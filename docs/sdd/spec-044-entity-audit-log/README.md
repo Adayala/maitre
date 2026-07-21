@@ -8,7 +8,8 @@ Registro de auditoría: actor, action, recurso, old/new value.
 | **ID** | SPEC-044 |
 | **Tipo** | Entity |
 | **Dominio** | Audit |
-| **Status** | PLANNED |
+| **Estado** | PLANNED |
+| **Readiness** | NOT_ASSESSED |
 | **Prioridad** | P0 |
 | **Fase** | 1 |
 | **Estimación** | 4h |

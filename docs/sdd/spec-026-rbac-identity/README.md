@@ -8,7 +8,8 @@ Quién puede invitar, desactivar, cambiar roles.
 | **ID** | SPEC-026 |
 | **Tipo** | RBAC |
 | **Dominio** | Identity |
-| **Status** | PLANNED |
+| **Estado** | PLANNED |
+| **Readiness** | NOT_ASSESSED |
 | **Prioridad** | P0 |
 | **Fase** | 1 |
 | **Estimación** | 4h |

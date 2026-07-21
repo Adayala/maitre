@@ -8,7 +8,8 @@ CRUD /menus/:id/categories.
 | **ID** | SPEC-041 |
 | **Tipo** | API |
 | **Dominio** | Catalog |
-| **Status** | PLANNED |
+| **Estado** | PLANNED |
+| **Readiness** | NOT_ASSESSED |
 | **Prioridad** | P1 |
 | **Fase** | 1 |
 | **Estimación** | 4h |

@@ -8,7 +8,8 @@ GET /dashboard/setup-status (qué falta configurar).
 | **ID** | SPEC-046 |
 | **Tipo** | API |
 | **Dominio** | Dashboard |
-| **Status** | PLANNED |
+| **Estado** | PLANNED |
+| **Readiness** | NOT_ASSESSED |
 | **Prioridad** | P1 |
 | **Fase** | 1 |
 | **Estimación** | 4h |

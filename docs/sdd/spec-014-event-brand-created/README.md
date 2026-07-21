@@ -8,7 +8,8 @@ Evento emitido cuando se crea una marca.
 | **ID** | SPEC-014 |
 | **Tipo** | Event |
 | **Dominio** | Organization |
-| **Status** | PLANNED |
+| **Estado** | PLANNED |
+| **Readiness** | NOT_ASSESSED |
 | **Prioridad** | P0 |
 | **Fase** | 1 |
 

@@ -8,7 +8,8 @@ GET /subscriptions/:id/entitlements (read-only, derechos efectivos).
 | **ID** | SPEC-032 |
 | **Tipo** | API |
 | **Dominio** | Subscription |
-| **Status** | PLANNED |
+| **Estado** | PLANNED |
+| **Readiness** | NOT_ASSESSED |
 | **Prioridad** | P0 |
 | **Fase** | 1 |
 | **Estimación** | 4h |

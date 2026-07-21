@@ -8,7 +8,8 @@ Permiso: recurso + acción.
 | **ID** | SPEC-019 |
 | **Tipo** | Entity |
 | **Dominio** | Identity |
-| **Status** | PLANNED |
+| **Estado** | PLANNED |
+| **Readiness** | NOT_ASSESSED |
 | **Prioridad** | P1 |
 | **Fase** | 1 |
 

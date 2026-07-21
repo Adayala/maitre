@@ -8,7 +8,8 @@ Solo OWNER/ADMIN modifican suscripción.
 | **ID** | SPEC-036 |
 | **Tipo** | RBAC |
 | **Dominio** | Subscription |
-| **Status** | PLANNED |
+| **Estado** | PLANNED |
+| **Readiness** | NOT_ASSESSED |
 | **Prioridad** | P0 |
 | **Fase** | 1 |
 | **Estimación** | 2h |

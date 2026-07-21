@@ -10,7 +10,8 @@ HTTP endpoints para crear, obtener y actualizar tenants.
 | **Título** | Tenants API |
 | **Tipo** | API |
 | **Dominio** | Organization |
-| **Status** | PLANNED |
+| **Estado** | PLANNED |
+| **Readiness** | NOT_ASSESSED |
 | **Prioridad** | P0 |
 | **Fase** | 1 |
 | **Estimación** | 8h |

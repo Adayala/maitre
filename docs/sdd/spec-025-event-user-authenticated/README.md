@@ -8,7 +8,8 @@ Evento cuando usuario se autentica.
 | **ID** | SPEC-025 |
 | **Tipo** | Event |
 | **Dominio** | Identity |
-| **Status** | PLANNED |
+| **Estado** | PLANNED |
+| **Readiness** | NOT_ASSESSED |
 | **Prioridad** | P1 |
 | **Fase** | 1 |
 

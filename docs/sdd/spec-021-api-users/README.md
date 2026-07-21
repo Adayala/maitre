@@ -8,7 +8,8 @@ CRUD + invite: POST, GET, PATCH, DELETE /users.
 | **ID** | SPEC-021 |
 | **Tipo** | API |
 | **Dominio** | Identity |
-| **Status** | PLANNED |
+| **Estado** | PLANNED |
+| **Readiness** | NOT_ASSESSED |
 | **Prioridad** | P0 |
 | **Fase** | 1 |
 | **Estimación** | 8h |

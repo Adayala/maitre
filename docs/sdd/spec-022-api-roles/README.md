@@ -8,7 +8,8 @@ GET /roles (read-only, lista de roles predefinidos).
 | **ID** | SPEC-022 |
 | **Tipo** | API |
 | **Dominio** | Identity |
-| **Status** | PLANNED |
+| **Estado** | PLANNED |
+| **Readiness** | NOT_ASSESSED |
 | **Prioridad** | P1 |
 | **Fase** | 1 |
 | **Estimación** | 2h |

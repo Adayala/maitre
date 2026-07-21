@@ -8,7 +8,8 @@ CRUD API para marcas.
 | **ID** | SPEC-008 |
 | **Tipo** | API |
 | **Dominio** | Organization |
-| **Status** | PLANNED |
+| **Estado** | PLANNED |
+| **Readiness** | NOT_ASSESSED |
 | **Prioridad** | P0 |
 | **Fase** | 1 |
 | **Estimación** | 6h |

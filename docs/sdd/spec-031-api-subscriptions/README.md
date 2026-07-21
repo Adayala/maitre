@@ -8,7 +8,8 @@ POST, GET, PATCH /subscriptions.
 | **ID** | SPEC-031 |
 | **Tipo** | API |
 | **Dominio** | Subscription |
-| **Status** | PLANNED |
+| **Estado** | PLANNED |
+| **Readiness** | NOT_ASSESSED |
 | **Prioridad** | P0 |
 | **Fase** | 1 |
 | **Estimación** | 8h |

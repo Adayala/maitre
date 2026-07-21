@@ -8,7 +8,8 @@ CRUD API para mesas.
 | **ID** | SPEC-012 |
 | **Tipo** | API |
 | **Dominio** | Organization |
-| **Status** | PLANNED |
+| **Estado** | PLANNED |
+| **Readiness** | NOT_ASSESSED |
 | **Prioridad** | P1 |
 | **Fase** | 1 |
 | **Estimación** | 4h |

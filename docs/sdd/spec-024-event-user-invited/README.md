@@ -8,7 +8,8 @@ Evento cuando se invita un usuario.
 | **ID** | SPEC-024 |
 | **Tipo** | Event |
 | **Dominio** | Identity |
-| **Status** | PLANNED |
+| **Estado** | PLANNED |
+| **Readiness** | NOT_ASSESSED |
 | **Prioridad** | P0 |
 | **Fase** | 1 |
 

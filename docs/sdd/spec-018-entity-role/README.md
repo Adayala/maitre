@@ -8,7 +8,8 @@ Roles predefinidos del sistema.
 | **ID** | SPEC-018 |
 | **Tipo** | Entity |
 | **Dominio** | Identity |
-| **Status** | PLANNED |
+| **Estado** | PLANNED |
+| **Readiness** | NOT_ASSESSED |
 | **Prioridad** | P0 |
 | **Fase** | 1 |
 

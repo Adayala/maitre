@@ -8,7 +8,8 @@ Producto: nombre, descripción, precio, foto, alérgenos.
 | **ID** | SPEC-039 |
 | **Tipo** | Entity |
 | **Dominio** | Catalog |
-| **Status** | PLANNED |
+| **Estado** | PLANNED |
+| **Readiness** | NOT_ASSESSED |
 | **Prioridad** | P1 |
 | **Fase** | 1 |
 | **Estimación** | 4h |

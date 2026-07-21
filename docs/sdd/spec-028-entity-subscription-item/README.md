@@ -8,7 +8,8 @@
 | **ID** | SPEC-028 |
 | **Tipo** | Entity |
 | **Dominio** | Subscription |
-| **Status** | PLANNED |
+| **Estado** | PLANNED |
+| **Readiness** | NOT_ASSESSED |
 | **Prioridad** | P0 |
 | **Fase** | 1 |
 | **Estimación** | 4h |

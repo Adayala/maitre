@@ -8,7 +8,8 @@ Derecho efectivo: FLOOR.ACCESS = true, BRANCHES.MAX = 3.
 | **ID** | SPEC-029 |
 | **Tipo** | Entity |
 | **Dominio** | Subscription |
-| **Status** | PLANNED |
+| **Estado** | PLANNED |
+| **Readiness** | NOT_ASSESSED |
 | **Prioridad** | P0 |
 | **Fase** | 1 |
 | **Estimación** | 4h |

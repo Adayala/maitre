@@ -8,7 +8,8 @@ App web para admin: configurar tenant, ver estado, entitlements.
 | **ID** | SPEC-048 |
 | **Tipo** | App |
 | **Dominio** | Dashboard |
-| **Status** | PLANNED |
+| **Estado** | PLANNED |
+| **Readiness** | NOT_ASSESSED |
 | **Prioridad** | P0 |
 | **Fase** | 1 |
 | **Estimación** | 16h |

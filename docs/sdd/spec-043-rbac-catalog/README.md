@@ -8,7 +8,8 @@ MANAGER/ADMIN crean/editan menú.
 | **ID** | SPEC-043 |
 | **Tipo** | RBAC |
 | **Dominio** | Catalog |
-| **Status** | PLANNED |
+| **Estado** | PLANNED |
+| **Readiness** | NOT_ASSESSED |
 | **Prioridad** | P1 |
 | **Fase** | 1 |
 | **Estimación** | 2h |

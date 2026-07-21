@@ -8,7 +8,8 @@ GET /audit/logs?resource=...&actor=...&dateRange=...
 | **ID** | SPEC-045 |
 | **Tipo** | API |
 | **Dominio** | Audit |
-| **Status** | PLANNED |
+| **Estado** | PLANNED |
+| **Readiness** | NOT_ASSESSED |
 | **Prioridad** | P0 |
 | **Fase** | 1 |
 | **Estimación** | 4h |
