@@ -26,6 +26,13 @@
 - [ ] CI/toolchain cumple gates y presupuesto medido.
 - [ ] Dump/restore/export recupera datos sintéticos.
 
+## Presupuesto
+
+- [ ] Cada ejecución remota registra plan/cuota y consumo inicial/final.
+- [ ] No existe billing, upgrade o add-on activado por el spike.
+- [ ] PASS incluye margen demo y stop conditions observables.
+- [ ] Límite gratuito alcanzado se reporta como resultado, no se evita comprando capacidad.
+
 ## Decisión
 
 - [ ] Cada criterio ADR-002/003 tiene evidencia.

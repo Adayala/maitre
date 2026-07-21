@@ -197,3 +197,13 @@ SPK-01 y la porción local de SPK-05 pueden ejecutarse mientras se completa esa 
 - Resultados se anexan/enlazan desde ADR-002/003 e I0 readiness.
 - ADR-002 no pasa por el solo hecho de conectar la integración oficial; requiere SPK-02, SPK-03, SPK-04 y SPK-06.
 - ADR-003 requiere SPK-01 y SPK-05, además de las partes de Drizzle cubiertas por SPK-02/04.
+
+## 12. Presupuesto y criterio de corte
+
+- El baseline I0 se ejecuta exclusivamente con planes gratuitos aprobados por SPEC-208.
+- Ningún experimento activa billing, upgrade, add-on, dominio pago o recurso fuera del free tier.
+- Antes de una ejecución remota se registra la cuota aplicable, su unidad de medición y el consumo inicial/final sin copiar secretos.
+- Si el experimento requiere pago para alcanzar PASS, su resultado es `FAIL` para I0 o `INCONCLUSIVE` si falta evidencia; nunca se compra capacidad implícitamente.
+- Rate limit, suspensión, pausa por inactividad o cuota agotada se registran como comportamiento del proveedor, no se ocultan aumentando el plan.
+- Un resultado PASS incluye margen estimado para el tráfico demo y alertas/stop conditions de SPEC-208.
+- Toda excepción de costo exige decisión explícita fuera de este spike y una revisión de ADR/roadmap.

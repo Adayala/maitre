@@ -15,6 +15,8 @@
 11. Todo resultado comienza `NOT_RUN`; no se infiere PASS por configuración o documentación.
 12. Evidencia contiene nombres de variables y valores redactados, nunca secrets.
 13. La ausencia de un recurso remoto bloquea sólo los experimentos que realmente lo requieren.
+14. Un spike I0 no activa gasto ni eleva un plan para obtener PASS.
+15. Cuota agotada, pausa o rate limit son evidencia y deben quedar registrados.
 
 ## Timebox propuesto
 

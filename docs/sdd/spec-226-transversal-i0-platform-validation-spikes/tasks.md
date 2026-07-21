@@ -6,6 +6,7 @@
 - [ ] Ejecutar las porciones locales de SPK-01 y SPK-05.
 - [ ] Confirmar repo, Vercel y Supabase conectados mediante integración/invitaciones.
 - [ ] Auditar variables Development/Preview/Production sin registrar valores.
+- [ ] Registrar cuotas gratuitas, baseline y stop conditions antes de ejecutar remoto.
 - [ ] Preparar ambiente sintético y cleanup.
 - [ ] Ejecutar SPK-01 Vite/Fastify/Vercel/Node.
 - [ ] Ejecutar SPK-02 Supavisor/pooling.

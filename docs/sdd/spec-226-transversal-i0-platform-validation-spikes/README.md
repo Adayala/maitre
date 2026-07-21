@@ -7,7 +7,11 @@ Contrato para validar empíricamente Supabase y el toolchain React/Node antes de
 | **ID** | SPEC-226 |
 | **Tipo** | Transversal / Technical Spike |
 | **Dominio** | Platform / Engineering |
-| **Estado** | DRAFT — READY FOR I0 REVIEW |
+| **Estado** | DRAFT |
+| **Readiness** | BLOCKED |
+| **Owner** | UNASSIGNED |
+| **Reviewer** | UNASSIGNED |
+| **Blockers** | Asignar owner/reviewer y disponer de proyectos development Vercel/Supabase |
 | **Prioridad** | P0 |
 | **Fase** | Antes de I0 READY_FOR_IMPLEMENTATION |
 | **Depende de** | ADR-001–003, SPEC-207–225 |

@@ -43,3 +43,9 @@ La conexión del proyecto Supabase con GitHub/Vercel es un prerrequisito externo
 - Preferir claves publishable en browser y evitar claves elevadas salvo caso server-side aprobado.
 - El mapping de nombres provistos por la integración a `VITE_*`/server-only se valida durante SPK-02/03.
 - Preview no ejecuta migraciones destructivas ni obtiene autoridad sobre Production.
+
+## Presupuesto
+
+- Los spikes validan la viabilidad dentro del free tier; no justifican gasto automático.
+- Cualquier pantalla que solicite billing o upgrade detiene la ejecución y se registra como evidencia.
+- Pricing y límites son datos temporales: se fijan con fecha y fuente oficial al ejecutar, no se copian como constantes normativas en esta spec.
