@@ -35,3 +35,7 @@ Tenant representa una organización cliente y es la raíz explícita del aislami
 - [SPEC-020 — Membership](../spec-020-entity-membership/README.md)
 - [SPEC-027 — Subscription](../spec-027-entity-subscription/README.md)
 - [SPEC-029 — Entitlement](../spec-029-entity-entitlement/README.md)
+
+## Contrato especializado
+
+- [Contrato](contract.md)

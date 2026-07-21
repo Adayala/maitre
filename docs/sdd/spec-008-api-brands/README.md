@@ -16,4 +16,6 @@ CRUD API para marcas.
 | **Fase** | 1 |
 | **Estimación** | 6h |
 
-**Status: PLANNED**
+## Documentos normativos
+
+- [Contrato](contract.md)

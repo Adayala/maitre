@@ -44,4 +44,6 @@ Cada tenant puede tener múltiples entidades fiscales (personas o empresas). Cad
 - [ ] notes.md
 - [ ] Peer review
 
-**Status: PLANNED**
+## Documentos normativos
+
+- [Contrato](contract.md)

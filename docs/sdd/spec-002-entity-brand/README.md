@@ -79,3 +79,7 @@ Cada marca:
 - [Tasks](tasks.md)
 - [Verificación](verification.md)
 - [Notas](notes.md)
+
+## Contrato especializado
+
+- [Contrato](contract.md)

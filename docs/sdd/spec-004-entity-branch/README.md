@@ -36,3 +36,7 @@ Branch representa una unidad operativa física o lógica dentro de un Tenant y u
 - [SPEC-005 — Salon](../spec-005-entity-salon/README.md)
 - [SPEC-015 — BranchCreated](../spec-015-event-branch-created/README.md)
 - [SPEC-029 — Entitlement](../spec-029-entity-entitlement/README.md)
+
+## Contrato especializado
+
+- [Contrato](contract.md)

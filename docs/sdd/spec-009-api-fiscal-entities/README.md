@@ -16,4 +16,6 @@ CRUD API para entidades fiscales.
 | **Fase** | 1 |
 | **Estimación** | 6h |
 
-**Status: PLANNED**
+## Documentos normativos
+
+- [Contrato](contract.md)

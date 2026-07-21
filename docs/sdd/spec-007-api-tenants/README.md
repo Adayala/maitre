@@ -28,4 +28,6 @@ HTTP endpoints para crear, obtener y actualizar tenants.
 
 **Depends on:** [SPEC-001] Tenant Entity ✅
 
-**Status: PLANNED**
+## Documentos normativos
+
+- [Contrato](contract.md)
