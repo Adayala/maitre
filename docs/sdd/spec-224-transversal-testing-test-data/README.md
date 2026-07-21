@@ -7,7 +7,7 @@ Contrato transversal para obtener evidencia confiable con tests rápidos, manten
 | **ID** | SPEC-224 |
 | **Tipo** | Transversal / Quality Engineering |
 | **Dominio** | Engineering / Verification |
-| **Estado** | DRAFT — PROPOSED FOR APPROVAL |
+| **Estado** | DRAFT — READY FOR I0 REVIEW |
 | **Prioridad** | P0 |
 | **Fase** | Antes del primer código funcional |
 | **Depende de** | SPEC-207, SPEC-209–223 |
@@ -31,3 +31,5 @@ Contrato transversal para obtener evidencia confiable con tests rápidos, manten
 - [Tareas](tasks.md)
 - [Verificación](verification.md)
 - [Decisiones](notes.md)
+
+La ejecución CI y sus comandos pertenecen a la [matriz de SPEC-207](../spec-207-transversal-engineering-quality/quality-gates.md); esta spec define qué evidencia producen los tests.

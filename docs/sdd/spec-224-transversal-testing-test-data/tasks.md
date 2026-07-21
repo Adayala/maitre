@@ -16,3 +16,5 @@
 - [ ] Probar idempotencia, concurrencia y recovery.
 - [ ] Implementar política/metricas de flakiness.
 - [ ] Medir duración, coverage y tests lentos.
+- [ ] Mapear cada suite al script raíz único de SPEC-207.
+- [ ] Probar filtros affected contra cambios en contratos, config y lockfile.

@@ -7,7 +7,7 @@ Contrato transversal de calidad para todo cambio de Maitre.
 | **ID** | SPEC-207 |
 | **Tipo** | Transversal |
 | **Dominio** | Platform / Engineering |
-| **Estado** | DRAFT |
+| **Estado** | DRAFT — READY FOR I0 REVIEW |
 | **Prioridad** | P0 |
 | **Fase** | Todas, antes del primer código productivo |
 
@@ -23,3 +23,4 @@ Hacer verificable que cada implementación parte de una spec aprobada, conserva 
 - [Tareas](tasks.md)
 - [Verificación](verification.md)
 - [Decisiones y excepciones](notes.md)
+- [Matriz de quality gates](quality-gates.md)

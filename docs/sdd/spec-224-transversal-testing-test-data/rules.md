@@ -14,6 +14,8 @@
 10. Flaky tests no se ignoran ni reintentan indefinidamente.
 11. Coverage es gate/señal, no sustituto de assertions.
 12. PRs no llaman proveedores fiscales/pagos reales.
+13. La estrategia de test no duplica comandos ni triggers definidos por SPEC-207.
+14. Un filtro por cambios afectados debe demostrar que no omite evidencia relevante.
 
 ## Excepciones
 

@@ -14,3 +14,8 @@
 12. **Comentarios útiles:** documentan por qué; el código expresa qué y cómo.
 13. **Excepciones temporales:** requieren issue, responsable, vencimiento y riesgo aceptado.
 14. **CI inmutable:** la rama principal nunca recibe cambios que evadan gates obligatorios.
+15. **Comandos locales:** todo gate CI posee un script raíz equivalente y documentado.
+16. **Una fuente:** SPEC-207 orquesta gates; SPEC-224 define evidencia de tests.
+17. **Sonar verificable:** falta de elegibilidad/infraestructura bloquea el gate, no produce un PASS ficticio.
+18. **Sin exclusiones cosméticas:** lógica mantenible no se oculta de coverage o análisis para mejorar métricas.
+19. **Cambio afectado:** optimizar por paths sólo omite trabajo cuando una regla versionada demuestra que el gate no aplica.

@@ -43,9 +43,15 @@ Cada pull request debe declarar:
 | Sonar | Quality Gate aprobado en código nuevo |
 | Spec validation | Links, estructura y criterios requeridos válidos |
 
+Los nombres de comandos, triggers, evidencia y política de fallo están en [quality-gates.md](quality-gates.md). SPEC-207 es su única fuente normativa; SPEC-224 define cómo producir evidencia de testing sin duplicar la orquestación CI.
+
+Todo comando requerido por CI existe como script raíz y puede ejecutarse localmente. El workflow no contiene lógica de calidad que no pueda invocarse desde el repositorio.
+
 ## SonarQube / SonarCloud
 
 El análisis se ejecuta sobre pull requests y rama principal. Para mantener costo cero se admite SonarCloud cuando el repositorio y su licencia sean elegibles; SonarQube Community puede ejecutarse fuera del camino crítico si requiere infraestructura persistente.
+
+SPK-05 debe confirmar la modalidad gratuita y reproducible antes del primer código productivo. Si el repositorio no es elegible para SonarQube Cloud OSS y no existe un runner seguro para SonarQube Community Build, el gate queda `BLOCKED`; no se marca PASS ni se sustituye silenciosamente por una métrica distinta.
 
 El Quality Gate para código nuevo exige inicialmente:
 
@@ -59,6 +65,8 @@ El Quality Gate para código nuevo exige inicialmente:
 - security rating A.
 
 Los umbrales pueden endurecerse mediante ADR, nunca relajarse silenciosamente.
+
+El gate se evalúa sobre código nuevo. Exclusiones de coverage/duplicación se versionan, justifican y revisan; no se excluye lógica de negocio, autorización, cálculo o persistencia para alcanzar métricas.
 
 ## Estrategia de tests
 
@@ -81,3 +89,5 @@ Un cambio está terminado solo si:
 5. observabilidad y runbook se actualizaron cuando aplica;
 6. no quedan TODOs sin issue;
 7. existe evidencia verificable enlazada al PR.
+
+Para cambios documentales previos al scaffolding, la evidencia aplicable es formato, links, estructura SDD y review. Los gates de código pasan a ser exigibles en el mismo commit que introduce el toolchain, sin reclamar resultados inexistentes antes de ello.

@@ -169,3 +169,5 @@ Retries de CI recolectan evidencia pero no convierten el primer fallo en éxito 
 - Suites completas/matrices/mutation se programan si exceden presupuesto PR.
 - Duración p50/p95, flakes y top slow tests se observan.
 - Optimización de CI nunca elimina evidencia requerida para el cambio.
+
+La clasificación de un cambio como “afectado” sigue SPEC-207. SPEC-224 no define workflows o scripts alternativos; cada nivel se expone mediante la matriz raíz única.

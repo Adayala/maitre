@@ -7,8 +7,13 @@
 - [ ] Una vulnerabilidad crítica/alta nueva bloquea el merge.
 - [ ] Un secreto de prueba detectado bloquea el merge.
 - [ ] Un Quality Gate Sonar fallido bloquea el merge.
+- [ ] Sonar no se marca configurado hasta que SPK-05 confirme modalidad gratuita y reproducible.
 - [ ] Una referencia SDD rota bloquea el merge.
 - [ ] La cobertura y duplicación de código nuevo cumplen los umbrales.
 - [ ] El build React.js y Node.js se reproduce fuera de Vercel.
 - [ ] Una excepción documentada incluye issue, responsable y vencimiento.
 - [ ] `main` no admite push directo que evada las protecciones acordadas.
+- [ ] Cada job CI ejecuta un script raíz equivalente disponible localmente.
+- [ ] Cada canario falla únicamente el gate esperado y luego se elimina.
+- [ ] Rules por paths no omiten un gate aplicable al cambio.
+- [ ] Exclusiones de análisis están versionadas y justificadas.

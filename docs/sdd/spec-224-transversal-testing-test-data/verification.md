@@ -32,3 +32,5 @@
 - [ ] Flake produce issue/evidencia y no se oculta con retries.
 - [ ] Reports incluyen seed, ambiente y artefactos sólo cuando aportan diagnóstico.
 - [ ] Duración/consumo permanece dentro de SPEC-208/221.
+- [ ] Cada suite se invoca mediante la matriz única de SPEC-207.
+- [ ] Un cambio compartido invalida filtros y ejecuta suites dependientes.
