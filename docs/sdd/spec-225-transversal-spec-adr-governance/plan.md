@@ -4,7 +4,7 @@
 
 1. Aprobar estados, metadata y owners.
 2. Auditar IDs/slugs/duplicados existentes.
-3. Crear registry machine-readable o índice validable.
+3. Generar catálogo machine-readable e índices desde metadata autoritativa.
 4. Definir proceso de asignación de IDs.
 5. Normalizar estados compuestos separando estado, readiness y blockers.
 

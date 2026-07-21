@@ -20,6 +20,7 @@ Una guía explica cómo trabajar; una spec normativa define qué debe cumplirse.
 - El ID se asigna al crear el primer draft y no cambia al renombrar título/directorio.
 - Un ID retirado no se reutiliza.
 - `INDEX.md`/registro mantiene ID, slug, título, tipo, dominio, estado y reemplazo.
+- La metadata del README de cada spec es la fuente autoritativa; el registro y los índices son proyecciones verificables.
 - Duplicados o referencias ambiguas bloquean validación.
 - Specs históricas sin ID normalizado se migran mediante cambio explícito; no reciben un número que colisione.
 
@@ -197,6 +198,8 @@ PRs declaran specs y criterios implementados. Tests nombran/enlazan criterios cu
 No marca una spec como correcta semánticamente; reduce inconsistencia mecánica.
 El comportamiento determinista, los códigos de hallazgo y la adopción sobre deuda
 histórica se definen en [validation-contract.md](validation-contract.md).
+La fuente de verdad, el schema y la generación del catálogo se definen en
+[registry-contract.md](registry-contract.md).
 
 ## 12. Deprecación y archivo
 

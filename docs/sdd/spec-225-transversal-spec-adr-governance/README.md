@@ -31,4 +31,5 @@ Contrato transversal para crear, revisar, aprobar, cambiar, verificar y retirar 
 - [Tareas](tasks.md)
 - [Verificación](verification.md)
 - [Contrato del validador](validation-contract.md)
+- [Contrato del registro](registry-contract.md)
 - [Decisiones](notes.md)

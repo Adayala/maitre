@@ -4,7 +4,8 @@
 - [x] Definir contrato determinista y códigos del validador.
 - [ ] Definir owners/reviewers por dominio.
 - [ ] Auditar IDs, slugs y estados actuales.
-- [ ] Crear registro/índice validable.
+- [x] Definir fuente de verdad y contrato del registro.
+- [ ] Implementar generación/validación del catálogo e índices.
 - [ ] Implementar asignación de ID sin colisiones.
 - [ ] Implementar `npm run sdd:validate`.
 - [ ] Crear auditoría y línea base versionada de deuda histórica.

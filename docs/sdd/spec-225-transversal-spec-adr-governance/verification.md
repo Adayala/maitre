@@ -15,6 +15,7 @@
 - [ ] Archivo/link/dependency inexistente falla.
 - [ ] Ciclo inválido se reporta con ruta comprensible.
 - [ ] INDEX/START_HERE no divergen del registro.
+- [ ] Catálogo regenerado es byte-for-byte estable y no contiene metadata manual.
 - [ ] Findings tienen código, ubicación y orden deterministas.
 - [ ] Una excepción histórica nueva falla; resolver una reduce la línea base.
 - [ ] CI no reescribe documentos ni cambia estados.
