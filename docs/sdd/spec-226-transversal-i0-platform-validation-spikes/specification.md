@@ -171,10 +171,29 @@ Cada spike produce:
 - recomendación sobre ADR/spec;
 - follow-ups con owner.
 
-## 10. Regla de decisión
+Los resultados se registran en `evidence/SPK-XX.md`. El valor inicial es `NOT_RUN`; sólo el ejecutor lo cambia a `PASS`, `FAIL` o `INCONCLUSIVE` después de adjuntar evidencia verificable. Los archivos no contienen valores de variables, tokens, URLs con credenciales ni datos personales.
+
+## 10. Prerrequisitos y dependencias externas
+
+| Spike | Puede comenzar sin proyecto remoto | Prerrequisito remoto |
+| --- | --- | --- |
+| SPK-01 | sí, para Node/Vite local | proyecto Vercel vinculado para validar preview |
+| SPK-02 | no | proyecto Supabase development, pooler y credenciales por environment |
+| SPK-03 | parcial, con verifier fake | Supabase Auth, redirect allowlist y usuarios sintéticos |
+| SPK-04 | parcial, con PostgreSQL local | proyecto Supabase development para grants/RLS reales |
+| SPK-05 | sí, para gates locales | GitHub/Vercel/Sonar sólo para validar CI remoto |
+| SPK-06 | parcial, con PostgreSQL local | proyecto Supabase development y Storage si se evalúa |
+
+El propietario de plataforma conecta Supabase, GitHub y Vercel mediante invitaciones/integraciones. No transmite secretos por chat ni los agrega a Git. El equipo audita nombres y alcance de variables sin copiar sus valores a la evidencia.
+
+SPK-01 y la porción local de SPK-05 pueden ejecutarse mientras se completa esa coordinación. SPK-02 es prerequisite de las porciones remotas de SPK-03/04/06.
+
+## 11. Regla de decisión
 
 - ADR se acepta sólo si todos sus criterios P0 pasan.
 - Un resultado inconclusive no se interpreta como aceptación.
 - Un fallo puede cambiar configuración, herramienta o proveedor mediante nueva opción documentada.
 - No se elige una alternativa por preferencia sin repetir criterios equivalentes.
 - Resultados se anexan/enlazan desde ADR-002/003 e I0 readiness.
+- ADR-002 no pasa por el solo hecho de conectar la integración oficial; requiere SPK-02, SPK-03, SPK-04 y SPK-06.
+- ADR-003 requiere SPK-01 y SPK-05, además de las partes de Drizzle cubiertas por SPK-02/04.

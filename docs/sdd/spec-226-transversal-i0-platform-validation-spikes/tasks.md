@@ -1,7 +1,11 @@
 # Tareas — SPEC-226
 
 - [ ] Aprobar hipótesis, criterios y timeboxes.
-- [ ] Crear plantilla/directorio de evidencia.
+- [x] Crear plantilla/directorio de evidencia (estructura documental, no resultado técnico).
+- [ ] Asignar owner/reviewer a cada spike.
+- [ ] Ejecutar las porciones locales de SPK-01 y SPK-05.
+- [ ] Confirmar repo, Vercel y Supabase conectados mediante integración/invitaciones.
+- [ ] Auditar variables Development/Preview/Production sin registrar valores.
 - [ ] Preparar ambiente sintético y cleanup.
 - [ ] Ejecutar SPK-01 Vite/Fastify/Vercel/Node.
 - [ ] Ejecutar SPK-02 Supavisor/pooling.

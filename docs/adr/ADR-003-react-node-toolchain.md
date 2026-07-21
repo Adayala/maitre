@@ -5,7 +5,7 @@
 | **Estado** | PROPOSED |
 | **Fecha** | 2026-07-21 |
 | **Decidido por** | Pendiente |
-| **Specs relacionadas** | SPEC-207, SPEC-209, SPEC-211, SPEC-224 |
+| **Specs relacionadas** | SPEC-207, SPEC-209, SPEC-211, SPEC-213, SPEC-224, SPEC-226 |
 
 ## Contexto
 
@@ -45,3 +45,5 @@ Adoptar Vite/React Router/TanStack Query para web; Fastify para API; Zod como sc
 - OpenAPI no tiene drift;
 - Drizzle conecta por pooler y migra desde cero;
 - gates SPEC-207/224 pasan dentro de cuota.
+
+La evidencia y el resultado de cada criterio se registran en [SPEC-226](../sdd/spec-226-transversal-i0-platform-validation-spikes/README.md). Hasta completarlos, la decisión permanece `PROPOSED`.

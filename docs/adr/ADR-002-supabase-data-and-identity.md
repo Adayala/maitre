@@ -5,7 +5,7 @@
 | **Estado** | PROPOSED |
 | **Fecha** | 2026-07-21 |
 | **Decidido por** | Pendiente |
-| **Specs relacionadas** | SPEC-210, SPEC-214, SPEC-220 |
+| **Specs relacionadas** | SPEC-017, SPEC-020, SPEC-023, SPEC-210, SPEC-214, SPEC-220, SPEC-226 |
 
 ## Contexto
 
@@ -45,6 +45,8 @@ Usar Supabase para PostgreSQL y Auth, y Storage sólo cuando una feature lo requ
 - dump/restore y export de objetos;
 - medición de cuota y revisión de términos;
 - ejecución del dominio sin SDK Supabase.
+
+La evidencia y el resultado de cada criterio se registran en [SPEC-226](../sdd/spec-226-transversal-i0-platform-validation-spikes/README.md). La conexión Supabase–Vercel no cambia por sí sola el estado de este ADR.
 
 ## Alternativa si falla
 

@@ -12,6 +12,9 @@
 8. Mediciones incluyen versiones y ambiente.
 9. Secrets no aparecen en commit, logs o artifacts.
 10. Alternativas se comparan con criterios equivalentes.
+11. Todo resultado comienza `NOT_RUN`; no se infiere PASS por configuración o documentación.
+12. Evidencia contiene nombres de variables y valores redactados, nunca secrets.
+13. La ausencia de un recurso remoto bloquea sólo los experimentos que realmente lo requieren.
 
 ## Timebox propuesto
 

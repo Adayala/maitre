@@ -7,7 +7,7 @@ Contrato para validar empíricamente Supabase y el toolchain React/Node antes de
 | **ID** | SPEC-226 |
 | **Tipo** | Transversal / Technical Spike |
 | **Dominio** | Platform / Engineering |
-| **Estado** | DRAFT — PROPOSED FOR APPROVAL |
+| **Estado** | DRAFT — READY FOR I0 REVIEW |
 | **Prioridad** | P0 |
 | **Fase** | Antes de I0 READY_FOR_IMPLEMENTATION |
 | **Depende de** | ADR-001–003, SPEC-207–225 |
@@ -32,3 +32,4 @@ Contrato para validar empíricamente Supabase y el toolchain React/Node antes de
 - [Tareas](tasks.md)
 - [Verificación](verification.md)
 - [Decisiones y evidencia](notes.md)
+- [Registro de ejecución](evidence/README.md)

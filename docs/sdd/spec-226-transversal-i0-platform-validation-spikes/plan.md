@@ -3,9 +3,11 @@
 ## Preparación
 
 1. Aprobar SPEC-226 y timeboxes.
-2. Crear recursos development sintéticos y expirables.
-3. Definir plantilla de evidencia y cleanup.
-4. Fijar versiones candidatas desde fuentes oficiales.
+2. Asignar owner y reviewer de cada spike en el registro de evidencia.
+3. Ejecutar SPK-01 local y gates locales de SPK-05 sin esperar recursos remotos.
+4. Conectar recursos development sintéticos y expirables mediante integraciones/invitaciones.
+5. Auditar variables por environment sin exportar valores a Git.
+6. Fijar versiones candidatas desde fuentes oficiales.
 
 ## Ejecución
 
@@ -16,7 +18,7 @@
 5. SPK-05 toolchain/CI.
 6. SPK-06 backup/exit.
 
-SPK-01 y configuración local preceden al resto. SPK-02–04 reutilizan únicamente harness validado, no decisiones de dominio no aprobadas.
+SPK-01 y configuración local preceden al resto. SPK-02–04 reutilizan únicamente harness validado, no decisiones de dominio no aprobadas. SPK-02–04/06 permanecen `NOT_RUN` hasta disponer del recurso Supabase development.
 
 ## Decisión
 

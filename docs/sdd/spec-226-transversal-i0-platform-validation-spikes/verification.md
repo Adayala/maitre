@@ -6,6 +6,8 @@
 - [ ] Versiones/configuración están registradas sin secretos.
 - [ ] PASS incluye output, medición o test verificable.
 - [ ] Recursos temporales y cleanup están inventariados.
+- [ ] Cada registro conserva estado `NOT_RUN` hasta que exista evidencia.
+- [ ] Owner y reviewer están identificados antes de ejecutar.
 
 ## Seguridad
 
@@ -13,6 +15,7 @@
 - [ ] Browser/artifacts no contienen service role/connection strings.
 - [ ] Logs/errores no filtran tokens.
 - [ ] Migration y runtime credentials tienen permisos distintos.
+- [ ] El registro enumera variables requeridas sin copiar sus valores.
 
 ## Plataforma
 
