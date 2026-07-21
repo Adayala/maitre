@@ -31,7 +31,7 @@ Implementar estas specs literalmente introduciría duplicación de fuentes de ve
 | --- | --- | --- | --- | --- |
 | FC-B01 | RESOLVED IN DRAFT | SPEC-017 | `User` contenía `tenantId`, `role` y `password_hash` | reconciliado como identidad global sin credenciales/autorización; pendiente review |
 | FC-B02 | RESOLVED IN DRAFT | SPEC-020 | Membership modelaba un único `role` y no branches | reconciliado con role assignments y branch scopes normalizados; pendiente review |
-| FC-B03 | P0 | SPEC-023 | Login/reset/verify y JWT propios contradicen Supabase Auth | convertir spec en boundary/session flow o aceptar backend auth propio mediante ADR |
+| FC-B03 | RESOLVED IN DRAFT | SPEC-023 | Login/reset/verify y JWT propios contradecían Supabase Auth | reconciliado como boundary portable: proveedor gestiona credenciales/sesión y Maitre valida tokens y autoriza server-side; pendiente review/ADR |
 | FC-B04 | P0 | SPEC-001 | `plan_tier`, límites y `features_enabled` duplican Subscription/Entitlement | Tenant conserva identidad/config global; capacidades se calculan en dominio Subscription |
 | FC-B05 | P0 | SPEC-004 | `services_active` duplica entitlements | derivar capacidad efectiva; no persistir segunda fuente autoritativa |
 | FC-B06 | P0 | SPEC-001 | README/objective/structure/rules son placeholders | completar paquete coherente antes de review |
@@ -40,7 +40,7 @@ Implementar estas specs literalmente introduciría duplicación de fuentes de ve
 | FC-B09 | P1 | SPEC-001/004/017/020 | timestamps SQL sin timezone | usar `timestamptz`, Clock y UTC según specs transversales |
 | FC-B10 | P1 | SPEC-017/020 | unicidad de email por tenant contradice identidad multi-tenant | email/identity en proveedor/global; Membership permite mismo user en varios tenants |
 | FC-B11 | P1 | SPEC-020 | UNIQUE tenant/user impide representar roles/branches si se modelan como filas | elegir Membership agregado + assignments o constraints compuestas explícitas |
-| FC-B12 | P1 | SPEC-023 | `HS256 o RS256` queda ambiguo | validación según issuer/JWKS/algoritmos permitidos del proveedor |
+| FC-B12 | RESOLVED IN DRAFT | SPEC-023 | `HS256 o RS256` quedaba ambiguo | allowlist explícita y validación de issuer/audience/JWKS definidas; pendiente spike/ADR |
 | FC-B13 | P1 | SPEC-001 | trial/cancel por job está acoplado a billing | estado comercial en Subscription; Tenant lifecycle separado |
 | FC-B14 | P1 | SPEC-004 | herencia de menú/config no está definida ni necesaria para I0 | recortar a branch mínima; diseñar herencia en spec posterior |
 | FC-B15 | P1 | Todas | criterios marcan ✅ aunque status es PLANNED | checkboxes representan evidencia, no intención |

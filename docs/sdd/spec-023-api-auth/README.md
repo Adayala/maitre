@@ -1,16 +1,32 @@
-# [SPEC-023] Auth API
+# [SPEC-023] Authentication and Session Boundary
 
-POST /auth/login, /auth/refresh, /auth/logout.
+Define el límite entre el proveedor de identidad, el cliente React y la API Node.js de Maitre. El MVP propone Supabase Auth, pero el dominio depende de puertos propios para conservar portabilidad.
 
 ## Metadata
+
 | Campo | Valor |
 | --- | --- |
 | **ID** | SPEC-023 |
-| **Tipo** | API |
+| **Tipo** | API / Security boundary |
 | **Dominio** | Identity |
-| **Status** | PLANNED |
+| **Status** | DRAFT — RECONCILED FOR I0 REVIEW |
 | **Prioridad** | P0 |
-| **Fase** | 1 |
-| **Estimación** | 8h |
+| **Fase** | I0 |
 
-**Status: PLANNED**
+## Documentos
+
+- [Objetivo](./objective.md)
+- [Especificación](./specification.md)
+- [Estructura](./structure.md)
+- [Reglas](./rules.md)
+- [Plan](./plan.md)
+- [Tareas](./tasks.md)
+- [Verificación](./verification.md)
+
+## Relacionadas
+
+- [SPEC-017 — User](../spec-017-entity-user/README.md)
+- [SPEC-020 — Membership](../spec-020-entity-membership/README.md)
+- [SPEC-210 — Platform foundations](../spec-210-transversal-mvp-platform-foundations/README.md)
+- [SPEC-213 — Walking skeleton](../spec-213-transversal-mvp-walking-skeleton/README.md)
+- [SPEC-226 — Platform validation spikes](../spec-226-transversal-i0-platform-validation-spikes/README.md)
