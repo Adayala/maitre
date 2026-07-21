@@ -1,5 +1,9 @@
 # Maitre Foundationals — Spec-Driven Development
 
+<p align="center">
+  <img src="../assets/branding/maitre-logo.png" alt="Logo de Maitre" width="640">
+</p>
+
 Este directorio contiene las **especificaciones ejecutables** de la plataforma Maitre. No es código; es el contrato que el código debe cumplir.
 
 ## Qué es Spec-Driven Development
@@ -284,4 +288,3 @@ Entitlements: [qué derecho se requiere]
 - **Feedback de implementación:** Crea issue o Pull Request.
 
 Maitre es especificación viva. Se actualiza con el aprendizaje.
-

@@ -1,5 +1,9 @@
 # Maitre
 
+<p align="center">
+  <img src="docs/assets/branding/maitre-logo.png" alt="Logo de Maitre" width="720">
+</p>
+
 Maitre es una plataforma operativa modular para restaurantes argentinos. Está diseñada para acompañar desde un único local hasta grupos multi-marca y multi-sucursal, integrando la operación de salón, reservas, pedidos, cocina, cuentas, pagos, facturación y reputación.
 
 > Los sistemas tradicionales administran mesas, pedidos y cajas. Maitre administra el servicio.

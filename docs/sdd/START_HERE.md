@@ -1,5 +1,9 @@
 # SDD — Spec-Driven Development
 
+<p align="center">
+  <img src="../assets/branding/maitre-logo.png" alt="Logo de Maitre" width="640">
+</p>
+
 Bienvenido a las especificaciones ejecutables de Maitre.
 
 ## Qué es SDD
