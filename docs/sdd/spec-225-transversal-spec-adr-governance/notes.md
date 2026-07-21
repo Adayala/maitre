@@ -21,6 +21,10 @@
 - duplicación entre guías extensas y specs transversales;
 - referencias a archivos eliminados o renombrados.
 
+La fotografía cuantitativa inicial y su estrategia de remediación están en
+[registry-baseline-audit.md](registry-baseline-audit.md). Sus conteos son evidencia de
+auditoría documental, no resultado del futuro comando `npm run sdd:validate`.
+
 ## Métricas
 
 - specs por estado y tiempo en review;

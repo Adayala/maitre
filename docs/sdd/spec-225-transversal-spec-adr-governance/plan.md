@@ -3,10 +3,11 @@
 ## Fase 1 — Registro
 
 1. Aprobar estados, metadata y owners.
-2. Auditar IDs/slugs/duplicados existentes.
+2. Auditar IDs/slugs/duplicados existentes. Primera auditoría documental completada; remediación pendiente.
 3. Generar catálogo machine-readable e índices desde metadata autoritativa.
 4. Definir proceso de asignación de IDs.
 5. Normalizar estados compuestos separando estado, readiness y blockers.
+6. Migrar metadata histórica por lotes de dominio sin inferir aprobación.
 
 ## Fase 2 — Validación
 

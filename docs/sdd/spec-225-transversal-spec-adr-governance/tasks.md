@@ -3,7 +3,9 @@
 - [ ] Aprobar lifecycle y estados.
 - [x] Definir contrato determinista y códigos del validador.
 - [ ] Definir owners/reviewers por dominio.
-- [ ] Auditar IDs, slugs y estados actuales.
+- [x] Auditar cobertura inicial de IDs, metadata, títulos y estados actuales.
+- [ ] Migrar metadata placeholder de SPEC-049–205 por lotes.
+- [ ] Asignar owners/reviewers o `UNASSIGNED` en las specs normalizadas.
 - [x] Definir fuente de verdad y contrato del registro.
 - [ ] Implementar generación/validación del catálogo e índices.
 - [ ] Implementar asignación de ID sin colisiones.

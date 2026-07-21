@@ -1,0 +1,67 @@
+# Auditoría inicial del registro — SPEC-225
+
+Fotografía manual reproducible previa a implementar `npm run sdd:validate`.
+
+## 1. Alcance y resultado
+
+Auditoría local sobre `docs/sdd/spec-*/README.md`:
+
+| Control | Resultado |
+| --- | --- |
+| Directorios `spec-*` | 226 |
+| Directorios con patrón `spec-NNN-slug` | 226 |
+| Directorios legacy sin número | 0 |
+| README sin `ID`, `Tipo`, `Dominio` o `Prioridad` parseable | 157 |
+| README sin `Estado` parseable | 203 |
+| README sin `Owner` | 224 |
+| README sin `Reviewer` | 225 |
+| README sin `Readiness` | 203 |
+
+La ausencia de metadata básica se concentra en SPEC-049–205. Esos 157 README comienzan
+con títulos placeholder como `# spec-049-entity-visit` y no poseen la tabla canónica.
+
+Las 23 specs que ya declaran `Estado` usan `DRAFT` después de la normalización inicial.
+Eso confirma sintaxis canónica en el subset, pero no implica readiness ni aprobación.
+
+## 2. Findings de baseline
+
+| Baseline | Rango/artefacto | Hallazgo esperado | Remediación |
+| --- | --- | --- | --- |
+| `BASE-SDD003-01` | SPEC-049–205 | metadata mínima ausente | migrar por dominio/lote |
+| `BASE-SDD003-02` | repositorio salvo excepciones normalizadas | owner/reviewer ausentes | registrar rol o `UNASSIGNED` |
+| `BASE-SDD003-03` | specs sin estado/readiness | lifecycle no declarado | agregar `DRAFT` + readiness real |
+| `BASE-SDD008-01` | `INDEX.md` | slugs históricos sin `SPEC-NNN` | regenerar después de metadata mínima |
+| `BASE-SDD008-02` | `START_HERE.md` | árbol/ejemplos históricos | reconciliar guía con estructura vigente |
+
+Estos identificadores documentan categorías temporales. La línea base machine-readable
+definitiva se crea con el validador y debe apuntar a un issue/owner por lote.
+
+## 3. Orden de remediación
+
+1. Mantener estricto el subset I0 ya reconciliado.
+2. Normalizar SPEC-049–205 en lotes que respeten dominios y dependencias.
+3. No completar descripciones, owners, prioridad o readiness por inferencia silenciosa.
+4. Reejecutar auditoría tras cada lote y exigir que los conteos sólo bajen.
+5. Regenerar catálogo e `INDEX.md` cuando todas las entradas tengan ID/título mínimo.
+6. Reconciliar `START_HERE.md` y activar `SDD008` sin excepción histórica.
+
+## 4. Lotes propuestos
+
+| Lote | Specs | Tema |
+| --- | --- | --- |
+| A | 049–065 | Floor / visits / payments |
+| B | 066–080 | Reservations |
+| C | 081–110 | Ordering / kitchen |
+| D | 111–136 | Shifts / cash |
+| E | 137–166 | Fiscal / integrations |
+| F | 167–190 | Analytics / inventory / delivery |
+| G | 191–205 | Apps / cross-domain |
+
+Los límites son unidades de migración documental, no prioridades de implementación.
+
+## 5. Reproducción provisional
+
+Hasta existir tooling versionado, la auditoría se reproduce enumerando directorios
+`docs/sdd/spec-*` y comprobando en cada README las filas `ID`, `Tipo`, `Dominio`, `Estado`,
+`Prioridad`, `Owner`, `Reviewer` y `Readiness`. El resultado durable será una fixture/test,
+no un comando shell copiado a CI.
