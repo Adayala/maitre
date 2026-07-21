@@ -36,3 +36,7 @@ Define el límite entre el proveedor de identidad, el cliente React y la API Nod
 - [SPEC-210 — Platform foundations](../spec-210-transversal-mvp-platform-foundations/README.md)
 - [SPEC-213 — Walking skeleton](../spec-213-transversal-mvp-walking-skeleton/README.md)
 - [SPEC-226 — Platform validation spikes](../spec-226-transversal-i0-platform-validation-spikes/README.md)
+
+## Contrato especializado
+
+- [Contrato](contract.md)

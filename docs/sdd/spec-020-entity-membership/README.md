@@ -31,3 +31,7 @@ Membership contiene el vínculo User ↔ Tenant. Roles y branches se modelan com
 - [Plan](plan.md)
 - [Tareas](tasks.md)
 - [Verificación](verification.md)
+
+## Contrato especializado
+
+- [Contrato](contract.md)

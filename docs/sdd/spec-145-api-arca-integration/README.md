@@ -36,3 +36,7 @@ Spike técnico para definir la integración de Maitre con los servicios fiscales
 - [Tareas](tasks.md)
 - [Criterios de verificación](verification.md)
 - [Notas y fuentes oficiales](notes.md)
+
+## Contrato especializado
+
+- [Contrato de integración](contract.md)

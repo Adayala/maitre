@@ -30,3 +30,7 @@ Perfil global de una persona autenticada, separado de credenciales, tenants, rol
 - [Plan](plan.md)
 - [Tareas](tasks.md)
 - [Verificación](verification.md)
+
+## Contrato especializado
+
+- [Contrato](contract.md)
