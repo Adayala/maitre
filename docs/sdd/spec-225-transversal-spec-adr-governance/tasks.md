@@ -19,6 +19,7 @@
 - [ ] Validar links, dependencias y successors.
 - [ ] Detectar ciclos/contradicciones mecánicas.
 - [ ] Crear template ADR y directorio.
+- [x] Definir metadata y validaciones mecánicas del registro ADR.
 - [ ] Crear checklist readiness/change class.
 - [ ] Integrar validación en CI.
 - [ ] Revisar SPEC-207–225 P0.

@@ -27,6 +27,8 @@
 - [ ] Tests/evidencia se relacionan con aceptación.
 - [ ] Release lista specs/revisiones incluidas.
 - [ ] ADR enlaza specs y successor cuando cambia.
+- [ ] Índice ADR coincide con ID, estado y archivo autoritativo.
+- [ ] ADR ACCEPTED posee deciders y revisión aceptada verificable.
 - [ ] Conflicto conocido bloquea merge afectado.
 
 ## Gobernanza
