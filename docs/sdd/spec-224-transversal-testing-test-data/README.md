@@ -7,7 +7,8 @@ Contrato transversal para obtener evidencia confiable con tests rápidos, manten
 | **ID** | SPEC-224 |
 | **Tipo** | Transversal / Quality Engineering |
 | **Dominio** | Engineering / Verification |
-| **Estado** | DRAFT — READY FOR I0 REVIEW |
+| **Estado** | DRAFT |
+| **Readiness** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
 | **Fase** | Antes del primer código funcional |
 | **Depende de** | SPEC-207, SPEC-209–223 |

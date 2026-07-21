@@ -7,7 +7,8 @@ Perfil global de una persona autenticada, separado de credenciales, tenants, rol
 | **ID** | SPEC-017 |
 | **Tipo** | Entity |
 | **Dominio** | Identity |
-| **Estado** | DRAFT — RECONCILED FOR I0 REVIEW |
+| **Estado** | DRAFT |
+| **Readiness** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
 | **Fase** | SPEC-222 I0/I1 |
 | **Depende de** | IdentityProviderPort, SPEC-020, SPEC-023, SPEC-210 |

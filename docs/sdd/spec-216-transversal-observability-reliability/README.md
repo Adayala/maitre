@@ -7,7 +7,8 @@ Contrato para detectar, entender y recuperar fallos de Maitre con telemetría po
 | **ID** | SPEC-216 |
 | **Tipo** | Transversal / Reliability Engineering |
 | **Dominio** | Platform / Operations |
-| **Estado** | DRAFT — READY FOR I0 REVIEW |
+| **Estado** | DRAFT |
+| **Readiness** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
 | **Fase** | Antes del ambiente demo estable |
 | **Depende de** | SPEC-207–215 |

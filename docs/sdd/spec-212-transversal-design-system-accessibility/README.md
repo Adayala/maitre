@@ -7,7 +7,9 @@ Contrato transversal para una experiencia React.js consistente, accesible, rápi
 | **ID** | SPEC-212 |
 | **Tipo** | Transversal / UX Architecture |
 | **Dominio** | Product / Frontend |
-| **Estado** | DRAFT — READY FOR I0 REVIEW; TOOLING PENDING ADR-004/SPK-05 |
+| **Estado** | DRAFT |
+| **Readiness** | BLOCKED |
+| **Blockers** | Tooling pendiente de ADR-004 y SPK-05 |
 | **Prioridad** | P0 |
 | **Fase** | Antes del scaffolding de UI |
 | **Depende de** | ADR-004, SPEC-207–209, SPEC-211, SPEC-213, SPEC-224, SPEC-226 |

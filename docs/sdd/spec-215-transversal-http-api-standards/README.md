@@ -7,7 +7,8 @@ Contrato transversal para APIs HTTP consistentes, seguras, observables y evoluti
 | **ID** | SPEC-215 |
 | **Tipo** | Transversal / API Architecture |
 | **Dominio** | Platform / Contracts |
-| **Estado** | DRAFT — PROPOSED FOR APPROVAL |
+| **Estado** | DRAFT |
+| **Readiness** | PROPOSED_FOR_REVIEW |
 | **Prioridad** | P0 |
 | **Fase** | Antes del primer endpoint funcional |
 | **Depende de** | SPEC-016, SPEC-023, SPEC-207, SPEC-209, SPEC-211, SPEC-213 |

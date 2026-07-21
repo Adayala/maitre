@@ -7,7 +7,8 @@ Contrato transversal para mantener Floor, Kitchen, Cash y Dash actualizados sin 
 | **ID** | SPEC-223 |
 | **Tipo** | Transversal / Realtime Architecture |
 | **Dominio** | Platform / Operations |
-| **Estado** | DRAFT — PROPOSED FOR APPROVAL |
+| **Estado** | DRAFT |
+| **Readiness** | PROPOSED_FOR_REVIEW |
 | **Prioridad** | P0 para Floor/Kitchen |
 | **Fase** | Antes de SPEC-222 I3 |
 | **Depende de** | SPEC-207–218, SPEC-222 |

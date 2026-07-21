@@ -7,7 +7,9 @@ Contrato transversal para integrar, verificar, desplegar, promover y revertir ca
 | **ID** | SPEC-221 |
 | **Tipo** | Transversal / Delivery Engineering |
 | **Dominio** | Platform / Operations |
-| **Estado** | DRAFT — READY FOR I0 REVIEW; PLATFORM SETTINGS NOT VERIFIED |
+| **Estado** | DRAFT |
+| **Readiness** | BLOCKED |
+| **Blockers** | Configuración de plataforma no verificada |
 | **Prioridad** | P0 |
 | **Fase** | Antes de automatizar el primer deployment |
 | **Depende de** | SPEC-207–220 |

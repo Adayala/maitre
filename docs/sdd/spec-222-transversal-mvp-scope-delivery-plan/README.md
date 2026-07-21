@@ -7,7 +7,8 @@ Contrato de alcance y secuencia que transforma el catálogo completo de Maitre e
 | **ID** | SPEC-222 |
 | **Tipo** | Transversal / Product Delivery |
 | **Dominio** | Product / Engineering |
-| **Estado** | DRAFT — PROPOSED FOR APPROVAL |
+| **Estado** | DRAFT |
+| **Readiness** | PROPOSED_FOR_REVIEW |
 | **Prioridad** | P0 |
 | **Fase** | Antes de comenzar implementación funcional |
 | **Depende de** | Foundations, SPEC-001–206 y SPEC-207–221 |

@@ -7,7 +7,8 @@ Vínculo de autorización entre un User global y un Tenant, con roles y alcance 
 | **ID** | SPEC-020 |
 | **Tipo** | Entity / Authorization Aggregate |
 | **Dominio** | Identity |
-| **Estado** | DRAFT — RECONCILED FOR I0 REVIEW |
+| **Estado** | DRAFT |
+| **Readiness** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
 | **Fase** | SPEC-222 I0/I1 |
 | **Depende de** | SPEC-001, SPEC-004, SPEC-017, SPEC-018, SPEC-019, SPEC-023 |

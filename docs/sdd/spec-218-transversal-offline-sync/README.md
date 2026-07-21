@@ -7,7 +7,8 @@ Contrato transversal para degradación, captura local y sincronización segura d
 | **ID** | SPEC-218 |
 | **Tipo** | Transversal / Offline Architecture |
 | **Dominio** | Platform / Operations |
-| **Estado** | DRAFT — PROPOSED FOR APPROVAL |
+| **Estado** | DRAFT |
+| **Readiness** | PROPOSED_FOR_REVIEW |
 | **Prioridad** | P0 para Floor/Kitchen; P1 para Guest |
 | **Fase** | Antes del piloto operativo |
 | **Depende de** | SPEC-207–217 y specs funcionales de cada comando |

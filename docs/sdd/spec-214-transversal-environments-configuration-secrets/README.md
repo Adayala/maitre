@@ -7,7 +7,8 @@ Contrato para configurar y desplegar Maitre de forma reproducible, segura y port
 | **ID** | SPEC-214 |
 | **Tipo** | Transversal / Platform Security |
 | **Dominio** | Platform / Operations |
-| **Estado** | DRAFT — READY FOR I0 REVIEW |
+| **Estado** | DRAFT |
+| **Readiness** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
 | **Fase** | Antes del primer despliegue compartido |
 | **Depende de** | SPEC-207–211, SPEC-213 |

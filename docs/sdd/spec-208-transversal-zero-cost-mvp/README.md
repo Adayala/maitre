@@ -7,7 +7,8 @@ Contrato de costo, capacidad y salida para operar el MVP con free tiers.
 | **ID** | SPEC-208 |
 | **Tipo** | Transversal |
 | **Dominio** | Platform / FinOps |
-| **Estado** | DRAFT — READY FOR I0 REVIEW |
+| **Estado** | DRAFT |
+| **Readiness** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
 | **Fase** | MVP |
 

@@ -7,7 +7,8 @@ Contrato transversal para publicar y consumir eventos de integración sin perder
 | **ID** | SPEC-217 |
 | **Tipo** | Transversal / Event Architecture |
 | **Dominio** | Platform / Integration |
-| **Estado** | DRAFT — PROPOSED FOR APPROVAL |
+| **Estado** | DRAFT |
+| **Readiness** | PROPOSED_FOR_REVIEW |
 | **Prioridad** | P0 |
 | **Fase** | Antes del primer efecto asíncrono |
 | **Depende de** | SPEC-207–216 |

@@ -7,7 +7,9 @@ Spike técnico para definir la integración de Maitre con los servicios fiscales
 | **ID** | SPEC-145 |
 | **Tipo** | Connector / API |
 | **Dominio** | Billing & Tax |
-| **Estado** | SPIKE COMPLETED — DRAFT |
+| **Estado** | DRAFT |
+| **Readiness** | PROPOSED_FOR_REVIEW |
+| **Resultado del spike** | COMPLETED |
 | **Prioridad** | P0 |
 | **Fase** | 4 |
 | **Fecha de investigación** | 2026-07-21 |
