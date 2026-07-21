@@ -1,33 +1,33 @@
-# [SPEC-004] Branch Entity
+# [SPEC-004] Branch
 
-Sucursal física y operacional de un restaurante. Unidad de operación, facturación y reportes.
+Branch representa una unidad operativa física o lógica dentro de un Tenant y una Brand. Define identidad, ubicación, timezone y estado; no replica entitlements, menú ni configuración genérica.
 
 ## Metadata
 
 | Campo | Valor |
 | --- | --- |
 | **ID** | SPEC-004 |
-| **Título** | Branch Entity |
 | **Tipo** | Entity |
 | **Dominio** | Organization |
-| **Status** | PLANNED |
+| **Status** | DRAFT — RECONCILED FOR I0 REVIEW |
 | **Prioridad** | P0 |
-| **Fase** | 1 |
-| **Estimación** | 8h |
+| **Fase** | I0 |
 
-## Overview
+## Documentos
 
-Una sucursal es la unidad operacional de un restaurante. Puede:
-- Pertenece a una marca y un tenant
-- Tiene dirección, teléfono, horario
-- Contiene salones y mesas
-- Puede heredar menú de marca o tener el propio
-- Activa servicios (Floor, Kitchen, Cash, etc)
+- [Objetivo](./objective.md)
+- [Especificación](./specification.md)
+- [Estructura](./structure.md)
+- [Reglas](./rules.md)
+- [Plan](./plan.md)
+- [Tareas](./tasks.md)
+- [Verificación](./verification.md)
 
-## Related Specs
+## Relacionadas
 
-**Dependencias:** [SPEC-001] Tenant, [SPEC-002] Brand, [SPEC-003] FiscalEntity ✅
-
-**Dependientes:** [SPEC-005] Salon, [SPEC-010] Branches API, [SPEC-015] BranchCreated Event
-
-**Status: PLANNED**
+- [SPEC-001 — Tenant](../spec-001-entity-tenant/README.md)
+- [SPEC-002 — Brand](../spec-002-entity-brand/README.md)
+- [SPEC-003 — FiscalEntity](../spec-003-entity-fiscal-entity/README.md)
+- [SPEC-005 — Salon](../spec-005-entity-salon/README.md)
+- [SPEC-015 — BranchCreated](../spec-015-event-branch-created/README.md)
+- [SPEC-029 — Entitlement](../spec-029-entity-entitlement/README.md)

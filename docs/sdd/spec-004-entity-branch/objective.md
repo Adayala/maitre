@@ -2,41 +2,21 @@
 
 ## Propósito
 
-Sucursal es la unidad operacional: contiene salones, mesas, activa servicios (Floor, Kitchen, etc), reportes por sucursal.
+Definir la sucursal mínima necesaria para operar y aislar recursos por Tenant y Branch, con relaciones consistentes hacia Brand y FiscalEntity.
 
 ## Resultado esperado
 
-1. ✅ Sucursal creada con nombre, dirección, horario
-2. ✅ Sucursal pertenece a brand y tenant
-3. ✅ Sucursal activa servicios (Floor, Kitchen, Cash, etc)
-4. ✅ Sucursal hereda config de brand, puede sobrescribir
-5. ✅ API CRUD: POST, GET, PATCH /branches
-6. ✅ Aislación por tenant
+1. Branch pertenece exactamente a un Tenant y una Brand del mismo Tenant.
+2. FiscalEntity es opcional y, cuando existe, pertenece al mismo Tenant.
+3. El código es estable y único dentro del Tenant.
+4. Timezone y ubicación se modelan explícitamente sin un JSON de configuración abierto.
+5. Servicios y límites se calculan desde Entitlements; no se copian en Branch.
+6. Menús, horarios y políticas heredables se diseñan en sus dominios antes de incorporarlos.
 
-## Criterios de aceptación
+## Fuera de alcance I0
 
-### CAD-1: Crear sucursal
-
-POST /branches con name, brand, dirección → sucursal activa.
-
-### CAD-2: Herencia de brand
-
-Sucursal hereda menú y config de brand.
-
-### CAD-3: Servicios activos
-
-Sucursal especifica qué servicios tiene (via entitlements de subscription).
-
-### CAD-4: API CRUD
-
-POST, GET, PATCH /branches.
-
-### CAD-5: Isolación
-
-Sucursales de tenant A no visibles para tenant B.
-
-## User stories
-
-Como gerente
-Quiero crear una sucursal nueva en Belgrano
-Para empezar a operar desde ese local.
+- activación de módulos o servicios;
+- herencia de menú o configuración de Brand;
+- horarios comerciales y excepciones de calendario;
+- datos fiscales o certificados embebidos;
+- endpoints CRUD, definidos por su spec API.

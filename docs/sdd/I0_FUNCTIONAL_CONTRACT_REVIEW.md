@@ -33,7 +33,7 @@ Implementar estas specs literalmente introduciría duplicación de fuentes de ve
 | FC-B02 | RESOLVED IN DRAFT | SPEC-020 | Membership modelaba un único `role` y no branches | reconciliado con role assignments y branch scopes normalizados; pendiente review |
 | FC-B03 | RESOLVED IN DRAFT | SPEC-023 | Login/reset/verify y JWT propios contradecían Supabase Auth | reconciliado como boundary portable: proveedor gestiona credenciales/sesión y Maitre valida tokens y autoriza server-side; pendiente review/ADR |
 | FC-B04 | RESOLVED IN DRAFT | SPEC-001 | `plan_tier`, límites y `features_enabled` duplicaban Subscription/Entitlement | retirados de Tenant; capacidades se resuelven en Subscription/Entitlement; pendiente review |
-| FC-B05 | P0 | SPEC-004 | `services_active` duplica entitlements | derivar capacidad efectiva; no persistir segunda fuente autoritativa |
+| FC-B05 | RESOLVED IN DRAFT | SPEC-004 | `services_active` duplicaba entitlements | retirado de Branch; capacidad efectiva derivada desde Entitlement; pendiente review |
 | FC-B06 | RESOLVED IN DRAFT | SPEC-001 | README/objective/structure/rules eran placeholders | paquete completado y reconciliado; pendiente review |
 | FC-B07 | RESOLVED IN DRAFT | SPEC-001/017 | `createdBy` obligatorio creaba ciclos durante bootstrap | actor system/null controlado y audit context definidos; pendiente review |
 | FC-B08 | P1 | Todas | camelCase JSON y snake_case DB se mezclan sin mapping explícito | contratos camelCase; persistence snake_case detrás de repository |
@@ -42,7 +42,7 @@ Implementar estas specs literalmente introduciría duplicación de fuentes de ve
 | FC-B11 | P1 | SPEC-020 | UNIQUE tenant/user impide representar roles/branches si se modelan como filas | elegir Membership agregado + assignments o constraints compuestas explícitas |
 | FC-B12 | RESOLVED IN DRAFT | SPEC-023 | `HS256 o RS256` quedaba ambiguo | allowlist explícita y validación de issuer/audience/JWKS definidas; pendiente spike/ADR |
 | FC-B13 | RESOLVED IN DRAFT | SPEC-001 | trial/cancel por job estaba acoplado a billing | estado comercial delegado a Subscription y lifecycle organizacional separado; pendiente review |
-| FC-B14 | P1 | SPEC-004 | herencia de menú/config no está definida ni necesaria para I0 | recortar a branch mínima; diseñar herencia en spec posterior |
+| FC-B14 | RESOLVED IN DRAFT | SPEC-004 | herencia de menú/config no estaba definida ni era necesaria para I0 | retirada del agregado mínimo y delegada a specs de dominio posteriores; pendiente review |
 | FC-B15 | P1 | Todas | criterios marcan ✅ aunque status es PLANNED | checkboxes representan evidencia, no intención |
 
 ## Modelo objetivo para I0
