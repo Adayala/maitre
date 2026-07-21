@@ -7,7 +7,8 @@ Contrato transversal para crear, revisar, aprobar, cambiar, verificar y retirar 
 | **ID** | SPEC-225 |
 | **Tipo** | Transversal / Engineering Governance |
 | **Dominio** | Product / Architecture / Engineering |
-| **Estado** | DRAFT — PROPOSED FOR APPROVAL |
+| **Estado** | DRAFT |
+| **Readiness** | PROPOSED_FOR_REVIEW |
 | **Prioridad** | P0 |
 | **Fase** | Antes de marcar specs como READY_FOR_IMPLEMENTATION |
 | **Depende de** | SPEC-207, SPEC-221, SPEC-222 |
@@ -29,4 +30,5 @@ Contrato transversal para crear, revisar, aprobar, cambiar, verificar y retirar 
 - [Plan](plan.md)
 - [Tareas](tasks.md)
 - [Verificación](verification.md)
+- [Contrato del validador](validation-contract.md)
 - [Decisiones](notes.md)

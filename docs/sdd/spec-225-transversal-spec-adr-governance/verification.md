@@ -15,6 +15,10 @@
 - [ ] Archivo/link/dependency inexistente falla.
 - [ ] Ciclo inválido se reporta con ruta comprensible.
 - [ ] INDEX/START_HERE no divergen del registro.
+- [ ] Findings tienen código, ubicación y orden deterministas.
+- [ ] Una excepción histórica nueva falla; resolver una reduce la línea base.
+- [ ] CI no reescribe documentos ni cambia estados.
+- [ ] La validación de PR no depende de red.
 
 ## Trazabilidad
 

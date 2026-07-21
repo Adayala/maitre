@@ -8,6 +8,8 @@
 - ADRs y specs se enlazan pero no se fusionan: responden preguntas diferentes.
 - Tooling valida estructura; aprobación humana/agente revisa semántica y trade-offs.
 - El primer uso de esta política será revisar el subset I0, no aprobar en bloque todas las specs existentes.
+- Estado, readiness y blockers son dimensiones separadas para evitar valores compuestos imposibles de validar.
+- La deuda histórica se adopta mediante línea base explícita y monotónica; no se relajan reglas para documentos nuevos.
 
 ## Deuda existente a auditar
 

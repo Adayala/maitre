@@ -6,13 +6,15 @@
 2. Auditar IDs/slugs/duplicados existentes.
 3. Crear registry machine-readable o índice validable.
 4. Definir proceso de asignación de IDs.
+5. Normalizar estados compuestos separando estado, readiness y blockers.
 
 ## Fase 2 — Validación
 
-1. Implementar `sdd:validate`.
+1. Implementar `npm run sdd:validate` según `validation-contract.md`.
 2. Validar archivos, metadata, links y dependencias.
 3. Integrar Markdown/whitespace y catálogo.
 4. Añadir fixtures de specs válidas/inválidas.
+5. Generar y revisar la línea base histórica antes de activarla en CI.
 
 ## Fase 3 — Readiness P0
 

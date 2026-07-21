@@ -12,8 +12,10 @@
 8. Pregunta P0 abierta bloquea readiness.
 9. Owner/aprobación son proporcionales al riesgo, aunque una persona cumpla varios roles.
 10. Código no redefine silenciosamente una spec.
-11. `sdd:validate` es gate mecánico obligatorio.
+11. `npm run sdd:validate` es gate mecánico obligatorio.
 12. Urgencia no autoriza scope adicional ni elimina regresión/evidencia.
+13. `Estado` usa un valor canónico; readiness y blockers son metadata separada.
+14. La línea base histórica es explícita, versionada y sólo puede reducirse.
 
 ## Prohibiciones
 
@@ -22,3 +24,5 @@
 - Marcar `DONE/VERIFIED` por completar documentos.
 - Resolver contradicciones mediante comentarios no versionados.
 - Borrar una decisión histórica sin successor/deprecation.
+- Agregar excepciones a la línea base para hacer pasar un cambio nuevo.
+- Modificar metadata o transicionar estados automáticamente desde CI.

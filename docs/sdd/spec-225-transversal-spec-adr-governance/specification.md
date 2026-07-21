@@ -64,6 +64,11 @@ El README declara:
 
 No se inventa un owner nominal si todavía no existe; se registra rol/`UNASSIGNED`, que bloquea readiness cuando el ownership es obligatorio.
 
+`Estado` contiene exclusivamente uno de los valores de la sección 3. La preparación para
+review, blockers y gates se expresan en campos separados (`Readiness`, `Blockers` o
+`Implementation gate`); no se concatenan al estado. El texto documental puede explicar
+la situación, pero no crea estados nuevos.
+
 ## 5. Paquete mínimo por tipo
 
 Toda spec nueva contiene:
@@ -176,7 +181,7 @@ PRs declaran specs y criterios implementados. Tests nombran/enlazan criterios cu
 
 ## 11. Verificación automática
 
-`sdd:validate` verifica como mínimo:
+`npm run sdd:validate` verifica como mínimo:
 
 - IDs y slugs únicos;
 - metadata/estado válidos;
@@ -190,6 +195,8 @@ PRs declaran specs y criterios implementados. Tests nombran/enlazan criterios cu
 - reglas Markdown/whitespace.
 
 No marca una spec como correcta semánticamente; reduce inconsistencia mecánica.
+El comportamiento determinista, los códigos de hallazgo y la adopción sobre deuda
+histórica se definen en [validation-contract.md](validation-contract.md).
 
 ## 12. Deprecación y archivo
 

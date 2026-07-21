@@ -1,11 +1,14 @@
 # Tareas — SPEC-225
 
 - [ ] Aprobar lifecycle y estados.
+- [x] Definir contrato determinista y códigos del validador.
 - [ ] Definir owners/reviewers por dominio.
 - [ ] Auditar IDs, slugs y estados actuales.
 - [ ] Crear registro/índice validable.
 - [ ] Implementar asignación de ID sin colisiones.
-- [ ] Implementar `sdd:validate`.
+- [ ] Implementar `npm run sdd:validate`.
+- [ ] Crear auditoría y línea base versionada de deuda histórica.
+- [ ] Normalizar estados compuestos del subset I0.
 - [ ] Validar metadata y archivos mínimos.
 - [ ] Validar links, dependencias y successors.
 - [ ] Detectar ciclos/contradicciones mecánicas.
