@@ -18,9 +18,9 @@ Seleccionar una plataforma gratuita que permita implementar las primeras specs d
 | Inactividad | Puede pausarse por baja actividad | Scale-to-zero, sin límite temporal anunciado |
 | Complejidad inicial | Menor para DB + Auth + Storage | Menor si se usa solo DB/Auth |
 
-## Resultado
+## Resultado propuesto
 
-Supabase reduce el número de proveedores en el MVP y ofrece una experiencia integrada. Se acepta la pausa por inactividad únicamente para desarrollo/demo y se compensa la ausencia de backups administrados en Free mediante exportación lógica automatizada y restauración probada.
+Supabase parece reducir el número de proveedores y ofrece una experiencia integrada. Esta comparación documental no constituye adopción: SPK-02/03/04/06 deben validar pooling, identidad, RLS/migraciones y salida antes de aceptar ADR-002.
 
 ## Fuera de alcance
 
@@ -28,3 +28,4 @@ Supabase reduce el número de proveedores en el MVP y ofrece una experiencia int
 - Elegir ORM o query builder.
 - Permitir acceso directo del navegador a tablas operacionales.
 - Adoptar Edge Functions, Realtime o APIs propietarias sin una spec adicional.
+- Crear un segundo proyecto remoto antes de demostrar su necesidad.

@@ -7,14 +7,14 @@ Decisión de PostgreSQL, identidad y almacenamiento inicial para el MVP de costo
 | **ID** | SPEC-210 |
 | **Tipo** | Transversal / Architecture Decision |
 | **Dominio** | Platform / Identity / Data |
-| **Estado** | DRAFT — PROPOSED FOR APPROVAL |
+| **Estado** | DRAFT — READY FOR I0 REVIEW; ADOPTION PENDING ADR-002/SPK-02–06 |
 | **Prioridad** | P0 |
 | **Fase** | Antes del walking skeleton con persistencia |
-| **Depende de** | SPEC-207, SPEC-208, SPEC-209 |
+| **Depende de** | ADR-002, SPEC-207–209, SPEC-214, SPEC-220, SPEC-226 |
 
 ## Decisión propuesta
 
-Usar **Supabase Free** como proveedor inicial de PostgreSQL, Auth y Storage durante desarrollo y demo del MVP, encapsulado detrás de puertos propios y con salida probada hacia PostgreSQL estándar y un proveedor de identidad reemplazable.
+Evaluar **Supabase Free** como proveedor inicial de PostgreSQL y Auth. Storage sólo se habilita cuando una spec funcional lo requiera. La adopción depende de ADR-002 y evidencia PASS de SPEC-226; los puertos propios y la salida a PostgreSQL/identidad reemplazable son obligatorios.
 
 ## Documentos
 

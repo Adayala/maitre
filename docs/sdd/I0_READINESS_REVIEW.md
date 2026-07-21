@@ -4,11 +4,11 @@
 
 **Alcance:** SPEC-207 a SPEC-225 y dependencias del walking skeleton
 
-**Resultado:** NOT READY — aprobación y blockers pendientes
+**Resultado:** NOT READY — contratos reconciliados; aprobación, owners, implementación de gates y evidencia SPK pendientes
 
 ## Resumen
 
-La base documental transversal está completa en estructura después de agregar los archivos faltantes de SPEC-207/208. Sin embargo, las specs continúan en `DRAFT` y no autorizan implementación según SPEC-207/225.
+La base documental transversal y los contratos funcionales I0 están reconciliados y listos para peer review. Continúan en `DRAFT` y no autorizan implementación productiva según SPEC-207/225; ADR-002/003 siguen `PROPOSED` y los spikes están `NOT_RUN`.
 
 ## Correcciones completadas
 
@@ -18,6 +18,9 @@ La base documental transversal está completa en estructura después de agregar 
 - Se creó registro ADR.
 - ADR-001 documenta la decisión explícita React.js + Node.js + Vercel.
 - ADR-002 y ADR-003 quedan propuestos, no aceptados.
+- SPEC-001/004/017/020/023 y `/v1/me/context` fueron reconciliadas; I0-B04 queda resuelto en draft.
+- SPEC-208 contiene registro operativo fechado; I0-B07 queda resuelto documentalmente, pendiente verificación de dashboards.
+- SPEC-207 define `specs:validate` y la matriz de gates; la implementación sigue pendiente.
 
 ## Blockers para READY_FOR_IMPLEMENTATION
 
@@ -26,10 +29,10 @@ La base documental transversal está completa en estructura después de agregar 
 | I0-B01 | SPEC-207–225 están DRAFT | revisión/aprobación del subset realmente requerido |
 | I0-B02 | Metadata no declara owners/reviewers uniformes | asignar roles o `UNASSIGNED` explícito |
 | I0-B03 | Supabase y toolchain no tienen ADR aceptada | ejecutar [`SPEC-226`](spec-226-transversal-i0-platform-validation-spikes/) y aprobar/rechazar ADR-002/003 |
-| I0-B04 | Dependencias funcionales SPEC-001/004/017/020/023 contienen contradicciones P0 | resolver [`I0_FUNCTIONAL_CONTRACT_REVIEW.md`](I0_FUNCTIONAL_CONTRACT_REVIEW.md) |
-| I0-B05 | No existe implementación de `sdd:validate` | implementar gate mecánico antes de escalar cambios |
+| I0-B04 | RESOLVED IN DRAFT: contratos funcionales reconciliados | aprobar en peer review [`I0_FUNCTIONAL_CONTRACT_REVIEW.md`](I0_FUNCTIONAL_CONTRACT_REVIEW.md) |
+| I0-B05 | Existe contrato `specs:validate`, no implementación | implementar gate mecánico durante el scaffold y probar canario |
 | I0-B06 | Branch protection/GitHub checks no verificados | configurar según SPEC-221 cuando autenticación admin esté disponible |
-| I0-B07 | Cuotas/términos vigentes no están en registro operativo fechado | verificar antes de desplegar demo compartida |
+| I0-B07 | RESOLVED DOCUMENTALLY: registro fechado en SPEC-208; dashboards no auditados | auditar cuentas antes de desplegar demo compartida |
 
 ## No bloquean scaffolding local, pero sí hitos posteriores
 
@@ -62,4 +65,4 @@ SPEC-217/218/223 permanecen dependencias diseñadas para incrementos operativos 
 
 ## Próxima decisión
 
-Revisar ADR-002 y ADR-003 mediante spikes acotados y reconciliar las cinco specs funcionales según [`I0_FUNCTIONAL_CONTRACT_REVIEW.md`](I0_FUNCTIONAL_CONTRACT_REVIEW.md). Si pasan sus criterios, mover únicamente el subset I0 a `IN_REVIEW`; después resolver metadata/blockers y aprobar `READY_FOR_IMPLEMENTATION` de forma explícita.
+Realizar peer review del subset I0 y asignar owners/reviewers. Luego ejecutar SPK-01/05 localmente y SPK-02/03/04/06 cuando el proyecto Supabase esté vinculado. Sólo con evidencia y ADR-002/003 aceptadas se puede aprobar `READY_FOR_IMPLEMENTATION` explícitamente.

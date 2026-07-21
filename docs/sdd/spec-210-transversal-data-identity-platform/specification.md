@@ -1,10 +1,10 @@
 # SPECIFICATION — SPEC-210
 
-## Perfil inicial
+## Perfil candidato
 
-- **Database:** Supabase PostgreSQL.
-- **Identity provider:** Supabase Auth.
-- **Object storage:** Supabase Storage cuando una spec lo requiera.
+- **Database:** Supabase PostgreSQL, pendiente SPK-02/04/06.
+- **Identity provider:** Supabase Auth, pendiente SPK-03.
+- **Object storage:** sin habilitar en I0; Supabase Storage es candidato futuro.
 - **Application runtime:** Node.js en Vercel.
 - **Browser:** React.js consume APIs de Maitre y endpoints de autenticación permitidos; no consulta tablas operacionales directamente.
 
@@ -54,16 +54,16 @@ El token autentica una identidad. La autorización de tenant, sucursal, rol y en
 
 - Toda tabla operacional incluye `tenant_id` explícito cuando corresponda.
 - La API Node.js establece y verifica el contexto de tenant.
-- RLS se habilita en tablas expuestas y actúa como defensa en profundidad.
+- RLS se habilita en tablas tenant-scoped y actúa como defensa en profundidad según el patrón probado en SPK-04.
 - Cada policy tiene tests positivos y negativos de acceso cruzado.
-- La service role nunca se distribuye al navegador.
+- Una secret/service-role key nunca se distribuye al navegador y no es requisito del runtime I0.
 - Grants mínimos y RLS se crean mediante migraciones versionadas, no cambios manuales del dashboard.
 
-## Conexiones desde Vercel
+## Conexiones candidatas desde Vercel
 
-- Runtime serverless: usar Shared Pooler/Supavisor en transaction mode.
+- Runtime serverless: validar Shared Pooler/Supavisor y modo adecuado mediante SPK-02.
 - Migraciones, `pg_dump` y administración: conexión directa cuando el entorno soporte IPv6 o método oficial compatible.
-- No usar prepared statements cuando el modo transaction pooling no los soporte.
+- Configurar prepared statements según el modo demostrado; `prepare: false` es hipótesis, no resultado.
 - Timeout explícito, conexiones acotadas y recuperación ante sockets obsoletos.
 - La configuración de runtime y migraciones utiliza credenciales separadas.
 
@@ -83,8 +83,7 @@ El contrato normativo de ciclo de vida, RPO/RTO y restauración está en
 Supabase recomienda exportaciones periódicas para proyectos Free. Maitre requiere:
 
 - `pg_dump` lógico cifrado fuera de Supabase;
-- frecuencia diaria mientras existan datos que no puedan regenerarse;
-- retención inicial de 7 copias diarias y 4 semanales, sujeta al presupuesto gratuito;
+- frecuencia y retención aprobadas por SPEC-220 cuando existan datos no regenerables;
 - hash, fecha, versión de schema y resultado del backup;
 - prueba de restauración mensual y antes de cambios destructivos;
 - objetos exportados por separado porque el backup de base no contiene Storage.
@@ -102,12 +101,21 @@ Datos de demo regenerables pueden excluirse si existe un seed versionado.
 
 ## Ambientes
 
-Con dos proyectos activos en Free:
+Topología mínima:
 
-1. `development`: compartido para integración, regenerable.
-2. `demo`: estable para demostraciones, con datos ficticios.
+1. primer proyecto `development`: integración/previews con datos sintéticos, aislamiento lógico y cleanup;
+2. segundo proyecto `demo`: sólo si SPEC-213 demuestra que separar la demo estable es necesario y la cuota sigue vigente.
 
 Tests unitarios no usan Supabase. Integración puede usar PostgreSQL/Supabase local o un entorno efímero compatible. No se crea un proyecto remoto por pull request.
+
+Previews no ejecutan migraciones sobre el proyecto compartido. Un workflow autorizado aplica migraciones compatibles usando `DATABASE_MIGRATION_URL`; runtime usa únicamente `DATABASE_URL` pooled según SPEC-214.
+
+## Estado de adopción
+
+- Documentación, comparación o conexión de cuentas no equivalen a PASS.
+- SPK-02/03/04/06 comienzan `NOT_RUN` y aportan evidencia a ADR-002.
+- Hasta aceptar ADR-002 sólo se permite código de spike aislado; no migraciones productivas ni adapters asumidos como baseline.
+- Un resultado FAIL/INCONCLUSIVE actualiza la comparación y puede activar una alternativa sin modificar domain/application.
 
 ## Salida
 

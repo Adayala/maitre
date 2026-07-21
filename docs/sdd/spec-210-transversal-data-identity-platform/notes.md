@@ -1,8 +1,10 @@
 # NOTES — SPEC-210
 
-## Motivo de elección
+## Motivo de la propuesta
 
 Supabase agrupa PostgreSQL, Auth y Storage, reduciendo proveedores y tiempo de integración. PostgreSQL y RLS son capacidades estándar; Auth y Storage requieren adapters y un plan explícito de salida.
+
+La conexión pendiente de la cuenta/proyecto administrado por el owner externo habilita los experimentos, pero no acepta ADR-002.
 
 ## Límites verificados al 2026-07-21
 
@@ -10,7 +12,7 @@ Supabase agrupa PostgreSQL, Auth y Storage, reduciendo proveedores y tiempo de i
 - Los proyectos Free con baja actividad pueden pausarse después de siete días.
 - Un proyecto pausado puede restaurarse desde el dashboard dentro de la ventana publicada.
 - Backups administrados diarios corresponden a planes pagos; para Free se recomienda `supabase db dump` y copia externa.
-- Supavisor transaction mode está indicado para funciones serverless y no soporta prepared statements.
+- La documentación ofrece alternativas de conexión/pooling; SPK-02 debe fijar la combinación real y el comportamiento de prepared statements.
 
 ## Fuentes oficiales
 
