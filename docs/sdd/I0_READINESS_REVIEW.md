@@ -20,7 +20,7 @@ La base documental transversal y los contratos funcionales I0 están reconciliad
 - ADR-002 y ADR-003 quedan propuestos, no aceptados.
 - SPEC-001/004/017/020/023 y `/v1/me/context` fueron reconciliadas; I0-B04 queda resuelto en draft.
 - SPEC-208 contiene registro operativo fechado; I0-B07 queda resuelto documentalmente, pendiente verificación de dashboards.
-- SPEC-207 define `specs:validate` y la matriz de gates; la implementación sigue pendiente.
+- SPEC-207 define `sdd:validate` y la matriz de gates; la implementación sigue pendiente.
 
 ## Blockers para READY_FOR_IMPLEMENTATION
 
@@ -30,7 +30,7 @@ La base documental transversal y los contratos funcionales I0 están reconciliad
 | I0-B02 | Metadata no declara owners/reviewers uniformes | asignar roles o `UNASSIGNED` explícito |
 | I0-B03 | Supabase y toolchain no tienen ADR aceptada | ejecutar [`SPEC-226`](spec-226-transversal-i0-platform-validation-spikes/) y aprobar/rechazar ADR-002/003 |
 | I0-B04 | RESOLVED IN DRAFT: contratos funcionales reconciliados | aprobar en peer review [`I0_FUNCTIONAL_CONTRACT_REVIEW.md`](I0_FUNCTIONAL_CONTRACT_REVIEW.md) |
-| I0-B05 | Existe contrato `specs:validate`, no implementación | implementar gate mecánico durante el scaffold y probar canario |
+| I0-B05 | Existe contrato `sdd:validate`, no implementación | implementar gate mecánico durante el scaffold y probar canario |
 | I0-B06 | Branch protection/GitHub checks no verificados | configurar según SPEC-221 cuando autenticación admin esté disponible |
 | I0-B07 | RESOLVED DOCUMENTALLY: registro fechado en SPEC-208; dashboards no auditados | auditar cuentas antes de desplegar demo compartida |
 

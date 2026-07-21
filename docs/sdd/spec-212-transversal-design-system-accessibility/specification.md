@@ -15,6 +15,8 @@ Design tokens
 - Cada `apps/*` compone esos elementos con casos de uso y permisos propios.
 - Una feature no puede incorporarse a `packages/ui` hasta demostrar reutilización real o representar una primitiva transversal.
 
+I0 implementa únicamente el inventario de [i0-component-scope.md](i0-component-scope.md). Los patrones de otras superficies permanecen diseño futuro y no crean componentes vacíos.
+
 ## 2. Tokens
 
 Los tokens constituyen la fuente de verdad y se nombran por intención, no por valor:
@@ -77,9 +79,9 @@ Las tablas deben ofrecer una representación útil en pantallas angostas; no se 
 - `forwardRef` sólo cuando exista un caso de interoperabilidad; composición antes que props booleanas combinatorias.
 - Estado controlado y no controlado sigue convenciones React y se documenta.
 - Primitivas no consultan APIs, stores globales, permisos ni reglas del dominio.
-- HTML nativo es la primera opción. Radix UI puede respaldar dialog, popover, select u otras interacciones complejas, encapsulado detrás de la API de Maitre.
-- Tailwind CSS consume variables semánticas; no convierte clases arbitrarias en una segunda fuente de tokens.
-- Lucide React es el set inicial. Un ícono decorativo se oculta a tecnología asistiva; uno significativo posee texto visible o nombre accesible.
+- HTML nativo es la primera opción. Si ADR-004 acepta Radix UI, puede respaldar interacciones complejas encapsulado detrás de la API de Maitre.
+- Si ADR-004 acepta Tailwind CSS, consume variables semánticas y no convierte clases arbitrarias en una segunda fuente de tokens.
+- Los íconos pasan por componentes propios. Si ADR-004 acepta Lucide React, sigue siendo reemplazable; un ícono decorativo se oculta y uno significativo posee texto visible o nombre accesible.
 - Cada componente incluye estados default, hover, active, focus, disabled, loading, error y empty cuando correspondan.
 
 ## 7. Contenido y localización
@@ -92,7 +94,7 @@ Las tablas deben ofrecer una representación útil en pantallas angostas; no se 
 
 ## 8. Documentación y pruebas
 
-Storybook documenta primitivas y patrones de manera local y genera un artefacto estático en CI. No se requiere un servicio SaaS.
+La documentación de componentes debe ejecutarse localmente y generar un artefacto estático. Storybook es candidato sujeto a ADR-004/SPK-05; no se requiere SaaS.
 
 Cada componente nuevo incluye:
 
@@ -104,3 +106,16 @@ Cada componente nuevo incluye:
 - screenshots estables para un conjunto pequeño de vistas representativas.
 
 La automatización complementa revisiones manuales con teclado, lector de pantalla, zoom, contraste, touch y conectividad degradada.
+
+## 9. Gate de dependencias UI
+
+Antes de adoptar Tailwind, Radix, Lucide o Storybook, ADR-004 registra evidencia de:
+
+- tamaño del build base y delta por dependencia realmente usada;
+- accesibilidad/teclado del patrón I0;
+- posibilidad de tree-shaking y ausencia de runtime server-only;
+- mantenimiento/licencia y actualizaciones;
+- tiempo cold/warm de build/test en SPK-05;
+- reemplazo detrás de tokens/componentes propios.
+
+Un resultado pendiente o inconclusive permite implementar HTML/CSS nativo mínimo, pero no incorporar el candidato como estándar.

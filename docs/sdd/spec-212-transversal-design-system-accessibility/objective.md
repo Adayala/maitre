@@ -16,3 +16,5 @@ Definir un único lenguaje visual y de interacción que permita construir las ap
 - Diseñar cada pantalla funcional.
 - Reemplazar las specs de dominio, permisos o flujos de cada aplicación.
 - Garantizar conformidad mediante automatización solamente; la revisión manual sigue siendo obligatoria.
+- Implementar patrones de Guest, Floor, Kitchen, Cash o Connect durante I0.
+- Aprobar una dependencia UI sin medir accesibilidad, bundle, mantenimiento y costo CI.

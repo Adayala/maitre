@@ -7,7 +7,7 @@ Los scripts son el contrato estable. La herramienta interna puede cambiar median
 | Gate | Script npm raíz | PR afectado | `main` | Release |
 | --- | --- | ---: | ---: | ---: |
 | formato | `npm run format:check` | sí | sí | sí |
-| Markdown/SDD/links | `npm run specs:validate` | sí | sí | sí |
+| Markdown/SDD/links | `npm run sdd:validate` | sí | sí | sí |
 | lint | `npm run lint` | sí | sí | sí |
 | tipos | `npm run typecheck` | sí | sí | sí |
 | boundaries | `npm run deps:check` | sí | sí | sí |

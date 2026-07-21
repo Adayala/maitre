@@ -2,24 +2,24 @@
 
 ## Fase 1 — Fundaciones
 
-1. Aprobar la spec y registrar el ADR de UI.
+1. Revisar ADR-004 y validar candidatos mediante SPK-05.
 2. Definir tokens semánticos, temas y contrato de exportación.
-3. Configurar Tailwind CSS para consumir CSS custom properties.
-4. Configurar Storybook, axe-core y reglas de accesibilidad de ESLint.
+3. Implementar CSS custom properties sin depender de un candidato no aprobado.
+4. Configurar axe-core y reglas de accesibilidad; adoptar tooling visual sólo tras ADR-004.
 
 ## Fase 2 — Primitivas
 
-1. Implementar tipografía, iconografía, Button, Link, Input, Select, Checkbox y Radio.
-2. Implementar feedback: Alert, Toast, Progress, Skeleton y estados vacíos.
-3. Implementar overlays accesibles sólo donde HTML nativo no alcance.
+1. Implementar únicamente primitivas de `i0-component-scope.md`.
+2. Implementar feedback necesario para loading, vacío, error y sesión expirada.
+3. Posponer overlays/componentes complejos hasta que un flujo aprobado los necesite.
 4. Validar teclado, foco, lector de pantalla y targets táctiles.
 
 ## Fase 3 — Patrones operativos
 
-1. App shell, navegación, contexto activo y permisos visibles.
-2. Estado de red/sincronización y recuperación de errores.
-3. Formularios, filtros, tablas responsive y confirmaciones críticas.
-4. Patrones de Kitchen, Floor y Cash validados en dispositivos objetivo.
+1. App shell, skip link y contexto activo de Dash.
+2. Login, selector de contexto y logout.
+3. Estado de red, sesión, loading, vacío y recuperación de errores.
+4. Posponer tablas y patrones operativos a sus incrementos funcionales.
 
 ## Fase 4 — Adopción y gobierno
 

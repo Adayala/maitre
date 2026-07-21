@@ -16,3 +16,4 @@ Los ADRs conservan el contexto, las alternativas y las consecuencias de decision
 | [ADR-001](ADR-001-initial-runtime-and-platform.md) | ACCEPTED | React.js, Node.js y Vercel como plataforma inicial portable |
 | [ADR-002](ADR-002-supabase-data-and-identity.md) | PROPOSED | Supabase para PostgreSQL, Auth y Storage inicial |
 | [ADR-003](ADR-003-react-node-toolchain.md) | PROPOSED | Vite, Fastify, Zod, Drizzle y toolchain de pruebas |
+| [ADR-004](ADR-004-ui-foundations.md) | PROPOSED | CSS/tokens nativos como baseline y evaluación de dependencias UI |

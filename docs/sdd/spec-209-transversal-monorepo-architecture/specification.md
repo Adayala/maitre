@@ -68,7 +68,7 @@ Se usarán npm workspaces, consistente con SPEC-048. Todo desarrollador y CI ope
 
 ```text
 npm run format:check
-npm run specs:validate
+npm run sdd:validate
 npm run lint
 npm run typecheck
 npm run deps:check

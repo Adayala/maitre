@@ -8,7 +8,7 @@
 - axe-core sin violaciones en componentes y páginas cubiertas.
 - Playwright aprueba navegación por teclado y flujos críticos.
 - Screenshots representativos no cambian sin aprobación explícita.
-- Presupuesto de bundle del paquete UI definido y respetado.
+- Baseline y delta de bundle por candidato UI registrados antes de ADR-004.
 
 ## Checklist manual por flujo crítico
 
@@ -24,8 +24,9 @@
 
 ## Criterios de aceptación
 
-- Un walking skeleton usa tokens y componentes compartidos en al menos dos apps.
+- Login, selector de contexto y Dash shell usan los mismos tokens/primitivas sin duplicar semántica.
 - El mismo componente funciona con teclado, mouse y touch.
-- Storybook se genera localmente y en CI sin servicio pago.
+- La documentación visual elegida se genera localmente/CI sin SaaS pago, si ADR-004 la adopta.
 - No existen reglas de negocio ni SDKs de proveedor en `packages/ui`.
 - Los resultados de automatización y revisión manual quedan adjuntos al cambio.
+- Ningún componente fuera del inventario I0 se crea sin consumidor aprobado.

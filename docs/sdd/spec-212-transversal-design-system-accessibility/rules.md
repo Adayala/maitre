@@ -12,6 +12,11 @@
 8. Acciones monetarias, fiscales, de alérgenos o irreversibles no usan confirmación optimista.
 9. Todas las apps funcionan con teclado aunque su entrada primaria sea táctil.
 10. Una dependencia visual externa debe ser reemplazable detrás de componentes propios.
+11. I0 no crea componentes para apps o patrones fuera de SPEC-213.
+12. Tailwind, Radix, Lucide y Storybook no son baseline hasta aceptar ADR-004.
+13. Íconos nunca son la única representación de una acción crítica.
+14. Un componente se promociona a `packages/ui` por semántica compartida, no por anticipación.
+15. La automatización de accesibilidad nunca sustituye revisión manual del flujo.
 
 ## Regla DRY
 
