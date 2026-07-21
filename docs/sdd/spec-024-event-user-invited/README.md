@@ -15,4 +15,9 @@ Evento cuando se invita un usuario.
 | **Reviewer** | UNASSIGNED |
 | **Fase** | 1 |
 
-**Status: PLANNED**
+## Documentos
+
+- [Contrato del evento](contract.md)
+- [Especificación](specification.md)
+- [Reglas](rules.md)
+- [Verificación](verification.md)

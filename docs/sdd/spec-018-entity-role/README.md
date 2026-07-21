@@ -25,4 +25,9 @@ Roles:
 - CASHIER
 - GUEST
 
-**Status: PLANNED**
+## Documentos
+
+- [Contrato de dominio](contract.md)
+- [Especificación](specification.md)
+- [Reglas](rules.md)
+- [Verificación](verification.md)

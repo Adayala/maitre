@@ -16,4 +16,9 @@ POST, GET, PATCH /subscriptions.
 | **Fase** | 1 |
 | **Estimación** | 8h |
 
-**Status: PLANNED**
+## Documentos
+
+- [Contrato](contract.md)
+- [Especificación](specification.md)
+- [Reglas](rules.md)
+- [Verificación](verification.md)

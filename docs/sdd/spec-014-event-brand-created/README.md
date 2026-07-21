@@ -15,4 +15,8 @@ Evento emitido cuando se crea una marca.
 | **Reviewer** | UNASSIGNED |
 | **Fase** | 1 |
 
-**Status: PLANNED**
+## Documentos
+
+- [Contrato del evento](contract.md)
+- [Reglas](rules.md)
+- [Verificación](verification.md)

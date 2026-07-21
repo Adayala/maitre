@@ -16,4 +16,10 @@ CRUD API para sucursales.
 | **Fase** | 1 |
 | **Estimación** | 8h |
 
-**Status: PLANNED**
+## Documentos
+
+- [Contrato API](contract.md)
+- [Objetivo](objective.md)
+- [Especificación](specification.md)
+- [Reglas](rules.md)
+- [Verificación](verification.md)

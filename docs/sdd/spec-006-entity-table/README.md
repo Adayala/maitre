@@ -18,6 +18,14 @@ Mesa física con capacidad, número, ubicación.
 | **Fase** | 1 |
 | **Estimación** | 4h |
 
+## Documentos
+
+- [Contrato de dominio](contract.md)
+- [Objetivo](objective.md)
+- [Especificación](specification.md)
+- [Reglas](rules.md)
+- [Verificación](verification.md)
+
 ## Overview
 
 Una mesa es un recurso físico con:
@@ -33,5 +41,3 @@ Su estado (AVAILABLE, OCCUPIED, PAYING, etc) se **deriva** de ocupaciones y rese
 **Dependencias:** [SPEC-005] Salon ✅
 
 **Dependientes:** [SPEC-012] Tables API, [SPEC-058] TableOccupation Entity
-
-**Status: PLANNED**

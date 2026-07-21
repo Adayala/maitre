@@ -16,4 +16,9 @@ Derecho efectivo: FLOOR.ACCESS = true, BRANCHES.MAX = 3.
 | **Fase** | 1 |
 | **Estimación** | 4h |
 
-**Status: PLANNED**
+## Documentos
+
+- [Contrato](contract.md)
+- [Especificación](specification.md)
+- [Reglas](rules.md)
+- [Verificación](verification.md)

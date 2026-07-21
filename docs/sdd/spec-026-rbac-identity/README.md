@@ -16,4 +16,9 @@ Quién puede invitar, desactivar, cambiar roles.
 | **Fase** | 1 |
 | **Estimación** | 4h |
 
-**Status: PLANNED**
+## Documentos
+
+- [Contrato de autorización](contract.md)
+- [Especificación](specification.md)
+- [Reglas](rules.md)
+- [Verificación](verification.md)

@@ -16,4 +16,10 @@ CRUD API para salones.
 | **Fase** | 1 |
 | **Estimación** | 4h |
 
-**Status: PLANNED**
+## Documentos
+
+- [Contrato API](contract.md)
+- [Objetivo](objective.md)
+- [Especificación](specification.md)
+- [Reglas](rules.md)
+- [Verificación](verification.md)

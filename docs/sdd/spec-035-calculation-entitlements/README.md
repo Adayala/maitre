@@ -16,4 +16,9 @@ Cómo se derivan entitlements desde subscription items.
 | **Fase** | 1 |
 | **Estimación** | 4h |
 
-**Status: PLANNED**
+## Documentos
+
+- [Contrato](contract.md)
+- [Especificación](specification.md)
+- [Reglas](rules.md)
+- [Verificación](verification.md)

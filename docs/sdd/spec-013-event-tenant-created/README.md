@@ -19,4 +19,8 @@ Evento emitido cuando se crea un tenant.
 
 **Consumers:** Identity, Billing, Analytics
 
-**Status: PLANNED**
+## Documentos
+
+- [Contrato del evento](contract.md)
+- [Reglas](rules.md)
+- [Verificación](verification.md)

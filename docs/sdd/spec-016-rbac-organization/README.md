@@ -21,4 +21,9 @@ Control de acceso en el dominio Organization (quién puede crear/editar tenant, 
 - ADMIN: crear brand, fiscal entity, branch
 - MANAGER: ver configuración
 
-**Status: PLANNED**
+## Documentos
+
+- [Contrato de autorización](contract.md)
+- [Especificación](specification.md)
+- [Reglas](rules.md)
+- [Verificación](verification.md)

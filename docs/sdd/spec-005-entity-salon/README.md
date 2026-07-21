@@ -18,6 +18,14 @@
 | **Fase** | 1 |
 | **Estimación** | 4h |
 
+## Documentos
+
+- [Contrato de dominio](contract.md)
+- [Objetivo](objective.md)
+- [Especificación](specification.md)
+- [Reglas](rules.md)
+- [Verificación](verification.md)
+
 ## Overview
 
 Un salón es un área física dentro de una sucursal (ej: "Salón Principal", "Terraza", "VIP").
@@ -32,5 +40,3 @@ Agrupa mesas, ayuda a:
 **Dependencias:** [SPEC-004] Branch ✅
 
 **Dependientes:** [SPEC-006] Table Entity, [SPEC-011] Salons API
-
-**Status: PLANNED**

@@ -16,4 +16,9 @@ Solo OWNER/ADMIN modifican suscripción.
 | **Fase** | 1 |
 | **Estimación** | 2h |
 
-**Status: PLANNED**
+## Documentos
+
+- [Contrato](contract.md)
+- [Especificación](specification.md)
+- [Reglas](rules.md)
+- [Verificación](verification.md)

@@ -15,4 +15,9 @@ Permiso: recurso + acción.
 | **Reviewer** | UNASSIGNED |
 | **Fase** | 1 |
 
-**Status: PLANNED**
+## Documentos
+
+- [Contrato de dominio](contract.md)
+- [Especificación](specification.md)
+- [Reglas](rules.md)
+- [Verificación](verification.md)

@@ -16,4 +16,9 @@ Contrato de compra: items, status, ciclo de facturación.
 | **Fase** | 1 |
 | **Estimación** | 6h |
 
-**Status: PLANNED**
+## Documentos
+
+- [Contrato](contract.md)
+- [Especificación](specification.md)
+- [Reglas](rules.md)
+- [Verificación](verification.md)

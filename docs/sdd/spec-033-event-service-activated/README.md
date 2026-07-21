@@ -15,4 +15,9 @@ Evento cuando se activa un servicio.
 | **Reviewer** | UNASSIGNED |
 | **Fase** | 1 |
 
-**Status: PLANNED**
+## Documentos
+
+- [Contrato](contract.md)
+- [Especificación](specification.md)
+- [Reglas](rules.md)
+- [Verificación](verification.md)

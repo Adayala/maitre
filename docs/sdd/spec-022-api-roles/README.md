@@ -16,4 +16,9 @@ GET /roles (read-only, lista de roles predefinidos).
 | **Fase** | 1 |
 | **Estimación** | 2h |
 
-**Status: PLANNED**
+## Documentos
+
+- [Contrato API](contract.md)
+- [Especificación](specification.md)
+- [Reglas](rules.md)
+- [Verificación](verification.md)
