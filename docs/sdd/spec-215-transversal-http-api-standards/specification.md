@@ -55,6 +55,8 @@ Los headers de contexto expresan la selección solicitada, no autoridad. El back
 
 Un endpoint no acepta `tenantId` dentro del body para decidir ownership. Cuando el tenant forme parte del recurso o payload de administración, debe coincidir con el contexto autorizado.
 
+`GET /v1/me/context` es la excepción de descubrimiento: requiere autenticación, pero no headers `X-Tenant-Id`/`X-Branch-Id`. Devuelve únicamente contextos efectivos autorizados. Enviarlos no filtra ni amplía el resultado.
+
 ## 5. Respuestas exitosas
 
 Un recurso individual usa:

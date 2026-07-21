@@ -11,8 +11,8 @@
 
 1. Crear migraciones mínimas y seed ficticio.
 2. Configurar Supabase Auth y verificación server-side.
-3. Implementar repositorios y `GET /v1/me/context`.
-4. Probar autorización y aislamiento cross-tenant.
+3. Implementar repositorios normalizados y schema ejecutable de `GET /v1/me/context`.
+4. Probar estado vacío, scopes de branch y aislamiento cross-tenant.
 
 ## Incremento 3 — Experiencia vertical
 

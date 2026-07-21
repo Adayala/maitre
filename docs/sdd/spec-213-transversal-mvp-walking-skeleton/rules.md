@@ -12,6 +12,9 @@
 8. El recorrido completo cumple gates de SPEC-207 y accesibilidad de SPEC-212.
 9. La app maneja explícitamente loading, vacío, error, offline y sesión expirada.
 10. El núcleo se ejecuta y prueba fuera de Vercel.
+11. `/v1/me/context` descubre contextos y no confía en headers de selección.
+12. La respuesta contiene sólo memberships y branches activas, con orden determinista.
+13. Roles se resuelven desde Maitre y no se expanden a permisos en el payload I0.
 
 ## Definition of Done
 

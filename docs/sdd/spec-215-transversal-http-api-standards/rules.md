@@ -14,6 +14,7 @@
 10. Los reintentos son acotados y sólo se realizan cuando la operación es segura.
 11. IDs son opacos y todos los timestamps representan zona/offset inequívoco.
 12. No se introduce un endpoint sin spec, autorización, observabilidad y tests de contrato.
+13. Los endpoints de descubrimiento de contexto no aceptan selección como autoridad y documentan su semántica explícitamente.
 
 ## Excepciones
 

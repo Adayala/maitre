@@ -12,6 +12,7 @@
 - [ ] Token ausente/inválido devuelve 401 sin filtrar causa sensible.
 - [ ] Falta de permiso devuelve 403 o 404 según política de no revelación.
 - [ ] Tenant o branch manipulados no amplían acceso.
+- [ ] `/v1/me/context` produce el mismo alcance autorizado aunque se envíen headers de selección.
 - [ ] CORS y límites varían sólo mediante config validada.
 - [ ] Logs, problemas y OpenAPI no incluyen secretos.
 

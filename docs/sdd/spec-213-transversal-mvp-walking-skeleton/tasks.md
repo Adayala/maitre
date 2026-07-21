@@ -6,9 +6,11 @@
 - [ ] Implementar `GET /health/live` y `GET /health/ready`.
 - [ ] Crear migraciones y seed ficticio idempotente.
 - [ ] Implementar adapters de identidad y persistencia Supabase.
-- [ ] Implementar `GET /v1/me/context` desde schema Zod.
+- [ ] Implementar el schema Zod exacto de `GET /v1/me/context`.
+- [ ] Resolver `ALL_BRANCHES` y `SELECTED_BRANCHES` a branches activas.
+- [ ] Ordenar memberships, roles y branches de forma determinista.
 - [ ] Generar OpenAPI y contract tests.
-- [ ] Probar token inválido, sesión expirada y usuario sin membership.
+- [ ] Probar token inválido, sesión expirada, identidad no habilitada y estado sin memberships.
 - [ ] Probar aislamiento cross-tenant positivo y negativo.
 - [ ] Implementar login, selector de contexto y logout.
 - [ ] Implementar Dash shell accesible.

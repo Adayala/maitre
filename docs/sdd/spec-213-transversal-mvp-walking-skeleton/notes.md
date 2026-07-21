@@ -13,6 +13,8 @@ A diferencia de un health check aislado, produce una base que las siguientes fea
 - Liveness y readiness se separan para no reiniciar procesos sanos por fallos transitorios de dependencias.
 - No se crean módulos futuros vacíos ni endpoints placeholder.
 - La primera feature de negocio posterior debe construirse sobre este corte, no en un segundo stack paralelo.
+- `/v1/me/context` es un endpoint de descubrimiento: no recibe tenant/branch seleccionados y no expande permisos o entitlements.
+- Un User válido sin memberships activas es un estado funcional vacío, no un fallo de autenticación.
 
 ## Riesgos a observar
 

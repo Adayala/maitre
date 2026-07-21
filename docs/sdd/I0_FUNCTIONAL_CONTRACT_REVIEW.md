@@ -4,7 +4,7 @@
 
 **Alcance:** SPEC-001 Tenant, SPEC-004 Branch, SPEC-017 User, SPEC-020 Membership y SPEC-023 Auth
 
-**Resultado:** NOT READY — modelo de identidad, tenancy y entitlements requiere reconciliación
+**Resultado:** READY FOR PEER REVIEW — contratos reconciliados en draft; implementación pendiente de aprobación, ADR y spikes I0
 
 ## Objetivo
 
@@ -12,9 +12,9 @@ Verificar que las entidades mínimas para `GET /v1/me/context` sean coherentes c
 
 ## Resumen ejecutivo
 
-Las cinco specs contienen material útil, pero fueron escritas bajo un modelo anterior y no forman todavía un contrato implementable conjunto.
+Las cinco specs originales fueron escritas bajo un modelo anterior y no formaban un contrato implementable conjunto. La reconciliación documental completada elimina las fuentes de verdad duplicadas y alinea SPEC-213/215.
 
-Los principales problemas son:
+Los problemas originales fueron:
 
 - `User` mezcla identidad global, credenciales, tenant y autorización.
 - `Membership` sólo admite un rol y no modela alcance por sucursal.
@@ -23,7 +23,7 @@ Los principales problemas son:
 - `Auth API` implementa login/password/JWT propios, mientras SPEC-210 propone Supabase Auth.
 - `SPEC-001` conserva metadata, objective, structure y rules placeholder.
 
-Implementar estas specs literalmente introduciría duplicación de fuentes de verdad y una migración temprana evitable.
+Los paquetes reconciliados están listos para revisión conjunta. Aún no autorizan migraciones ni código hasta aprobar ADR-002 y completar la evidencia técnica de SPEC-226.
 
 ## Findings
 
@@ -36,14 +36,14 @@ Implementar estas specs literalmente introduciría duplicación de fuentes de ve
 | FC-B05 | RESOLVED IN DRAFT | SPEC-004 | `services_active` duplicaba entitlements | retirado de Branch; capacidad efectiva derivada desde Entitlement; pendiente review |
 | FC-B06 | RESOLVED IN DRAFT | SPEC-001 | README/objective/structure/rules eran placeholders | paquete completado y reconciliado; pendiente review |
 | FC-B07 | RESOLVED IN DRAFT | SPEC-001/017 | `createdBy` obligatorio creaba ciclos durante bootstrap | actor system/null controlado y audit context definidos; pendiente review |
-| FC-B08 | P1 | Todas | camelCase JSON y snake_case DB se mezclan sin mapping explícito | contratos camelCase; persistence snake_case detrás de repository |
-| FC-B09 | P1 | SPEC-001/004/017/020 | timestamps SQL sin timezone | usar `timestamptz`, Clock y UTC según specs transversales |
-| FC-B10 | P1 | SPEC-017/020 | unicidad de email por tenant contradice identidad multi-tenant | email/identity en proveedor/global; Membership permite mismo user en varios tenants |
-| FC-B11 | P1 | SPEC-020 | UNIQUE tenant/user impide representar roles/branches si se modelan como filas | elegir Membership agregado + assignments o constraints compuestas explícitas |
+| FC-B08 | RESOLVED IN DRAFT | Todas | camelCase JSON y snake_case DB se mezclaban sin mapping explícito | API/DTO camelCase y persistencia snake_case detrás de repositories/mappers; pendiente review |
+| FC-B09 | RESOLVED IN DRAFT | SPEC-001/004/017/020 | timestamps SQL no preservaban timezone | `timestamptz`, UTC y timestamps server-side definidos; pendiente review |
+| FC-B10 | RESOLVED IN DRAFT | SPEC-017/020 | unicidad de email por tenant contradecía identidad multi-tenant | email es snapshot global no autoritativo y Membership admite varios tenants; pendiente review |
+| FC-B11 | RESOLVED IN DRAFT | SPEC-020 | una fila por rol/branch chocaba con unique tenant/user | agregado Membership único con assignments y scopes normalizados; pendiente review |
 | FC-B12 | RESOLVED IN DRAFT | SPEC-023 | `HS256 o RS256` quedaba ambiguo | allowlist explícita y validación de issuer/audience/JWKS definidas; pendiente spike/ADR |
 | FC-B13 | RESOLVED IN DRAFT | SPEC-001 | trial/cancel por job estaba acoplado a billing | estado comercial delegado a Subscription y lifecycle organizacional separado; pendiente review |
 | FC-B14 | RESOLVED IN DRAFT | SPEC-004 | herencia de menú/config no estaba definida ni era necesaria para I0 | retirada del agregado mínimo y delegada a specs de dominio posteriores; pendiente review |
-| FC-B15 | P1 | Todas | criterios marcan ✅ aunque status es PLANNED | checkboxes representan evidencia, no intención |
+| FC-B15 | RESOLVED IN DRAFT | Todas | criterios marcaban ✅ aunque status era PLANNED | checks quedaron pendientes hasta adjuntar evidencia ejecutada; pendiente review |
 
 ## Modelo objetivo para I0
 
@@ -132,7 +132,7 @@ Para la opción Supabase propuesta:
 
 ## Contrato mínimo de `/v1/me/context`
 
-Response propuesta, sujeta a schemas SPEC-213/215:
+Response reconciliada con SPEC-213/215:
 
 ```json
 {
@@ -143,14 +143,22 @@ Response propuesta, sujeta a schemas SPEC-213/215:
     },
     "memberships": [
       {
+        "id": "membership_...",
         "tenant": {
           "id": "tenant_...",
           "name": "Restaurante Demo"
         },
-        "roles": ["OWNER"],
+        "roles": [
+          {
+            "id": "role_...",
+            "code": "OWNER"
+          }
+        ],
+        "branchScopeType": "SELECTED_BRANCHES",
         "branches": [
           {
             "id": "branch_...",
+            "code": "PALERMO",
             "name": "Sucursal Demo",
             "timezone": "America/Argentina/Buenos_Aires"
           }
@@ -174,14 +182,14 @@ No incluir en I0:
 
 ## Orden de reconciliación
 
-1. Aprobar/rechazar ADR-002 Supabase.
-2. Reescribir SPEC-017 User sin credenciales/tenant/role.
-3. Reescribir SPEC-020 Membership y decidir role/branch assignments.
-4. Reescribir SPEC-023 como Auth boundary y session flows.
-5. Recortar SPEC-001 Tenant y completar placeholders.
-6. Recortar SPEC-004 Branch y eliminar services duplicados.
-7. Alinear SPEC-213 `/v1/me/context` y schemas API.
-8. Añadir tests Tenant A/B, membership revocada y branch fuera de scope.
+1. Pendiente: aprobar/rechazar ADR-002 Supabase mediante SPEC-226.
+2. Completado en draft: reconciliar SPEC-017 User.
+3. Completado en draft: reconciliar SPEC-020 Membership.
+4. Completado en draft: reconciliar SPEC-023 Auth boundary.
+5. Completado en draft: reconciliar SPEC-001 Tenant.
+6. Completado en draft: reconciliar SPEC-004 Branch.
+7. Completado en draft: alinear SPEC-213/215 y `/v1/me/context`.
+8. Pendiente de implementación: ejecutar tests Tenant A/B, membership revocada y branch fuera de scope.
 
 ## Criterios para cerrar FC-B01–B15
 

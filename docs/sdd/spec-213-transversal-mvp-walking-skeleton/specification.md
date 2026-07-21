@@ -50,18 +50,71 @@ El shell contiene navegación mínima, encabezado, selector de contexto y una p�
 
 - requiere bearer token válido;
 - devuelve identidad de dominio y memberships activas con tenant y sucursales autorizadas;
-- no acepta `tenant_id` confiado desde query o headers para ampliar acceso;
+- no requiere ni acepta `X-Tenant-Id` o `X-Branch-Id` para calcular el resultado;
 - usa schema Zod como fuente del tipo TypeScript y OpenAPI;
 - errores siguen el contrato común y poseen `correlationId`.
+
+#### Response `200`
+
+```json
+{
+  "data": {
+    "user": {
+      "id": "usr_01...",
+      "displayName": "Alex Demo"
+    },
+    "memberships": [
+      {
+        "id": "mem_01...",
+        "tenant": {
+          "id": "ten_01...",
+          "name": "Restaurante Demo"
+        },
+        "roles": [
+          {
+            "id": "rol_01...",
+            "code": "OWNER"
+          }
+        ],
+        "branchScopeType": "SELECTED_BRANCHES",
+        "branches": [
+          {
+            "id": "brn_01...",
+            "code": "PALERMO",
+            "name": "Palermo",
+            "timezone": "America/Argentina/Buenos_Aires"
+          }
+        ]
+      }
+    ]
+  },
+  "meta": {
+    "correlationId": "01J..."
+  }
+}
+```
+
+#### Semántica
+
+- sólo se incluyen User, Membership, Tenant y Branch efectivamente activos;
+- `roles` contiene identidad del rol, no permisos expandidos ni claims del proveedor;
+- `branches` ya es la lista efectiva después de aplicar `ALL_BRANCHES` o `SELECTED_BRANCHES`;
+- `branchScopeType` explica cómo se obtuvo el alcance y permite representar `ALL_BRANCHES` aunque no existan branches activas;
+- arrays se ordenan de forma determinista por nombre normalizado y luego ID;
+- una identidad habilitada sin memberships activas obtiene `200` con `memberships: []`, permitiendo un estado vacío diseñado;
+- User inexistente/deshabilitado sigue los problemas `identity-not-enabled` o `access-suspended` de SPEC-023;
+- email, external subject, tokens, permisos completos, entitlements y datos fiscales no forman parte de esta respuesta.
+
+El cliente selecciona IDs exclusivamente de esta respuesta. En endpoints tenant-scoped posteriores envía `X-Tenant-Id` y, cuando corresponda, `X-Branch-Id`; el servidor vuelve a validar el contexto en cada request.
 
 ## 4. Datos mínimos
 
 Las migraciones crean sólo las tablas y constraints requeridos por las specs dependientes:
 
 - users y referencia a identidad externa;
-- tenants/brands según el modelo vigente;
+- tenants y brands mínimas requeridas por Branch;
 - branches;
-- memberships y alcance autorizado;
+- memberships, role assignments y branch scopes normalizados;
 - audit metadata requerida.
 
 El seed de demo es determinista, ficticio e idempotente. Credenciales y usuarios de Auth se aprovisionan mediante un script separado del seed SQL y nunca se guardan en Git.
