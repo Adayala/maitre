@@ -9,7 +9,7 @@ Selección del toolchain open source para implementar el MVP con React.js, Node.
 | **Dominio** | Platform / Engineering |
 | **Estado** | DRAFT |
 | **Readiness** | BLOCKED |
-| **Blockers** | Adopción pendiente de ADR-003 y SPK-01–05 |
+| **Blockers** | Adopción pendiente de ADR-003 y SPK-01–05; asignar owner y reviewer |
 | **Prioridad** | P0 |
 | **Owner** | UNASSIGNED |
 | **Reviewer** | UNASSIGNED |

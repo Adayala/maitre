@@ -9,7 +9,7 @@ Contrato transversal para conservar, exportar, restaurar y eliminar datos de Mai
 | **Dominio** | Data / Operations / Privacy |
 | **Estado** | DRAFT |
 | **Readiness** | BLOCKED |
-| **Blockers** | Gate de datos no regenerables no aprobado |
+| **Blockers** | Gate de datos no regenerables no aprobado; asignar owner y reviewer |
 | **Prioridad** | P0 |
 | **Owner** | UNASSIGNED |
 | **Reviewer** | UNASSIGNED |

@@ -9,7 +9,7 @@ Contrato transversal de seguridad y privacidad para diseñar, implementar y veri
 | **Dominio** | Security / Privacy / Platform |
 | **Estado** | DRAFT |
 | **Readiness** | BLOCKED |
-| **Blockers** | Gate de piloto no aprobado |
+| **Blockers** | Gate de piloto no aprobado; asignar owner y reviewer |
 | **Prioridad** | P0 |
 | **Owner** | UNASSIGNED |
 | **Reviewer** | UNASSIGNED |

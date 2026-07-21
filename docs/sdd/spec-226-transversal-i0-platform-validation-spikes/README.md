@@ -11,7 +11,7 @@ Contrato para validar empíricamente Supabase y el toolchain React/Node antes de
 | **Readiness** | BLOCKED |
 | **Owner** | UNASSIGNED |
 | **Reviewer** | UNASSIGNED |
-| **Blockers** | Asignar owner/reviewer y disponer de proyectos development Vercel/Supabase |
+| **Blockers** | Disponer de proyectos development Vercel/Supabase; asignar owner y reviewer |
 | **Prioridad** | P0 |
 | **Fase** | Antes de I0 READY_FOR_IMPLEMENTATION |
 | **Depende de** | ADR-001–003, SPEC-207–225 |

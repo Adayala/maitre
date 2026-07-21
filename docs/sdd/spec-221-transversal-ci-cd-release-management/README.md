@@ -9,7 +9,7 @@ Contrato transversal para integrar, verificar, desplegar, promover y revertir ca
 | **Dominio** | Platform / Operations |
 | **Estado** | DRAFT |
 | **Readiness** | BLOCKED |
-| **Blockers** | Configuración de plataforma no verificada |
+| **Blockers** | Configuración de plataforma no verificada; asignar owner y reviewer |
 | **Prioridad** | P0 |
 | **Owner** | UNASSIGNED |
 | **Reviewer** | UNASSIGNED |

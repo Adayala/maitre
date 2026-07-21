@@ -9,7 +9,7 @@ Contrato transversal para una experiencia React.js consistente, accesible, rápi
 | **Dominio** | Product / Frontend |
 | **Estado** | DRAFT |
 | **Readiness** | BLOCKED |
-| **Blockers** | Tooling pendiente de ADR-004 y SPK-05 |
+| **Blockers** | Tooling pendiente de ADR-004 y SPK-05; asignar owner y reviewer |
 | **Prioridad** | P0 |
 | **Owner** | UNASSIGNED |
 | **Reviewer** | UNASSIGNED |

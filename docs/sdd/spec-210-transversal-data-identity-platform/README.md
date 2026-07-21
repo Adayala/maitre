@@ -9,7 +9,7 @@ Decisión de PostgreSQL, identidad y almacenamiento inicial para el MVP de costo
 | **Dominio** | Platform / Identity / Data |
 | **Estado** | DRAFT |
 | **Readiness** | BLOCKED |
-| **Blockers** | Adopción pendiente de ADR-002 y SPK-02–06 |
+| **Blockers** | Adopción pendiente de ADR-002 y SPK-02–06; asignar owner y reviewer |
 | **Prioridad** | P0 |
 | **Owner** | UNASSIGNED |
 | **Reviewer** | UNASSIGNED |
