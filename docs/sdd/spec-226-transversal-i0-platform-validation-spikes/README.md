@@ -5,7 +5,8 @@ Contrato para validar empíricamente Supabase y el toolchain React/Node antes de
 | Campo | Valor |
 | --- | --- |
 | **ID** | SPEC-226 |
-| **Tipo** | Transversal / Technical Spike |
+| **Tipo** | Transversal |
+| **Subtype** | Technical Spike |
 | **Dominio** | Platform / Engineering |
 | **Estado** | DRAFT |
 | **Readiness** | BLOCKED |

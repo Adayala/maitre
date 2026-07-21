@@ -5,7 +5,8 @@ Contrato transversal para mantener Floor, Kitchen, Cash y Dash actualizados sin 
 | Campo | Valor |
 | --- | --- |
 | **ID** | SPEC-223 |
-| **Tipo** | Transversal / Realtime Architecture |
+| **Tipo** | Transversal |
+| **Subtype** | Realtime Architecture |
 | **Dominio** | Platform / Operations |
 | **Estado** | DRAFT |
 | **Readiness** | BLOCKED |

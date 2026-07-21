@@ -5,7 +5,8 @@ Contrato para configurar y desplegar Maitre de forma reproducible, segura y port
 | Campo | Valor |
 | --- | --- |
 | **ID** | SPEC-214 |
-| **Tipo** | Transversal / Platform Security |
+| **Tipo** | Transversal |
+| **Subtype** | Platform Security |
 | **Dominio** | Platform / Operations |
 | **Estado** | DRAFT |
 | **Readiness** | BLOCKED |

@@ -5,7 +5,8 @@ Spike técnico para definir la integración de Maitre con los servicios fiscales
 | Campo | Valor |
 | --- | --- |
 | **ID** | SPEC-145 |
-| **Tipo** | Connector / API |
+| **Tipo** | API |
+| **Subtype** | Connector |
 | **Dominio** | Billing & Tax |
 | **Estado** | DRAFT |
 | **Readiness** | BLOCKED |

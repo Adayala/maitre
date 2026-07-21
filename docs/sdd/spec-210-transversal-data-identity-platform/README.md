@@ -5,7 +5,8 @@ Decisión de PostgreSQL, identidad y almacenamiento inicial para el MVP de costo
 | Campo | Valor |
 | --- | --- |
 | **ID** | SPEC-210 |
-| **Tipo** | Transversal / Architecture Decision |
+| **Tipo** | Transversal |
+| **Subtype** | Architecture Decision |
 | **Dominio** | Platform / Identity / Data |
 | **Estado** | DRAFT |
 | **Readiness** | BLOCKED |

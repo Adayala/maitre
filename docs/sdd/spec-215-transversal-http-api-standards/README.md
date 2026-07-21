@@ -5,7 +5,8 @@ Contrato transversal para APIs HTTP consistentes, seguras, observables y evoluti
 | Campo | Valor |
 | --- | --- |
 | **ID** | SPEC-215 |
-| **Tipo** | Transversal / API Architecture |
+| **Tipo** | Transversal |
+| **Subtype** | API Architecture |
 | **Dominio** | Platform / Contracts |
 | **Estado** | DRAFT |
 | **Readiness** | BLOCKED |

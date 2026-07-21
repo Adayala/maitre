@@ -5,7 +5,8 @@ Selección del toolchain open source para implementar el MVP con React.js, Node.
 | Campo | Valor |
 | --- | --- |
 | **ID** | SPEC-211 |
-| **Tipo** | Transversal / Architecture Decision |
+| **Tipo** | Transversal |
+| **Subtype** | Architecture Decision |
 | **Dominio** | Platform / Engineering |
 | **Estado** | DRAFT |
 | **Readiness** | BLOCKED |

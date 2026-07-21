@@ -5,7 +5,8 @@ Contrato transversal para conservar, exportar, restaurar y eliminar datos de Mai
 | Campo | Valor |
 | --- | --- |
 | **ID** | SPEC-220 |
-| **Tipo** | Transversal / Data Reliability |
+| **Tipo** | Transversal |
+| **Subtype** | Data Reliability |
 | **Dominio** | Data / Operations / Privacy |
 | **Estado** | DRAFT |
 | **Readiness** | BLOCKED |

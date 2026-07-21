@@ -5,7 +5,8 @@ Contrato transversal para publicar y consumir eventos de integración sin perder
 | Campo | Valor |
 | --- | --- |
 | **ID** | SPEC-217 |
-| **Tipo** | Transversal / Event Architecture |
+| **Tipo** | Transversal |
+| **Subtype** | Event Architecture |
 | **Dominio** | Platform / Integration |
 | **Estado** | DRAFT |
 | **Readiness** | BLOCKED |

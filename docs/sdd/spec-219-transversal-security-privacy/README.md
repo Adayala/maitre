@@ -5,7 +5,8 @@ Contrato transversal de seguridad y privacidad para diseñar, implementar y veri
 | Campo | Valor |
 | --- | --- |
 | **ID** | SPEC-219 |
-| **Tipo** | Transversal / Security Architecture |
+| **Tipo** | Transversal |
+| **Subtype** | Security Architecture |
 | **Dominio** | Security / Privacy / Platform |
 | **Estado** | DRAFT |
 | **Readiness** | BLOCKED |

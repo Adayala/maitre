@@ -5,7 +5,8 @@ Contrato transversal para integrar, verificar, desplegar, promover y revertir ca
 | Campo | Valor |
 | --- | --- |
 | **ID** | SPEC-221 |
-| **Tipo** | Transversal / Delivery Engineering |
+| **Tipo** | Transversal |
+| **Subtype** | Delivery Engineering |
 | **Dominio** | Platform / Operations |
 | **Estado** | DRAFT |
 | **Readiness** | BLOCKED |

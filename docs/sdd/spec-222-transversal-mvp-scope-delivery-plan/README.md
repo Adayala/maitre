@@ -5,7 +5,8 @@ Contrato de alcance y secuencia que transforma el catálogo completo de Maitre e
 | Campo | Valor |
 | --- | --- |
 | **ID** | SPEC-222 |
-| **Tipo** | Transversal / Product Delivery |
+| **Tipo** | Transversal |
+| **Subtype** | Product Delivery |
 | **Dominio** | Product / Engineering |
 | **Estado** | DRAFT |
 | **Readiness** | BLOCKED |

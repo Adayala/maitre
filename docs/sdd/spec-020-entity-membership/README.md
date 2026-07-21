@@ -5,7 +5,8 @@ Vínculo de autorización entre un User global y un Tenant, con roles y alcance 
 | Campo | Valor |
 | --- | --- |
 | **ID** | SPEC-020 |
-| **Tipo** | Entity / Authorization Aggregate |
+| **Tipo** | Entity |
+| **Subtype** | Authorization Aggregate |
 | **Dominio** | Identity |
 | **Estado** | DRAFT |
 | **Readiness** | BLOCKED |

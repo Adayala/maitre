@@ -5,7 +5,8 @@ Contrato para detectar, entender y recuperar fallos de Maitre con telemetría po
 | Campo | Valor |
 | --- | --- |
 | **ID** | SPEC-216 |
-| **Tipo** | Transversal / Reliability Engineering |
+| **Tipo** | Transversal |
+| **Subtype** | Reliability Engineering |
 | **Dominio** | Platform / Operations |
 | **Estado** | DRAFT |
 | **Readiness** | BLOCKED |

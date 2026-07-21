@@ -5,7 +5,8 @@ Contrato estructural para implementar Maitre con React.js, Node.js y TypeScript 
 | Campo | Valor |
 | --- | --- |
 | **ID** | SPEC-209 |
-| **Tipo** | Transversal / Architecture |
+| **Tipo** | Transversal |
+| **Subtype** | Architecture |
 | **Dominio** | Platform / Engineering |
 | **Estado** | DRAFT |
 | **Readiness** | BLOCKED |

@@ -5,7 +5,8 @@ Contrato transversal para crear, revisar, aprobar, cambiar, verificar y retirar 
 | Campo | Valor |
 | --- | --- |
 | **ID** | SPEC-225 |
-| **Tipo** | Transversal / Engineering Governance |
+| **Tipo** | Transversal |
+| **Subtype** | Engineering Governance |
 | **Dominio** | Product / Architecture / Engineering |
 | **Estado** | DRAFT |
 | **Readiness** | BLOCKED |

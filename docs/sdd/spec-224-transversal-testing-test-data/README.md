@@ -5,7 +5,8 @@ Contrato transversal para obtener evidencia confiable con tests rápidos, manten
 | Campo | Valor |
 | --- | --- |
 | **ID** | SPEC-224 |
-| **Tipo** | Transversal / Quality Engineering |
+| **Tipo** | Transversal |
+| **Subtype** | Quality Engineering |
 | **Dominio** | Engineering / Verification |
 | **Estado** | DRAFT |
 | **Readiness** | BLOCKED |

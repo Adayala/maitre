@@ -31,8 +31,9 @@ Campos obligatorios para specs nuevas y para el subset I0 normalizado:
 | Campo | Tipo/regla |
 | --- | --- |
 | `ID` | `SPEC-NNN`, único e igual al directorio |
-| `Tipo` | valor no vacío del vocabulario versionado |
-| `Dominio` | valor no vacío del vocabulario versionado |
+| `Tipo` | enum base coherente con el prefijo del slug |
+| `Subtype` | clasificación especializada opcional, separada del tipo base |
+| `Dominio` | valor no vacío; puede ser compuesto para contratos transversales |
 | `Estado` | enum canónico de SPEC-225 |
 | `Readiness` | enum separado de estado |
 | `Prioridad` | `P0`–`P3` o regla de migración explícita |
@@ -50,6 +51,21 @@ Campos condicionales:
 
 Los documentos históricos se incorporan con la línea base de
 `validation-contract.md`; eso no habilita omitir campos en una spec nueva.
+
+Tipos base iniciales:
+
+```text
+ENTITY | API | EVENT | RBAC | CALCULATION | APP | TRANSVERSAL
+```
+
+La serialización Markdown preserva los nombres legibles actuales (`Entity`, `Event`,
+`Calculation`, etc.) y el catálogo los normaliza al enum en mayúsculas. El prefijo del
+slug debe coincidir con el tipo base. Detalles como `Security boundary`, `Connector`,
+`Architecture Decision` o `Technical Spike` pertenecen a `Subtype`; no crean tipos base.
+
+`Dominio` no se deriva del slug. Puede expresar más de un área separada por `/` cuando la
+spec es genuinamente transversal; el catálogo conserva la lista normalizada y ordenada
+sin reemplazarla por un único owner ficticio.
 
 ## 4. Readiness
 

@@ -5,7 +5,8 @@ Contrato transversal para una experiencia React.js consistente, accesible, rápi
 | Campo | Valor |
 | --- | --- |
 | **ID** | SPEC-212 |
-| **Tipo** | Transversal / UX Architecture |
+| **Tipo** | Transversal |
+| **Subtype** | UX Architecture |
 | **Dominio** | Product / Frontend |
 | **Estado** | DRAFT |
 | **Readiness** | BLOCKED |

@@ -5,7 +5,8 @@ Contrato transversal para degradación, captura local y sincronización segura d
 | Campo | Valor |
 | --- | --- |
 | **ID** | SPEC-218 |
-| **Tipo** | Transversal / Offline Architecture |
+| **Tipo** | Transversal |
+| **Subtype** | Offline Architecture |
 | **Dominio** | Platform / Operations |
 | **Estado** | DRAFT |
 | **Readiness** | BLOCKED |

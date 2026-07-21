@@ -5,7 +5,8 @@ Primer corte vertical ejecutable de Maitre: desde el navegador hasta persistenci
 | Campo | Valor |
 | --- | --- |
 | **ID** | SPEC-213 |
-| **Tipo** | Transversal / Delivery |
+| **Tipo** | Transversal |
+| **Subtype** | Delivery |
 | **Dominio** | Platform / Product |
 | **Estado** | DRAFT |
 | **Readiness** | BLOCKED |
