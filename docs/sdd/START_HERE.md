@@ -22,15 +22,15 @@ Bienvenido a las especificaciones ejecutables de Maitre.
 ├── _guides/                    Documentos transversales y recursos
 │   ├── README.md              Introducción a las specs
 │   ├── SPEC_STRUCTURE.md      Cómo se organiza cada spec
-│   ├── 00-mvp-roadmap.md      Listado de ~193 specs para MVP
-│   ├── 01-priority-todo.md    Checklist ordenado por prioridad
-│   ├── 15-apps.md             Las 6 apps, dispositivos, mobile-first
-│   ├── 16-apis.md             Contratos HTTP formales
-│   └── 17-events.md           Eventos del sistema
+│   ├── 00-mvp-specifications-roadmap.md  Roadmap histórico de specs
+│   ├── 01-priority-specs-todo.md         Checklist histórico de prioridad
+│   ├── 15-applications-and-devices.md    Apps, dispositivos y mobile-first
+│   ├── 16-api-specifications.md          Contratos HTTP
+│   └── 17-event-specifications.md        Eventos del sistema
 │
 ├── INDEX.md                    Índice maestro de todas las specs
 │
-└── spec-[type]-[name]/         Directorio de cada spec individual
+└── spec-NNN-[type]-[name]/     Directorio numerado de cada spec individual
     ├── README.md              Propósito, metadata, links relacionados
     ├── structure.md           Schema, campos, tipos
     ├── rules.md               Invariantes y reglas de negocio
@@ -73,16 +73,17 @@ Bienvenido a las especificaciones ejecutables de Maitre.
 
 ### Para ver un ejemplo completo
 
-1. Abre [`spec-entity-tenant/`](spec-entity-tenant/)
+1. Abre [`SPEC-001 — Tenant`](spec-001-entity-tenant/)
 2. Lee en orden: `README.md` → `structure.md` → `rules.md`
 
 ### Para escribir una nueva spec
 
-1. Lee [`_guides/01-priority-todo.md`](_guides/01-priority-specs-todo.md) y elige una
-2. Crea directorio: `mkdir -p spec-[type]-[name]`
-3. Copia estructura de `spec-entity-tenant/`
-4. Sigue formato en [`_guides/SPEC_STRUCTURE.md`](_guides/SPEC_STRUCTURE.md)
-5. Actualiza [`INDEX.md`](INDEX.md)
+1. Confirma necesidad, alcance y dependencias en el roadmap/spec correspondiente.
+2. Reserva un ID único e inmutable según [`SPEC-225`](spec-225-transversal-spec-adr-governance/registry-contract.md).
+3. Crea `spec-NNN-[type]-[name]/` con el paquete mínimo definido por SPEC-225.
+4. Declara metadata, `Estado: DRAFT`, readiness, owner/reviewer y blockers reales.
+5. Regenera catálogo/índice cuando exista tooling; mientras tanto valida links e identidad en el mismo cambio.
+6. No marques `READY_FOR_IMPLEMENTATION` hasta completar review y aprobaciones.
 
 ### Para ver todas las specs
 
@@ -96,7 +97,7 @@ Abre [`INDEX.md`](INDEX.md) — listado completo con checkboxes.
 Especificaciones SDD (este directorio)
 ├── Guías y recursos (_guides/)
 ├── Índice maestro (INDEX.md)
-└── Specs individuales (spec-type-name/)
+└── Specs individuales (spec-NNN-type-name/)
     ├── README.md (qué es, links, metadata)
     ├── estructura (schema, campos, tipos)
     ├── comportamiento (reglas, máquinas de estado)
@@ -115,23 +116,21 @@ Cada spec es **autocontendida** — todo lo que necesitas sobre una entidad/API/
 | Entender cómo funcionan las specs | Leer `_guides/README.md` |
 | Ver estructura de una spec | Leer `_guides/SPEC_STRUCTURE.md` |
 | Saber qué specs escribir primero | Leer `_guides/01-priority-todo.md` |
-| Entender Tenant | Abrir `spec-entity-tenant/` |
+| Entender Tenant | Abrir `spec-001-entity-tenant/` |
 | Listar todas las specs | Abrir `INDEX.md` |
-| Escribir una spec nueva | Copiar estructura de `spec-entity-tenant/` |
+| Escribir una spec nueva | Aplicar el paquete mínimo y registro de SPEC-225 |
 | Entender cómo se crean apps | Leer `_guides/15-applications-and-devices.md` |
 | Ver APIs que usa cada app | Leer `_guides/16-api-specifications.md` |
 | Entender cómo se comunican dominios | Leer `_guides/17-event-specifications.md` |
 
 ---
 
-## Stats
+## Conteos
 
-- **Total MVP:** ~193 specs (Fases 1-5)
-- **Fase 1 (crítica):** ~48 specs (dominio de producto)
-- **Fase 2 (operación):** ~60 specs (mozo, cocina)
-- **Fase 3 (cliente):** ~35 specs (reserva, guest app)
-- **Fase 4 (dinero):** ~25 specs (caja, pagos)
-- **Fase 5 (integración):** ~30 specs (reputación, conectores)
+Los conteos de specs, estados y readiness deben derivarse del registro definido por
+SPEC-225. No se mantienen cifras manuales en esta guía porque divergen cuando se agrega,
+depreca o reemplaza una spec. Hasta implementar el catálogo generado, `INDEX.md` es una
+vista histórica útil pero no la fuente autoritativa de metadata.
 
 ---
 
@@ -148,22 +147,21 @@ Si una spec y el código divergen, la spec gana. (O la spec se actualiza si el c
 ## Próximos pasos
 
 ```
-✅ Infraestructura SDD lista (directorios, templates, índice)
-👉 Escribir specs de Fase 1 (~48 specs)
-   • Comenzar por Organization (13 specs)
-   • Luego Identity (12 specs)
-   • Luego Subscription (10 specs)
-🔲 Escribir specs de Fase 2 en paralelo
-🔲 Implementación siguiendo las specs
+✅ Contratos transversales I0 y gobernanza SDD documentados
+👉 Asignar owners/reviewers y completar review del subset I0
+🔲 Ejecutar SPEC-226 y resolver ADR-002/003/004 con evidencia
+🔲 Implementar `npm run sdd:validate` y regenerar el índice
+🔲 Aprobar únicamente las specs necesarias para el walking skeleton
+🔲 Crear el scaffold e implementar I0 contra revisiones aprobadas
 ```
 
 ---
 
 ## Contacto y cambios
 
-- **Cambio en una spec:** Actualiza el directorio y comenta en `INDEX.md`
+- **Cambio en una spec:** Actualiza su README autoritativo y las proyecciones afectadas
 - **Duda sobre estructura:** Revisa `_guides/SPEC_STRUCTURE.md`
-- **Pregunta abierta:** Agrega a `_guides/01-priority-todo.md` como nota
+- **Pregunta abierta:** Regístrala en `notes.md` y márcala como blocker cuando sea P0
 
 ---
 
