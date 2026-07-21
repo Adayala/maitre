@@ -20,11 +20,11 @@
 | `local` | Development | `vercel env pull` o valores locales seguros |
 | `test` | no deploy | variables sintéticas de CI |
 | `preview` | Preview | branches/PRs |
-| `development` | Preview con branch persistente autorizada | integración compartida |
+| `development` | no provisionado como deployment I0 | Supabase development respalda previews |
 | `demo` | Production target sobre `main` | datos sintéticos curados |
 | `production` | no configurado | decisión futura |
 
-Usar el target llamado “Production” por Vercel para publicar `demo` no convierte a Maitre en producción comercial. `APP_ENV=demo` y `VITE_APP_ENV=demo` conservan esa distinción dentro del sistema.
+Usar el target llamado “Production” por Vercel para publicar `demo` no convierte a Maitre en producción comercial. `APP_ENV=demo` y `VITE_APP_ENV=demo` conservan esa distinción dentro del sistema. I0 usa un Production build staged y promoción explícita para evitar reconstruir otro artefacto.
 
 ## 2. Clasificación de configuración
 

@@ -5,8 +5,8 @@
 - `main` es integrable y representa el estado candidato más reciente.
 - Features/fixes usan ramas cortas con nombres descriptivos.
 - Pull requests pequeños enlazan spec/issue, riesgo, evidencia y rollback.
-- `main` requiere checks y review cuando exista más de un contributor habilitado.
-- Push directo se restringe cuando la configuración de GitHub lo permita; emergencias quedan auditadas y seguidas por revisión.
+- Desde el primer código productivo, `main` requiere el check agregador y pull request. Reviews se exigen cuando exista reviewer habilitado independiente.
+- Push directo/force-push/deletion se restringen cuando plan/visibilidad lo permitan; la disponibilidad se audita antes de declararlo configurado.
 - No se mantienen ramas permanentes por ambiente.
 
 ## 2. Commits y versionado
@@ -30,6 +30,8 @@ chore(scope): maintenance without product behavior
 - Release tags siguen SemVer cuando exista una entrega consumible.
 - La versión desplegada expone commit SHA y release de forma sanitizada, no detalles sensibles.
 
+Durante I0 se valida el título del PR como Conventional Commit y se usa squash merge para producir un commit coherente. Commits directos previos al branch protection conservan el estándar, pero no constituyen el flujo futuro aprobado.
+
 ## 3. Pipeline de pull request
 
 Orden de feedback recomendado:
@@ -38,7 +40,7 @@ Orden de feedback recomendado:
 2. format/lint, secret scan y validación SDD;
 3. typecheck y dependency boundaries;
 4. unit/component/contract tests;
-5. build web/API/Storybook;
+5. build web/API y documentación UI sólo si ADR-004 la adopta;
 6. SAST/SCA/Sonar y OpenAPI breaking check;
 7. integration/RLS/migrations;
 8. Playwright/accessibility en preview cuando corresponda.
@@ -48,15 +50,16 @@ Jobs independientes corren en paralelo. Concurrency cancela ejecuciones obsoleta
 ## 4. Ambientes y promoción
 
 ```text
-PR commit → preview
-merge commit/main SHA → development
-approved main SHA/tag → demo
+PR commit → Preview (`APP_ENV=preview`)
+merge/squash SHA en main → staged Production build (`APP_ENV=demo`)
+approved staged build → current demo, sin rebuild
 approved release → production (future gate)
 ```
 
 - Preview usa datos sintéticos y secretos mínimos según SPEC-214.
-- Development despliega automáticamente desde `main` después de gates.
-- Demo se promueve manualmente desde un SHA verde y ejecuta smoke/E2E.
+- I0 no provisiona un deployment remoto `development`; local/CI y Preview cubren integración.
+- `main` produce un build Production staged con auto-asignación de dominio deshabilitada.
+- Demo promueve manualmente ese mismo staged deployment después de smoke; no se promueve Preview porque ello reconstruye con otra configuración.
 - El build se identifica y verifica; configuración se inyecta por ambiente.
 - No se copia una base de datos real para crear preview/demo.
 - Previews expiran y se limpian para proteger cuota.
@@ -67,7 +70,7 @@ approved release → production (future gate)
 - Node/npm y toolchain están fijados.
 - Builds no descargan código mutable fuera de dependencias bloqueadas.
 - Se conserva metadata: commit, workflow, timestamp, tool versions y hashes.
-- Web, API, OpenAPI, Storybook y reports se asocian al mismo SHA.
+- Web, API, OpenAPI, documentación UI adoptada y reports se asocian al mismo SHA.
 - Un deploy puede reproducirse localmente/CI sin APIs exclusivas de Vercel.
 - Artefactos no incluyen `.env`, secretos, dumps, tokens o source maps públicos no aprobados.
 
@@ -86,6 +89,8 @@ Las migraciones siguen expand/migrate/contract:
 - Toda migración se prueba desde cero y desde schema anterior representativo.
 - Operaciones destructivas requieren backup/restore válido, aprobación y plan compensatorio.
 - Down migrations no se presumen seguras; rollback de datos es compensación/restore explícito.
+
+Preview nunca recibe `DATABASE_MIGRATION_URL`. Un workflow/manual autorizado separado aplica migraciones expand compatibles al proyecto compartido antes del staged deployment que las necesita. El build Vercel y el arranque API no ejecutan schema changes.
 
 ## 7. Estrategia de release
 
@@ -113,6 +118,8 @@ Feature flags separan deploy de release sólo cuando existe plan de activación,
 8. cerrar release o iniciar rollback.
 
 No se despliega si readiness, error budget, cuota o dependencia crítica indican riesgo no aprobado.
+
+En I0 no existe error-budget gate operativo según SPEC-216. Se evalúan health, smoke, tests, cuota y blockers reales; no se exige una señal marcada `NOT_OPERATIONAL`.
 
 ## 9. Rollback y roll-forward
 
@@ -154,3 +161,11 @@ No se despliega si readiness, error budget, cuota o dependencia crítica indican
 - Integration/E2E costosos se activan por impacto más un schedule completo.
 - Nightly/scheduled jobs tienen owner, presupuesto y política de fallo.
 - Si una optimización oculta defectos o vuelve opcional un gate, se revierte.
+
+## 13. Restricciones del proveedor inicial
+
+- Vercel Hobby es no comercial según SPEC-208.
+- El commit author debe ser compatible con el ownership del Hobby team para que Git deployment no sea rechazado; colaboración Adrian/usuario debe auditarse.
+- Preview de forks no recibe secrets y requiere autorización explícita del owner cuando Vercel lo solicite.
+- Production target significa demo sintética (`APP_ENV=demo`), no readiness comercial.
+- Si branch protection no está disponible por visibilidad/plan, el blocker permanece abierto; no se reemplaza con una convención informal.

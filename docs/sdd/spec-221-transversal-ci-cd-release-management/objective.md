@@ -17,3 +17,5 @@ Convertir cada cambio aprobado en un release identificable, verificable y recupe
 - Introducir Kubernetes, runners pagos o un sistema externo de releases.
 - Automatizar aprobación humana de cambios fiscales/destructivos.
 - Mantener ramas de release largas durante el MVP.
+- Resolver colaboración multi-persona de Vercel Hobby sin verificar ownership/elegibilidad.
+- Ejecutar migraciones desde Preview o durante el build serverless.

@@ -7,7 +7,7 @@ Contrato transversal para integrar, verificar, desplegar, promover y revertir ca
 | **ID** | SPEC-221 |
 | **Tipo** | Transversal / Delivery Engineering |
 | **Dominio** | Platform / Operations |
-| **Estado** | DRAFT — PROPOSED FOR APPROVAL |
+| **Estado** | DRAFT — READY FOR I0 REVIEW; PLATFORM SETTINGS NOT VERIFIED |
 | **Prioridad** | P0 |
 | **Fase** | Antes de automatizar el primer deployment |
 | **Depende de** | SPEC-207–220 |
@@ -31,3 +31,6 @@ Contrato transversal para integrar, verificar, desplegar, promover y revertir ca
 - [Tareas](tasks.md)
 - [Verificación](verification.md)
 - [Decisiones](notes.md)
+- [Contrato de delivery I0](i0-delivery-contract.md)
+
+I0 usa Preview por PR y un deployment Production staged con `APP_ENV=demo`. No existe destino de producción comercial ni deployment remoto `development` separado.

@@ -14,7 +14,7 @@ Este registro no confirma la configuración de las cuentas de Maitre. Distingue 
 | Comportamiento al alcanzar límites | el recurso/uso puede pausarse hasta reinicio de cuota; no comprar overage |
 | Límite relevante para API | funciones con duración máxima configurable hasta 60 s en Hobby |
 | Builds | 6.000 minutos incluidos y 100 deployments/día documentados al verificar |
-| Colaboración | capacidades limitadas; validar ownership y acceso antes de depender de trabajo multi-persona |
+| Colaboración | en Hobby, el commit author debe ser owner del Hobby team para Git deployments; validar flujo Adrián/usuario o migrar de plan/plataforma |
 | Uso Maitre permitido | desarrollo técnico/demo elegible, nunca piloto comercial |
 | Owner/reviewer | pendiente / pendiente |
 | Dashboard verificado | no |

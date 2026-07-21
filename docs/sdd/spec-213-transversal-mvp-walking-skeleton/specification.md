@@ -151,9 +151,10 @@ OpenTelemetry se usa detrás de `TelemetryPort`. El recorrido permite correlacio
 ## 8. Entornos y despliegue
 
 - `local`: Supabase/PostgreSQL local o configuración de desarrollo documentada.
-- `development`: integración compartida y regenerable.
+- `development`: proyecto Supabase compartido/regenerable que respalda previews; no requiere deployment Vercel propio en I0.
 - `demo`: URL estable con datos ficticios.
-- previews: frontend/API por cambio; reutilizan recursos remotos permitidos y no crean un proyecto Supabase por PR.
+- previews: frontend/API por cambio; reutilizan Supabase development con aislamiento sintético y no crean un proyecto por PR.
+- `demo`: Production target staged/promovido con `APP_ENV=demo`, nunca producción comercial.
 
 La API arranca tanto mediante adapter Vercel como con `node`, compartiendo la misma instancia Fastify. Ningún test unitario requiere internet.
 

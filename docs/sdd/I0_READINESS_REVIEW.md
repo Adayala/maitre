@@ -33,6 +33,7 @@ La base documental transversal y los contratos funcionales I0 están reconciliad
 | I0-B05 | Existe contrato `sdd:validate`, no implementación | implementar gate mecánico durante el scaffold y probar canario |
 | I0-B06 | Branch protection/GitHub checks no verificados | configurar según SPEC-221 cuando autenticación admin esté disponible |
 | I0-B07 | RESOLVED DOCUMENTALLY: registro fechado en SPEC-208; dashboards no auditados | auditar cuentas antes de desplegar demo compartida |
+| I0-B08 | Vercel Hobby puede rechazar commits de autores distintos del team owner | auditar ownership/commit authors y decidir flujo compatible o plataforma/plan alternativo |
 
 ## No bloquean scaffolding local, pero sí hitos posteriores
 

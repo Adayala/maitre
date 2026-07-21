@@ -8,15 +8,18 @@
 - [ ] Violación arquitectónica, RLS o Sonar bloquea merge.
 - [ ] Run obsoleto se cancela sin cancelar otra rama.
 - [ ] Path filtering nunca produce un gate requerido ausente.
+- [ ] `ci/required` reporta resultado único y no queda pending en docs-only.
+- [ ] Workflows declaran permisos mínimos y third-party actions están fijadas por SHA.
 
 ## Deploy y promoción
 
 - [ ] Preview usa sólo datos/secretos autorizados.
-- [ ] Development despliega exactamente el SHA verde de `main`.
-- [ ] Demo promueve el mismo commit/artefacto aprobado.
+- [ ] `main` construye un Production deployment staged con `APP_ENV=demo`.
+- [ ] Demo promueve el mismo staged deployment sin rebuild.
 - [ ] Health, smoke, synthetic y observabilidad verifican release.
 - [ ] Metadata permite identificar commit/config/migración.
 - [ ] Preview vencida se elimina sin afectar datos compartidos.
+- [ ] Commit de cada contributor autorizado despliega o el blocker Hobby queda documentado.
 
 ## Migraciones
 
@@ -25,6 +28,7 @@
 - [ ] Backfill es reanudable, observable e idempotente.
 - [ ] Contract ocurre después de cerrar ventana de rollback.
 - [ ] Cambio destructivo posee backup/restore y aprobación.
+- [ ] Preview/build/runtime no ejecutan migraciones y carecen de migration credential.
 
 ## Rollback
 

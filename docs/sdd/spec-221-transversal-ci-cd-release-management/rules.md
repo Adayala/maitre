@@ -14,6 +14,12 @@
 10. Production permanece bloqueado hasta cumplir seguridad, DR, operación y términos comerciales.
 11. Artefactos no contienen secretos ni dumps.
 12. Optimizar cuota no puede volver silenciosamente opcional un gate.
+13. I0 promueve un staged Production build; Preview-to-Production rebuild no es promoción de artefacto idéntico.
+14. `APP_ENV=demo` es obligatorio en el target Production de Vercel.
+15. Preview no recibe migration/admin credentials ni ejecuta schema changes.
+16. El check agregador requerido siempre reporta estado, incluso en cambios docs-only.
+17. Workflows de forks/untrusted PRs nunca acceden a secrets.
+18. Restricciones Hobby de commit author/owner se verifican antes de prometer colaboración o deploy automático.
 
 ## Excepciones
 
