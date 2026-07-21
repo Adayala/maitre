@@ -5,6 +5,8 @@
 - [ ] Definir owners/reviewers por dominio.
 - [x] Auditar cobertura inicial de IDs, metadata, títulos y estados actuales.
 - [ ] Migrar metadata placeholder de SPEC-049–205 por lotes.
+- [ ] Reconciliar 136 README no rastreados antes de incorporarlos al registro.
+- [ ] Resolver la ruta legacy ausente `spec-entity-tenant/README.md` sin perder historia.
 - [ ] Asignar owners/reviewers o `UNASSIGNED` en las specs normalizadas.
 - [x] Definir fuente de verdad y contrato del registro.
 - [ ] Implementar generación/validación del catálogo e índices.

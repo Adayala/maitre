@@ -36,14 +36,35 @@ Eso confirma sintaxis canónica en el subset, pero no implica readiness ni aprob
 Estos identificadores documentan categorías temporales. La línea base machine-readable
 definitiva se crea con el validador y debe apuntar a un issue/owner por lote.
 
+## 2.1 Frontera de control de versiones
+
+Una segunda auditoría, posterior a los primeros lotes seguros, distinguió presencia en el
+filesystem de trazabilidad Git:
+
+| Control | Resultado |
+| --- | --- |
+| README numerados presentes | 226 |
+| README raíz de spec versionados | 90 |
+| README raíz de spec no rastreados | 136 |
+| README versionados sin fila `ID` | 0 |
+| README no rastreados con texto placeholder | 136 |
+| Ruta legacy rastreada pero ausente | `docs/sdd/spec-entity-tenant/README.md` |
+
+Los 136 README no rastreados no se incorporan mediante una migración mecánica: primero se
+debe determinar su procedencia y confirmar si deben agregarse, reemplazarse o descartarse.
+La ruta legacy tampoco se elimina desde esta auditoría, porque puede pertenecer a un cambio
+concurrente. Hasta resolver ambos casos, los conteos del filesystem no equivalen al
+catálogo publicable desde Git.
+
 ## 3. Orden de remediación
 
 1. Mantener estricto el subset I0 ya reconciliado.
-2. Normalizar SPEC-049–205 en lotes que respeten dominios y dependencias.
-3. No completar descripciones, owners, prioridad o readiness por inferencia silenciosa.
-4. Reejecutar auditoría tras cada lote y exigir que los conteos sólo bajen.
-5. Regenerar catálogo e `INDEX.md` cuando todas las entradas tengan ID/título mínimo.
-6. Reconciliar `START_HERE.md` y activar `SDD008` sin excepción histórica.
+2. Reconciliar la procedencia de README no rastreados y la ruta legacy ausente.
+3. Normalizar SPEC-049–205 versionadas en lotes que respeten dominios y dependencias.
+4. No completar descripciones, owners, prioridad o readiness por inferencia silenciosa.
+5. Reejecutar auditoría tras cada lote y exigir que los conteos sólo bajen.
+6. Regenerar catálogo e `INDEX.md` cuando todas las entradas tengan ID/título mínimo.
+7. Reconciliar `START_HERE.md` y activar `SDD008` sin excepción histórica.
 
 ## 4. Lotes propuestos
 
