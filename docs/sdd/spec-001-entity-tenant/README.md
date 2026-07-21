@@ -9,7 +9,8 @@ Tenant representa una organización cliente y es la raíz explícita del aislami
 | **ID** | SPEC-001 |
 | **Tipo** | Entity |
 | **Dominio** | Organization |
-| **Status** | DRAFT — RECONCILED FOR I0 REVIEW |
+| **Estado** | DRAFT |
+| **Readiness** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
 | **Fase** | I0 |
 

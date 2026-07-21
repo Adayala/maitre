@@ -9,7 +9,8 @@ Define el límite entre el proveedor de identidad, el cliente React y la API Nod
 | **ID** | SPEC-023 |
 | **Tipo** | API / Security boundary |
 | **Dominio** | Identity |
-| **Status** | DRAFT — RECONCILED FOR I0 REVIEW |
+| **Estado** | DRAFT |
+| **Readiness** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
 | **Fase** | I0 |
 
