@@ -13,7 +13,7 @@ Bienvenido a las especificaciones ejecutables de Maitre.
 - **Ejecutables:** Se pueden verificar sin código
 - **Vivas:** Se actualizan con el proyecto
 - **Contratos:** Son acuerdos entre equipos
-- **Independientes de tech:** No presuponen stack
+- **Independientes de implementación:** Describen comportamiento; el perfil técnico vigente se documenta aparte
 
 ## Estructura
 
@@ -47,6 +47,16 @@ Bienvenido a las especificaciones ejecutables de Maitre.
 
 1. Lee [`_guides/README.md`](_guides/README.md)
 2. Mira [`_guides/SPEC_STRUCTURE.md`](_guides/SPEC_STRUCTURE.md)
+3. Revisa [`TECH_STACK.md`](TECH_STACK.md) para la implementación vigente con React.js, Node.js y Vercel
+4. Aplica [`SPEC-207`](spec-207-transversal-engineering-quality/) para calidad y gates SDD
+5. Aplica [`SPEC-208`](spec-208-transversal-zero-cost-mvp/) para operar el MVP dentro de free tiers
+6. Usa [`SPEC-209`](spec-209-transversal-monorepo-architecture/) para crear el monorepo y respetar sus límites
+7. Aplica [`SPEC-210`](spec-210-transversal-data-identity-platform/) para PostgreSQL, identidad y almacenamiento con Supabase
+8. Aplica [`SPEC-211`](spec-211-transversal-implementation-toolchain/) para el toolchain React.js/Node.js y sus verificaciones
+9. Aplica [`SPEC-212`](spec-212-transversal-design-system-accessibility/) para UI consistente, responsive y accesible
+10. Implementa [`SPEC-213`](spec-213-transversal-mvp-walking-skeleton/) como primer corte vertical desplegable
+11. Aplica [`SPEC-214`](spec-214-transversal-environments-configuration-secrets/) para ambientes, configuración y secretos
+12. Usa [`SPEC-215`](spec-215-transversal-http-api-standards/) como contrato común de todas las APIs HTTP
 
 ### Para ver un ejemplo completo
 

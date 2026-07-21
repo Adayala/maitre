@@ -12,6 +12,9 @@ Cada aplicación tiene un contrato formal con el backend. Las APIs están agrupa
 
 ## Convenciones
 
+Las convenciones normativas transversales están definidas en
+[`SPEC-215 — HTTP API Standards`](../spec-215-transversal-http-api-standards/).
+
 ```
 POST   /resource           → crear
 GET    /resource/:id       → obtener
@@ -28,6 +31,8 @@ X-Branch-Id: <branchId>  (si aplica)
 Content-Type: application/json
 Idempotency-Key: <uuid>  (para POSTs críticos)
 ```
+
+`X-Tenant-Id` y `X-Branch-Id` expresan el contexto solicitado. El backend siempre debe validar ese contexto contra la identidad, memberships, roles y entitlements; estos headers nunca otorgan autoridad por sí mismos.
 
 ---
 

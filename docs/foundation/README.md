@@ -13,7 +13,7 @@ Este directorio contiene las **especificaciones ejecutables** de la plataforma M
 - **Ejecutables:** Pueden verificarse sin código.
 - **Vivas:** Se actualizan con la plataforma.
 - **Contrato:** Son el acuerdo entre stakeholders, equipos técnicos y usuarios.
-- **Independientes de tecnología:** No presuponen stack ni arquitectura.
+- **Independientes de implementación:** Las specs funcionales no presuponen stack; las decisiones técnicas vigentes se documentan por separado.
 
 El flujo es:
 
@@ -74,6 +74,8 @@ No es TDD (test-driven). **No escribimos tests primero; escribimos especificacio
 | --- | --- | --- |
 | [13-decisions-and-open-questions.md](13-decisions-and-open-questions.md) | Qué se decidió, qué aún es abierto | Todos |
 | [14-references.md](14-references.md) | Links a normativa, APIs, benchmarks | Engineering, Compliance |
+
+La implementación inicial usa **React.js**, **Node.js** y **Vercel**, manteniendo el núcleo portable. Consulta [el perfil técnico vigente](../sdd/TECH_STACK.md).
 
 ### Capa 6: Especificaciones ejecutables (SDD)
 

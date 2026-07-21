@@ -23,6 +23,14 @@ Sus principales objetivos son:
 
 El proyecto sigue un enfoque **Spec-Driven Development (SDD)**: primero se definen contratos formales y verificables; después se implementa y valida el software contra esas especificaciones.
 
+## Stack inicial
+
+- **Frontend:** React.js.
+- **Backend:** Node.js.
+- **Plataforma:** Vercel para la primera etapa.
+
+La arquitectura mantiene dominio, datos e integraciones desacoplados de Vercel para permitir que frontend, APIs, workers o persistencia migren de forma independiente cuando el crecimiento lo requiera. Los criterios completos están en [Stack técnico y estrategia de plataforma](docs/sdd/TECH_STACK.md).
+
 ## Documentación
 
 ### Producto y fundamentos
@@ -53,6 +61,15 @@ El proyecto sigue un enfoque **Spec-Driven Development (SDD)**: primero se defin
 - [Aplicaciones y dispositivos](docs/sdd/_guides/15-applications-and-devices.md)
 - [Contratos de API](docs/sdd/_guides/16-api-specifications.md)
 - [Contratos de eventos](docs/sdd/_guides/17-event-specifications.md)
+- [Calidad de ingeniería y gates SDD](docs/sdd/spec-207-transversal-engineering-quality/)
+- [Arquitectura free tier para el MVP](docs/sdd/spec-208-transversal-zero-cost-mvp/)
+- [Arquitectura del monorepo](docs/sdd/spec-209-transversal-monorepo-architecture/)
+- [Plataforma de datos e identidad](docs/sdd/spec-210-transversal-data-identity-platform/)
+- [Toolchain de implementación](docs/sdd/spec-211-transversal-implementation-toolchain/)
+- [Sistema de diseño y accesibilidad](docs/sdd/spec-212-transversal-design-system-accessibility/)
+- [Primer corte vertical del MVP](docs/sdd/spec-213-transversal-mvp-walking-skeleton/)
+- [Ambientes, configuración y secretos](docs/sdd/spec-214-transversal-environments-configuration-secrets/)
+- [Estándares de APIs HTTP](docs/sdd/spec-215-transversal-http-api-standards/)
 
 ## Roadmap resumido
 

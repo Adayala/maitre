@@ -1,0 +1,20 @@
+# Tareas — SPEC-213
+
+- [ ] Aprobar SPEC-213 y sus dependencias P0.
+- [ ] Crear únicamente los workspaces requeridos por el recorrido.
+- [ ] Fijar versiones de Node.js y npm.
+- [ ] Implementar `GET /health/live` y `GET /health/ready`.
+- [ ] Crear migraciones y seed ficticio idempotente.
+- [ ] Implementar adapters de identidad y persistencia Supabase.
+- [ ] Implementar `GET /v1/me/context` desde schema Zod.
+- [ ] Generar OpenAPI y contract tests.
+- [ ] Probar token inválido, sesión expirada y usuario sin membership.
+- [ ] Probar aislamiento cross-tenant positivo y negativo.
+- [ ] Implementar login, selector de contexto y logout.
+- [ ] Implementar Dash shell accesible.
+- [ ] Implementar estados de red, carga, vacío y error.
+- [ ] Añadir logs estructurados, correlación y redacción.
+- [ ] Configurar CI, cobertura y análisis Sonar.
+- [ ] Crear E2E de autenticación y entrada a sucursal.
+- [ ] Desplegar preview, development y demo dentro del free tier.
+- [ ] Documentar setup, migración, seed, despliegue y rollback.

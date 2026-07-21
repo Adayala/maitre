@@ -74,13 +74,25 @@ Los dominios publican hechos relevantes mediante un esquema versionado. Los cons
 
 ## Disponibilidad y operación local
 
-Se evaluará una arquitectura cloud con capacidades offline/locales para funciones críticas. Debe definirse:
+La primera implementación será cloud-first en Vercel, con frontend React.js y backend Node.js. Las capacidades offline/locales siguen siendo necesarias para las funciones críticas y deben definir:
 
 - Qué operaciones funcionan sin Internet.
 - Cómo se asignan identificadores.
 - Cómo se resuelven conflictos.
 - Qué funciones fiscales requieren conexión.
 - Cómo se sincronizan comandas y pagos.
+
+## Plataforma inicial y portabilidad
+
+- Vercel es la plataforma de despliegue inicial, no un límite permanente del producto.
+- React.js es la base de las aplicaciones web y Node.js la base de APIs, webhooks y procesos compatibles.
+- El dominio y los servicios de aplicación no importan SDKs de Vercel ni dependen de su ciclo de vida.
+- Base de datos, objetos, identidad, eventos, jobs, secretos y observabilidad se acceden mediante contratos propios y adaptadores reemplazables.
+- La configuración se inyecta por ambiente y no utiliza identificadores de plataforma como identidad de negocio.
+- Builds, tests y migraciones deben poder ejecutarse fuera de Vercel.
+- Frontend, APIs, workers, datos y almacenamiento pueden migrarse por separado.
+
+La plataforma se reevaluará por requisitos medidos: conexiones persistentes, workers continuos, procesos largos, throughput, residencia de datos, red privada, operación local, límites técnicos o costo. La plataforma destino se decidirá entonces; no se fija anticipadamente.
 
 ## Estrategia de implementación
 
@@ -107,6 +119,8 @@ analytics
 ```
 
 La extracción a microservicio debe justificarse por escalado, independencia, riesgo, equipo o integración, no por coincidir con un servicio comercial.
+
+El monolito modular inicial puede desplegarse en Vercel siempre que sus módulos conserven límites de dominio y puedan ejecutarse en un proceso Node.js o contenedor estándar fuera de la plataforma.
 
 ## Consistencia
 

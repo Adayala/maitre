@@ -1,6 +1,8 @@
 # Tasks — SPEC-048
 
-- [ ] Project bootstrap (Vite + React)
+- [ ] Project bootstrap (React.js + TypeScript)
+- [ ] Configure preview, staging and production deployments on Vercel
+- [ ] Verify build and tests outside Vercel
 - [ ] Auth flow
 - [ ] Setup wizard
 - [ ] Dashboard screen
@@ -9,6 +11,6 @@
 - [ ] Audit logs UI
 - [ ] Settings
 - [ ] Tests + E2E
-- [ ] Deployment
+- [ ] Production deployment on Vercel with rollback runbook
 
 **Est: ~40h**

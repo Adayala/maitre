@@ -16,6 +16,9 @@
 | D-010 | Servicio comercial no implica microservicio | Aceptada |
 | D-011 | La IA se construye sobre datos operativos y no como chatbot aislado | Aceptada |
 | D-012 | Google Business Profile será el primer candidato de Reputation | Propuesta |
+| D-013 | React.js será la tecnología base del frontend | Aceptada |
+| D-014 | Node.js será el runtime base del backend | Aceptada |
+| D-015 | Vercel será la plataforma inicial, con arquitectura portable y migración por componentes | Aceptada |
 
 ## Preguntas de producto
 
@@ -58,9 +61,11 @@
 
 ## Preguntas técnicas
 
-- Stack inicial.
+- Framework y estrategia de renderizado sobre React.js.
+- Framework HTTP y modelo de procesos sobre Node.js.
 - Base de datos y estrategia de aislamiento.
-- Operación cloud versus edge local.
+- Criterios y plataforma destino para componentes que excedan los límites de Vercel.
+- Operación cloud versus edge local para funciones críticas.
 - Protocolo de sincronización offline.
 - Proveedor de pagos.
 - Bus de eventos inicial.
