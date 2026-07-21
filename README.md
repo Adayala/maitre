@@ -70,6 +70,9 @@ La arquitectura mantiene dominio, datos e integraciones desacoplados de Vercel p
 - [Primer corte vertical del MVP](docs/sdd/spec-213-transversal-mvp-walking-skeleton/)
 - [Ambientes, configuración y secretos](docs/sdd/spec-214-transversal-environments-configuration-secrets/)
 - [Estándares de APIs HTTP](docs/sdd/spec-215-transversal-http-api-standards/)
+- [Observabilidad y confiabilidad](docs/sdd/spec-216-transversal-observability-reliability/)
+- [Eventos y procesamiento asíncrono](docs/sdd/spec-217-transversal-events-async-processing/)
+- [Operación offline y sincronización](docs/sdd/spec-218-transversal-offline-sync/)
 
 ## Roadmap resumido
 

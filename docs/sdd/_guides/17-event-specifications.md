@@ -2,12 +2,15 @@
 
 ## Principio
 
+Las reglas normativas transversales están definidas en
+[`SPEC-217 — Events & Async Processing`](../spec-217-transversal-events-async-processing/).
+
 Los dominios operativos comunican cambios relevantes mediante eventos. Cada evento:
 - Es un hecho inmutable ocurrido en el pasado.
 - Posee versión y namespace.
 - Contiene contexto: tenant, sucursal, actor, timestamp.
 - Es consumido idempotentemente por otros dominios.
-- Se guarda para auditoría y reconstrucción de estado.
+- Se publica de forma durable cuando cruza un límite de dominio. Auditoría y event sourcing son contratos separados.
 
 ## Estructura base
 
@@ -679,15 +682,15 @@ Eventos relacionados deben procesarse en orden:
 OrderSubmitted (1) → OrderItemApproved (2) → KitchenTicketCreated (3)
 ```
 
-Por eso cada evento incluye `correlationId` para agrupar.
+`correlationId` sólo agrupa un recorrido. El orden por agregado se detecta y valida mediante `aggregateVersion`, según SPEC-217.
 
 ### Retry
 
 ```
 Evento enviado pero consumidor offline:
 Reintentar con backoff exponencial (1s, 2s, 4s, 8s...)
-Máximo 5 reintentos.
-Después: dead-letter queue para investigación.
+El máximo depende de la criticidad, destino y ventana definida por cada spec.
+Después: estado dead-letter durable, observable y recuperable según runbook.
 ```
 
 ---
@@ -697,4 +700,3 @@ Después: dead-letter queue para investigación.
 **v1.0:** Eventos de Organization, Identity, Subscription, Floor, Ordering, Kitchen, Cash, Feedback
 **v2.0:** Reputation, AI (predictions), Integration webhooks
 **v3.0:** Eventos financieros de detalle, análisis predictivo maduro
-

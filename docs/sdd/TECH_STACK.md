@@ -190,6 +190,9 @@ La implementación debe cumplir además:
 - [`SPEC-213 — MVP Walking Skeleton`](spec-213-transversal-mvp-walking-skeleton/)
 - [`SPEC-214 — Environments, Configuration & Secrets`](spec-214-transversal-environments-configuration-secrets/)
 - [`SPEC-215 — HTTP API Standards`](spec-215-transversal-http-api-standards/)
+- [`SPEC-216 — Observability & Reliability`](spec-216-transversal-observability-reliability/)
+- [`SPEC-217 — Events & Async Processing`](spec-217-transversal-events-async-processing/)
+- [`SPEC-218 — Offline Operation & Synchronization`](spec-218-transversal-offline-sync/)
 
 Cuando una limitación de Vercel afecte una spec —por ejemplo tiempo real, procesamiento continuo u operación offline— la spec declara la capacidad requerida y la arquitectura selecciona el adaptador o despliegue que la satisfaga.
 

@@ -57,6 +57,9 @@ Bienvenido a las especificaciones ejecutables de Maitre.
 10. Implementa [`SPEC-213`](spec-213-transversal-mvp-walking-skeleton/) como primer corte vertical desplegable
 11. Aplica [`SPEC-214`](spec-214-transversal-environments-configuration-secrets/) para ambientes, configuración y secretos
 12. Usa [`SPEC-215`](spec-215-transversal-http-api-standards/) como contrato común de todas las APIs HTTP
+13. Aplica [`SPEC-216`](spec-216-transversal-observability-reliability/) para observabilidad, SLOs y recuperación
+14. Usa [`SPEC-217`](spec-217-transversal-events-async-processing/) para eventos, outbox y procesamiento asíncrono
+15. Aplica [`SPEC-218`](spec-218-transversal-offline-sync/) para operación offline y sincronización
 
 ### Para ver un ejemplo completo
 

@@ -201,12 +201,15 @@ Floor               Kitchen             Cash                Guest
 
 ## Consideraciones offline
 
+Las reglas normativas de captura local, sincronización, conflictos y seguridad están en
+[`SPEC-218 — Offline Operation & Synchronization`](../spec-218-transversal-offline-sync/).
+
 | App | Capacidad offline | Sincronización |
 | --- | --- | --- |
-| **Guest** | Menú (descargado), carrito local | Al conectar: sync pedido, recibir confirmación |
+| **Guest** | Menú descargado y carrito local | El pedido sólo se confirma al recibir ACK del servidor |
 | **Floor** | Pedidos locales, cambios de estado | Batch al conectar, idempotencia por pedidoId |
 | **Kitchen** | Descarga comandas, marca estados locales | Sync al conectar, reconciliación por ticketId |
-| **Cash** | Transacciones locales (si política lo permite) | Sync pendiente, validar contra servidor |
+| **Cash** | Última vista sólo lectura durante el MVP | Mutaciones de caja, pago y fiscalidad requieren conexión |
 | **Dash** | Última sesión en caché | Siempre requiere conexión para decisiones |
 
 ## Acceso y seguridad
