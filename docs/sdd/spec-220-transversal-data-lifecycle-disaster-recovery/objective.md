@@ -17,3 +17,5 @@ Limitar la pérdida de datos y el tiempo de recuperación ante error humano, mig
 - Tratar Git, logs o eventos como backup de base.
 - Definir plazos legales sin revisión especializada.
 - Recuperar datos nunca capturados o eliminados conforme a política.
+- Presentar rebuild desde Git/seed como backup de datos no regenerables.
+- Retener dumps I0 en GitHub artifacts, Vercel, chat o discos personales.

@@ -4,6 +4,8 @@
 
 - `pg_dump` es el mecanismo lógico portable inicial; backups administrados futuros pueden complementarlo, no eliminar automáticamente exports de salida.
 - Los objetivos de demo priorizan costo cero y datos sintéticos. No se extrapolan a operación comercial.
+- I0 no conserva dumps: usa rebuild desde Git/seed y un artefacto cifrado temporal para SPK-06.
+- No existe destino durable gratuito aprobado; esto bloquea datos no regenerables, no el scaffold sintético.
 - Objetos requieren pipeline separado aunque su metadata viva en PostgreSQL.
 - Identidad puede requerir reautenticación si credenciales/factores no son exportables de forma soportada.
 - Retención fiscal, laboral, privacidad y pagos requiere matriz con revisión especializada antes de fijar plazos.
@@ -28,3 +30,5 @@
 - RPO/RTO observado;
 - pérdida o divergencia detectada;
 - acciones, owner y vencimiento.
+
+El registro canónico del primer ejercicio es `SPEC-226/evidence/SPK-06.md`; hasta ejecutarlo permanece `NOT_RUN`.

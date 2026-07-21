@@ -31,7 +31,7 @@ Objetivos iniciales para ambientes no productivos:
 | demo | sintéticos curados | 24 horas | 4 horas en horario de trabajo |
 | production | reales | no definido | no definido |
 
-Production permanece bloqueado hasta aprobar RPO/RTO por recorrido, presupuesto, on-call, backups administrados, redundancia y obligaciones contractuales.
+Los valores de development/demo son hipótesis `NOT_APPROVED` hasta medir SPK-06. Para datos totalmente regenerables, la pérdida aceptada es reconstruir el dataset; no se reporta un RPO de backup ficticio. Production permanece bloqueado hasta aprobar RPO/RTO por recorrido, presupuesto, on-call, backups administrados, redundancia y obligaciones contractuales.
 
 ## 3. Backup PostgreSQL
 
@@ -43,7 +43,7 @@ Production permanece bloqueado hasta aprobar RPO/RTO por recorrido, presupuesto,
 - La automatización nunca imprime connection string, password o contenido del dump.
 - Backups incompletos, vacíos inesperados o sin hash fallan y alertan.
 
-Para demo se conserva inicialmente 7 diarios y 4 semanales, sujeto a medición del free tier. Si no puede mantenerse de forma segura y gratuita, se reduce el valor no regenerable de demo o se aprueba presupuesto; no se almacena un dump inseguro como compensación.
+I0 no programa retención de dumps. SPK-06 crea un dump temporal cifrado, verifica hash, restaura en destino aislado y lo elimina al cerrar el ejercicio. Si aparece un dato no regenerable, se bloquea su incorporación hasta aprobar destino, custodia, frecuencia y retención; no se almacena un dump inseguro como compensación.
 
 ## 4. Objetos
 
@@ -56,6 +56,8 @@ El backup de PostgreSQL no contiene bytes de Supabase Storage.
 - Preservar clasificación y no convertir objetos privados en públicos durante recovery.
 - Objetos regenerables pueden excluirse si el proceso y source están versionados.
 
+Storage permanece deshabilitado en I0. SPK-06 sólo evalúa export de objetos si el experimento crea fixtures temporales; no se crean buckets de producto para satisfacer esta spec.
+
 ## 5. Identidad
 
 - El dominio preserva User y memberships, pero credenciales/sesiones dependen de Supabase Auth.
@@ -64,6 +66,8 @@ El backup de PostgreSQL no contiene bytes de Supabase Storage.
 - Un DR puede requerir invalidar sesiones y ejecutar reautenticación/reset comunicado.
 - MFA, recovery codes y links no se incluyen en dumps generales.
 - Reconciliación verifica que cada identidad restaurada mapee al User correcto sin ampliar permisos.
+
+Los usuarios Auth I0 son sintéticos y se recrean mediante script autorizado separado del seed SQL. El script no contiene passwords/tokens; los valores se inyectan temporalmente. SPK-06 documenta limitaciones de export, pero no retiene credenciales.
 
 ## 6. Configuración, secretos y certificados
 
@@ -82,6 +86,8 @@ Para datos reales o no regenerables, el diseño busca:
 - una copia fuera del failure domain del proveedor/cuenta principal.
 
 Durante demo free tier, cualquier desviación queda explícita con el dato en riesgo, compensación y trigger de upgrade. Un backup en la misma base/cuenta no protege contra todos los incidentes.
+
+I0 declara una desviación total para datos regenerables: Git/migraciones/seed son fuentes de rebuild, no copias de la base. La regla 3-2-1 se vuelve obligatoria antes del primer dato no regenerable, salvo alternativa aprobada por riesgo.
 
 ## 8. Restore y disaster recovery
 
@@ -102,7 +108,7 @@ No se envían nuevamente pagos, facturas ARCA, emails o webhooks sólo porque el
 
 ## 9. Pruebas de restauración
 
-- Mensual para demo con datos no regenerables.
+- Según SPK-06 durante I0; mensual sólo si demo incorpora datos no regenerables después de aprobar su backup.
 - Antes de migración destructiva o cambio mayor de persistencia.
 - En destino aislado y sin credenciales capaces de contactar proveedores reales.
 - Ejecutada por una persona distinta del autor cuando el equipo lo permita.
@@ -162,3 +168,9 @@ Se monitorea:
 - drift entre inventario, objetos y DB.
 
 Alertas enlazan runbook y owner; un backup fallido no se silencia por un intento posterior sin revisar el gap.
+
+En I0 no hay backup programado ni alerta operativa. El ejercicio produce evidencia `PASS | FAIL | INCONCLUSIVE` en SPEC-226. Métricas de edad/RPO se activan cuando exista una política durable aprobada.
+
+## 14. Perfil I0
+
+El contrato concreto de rebuild, dump temporal, manifest, restore y cleanup está en [i0-recovery-profile.md](i0-recovery-profile.md). Ante conflicto, ese perfil limita I0; las secciones de datos reales siguen siendo gates futuros.

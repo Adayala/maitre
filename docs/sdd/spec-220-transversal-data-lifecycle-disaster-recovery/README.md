@@ -7,7 +7,7 @@ Contrato transversal para conservar, exportar, restaurar y eliminar datos de Mai
 | **ID** | SPEC-220 |
 | **Tipo** | Transversal / Data Reliability |
 | **Dominio** | Data / Operations / Privacy |
-| **Estado** | DRAFT — PROPOSED FOR APPROVAL |
+| **Estado** | DRAFT — READY FOR I0 REVIEW; NON-REGENERABLE DATA GATE NOT APPROVED |
 | **Prioridad** | P0 |
 | **Fase** | Antes de almacenar datos no regenerables |
 | **Depende de** | SPEC-207, SPEC-208, SPEC-210, SPEC-214, SPEC-216, SPEC-219 |
@@ -29,3 +29,6 @@ Contrato transversal para conservar, exportar, restaurar y eliminar datos de Mai
 - [Tareas](tasks.md)
 - [Verificación](verification.md)
 - [Decisiones](notes.md)
+- [Perfil de recuperación I0](i0-recovery-profile.md)
+
+I0 conserva sólo datos sintéticos regenerables. No existe todavía un destino durable aprobado para backups; SPK-06 prueba portabilidad con un dump temporal cifrado y cleanup obligatorio.
