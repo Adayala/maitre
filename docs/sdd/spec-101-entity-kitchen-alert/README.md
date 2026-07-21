@@ -1,10 +1,13 @@
-# spec-101-entity-kitchen-alert
+# [SPEC-101] Kitchen Alert Entity
 
-**Status:** DRAFT
-**Phase:** TBD
-**Type:** TBD
-**Priority:** TBD
-
----
-
-Specification metadata to be filled during peer review.
+| Campo | Valor |
+| --- | --- |
+| **ID** | SPEC-101 |
+| **Tipo** | Entity |
+| **Dominio** | Kitchen |
+| **Estado** | DRAFT |
+| **Readiness** | NOT_ASSESSED |
+| **Prioridad** | UNASSIGNED |
+| **Owner** | UNASSIGNED |
+| **Reviewer** | UNASSIGNED |
+| **Blockers** | Revisar contrato y asignar prioridad/ownership |
