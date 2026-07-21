@@ -77,6 +77,9 @@ El token autentica una identidad. La autorización de tenant, sucursal, rol y en
 
 ## Backups en Free
 
+El contrato normativo de ciclo de vida, RPO/RTO y restauración está en
+[`SPEC-220 — Data Lifecycle, Backup & Disaster Recovery`](../spec-220-transversal-data-lifecycle-disaster-recovery/).
+
 Supabase recomienda exportaciones periódicas para proyectos Free. Maitre requiere:
 
 - `pg_dump` lógico cifrado fuera de Supabase;

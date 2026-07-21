@@ -73,6 +73,12 @@ La arquitectura mantiene dominio, datos e integraciones desacoplados de Vercel p
 - [Observabilidad y confiabilidad](docs/sdd/spec-216-transversal-observability-reliability/)
 - [Eventos y procesamiento asíncrono](docs/sdd/spec-217-transversal-events-async-processing/)
 - [Operación offline y sincronización](docs/sdd/spec-218-transversal-offline-sync/)
+- [Seguridad, privacidad y aislamiento multi-tenant](docs/sdd/spec-219-transversal-security-privacy/)
+- [Ciclo de vida, backups y disaster recovery](docs/sdd/spec-220-transversal-data-lifecycle-disaster-recovery/)
+- [CI/CD y gestión de releases](docs/sdd/spec-221-transversal-ci-cd-release-management/)
+- [Alcance y secuencia del MVP](docs/sdd/spec-222-transversal-mvp-scope-delivery-plan/)
+- [Distribución de estado en tiempo real](docs/sdd/spec-223-transversal-realtime-state-distribution/)
+- [Estrategia de testing y datos de prueba](docs/sdd/spec-224-transversal-testing-test-data/)
 
 ## Roadmap resumido
 

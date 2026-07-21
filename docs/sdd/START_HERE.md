@@ -60,6 +60,12 @@ Bienvenido a las especificaciones ejecutables de Maitre.
 13. Aplica [`SPEC-216`](spec-216-transversal-observability-reliability/) para observabilidad, SLOs y recuperación
 14. Usa [`SPEC-217`](spec-217-transversal-events-async-processing/) para eventos, outbox y procesamiento asíncrono
 15. Aplica [`SPEC-218`](spec-218-transversal-offline-sync/) para operación offline y sincronización
+16. Verifica [`SPEC-219`](spec-219-transversal-security-privacy/) para seguridad, privacidad y aislamiento multi-tenant
+17. Aplica [`SPEC-220`](spec-220-transversal-data-lifecycle-disaster-recovery/) para ciclo de vida, backups y disaster recovery
+18. Usa [`SPEC-221`](spec-221-transversal-ci-cd-release-management/) para CI/CD, promoción y releases recuperables
+19. Ejecuta [`SPEC-222`](spec-222-transversal-mvp-scope-delivery-plan/) para mantener alcance y secuencia del MVP
+20. Aplica [`SPEC-223`](spec-223-transversal-realtime-state-distribution/) para actualización live de Floor y Kitchen
+21. Usa [`SPEC-224`](spec-224-transversal-testing-test-data/) para estrategia de tests y datos sintéticos
 
 ### Para ver un ejemplo completo
 

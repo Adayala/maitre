@@ -1,5 +1,7 @@
 # MVP y roadmap
 
+> Este documento describe la evolución del producto. El alcance implementable inmediato, la distinción entre MVP Demo y MVP Pilot y los gates por incremento se definen en [`SPEC-222`](../sdd/spec-222-transversal-mvp-scope-delivery-plan/).
+
 ## Objetivo del MVP
 
 Demostrar que un tenant puede contratar servicios, configurar una sucursal y completar una visita de salón desde la reserva o llegada hasta la cuenta, sin cerrar todavía todas las integraciones fiscales y predictivas.

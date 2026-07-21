@@ -1,0 +1,31 @@
+# [SPEC-220] Data Lifecycle, Backup & Disaster Recovery
+
+Contrato transversal para conservar, exportar, restaurar y eliminar datos de Maitre de manera verificable y portable.
+
+| Campo | Valor |
+| --- | --- |
+| **ID** | SPEC-220 |
+| **Tipo** | Transversal / Data Reliability |
+| **Dominio** | Data / Operations / Privacy |
+| **Estado** | DRAFT — PROPOSED FOR APPROVAL |
+| **Prioridad** | P0 |
+| **Fase** | Antes de almacenar datos no regenerables |
+| **Depende de** | SPEC-207, SPEC-208, SPEC-210, SPEC-214, SPEC-216, SPEC-219 |
+
+## Decisiones centrales
+
+- Backup no existe hasta que un restore probado demuestra recuperabilidad.
+- PostgreSQL, objetos, identidad, configuración y secretos se recuperan por procedimientos coordinados pero separados.
+- Exports son cifrados, inventariados y almacenados fuera del proveedor origen.
+- Retención y borrado se definen por categoría de datos y obligación, no mediante una duración global.
+- Demo/free tier usa datos sintéticos y objetivos modestos; producción exige una decisión de plataforma y continuidad separada.
+
+## Documentos
+
+- [Objetivo](objective.md)
+- [Especificación](specification.md)
+- [Reglas](rules.md)
+- [Plan](plan.md)
+- [Tareas](tasks.md)
+- [Verificación](verification.md)
+- [Decisiones](notes.md)

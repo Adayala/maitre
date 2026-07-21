@@ -193,6 +193,12 @@ La implementación debe cumplir además:
 - [`SPEC-216 — Observability & Reliability`](spec-216-transversal-observability-reliability/)
 - [`SPEC-217 — Events & Async Processing`](spec-217-transversal-events-async-processing/)
 - [`SPEC-218 — Offline Operation & Synchronization`](spec-218-transversal-offline-sync/)
+- [`SPEC-219 — Application Security, Privacy & Tenant Isolation`](spec-219-transversal-security-privacy/)
+- [`SPEC-220 — Data Lifecycle, Backup & Disaster Recovery`](spec-220-transversal-data-lifecycle-disaster-recovery/)
+- [`SPEC-221 — CI/CD & Release Management`](spec-221-transversal-ci-cd-release-management/)
+- [`SPEC-222 — MVP Scope & Delivery Plan`](spec-222-transversal-mvp-scope-delivery-plan/)
+- [`SPEC-223 — Realtime State Distribution`](spec-223-transversal-realtime-state-distribution/)
+- [`SPEC-224 — Testing & Test Data Strategy`](spec-224-transversal-testing-test-data/)
 
 Cuando una limitación de Vercel afecte una spec —por ejemplo tiempo real, procesamiento continuo u operación offline— la spec declara la capacidad requerida y la arquitectura selecciona el adaptador o despliegue que la satisfaga.
 
