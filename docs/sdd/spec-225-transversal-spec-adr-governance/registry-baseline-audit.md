@@ -56,6 +56,24 @@ La ruta legacy tampoco se elimina desde esta auditoría, porque puede pertenecer
 concurrente. Hasta resolver ambos casos, los conteos del filesystem no equivalen al
 catálogo publicable desde Git.
 
+## 2.2 Checkpoint del conjunto versionado
+
+Después de normalizar los lotes seguros, los 90 README raíz versionados cumplen este
+baseline estructural:
+
+- `ID` coincide con el número del directorio;
+- el título comienza con `[SPEC-NNN]`;
+- no existen IDs duplicados dentro del conjunto;
+- `Tipo` base coincide con el prefijo del slug;
+- `Subtype` conserva especializaciones sin ampliar el enum base;
+- `Estado`, `Readiness`, `Prioridad`, `Owner` y `Reviewer` están presentes;
+- estados y prioridades asignadas usan valores canónicos;
+- readiness bloqueada declara motivos, incluido ownership cuando está sin asignar.
+
+Este checkpoint es una comprobación documental provisional, no evidencia generada por
+`npm run sdd:validate`. Excluye deliberadamente los 136 README no rastreados y la ruta
+legacy ausente; ambos continúan como blockers del catálogo completo.
+
 ## 3. Orden de remediación
 
 1. Mantener estricto el subset I0 ya reconciliado.
