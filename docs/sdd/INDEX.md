@@ -1,8 +1,16 @@
 # SDD Specifications Index
 
-Índice maestro de todas las especificaciones de Maitre.
+Roadmap histórico de capacidades y especificaciones de Maitre.
 
-**Convención:** Cada spec vive en su propio directorio con múltiples documentos.
+> **No es la fuente autoritativa de metadata ni estado.** Cada README `spec-NNN-*` es
+> autoritativo según [SPEC-225](spec-225-transversal-spec-adr-governance/registry-contract.md).
+> Los nombres sin número y checkboxes de este archivo son referencias históricas de
+> planificación; no equivalen a slugs actuales, aprobación ni implementación.
+
+Consulta [START_HERE.md](START_HERE.md) para navegación vigente. Este índice será una
+proyección generada cuando se implemente `npm run sdd:validate`.
+
+**Convención vigente:** Cada spec usa `spec-NNN-[type]-[name]/` y contiene múltiples documentos.
 
 ```
 /docs/sdd/
@@ -15,7 +23,7 @@
 │   ├── 16-api-specifications.md
 │   └── 17-event-specifications.md
 │
-├── spec-entity-tenant/               (spec individual)
+├── spec-001-entity-tenant/           (spec individual)
 │   ├── README.md
 │   ├── structure.md
 │   ├── rules.md
@@ -23,7 +31,7 @@
 │   ├── examples.md
 │   └── relationships.md
 │
-└── spec-api-tenants/
+└── spec-007-api-tenants/
     ├── README.md
     ├── post-create.md
     ├── get-fetch.md
@@ -41,7 +49,7 @@
 
 #### Entidades
 
-- [ ] [spec-entity-tenant](spec-entity-tenant/) — Tenant: comprador, límite de aislamiento
+- [ ] [SPEC-001 — Tenant](spec-001-entity-tenant/) — Tenant: comprador, límite de aislamiento
 - [ ] spec-entity-brand — Brand: identidad comercial
 - [ ] spec-entity-fiscal-entity — FiscalEntity: CUIT, condición tributaria
 - [ ] spec-entity-branch — Branch: sucursal física
@@ -345,7 +353,10 @@
 
 ---
 
-## Status Tracker
+## Estimaciones históricas de alcance
+
+Los siguientes conteos son la fotografía del roadmap original. No se usan como métricas
+vigentes y sus checkboxes no representan `Estado` ni `Readiness`.
 
 ```
 Fase 1 — ~48 specs
@@ -381,18 +392,18 @@ Fase 5 — ~30 specs (Reputation, Connectors, Apps)
 Transversales — ~25 specs
 ```
 
-**Total MVP: ~193 specs**
+El conteo vigente se derivará del catálogo; no se mantiene manualmente aquí.
 
 ---
 
 ## Cómo usar este índice
 
-1. **Selecciona una spec** que no esté hecha.
-2. **Crea directorio:** `/docs/sdd/spec-[type]-[name]/`
-3. **Copia estructura** de ejemplo: `spec-entity-tenant/`
-4. **Escribe documentos** (structure.md, rules.md, examples.md, etc)
-5. **Actualiza status:** Marca [ ] → [x] en esta INDEX
-6. **Link desde guías:** Si la spec afecta foundation o roadmap, actualiza referencias
+1. Usa este archivo para entender el alcance histórico, no para inferir estado.
+2. Busca el ID/directorio vigente y abre su README autoritativo.
+3. Para crear una spec, reserva ID y aplica el paquete mínimo de SPEC-225.
+4. Declara estado, readiness, ownership, dependencias y blockers reales.
+5. No cambies un checkbox para representar aprobación o implementación.
+6. Actualiza specs, ADRs y guías afectadas en el mismo cambio.
 
 ---
 
@@ -403,17 +414,15 @@ Transversales — ~25 specs
 1. [`_guides/README.md`](_guides/README.md) — Cómo leer las specs
 2. [`_guides/SPEC_STRUCTURE.md`](_guides/SPEC_STRUCTURE.md) — Estructura de directorios
 3. [`_guides/01-priority-specs-todo.md`](_guides/01-priority-specs-todo.md) — Orden de prioridad
-4. Ejemplo: `spec-entity-tenant/` — Cómo se ve una spec completada
+4. Ejemplo: [`SPEC-001 — Tenant`](spec-001-entity-tenant/) — spec de entidad numerada
 
 ---
 
 ## Próximos pasos
 
-1. Completar `spec-entity-tenant/` con examples.md y relationships.md
-2. Crear `spec-api-tenants/` con endpoints
-3. Crear `spec-event-tenant-created/`
-4. Crear otras specs de Fase 1 Organization
-5. Crear specs de Identity
-6. Continuar con Subscription, Catalog, Audit
-
-**Timeline:** Fase 1 en ~3-4 semanas, Fase 2 en ~4 semanas.
+1. Reconciliar los README no rastreados identificados por SPEC-225.
+2. Implementar el catálogo y `npm run sdd:validate`.
+3. Regenerar este índice con IDs, slugs, estado y readiness reales.
+4. Resolver owners/reviewers y blockers del subset I0.
+5. Ejecutar SPEC-226 y decidir ADR-002/003/004 con evidencia.
+6. Aprobar únicamente las specs necesarias antes del walking skeleton.
