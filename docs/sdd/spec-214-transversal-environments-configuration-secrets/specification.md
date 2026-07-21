@@ -13,6 +13,19 @@
 
 `production` queda reservado para evitar que un despliegue accidental se presente como productivo. Su habilitación requiere decisión de uso comercial, seguridad, privacidad, backup, soporte y plataforma compatibles.
 
+### Mapping inicial en Vercel Hobby
+
+| Ambiente Maitre | Target Vercel | Fuente |
+| --- | --- | --- |
+| `local` | Development | `vercel env pull` o valores locales seguros |
+| `test` | no deploy | variables sintéticas de CI |
+| `preview` | Preview | branches/PRs |
+| `development` | Preview con branch persistente autorizada | integración compartida |
+| `demo` | Production target sobre `main` | datos sintéticos curados |
+| `production` | no configurado | decisión futura |
+
+Usar el target llamado “Production” por Vercel para publicar `demo` no convierte a Maitre en producción comercial. `APP_ENV=demo` y `VITE_APP_ENV=demo` conservan esa distinción dentro del sistema.
+
 ## 2. Clasificación de configuración
 
 ### Pública
@@ -35,6 +48,8 @@ Toda variable web pública usa el prefijo requerido por el bundler, actualmente 
 - certificados y claves de ARCA;
 - tokens de email, pagos, observabilidad o webhooks;
 - material de cifrado y credenciales administrativas.
+
+El walking skeleton no requiere una secret/service-role key de Supabase. Si un caso administrativo futuro la necesita, se agrega como variable opcional server-only mediante una spec, con autorización previa, alcance y rotación; nunca se reutiliza como credencial general de runtime.
 
 No se permite importar el módulo de configuración server-only desde `apps/web`, `packages/ui`, `packages/design-tokens` ni contratos compartidos con el navegador.
 
@@ -77,6 +92,10 @@ Vercel y CI inyectan variables por ambiente. La configuración equivalente puede
 - Variables se asignan explícitamente a preview/development/production; no se confía en defaults del dashboard.
 - Un inventario versionado registra nombre, clasificación, consumidor, owner, ambientes, origen y política de rotación, pero no el valor.
 
+La integración Supabase–Vercel puede inyectar nombres propios del proveedor. El deployment los mapea al contrato de [configuration-inventory.md](configuration-inventory.md); application/domain no lee `POSTGRES_*`, `NEXT_PUBLIC_*` ni nombres de integración directamente.
+
+`DATABASE_URL` corresponde al endpoint pooled de runtime. `DATABASE_MIGRATION_URL` corresponde a una conexión administrativa/directa separada y sólo existe en el job/manual de migración autorizado. La selección exacta de pooler y parámetros queda pendiente de SPK-02.
+
 ## 6. Feature flags
 
 - Un flag controla exposición, no autorización ni invariantes de seguridad.
@@ -115,3 +134,13 @@ Se rota inmediatamente ante exposición, cambio de responsable, uso inesperado o
 - Logs aplican allowlist de campos; redaction es defensa adicional.
 - Un secreto detectado se considera comprometido: primero revocar/rotar, luego eliminar del historial o artefactos según el incidente.
 - Nunca se publica el valor en un issue, PR, chat o captura para pedir ayuda.
+
+## 10. Incorporación de una integración externa
+
+1. El owner conecta cuentas mediante la integración oficial e invita a los responsables necesarios.
+2. Se verifica repositorio, proyecto y environments sin copiar valores.
+3. Se compara el inventario de variables disponible contra el contrato versionado.
+4. Se crean aliases/mappings para browser, runtime y migración.
+5. Se confirma que Preview no recibe credenciales de migración ni administrativas.
+6. Se redeploya porque cambios de variables no alteran deployments previos.
+7. Se ejecutan smoke tests y los spikes SPK-02/03 antes de aceptar ADR-002.

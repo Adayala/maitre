@@ -1,0 +1,80 @@
+# Inventario de configuración — SPEC-214
+
+Este documento define nombres, consumidores y clasificación. No contiene valores reales.
+
+## Browser build
+
+| Variable | Requerida | Propósito | Ambientes |
+| --- | --- | --- | --- |
+| `VITE_APP_ENV` | sí | `local | preview | development | demo` | todos los builds web |
+| `VITE_APP_VERSION` | sí | commit/version sanitizada | preview, development, demo |
+| `VITE_API_BASE_URL` | sí | origen público de API | todos |
+| `VITE_SUPABASE_URL` | sí para Auth real | URL pública del proyecto | preview, development, demo |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | sí para Auth real | clave pública para browser | preview, development, demo |
+
+Sólo este allowlist puede entrar al bundle. Ningún nombre que contenga `SECRET`, `SERVICE_ROLE`, `DATABASE`, `PASSWORD`, `PRIVATE_KEY` o `MIGRATION` es aceptado por el schema/browser audit.
+
+## API runtime
+
+| Variable | Requerida | Secreta | Propósito |
+| --- | --- | --- | --- |
+| `APP_ENV` | sí | no | ambiente lógico Maitre |
+| `APP_VERSION` | sí fuera de local | no | commit/version desplegada |
+| `LOG_LEVEL` | sí | no | nivel allowlisted |
+| `API_HOST` | local/Node | no | bind address; adapter puede proveerlo |
+| `API_PORT` | local/Node | no | puerto validado |
+| `CORS_ALLOWED_ORIGINS` | sí | no | allowlist explícita |
+| `DATABASE_URL` | sí | sí | conexión pooled de runtime |
+| `AUTH_PROVIDER` | sí | no | adapter seleccionado, inicialmente `supabase` |
+| `AUTH_ISSUER` | sí | no | issuer esperado |
+| `AUTH_AUDIENCE` | sí | no | audience esperada |
+| `AUTH_JWKS_URL` | sí | no | origen confiable de claves públicas |
+| `AUTH_ALLOWED_ALGORITHMS` | sí | no | allowlist, nunca derivada del token |
+| `AUTH_CLOCK_SKEW_SECONDS` | sí | no | tolerancia acotada |
+| `REQUEST_TIMEOUT_MS` | sí | no | presupuesto máximo de request |
+
+`SUPABASE_SECRET_KEY`/`SUPABASE_SERVICE_ROLE_KEY` no forman parte del runtime requerido para I0.
+
+## Migraciones
+
+| Variable | Requerida | Secreta | Consumidor |
+| --- | --- | --- | --- |
+| `DATABASE_MIGRATION_URL` | sí al migrar | sí | job/manual autorizado de migración |
+| `MIGRATION_ENV` | sí al migrar | no | guard contra target incorrecto |
+
+Estas variables no se entregan al browser, Preview ni al proceso API normal. Las migraciones verifican target y requieren aprobación explícita para ambientes compartidos.
+
+## Test/CI
+
+| Variable | Requerida | Propósito |
+| --- | --- | --- |
+| `APP_ENV=test` | sí | activa únicamente configuración segura de tests |
+| `DATABASE_URL` | integración | base efímera/sintética |
+| `CI` | provista | comportamiento no interactivo |
+
+Tests unitarios no requieren Supabase, Vercel ni red. Secrets canarios deben ser falsos, revocables y distinguibles de credenciales reales.
+
+## Mapping de integración
+
+La integración puede proporcionar nombres como `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `POSTGRES_URL` o variantes directas/non-pooling. Un paso de deployment/configuración los mapea así, sujeto a SPK-02/03:
+
+```text
+public Supabase URL        -> VITE_SUPABASE_URL
+publishable browser key   -> VITE_SUPABASE_PUBLISHABLE_KEY
+pooled runtime connection -> DATABASE_URL
+direct migration connection -> DATABASE_MIGRATION_URL
+```
+
+No se realiza mapping automático de una secret/service-role key. Los nombres exactos ofrecidos por el proveedor se registran durante el spike sin sus valores.
+
+## Ownership inicial
+
+| Área | Owner | Reviewer | Rotación/acción |
+| --- | --- | --- | --- |
+| Supabase project/integration | pendiente | pendiente | revocar conexión o rotar desde proveedor |
+| Vercel project variables | pendiente | pendiente | actualizar por environment y redeploy |
+| Database runtime | pendiente | pendiente | rotar y validar readiness |
+| Database migration | pendiente | pendiente | rotar fuera del runtime |
+| Auth public configuration | pendiente | pendiente | actualizar build y redeploy |
+
+Los nombres personales se completan durante onboarding; ninguna fila se considera operativa mientras owner/reviewer sigan pendientes.

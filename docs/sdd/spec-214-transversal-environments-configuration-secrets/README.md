@@ -7,7 +7,7 @@ Contrato para configurar y desplegar Maitre de forma reproducible, segura y port
 | **ID** | SPEC-214 |
 | **Tipo** | Transversal / Platform Security |
 | **Dominio** | Platform / Operations |
-| **Estado** | DRAFT — PROPOSED FOR APPROVAL |
+| **Estado** | DRAFT — READY FOR I0 REVIEW |
 | **Prioridad** | P0 |
 | **Fase** | Antes del primer despliegue compartido |
 | **Depende de** | SPEC-207–211, SPEC-213 |
@@ -27,3 +27,4 @@ Los secretos nunca se incluyen en Git, bundles web, previews no autorizadas, log
 - [Tareas](tasks.md)
 - [Verificación](verification.md)
 - [Decisiones](notes.md)
+- [Inventario de configuración](configuration-inventory.md)

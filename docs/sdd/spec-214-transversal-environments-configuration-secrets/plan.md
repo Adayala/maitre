@@ -2,7 +2,7 @@
 
 ## Fase 1 — Contrato
 
-1. Inventariar variables requeridas por el walking skeleton.
+1. Aprobar `configuration-inventory.md` como contrato sin valores.
 2. Clasificar browser, server, migración y CI.
 3. Implementar schemas Zod y entrypoints separados.
 4. Crear `.env.example` y chequeo de drift.
@@ -10,9 +10,9 @@
 ## Fase 2 — Ambientes
 
 1. Configurar local/test sin secretos reales.
-2. Mapear preview, development y demo en Vercel/Supabase.
+2. Mapear preview, development y demo en Vercel/Supabase según el target inicial.
 3. Separar credenciales de runtime, migración y administración.
-4. Verificar límites de acceso y datos sintéticos.
+4. Verificar límites de acceso y datos sintéticos, sin credenciales de migración en Preview.
 
 ## Fase 3 — Seguridad y operación
 

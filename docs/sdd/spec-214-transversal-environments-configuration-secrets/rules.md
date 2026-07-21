@@ -14,6 +14,10 @@
 10. Toda exposición inicia revocación/rotación; borrar el texto no recupera el secreto.
 11. Los nombres de configuración son portables y no codifican IDs internos de Vercel.
 12. Production permanece deshabilitado hasta una decisión explícita de readiness comercial y operacional.
+13. `demo` conserva `APP_ENV=demo` aunque use el target Production de Vercel.
+14. Preview no recibe `DATABASE_MIGRATION_URL` ni claves administrativas.
+15. El walking skeleton no requiere una Supabase secret/service-role key.
+16. Nombres inyectados por integraciones se mapean en composition/deployment, no se propagan al dominio.
 
 ## Excepciones
 

@@ -1,7 +1,7 @@
 # Tareas — SPEC-214
 
 - [ ] Aprobar matriz de ambientes y clasificación.
-- [ ] Crear inventario versionado sin valores.
+- [x] Crear inventario versionado sin valores (contrato documental).
 - [ ] Implementar schemas browser/server/test con Zod.
 - [ ] Impedir imports server-only desde el grafo web.
 - [ ] Crear `.env.example` seguro y documentado.
@@ -9,6 +9,9 @@
 - [ ] Ignorar todos los archivos locales con secretos.
 - [ ] Separar credenciales de runtime y migraciones.
 - [ ] Configurar variables por ambiente en Vercel.
+- [ ] Mapear variables de la integración a nombres portables.
+- [ ] Confirmar `APP_ENV=demo` en el target Production de Vercel.
+- [ ] Confirmar ausencia de migration/admin credentials en Preview.
 - [ ] Restringir secretos disponibles en previews.
 - [ ] Configurar secret scanning pre-commit/CI según SPEC-207.
 - [ ] Inspeccionar bundles, source maps y artefactos.
@@ -16,3 +19,4 @@
 - [ ] Documentar promoción, smoke test y rollback.
 - [ ] Probar arranque fallido con configuración inválida.
 - [ ] Probar rotación con un secreto canario, nunca uno real.
+- [ ] Redeployar y ejecutar smoke test después de cada cambio de variables.

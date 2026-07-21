@@ -7,6 +7,10 @@
 - `.env.example` documenta forma, nunca valores utilizables.
 - Los flags iniciales son configuración tipada; un servicio dedicado sólo se justifica por segmentación o operación dinámica medida.
 - Production es un ambiente reservado, no un alias de demo.
+- En Vercel Hobby, `demo` puede desplegarse en el target denominado Production manteniendo `APP_ENV=demo`; la distinción es contractual y visible.
+- `DATABASE_URL` es pooled/runtime y `DATABASE_MIGRATION_URL` es directa/administrativa; SPK-02 valida los endpoints concretos.
+- Se prefieren publishable keys actuales para browser. Las legacy `anon` sólo son fallback de compatibilidad durante validación.
+- No se agrega una Supabase secret/service-role key hasta que una spec server-side demuestre su necesidad.
 
 ## Convención de nombres
 
