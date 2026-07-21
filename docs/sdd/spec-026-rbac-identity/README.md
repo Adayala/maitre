@@ -1,0 +1,16 @@
+# [SPEC-026] Identity RBAC
+
+Quién puede invitar, desactivar, cambiar roles.
+
+## Metadata
+| Campo | Valor |
+| --- | --- |
+| **ID** | SPEC-026 |
+| **Tipo** | RBAC |
+| **Dominio** | Identity |
+| **Status** | PLANNED |
+| **Prioridad** | P0 |
+| **Fase** | 1 |
+| **Estimación** | 4h |
+
+**Status: PLANNED**

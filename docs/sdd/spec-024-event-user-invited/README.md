@@ -1,0 +1,15 @@
+# [SPEC-024] UserInvited Event
+
+Evento cuando se invita un usuario.
+
+## Metadata
+| Campo | Valor |
+| --- | --- |
+| **ID** | SPEC-024 |
+| **Tipo** | Event |
+| **Dominio** | Identity |
+| **Status** | PLANNED |
+| **Prioridad** | P0 |
+| **Fase** | 1 |
+
+**Status: PLANNED**

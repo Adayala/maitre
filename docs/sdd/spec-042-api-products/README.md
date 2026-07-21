@@ -1,0 +1,16 @@
+# [SPEC-042] Products API
+
+CRUD /categories/:id/products.
+
+## Metadata
+| Campo | Valor |
+| --- | --- |
+| **ID** | SPEC-042 |
+| **Tipo** | API |
+| **Dominio** | Catalog |
+| **Status** | PLANNED |
+| **Prioridad** | P1 |
+| **Fase** | 1 |
+| **Estimación** | 4h |
+
+**Status: PLANNED**
