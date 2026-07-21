@@ -31,6 +31,8 @@ Reglas:
 - health exitoso se muestrea o excluye para reducir ruido y cuota;
 - el logger se inyecta; dominio puro no depende de una biblioteca concreta.
 
+El schema mínimo, event codes I0 y campos prohibidos están en [i0-telemetry-contract.md](i0-telemetry-contract.md). API escribe JSON a stdout/stderr; la plataforma puede capturarlo sin introducir un SDK propietario en application/domain.
+
 ## 3. Trazas
 
 - OpenTelemetry instrumenta HTTP, casos de uso y dependencias relevantes.
@@ -57,6 +59,8 @@ Indicadores mínimos:
 
 No se usan tenantId, userId, resourceId, URL completa, correlationId o mensaje de error como label de métrica. Esos detalles viven en trazas/logs.
 
+I0 instrumenta únicamente HTTP, readiness, DB/pool cuando exista, Auth verification y `/v1/me/context`. Idempotencia, integraciones y métricas de producto se agregan junto con las specs que las implementan.
+
 ## 5. SLI, SLO y error budget
 
 El MVP comienza con objetivos internos, no SLA contractual:
@@ -69,7 +73,7 @@ El MVP comienza con objetivos internos, no SLA contractual:
 | Comando crítico | resultados sin duplicación | 100 % |
 | Demo | recorridos E2E sintéticos exitosos | 99.0 % en ventana medida |
 
-Los objetivos se revisan después de obtener baseline. Ventanas con datos insuficientes se reportan como tales, no como 100 %. El consumo acelerado del error budget detiene releases de riesgo y prioriza confiabilidad.
+Estos objetivos son hipótesis `NOT_OPERATIONAL`. Se revisan después de obtener baseline y seleccionar una fuente durable. Ventanas con datos insuficientes se reportan como `NO_DATA`, no como 100 %. Un error budget sólo participa del release gate después de que cálculo, owner y runbook hayan sido verificados.
 
 ## 6. Alertas
 
@@ -83,6 +87,8 @@ Una alerta debe ser:
 - probada con una condición sintética segura.
 
 P1 implica pérdida/duplicación monetaria o fiscal, aislamiento de tenant vulnerado, indisponibilidad extensa o corrupción. Alertas de cuota del free tier siguen SPEC-208.
+
+Durante I0 no existe guardia ni canal de paging. Una condición registrada en logs o CI no se llama “alerta operativa”. La activación futura exige owner, canal, horario de cobertura, prueba de entrega y fallback.
 
 ## 7. Health y synthetic checks
 
@@ -128,3 +134,21 @@ Todo incidente relevante registra timeline, impacto, detección, mitigación, ca
 - Telemetría detallada se reduce antes de perder señales críticas.
 - Exportadores pueden apuntar a consola estructurada, backend OpenTelemetry compatible o proveedor futuro.
 - Un cambio de proveedor no modifica instrumentación de dominio/aplicación.
+
+### Baseline I0
+
+- `local/test`: stdout JSON y collector OpenTelemetry local opcional;
+- `preview/demo`: stdout JSON capturado por Vercel, sujeto a su retención vigente;
+- CI: reports sanitizados con retención mínima;
+- no existe exporter SaaS, dashboard durable ni alerta operativa por defecto;
+- trazas no se fuerzan a exportarse cuando no hay destino: propagación e instrumentación siguen testeables con exporter in-memory.
+
+Antes de depender de datos históricos se selecciona un backend mediante ADR y presupuesto SPEC-208. La retención limitada se documenta como capacidad ausente, no se compensa aumentando indiscriminadamente el volumen de logs.
+
+## 11. Correlation y confianza
+
+- El servidor genera ULID/UUID opaco cuando falta `X-Correlation-Id`.
+- Un valor entrante sólo se conserva si cumple formato/longitud allowlisted; de otro modo se reemplaza.
+- `traceparent` se parsea con implementación estándar y nunca se concatena en SQL/HTML.
+- `correlationId` vuelve en envelope/problem y response header.
+- Identificadores externos son pistas de correlación, no autoridad ni permiso.

@@ -14,3 +14,8 @@
 10. Telemetría depende de contratos propios y puede cambiar de exporter.
 11. Un incidente de aislamiento, secreto, dinero o fiscalidad se trata como alta severidad.
 12. La instrumentación debe tener tests y presupuesto de costo/latencia.
+13. I0 no declara SLO, dashboard o alerta `OPERATIONAL` sin fuente durable, owner y prueba.
+14. Dominio puro no importa logger, OpenTelemetry ni SDK de plataforma.
+15. Correlation/trace IDs nunca conceden autoridad ni se aceptan sin validación.
+16. Un exporter ausente no rompe el caso de uso; una configuración inválida sí afecta readiness cuando sea obligatoria.
+17. Sólo se instrumentan capacidades implementadas; no se crean métricas futuras vacías.

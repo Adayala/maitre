@@ -17,3 +17,5 @@ Hacer que los fallos se descubran por evidencia antes que por reportes ambiguos 
 - Registrar todo request/body por defecto.
 - Usar logs como auditoría fiscal o de negocio.
 - Prometer SLA comercial durante el MVP.
+- Declarar alertas, dashboards o SLOs operativos sin backend, owner, canal y prueba end-to-end.
+- Instrumentar dominios no incluidos en el walking skeleton.

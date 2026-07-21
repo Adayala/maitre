@@ -7,7 +7,7 @@ Contrato para detectar, entender y recuperar fallos de Maitre con telemetría po
 | **ID** | SPEC-216 |
 | **Tipo** | Transversal / Reliability Engineering |
 | **Dominio** | Platform / Operations |
-| **Estado** | DRAFT — PROPOSED FOR APPROVAL |
+| **Estado** | DRAFT — READY FOR I0 REVIEW |
 | **Prioridad** | P0 |
 | **Fase** | Antes del ambiente demo estable |
 | **Depende de** | SPEC-207–215 |
@@ -30,3 +30,6 @@ Contrato para detectar, entender y recuperar fallos de Maitre con telemetría po
 - [Tareas](tasks.md)
 - [Verificación](verification.md)
 - [Decisiones](notes.md)
+- [Contrato de telemetría I0](i0-telemetry-contract.md)
+
+I0 implementa correlación, logs seguros, health y evidencia local/CI. SLOs, dashboards y alertas permanecen `NOT_OPERATIONAL` hasta seleccionar un backend/canal y asignar owner.

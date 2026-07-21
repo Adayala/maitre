@@ -7,6 +7,8 @@
 - SLOs iniciales son hipótesis internas y deben recalibrarse con baseline.
 - Se prefieren alertas por impacto/burn rate sobre umbrales aislados.
 - El free tier puede limitar retención o dashboards, pero no justifica omitir correlación, redacción ni métricas básicas.
+- I0 usa stdout JSON, exporter in-memory/local y evidencia CI; no hay backend SaaS ni paging adoptado.
+- Los SLOs numéricos son hipótesis de diseño hasta contar con volumen y fuente durable.
 
 ## Riesgos
 
