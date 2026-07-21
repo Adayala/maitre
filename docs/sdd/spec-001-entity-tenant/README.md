@@ -12,6 +12,8 @@ Tenant representa una organización cliente y es la raíz explícita del aislami
 | **Estado** | DRAFT |
 | **Readiness** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
+| **Owner** | UNASSIGNED |
+| **Reviewer** | UNASSIGNED |
 | **Fase** | I0 |
 
 ## Documentos

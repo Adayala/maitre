@@ -12,6 +12,8 @@ Define el límite entre el proveedor de identidad, el cliente React y la API Nod
 | **Estado** | DRAFT |
 | **Readiness** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
+| **Owner** | UNASSIGNED |
+| **Reviewer** | UNASSIGNED |
 | **Fase** | I0 |
 
 ## Documentos

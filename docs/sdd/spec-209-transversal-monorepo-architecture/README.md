@@ -10,6 +10,8 @@ Contrato estructural para implementar Maitre con React.js, Node.js y TypeScript 
 | **Estado** | DRAFT |
 | **Readiness** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
+| **Owner** | UNASSIGNED |
+| **Reviewer** | UNASSIGNED |
 | **Fase** | Antes del scaffolding |
 | **Depende de** | SPEC-207, SPEC-208 |
 

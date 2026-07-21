@@ -13,6 +13,8 @@ Persona humana o jurídica que emite comprobantes fiscales. Contiene CUIT, condi
 | **Estado** | PLANNED |
 | **Readiness** | NOT_ASSESSED |
 | **Prioridad** | P0 |
+| **Owner** | UNASSIGNED |
+| **Reviewer** | UNASSIGNED |
 | **Fase** | 1 |
 | **Estimación** | 8h |
 

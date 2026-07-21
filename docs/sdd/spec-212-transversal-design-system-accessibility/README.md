@@ -11,6 +11,8 @@ Contrato transversal para una experiencia React.js consistente, accesible, rápi
 | **Readiness** | BLOCKED |
 | **Blockers** | Tooling pendiente de ADR-004 y SPK-05 |
 | **Prioridad** | P0 |
+| **Owner** | UNASSIGNED |
+| **Reviewer** | UNASSIGNED |
 | **Fase** | Antes del scaffolding de UI |
 | **Depende de** | ADR-004, SPEC-207–209, SPEC-211, SPEC-213, SPEC-224, SPEC-226 |
 

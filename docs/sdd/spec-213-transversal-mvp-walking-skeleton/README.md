@@ -10,6 +10,8 @@ Primer corte vertical ejecutable de Maitre: desde el navegador hasta persistenci
 | **Estado** | DRAFT |
 | **Readiness** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
+| **Owner** | UNASSIGNED |
+| **Reviewer** | UNASSIGNED |
 | **Fase** | Primer incremento implementable |
 | **Depende de** | SPEC-001, SPEC-004, SPEC-017, SPEC-020, SPEC-023, SPEC-207–212 |
 

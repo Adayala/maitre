@@ -11,6 +11,8 @@ CRUD API para marcas.
 | **Estado** | PLANNED |
 | **Readiness** | NOT_ASSESSED |
 | **Prioridad** | P0 |
+| **Owner** | UNASSIGNED |
+| **Reviewer** | UNASSIGNED |
 | **Fase** | 1 |
 | **Estimación** | 6h |
 

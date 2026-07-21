@@ -15,6 +15,7 @@ Identidad comercial de un restaurante. Permite agrupar sucursales bajo una marca
 | **Prioridad** | P0 (Crítica) |
 | **Fase** | 1 (Plataforma Fundacional) |
 | **Owner** | @faguero |
+| **Reviewer** | UNASSIGNED |
 | **Estimación** | 6h |
 | **Created** | 2026-07-20 |
 | **Last updated** | 2026-07-20 |

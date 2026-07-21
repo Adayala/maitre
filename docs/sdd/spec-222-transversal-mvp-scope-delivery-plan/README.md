@@ -10,6 +10,8 @@ Contrato de alcance y secuencia que transforma el catálogo completo de Maitre e
 | **Estado** | DRAFT |
 | **Readiness** | PROPOSED_FOR_REVIEW |
 | **Prioridad** | P0 |
+| **Owner** | UNASSIGNED |
+| **Reviewer** | UNASSIGNED |
 | **Fase** | Antes de comenzar implementación funcional |
 | **Depende de** | Foundations, SPEC-001–206 y SPEC-207–221 |
 

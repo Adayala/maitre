@@ -10,6 +10,8 @@ Contrato transversal para obtener evidencia confiable con tests rápidos, manten
 | **Estado** | DRAFT |
 | **Readiness** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
+| **Owner** | UNASSIGNED |
+| **Reviewer** | UNASSIGNED |
 | **Fase** | Antes del primer código funcional |
 | **Depende de** | SPEC-207, SPEC-209–223 |
 

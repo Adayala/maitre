@@ -10,6 +10,8 @@ Contrato para configurar y desplegar Maitre de forma reproducible, segura y port
 | **Estado** | DRAFT |
 | **Readiness** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
+| **Owner** | UNASSIGNED |
+| **Reviewer** | UNASSIGNED |
 | **Fase** | Antes del primer despliegue compartido |
 | **Depende de** | SPEC-207–211, SPEC-213 |
 

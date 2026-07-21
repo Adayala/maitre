@@ -12,6 +12,8 @@ Evento emitido cuando se crea un tenant.
 | **Estado** | PLANNED |
 | **Readiness** | NOT_ASSESSED |
 | **Prioridad** | P0 |
+| **Owner** | UNASSIGNED |
+| **Reviewer** | UNASSIGNED |
 | **Fase** | 1 |
 | **Estimación** | 2h |
 

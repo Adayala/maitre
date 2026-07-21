@@ -11,6 +11,8 @@ Categoría de productos (Entrada, Plato Principal, Bebida).
 | **Estado** | PLANNED |
 | **Readiness** | NOT_ASSESSED |
 | **Prioridad** | P1 |
+| **Owner** | UNASSIGNED |
+| **Reviewer** | UNASSIGNED |
 | **Fase** | 1 |
 | **Estimación** | 2h |
 

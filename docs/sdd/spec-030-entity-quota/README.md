@@ -11,6 +11,8 @@ Límite cuantitativo: MAX_USERS, MAX_BRANCHES.
 | **Estado** | PLANNED |
 | **Readiness** | NOT_ASSESSED |
 | **Prioridad** | P1 |
+| **Owner** | UNASSIGNED |
+| **Reviewer** | UNASSIGNED |
 | **Fase** | 1 |
 | **Estimación** | 2h |
 

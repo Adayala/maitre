@@ -11,6 +11,8 @@ Contrato transversal para conservar, exportar, restaurar y eliminar datos de Mai
 | **Readiness** | BLOCKED |
 | **Blockers** | Gate de datos no regenerables no aprobado |
 | **Prioridad** | P0 |
+| **Owner** | UNASSIGNED |
+| **Reviewer** | UNASSIGNED |
 | **Fase** | Antes de almacenar datos no regenerables |
 | **Depende de** | SPEC-207, SPEC-208, SPEC-210, SPEC-214, SPEC-216, SPEC-219 |
 

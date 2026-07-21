@@ -12,6 +12,8 @@ Branch representa una unidad operativa física o lógica dentro de un Tenant y u
 | **Estado** | DRAFT |
 | **Readiness** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
+| **Owner** | UNASSIGNED |
+| **Reviewer** | UNASSIGNED |
 | **Fase** | I0 |
 
 ## Documentos

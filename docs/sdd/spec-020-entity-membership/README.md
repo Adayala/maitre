@@ -10,6 +10,8 @@ Vínculo de autorización entre un User global y un Tenant, con roles y alcance 
 | **Estado** | DRAFT |
 | **Readiness** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
+| **Owner** | UNASSIGNED |
+| **Reviewer** | UNASSIGNED |
 | **Fase** | SPEC-222 I0/I1 |
 | **Depende de** | SPEC-001, SPEC-004, SPEC-017, SPEC-018, SPEC-019, SPEC-023 |
 

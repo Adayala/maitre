@@ -10,6 +10,8 @@ Contrato transversal de calidad para todo cambio de Maitre.
 | **Estado** | DRAFT |
 | **Readiness** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
+| **Owner** | UNASSIGNED |
+| **Reviewer** | UNASSIGNED |
 | **Fase** | Todas, antes del primer código productivo |
 
 ## Propósito

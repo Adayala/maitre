@@ -10,6 +10,8 @@ Contrato para detectar, entender y recuperar fallos de Maitre con telemetría po
 | **Estado** | DRAFT |
 | **Readiness** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
+| **Owner** | UNASSIGNED |
+| **Reviewer** | UNASSIGNED |
 | **Fase** | Antes del ambiente demo estable |
 | **Depende de** | SPEC-207–215 |
 

@@ -11,6 +11,8 @@ GET /dashboard (resumen tenant, suscripción, sucursales).
 | **Estado** | PLANNED |
 | **Readiness** | NOT_ASSESSED |
 | **Prioridad** | P1 |
+| **Owner** | UNASSIGNED |
+| **Reviewer** | UNASSIGNED |
 | **Fase** | 1 |
 | **Estimación** | 4h |
 

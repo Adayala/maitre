@@ -10,6 +10,8 @@ Contrato de costo, capacidad y salida para operar el MVP con free tiers.
 | **Estado** | DRAFT |
 | **Readiness** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
+| **Owner** | UNASSIGNED |
+| **Reviewer** | UNASSIGNED |
 | **Fase** | MVP |
 
 ## Propósito

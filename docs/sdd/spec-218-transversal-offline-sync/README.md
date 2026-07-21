@@ -10,6 +10,8 @@ Contrato transversal para degradación, captura local y sincronización segura d
 | **Estado** | DRAFT |
 | **Readiness** | PROPOSED_FOR_REVIEW |
 | **Prioridad** | P0 para Floor/Kitchen; P1 para Guest |
+| **Owner** | UNASSIGNED |
+| **Reviewer** | UNASSIGNED |
 | **Fase** | Antes del piloto operativo |
 | **Depende de** | SPEC-207–217 y specs funcionales de cada comando |
 

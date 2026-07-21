@@ -10,6 +10,8 @@ Contrato transversal para crear, revisar, aprobar, cambiar, verificar y retirar 
 | **Estado** | DRAFT |
 | **Readiness** | PROPOSED_FOR_REVIEW |
 | **Prioridad** | P0 |
+| **Owner** | UNASSIGNED |
+| **Reviewer** | UNASSIGNED |
 | **Fase** | Antes de marcar specs como READY_FOR_IMPLEMENTATION |
 | **Depende de** | SPEC-207, SPEC-221, SPEC-222 |
 

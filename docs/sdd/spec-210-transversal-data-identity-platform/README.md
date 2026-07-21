@@ -11,6 +11,8 @@ Decisión de PostgreSQL, identidad y almacenamiento inicial para el MVP de costo
 | **Readiness** | BLOCKED |
 | **Blockers** | Adopción pendiente de ADR-002 y SPK-02–06 |
 | **Prioridad** | P0 |
+| **Owner** | UNASSIGNED |
+| **Reviewer** | UNASSIGNED |
 | **Fase** | Antes del walking skeleton con persistencia |
 | **Depende de** | ADR-002, SPEC-207–209, SPEC-214, SPEC-220, SPEC-226 |
 

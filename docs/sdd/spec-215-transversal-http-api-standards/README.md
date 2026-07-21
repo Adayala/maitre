@@ -10,6 +10,8 @@ Contrato transversal para APIs HTTP consistentes, seguras, observables y evoluti
 | **Estado** | DRAFT |
 | **Readiness** | PROPOSED_FOR_REVIEW |
 | **Prioridad** | P0 |
+| **Owner** | UNASSIGNED |
+| **Reviewer** | UNASSIGNED |
 | **Fase** | Antes del primer endpoint funcional |
 | **Depende de** | SPEC-016, SPEC-023, SPEC-207, SPEC-209, SPEC-211, SPEC-213 |
 

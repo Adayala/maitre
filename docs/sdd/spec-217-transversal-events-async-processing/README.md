@@ -10,6 +10,8 @@ Contrato transversal para publicar y consumir eventos de integración sin perder
 | **Estado** | DRAFT |
 | **Readiness** | PROPOSED_FOR_REVIEW |
 | **Prioridad** | P0 |
+| **Owner** | UNASSIGNED |
+| **Reviewer** | UNASSIGNED |
 | **Fase** | Antes del primer efecto asíncrono |
 | **Depende de** | SPEC-207–216 |
 
