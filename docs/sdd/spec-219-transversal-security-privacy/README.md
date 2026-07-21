@@ -7,7 +7,7 @@ Contrato transversal de seguridad y privacidad para diseñar, implementar y veri
 | **ID** | SPEC-219 |
 | **Tipo** | Transversal / Security Architecture |
 | **Dominio** | Security / Privacy / Platform |
-| **Estado** | DRAFT — PROPOSED FOR APPROVAL |
+| **Estado** | DRAFT — READY FOR I0 REVIEW; PILOT GATE NOT APPROVED |
 | **Prioridad** | P0 |
 | **Fase** | Desde el walking skeleton; gate obligatorio antes del piloto |
 | **Depende de** | SPEC-016, SPEC-023, SPEC-044–045, SPEC-207–218 |
@@ -30,3 +30,6 @@ Contrato transversal de seguridad y privacidad para diseñar, implementar y veri
 - [Tareas](tasks.md)
 - [Verificación](verification.md)
 - [Decisiones y fuentes](notes.md)
+- [Threat model y datos I0](i0-threat-model.md)
+
+I0 implementa únicamente controles del walking skeleton con datos sintéticos. ASVS L2 completo, revisión legal y controles fiscales/pagos siguen siendo gates del piloto, no evidencia del scaffold.

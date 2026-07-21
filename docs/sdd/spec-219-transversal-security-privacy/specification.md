@@ -12,6 +12,8 @@ Maitre adopta OWASP ASVS 5.0.0 nivel 2 como objetivo para aplicaciones que manej
 
 OWASP Top 10:2025 se usa para concientización y cobertura de riesgo, no como sustituto de ASVS o threat modeling.
 
+El scaffold I0 no declara conformidad ASVS. Usa [i0-threat-model.md](i0-threat-model.md) para priorizar controles aplicables; la matriz ASVS completa es obligatoria antes del piloto con datos reales.
+
 ## 2. Threat modeling
 
 Un modelo por arquitectura/recorrido identifica:
@@ -24,6 +26,8 @@ Un modelo por arquitectura/recorrido identifica:
 - mitigaciones, riesgo residual, owner y prueba.
 
 Se actualiza cuando cambia autenticación, tenancy, pagos, fiscalidad, offline, archivos, integraciones, IA o exposición pública. Diagramas y decisiones viven en Git; no incluyen secretos.
+
+El modelo inicial versionado identifica browser, Vercel, API, Supabase Auth/PostgreSQL y CI como boundaries separados. Conectar cuentas no reduce el nivel de confianza de inputs o artifacts.
 
 ## 3. Identidad y sesiones
 
@@ -54,7 +58,7 @@ token válido
 - IDs de request se tratan como no confiables.
 - Repositorios exigen `TenantContext`; no ofrecen métodos operativos sin tenant.
 - Queries filtran tenant explícitamente y RLS aporta defensa en profundidad.
-- Service role no llega al browser y su uso queda acotado/auditado.
+- Secret/service-role key no llega al browser y no es requisito del runtime I0.
 - Tests generan al menos dos tenants y prueban lectura, escritura, listado, búsqueda, exportación, eventos y storage cross-tenant.
 - Errores aplican política 403/404 sin revelar existencia.
 
@@ -68,6 +72,8 @@ token válido
 | Restringida | secretos, tokens, certificados, datos de pago | no log, acceso excepcional, rotación/custodia |
 
 Cada entidad/campo sensible declara propósito, base/justificación, owner, visibilidad, retención, exportación y borrado/anominización. Se recolecta el mínimo necesario y no se reutiliza para analítica o IA sin decisión compatible.
+
+I0 usa exclusivamente datos sintéticos. Su inventario mínimo y prohibiciones están en `i0-threat-model.md`; no se incorporan guests, empleados, reservas, facturas, pagos o CUIT.
 
 Requisitos legales argentinos y contractuales se mantienen en una matriz separada revisada por asesoría competente; la spec no presume que un control técnico equivale a cumplimiento.
 
@@ -104,6 +110,18 @@ Requisitos legales argentinos y contractuales se mantienen en una matriz separad
 - Rate limiting, body limits y timeouts protegen recursos sin usar IP como única identidad.
 - Source maps productivos no se publican abiertamente si revelan implementación sensible.
 
+### Baseline I0
+
+- credencial bearer según SPEC-023; Maitre no crea cookies de sesión;
+- CORS por allowlist exacta de local/preview/demo;
+- CSP sin `unsafe-eval`, `object-src 'none'`, `base-uri 'none'` y `frame-ancestors 'none'`, ajustada sólo por recursos realmente usados;
+- `X-Content-Type-Options: nosniff`, Referrer-Policy restrictiva y Permissions-Policy mínima;
+- responses de Auth/contexto con `Cache-Control: no-store`;
+- body/URL/header limits y timeout explícitos;
+- errores Problem Details sin stack, SQL, claims ni causa enumerativa.
+
+HSTS se habilita en el host HTTPS estable; no se envía desde localhost. CSRF se reevalúa si ADR futura adopta cookies. Rate limiting externo no se declara implementado en I0 hasta definir un port/backend compatible con serverless.
+
 ## 9. Archivos y contenido
 
 - Allowlist de MIME/extensión validada por contenido, no sólo header.
@@ -113,6 +131,8 @@ Requisitos legales argentinos y contractuales se mantienen en una matriz separad
 - Contenido activo, ejecutable o HTML se rechaza salvo spec específica.
 - Descargas fuerzan media type/disposition seguro.
 - Malware scanning se incorpora antes de aceptar archivos de riesgo; hasta entonces, ese tipo queda prohibido.
+
+I0 no acepta uploads ni activa Storage. Por tanto, sus controles se mantienen como requisitos futuros y no generan endpoints/buckets placeholder.
 
 ## 10. Supply chain y CI
 
@@ -134,6 +154,8 @@ Requisitos legales argentinos y contractuales se mantienen en una matriz separad
 - Timeouts, retries y circuit behavior siguen SPEC-216/217.
 - Payloads externos se consideran no confiables aunque la firma sea válida.
 - Acciones externas quedan auditadas sin registrar secretos o payloads innecesarios.
+
+I0 no expone webhooks ni llama ARCA/pagos/email. Estas reglas se activan con sus specs; el scaffold no crea secrets o routes preventivas.
 
 ## 12. Auditoría y detección
 

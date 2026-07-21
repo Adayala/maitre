@@ -17,3 +17,5 @@ Reducir la probabilidad e impacto de acceso indebido, fuga, fraude, corrupción 
 - Certificar ASVS sólo por completar una checklist interna.
 - Sustituir pentest independiente cuando el riesgo o un cliente lo exijan.
 - Implementar controles enterprise pagos sin necesidad medida.
+- Implementar uploads, pagos, ARCA, webhooks o controles de datos reales durante I0.
+- Declarar ASVS L2 verificado antes de completar su matriz y evidencia aplicable.

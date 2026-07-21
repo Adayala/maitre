@@ -8,13 +8,15 @@
 - [ ] RLS y aplicación bloquean lectura/escritura cross-tenant.
 - [ ] Listados, búsquedas, exports, eventos y storage respetan scope.
 
+En I0, la última comprobación aplica sólo a superficies implementadas. Ausencia de endpoint/bucket se verifica; no se crea funcionalidad para probar un control futuro.
+
 ## Aplicación y browser
 
 - [ ] CSP y headers se verifican en preview/demo.
-- [ ] XSS, SQL injection, SSRF, redirect y path traversal poseen tests negativos.
+- [ ] XSS, SQL injection y redirects del recorrido I0 poseen tests negativos; sinks ausentes de SSRF/path/upload permanecen ausentes.
 - [ ] CSRF se prueba según mecanismo real de sesión.
 - [ ] Rate/body/time limits degradan de forma segura.
-- [ ] Archivos inválidos, activos o excesivos se rechazan.
+- [ ] I0 no expone uploads ni buckets de producto.
 
 ## Datos y secretos
 
@@ -23,6 +25,7 @@
 - [ ] Backups/exports conservan protección y expiración.
 - [ ] Datos restringidos tienen acceso y auditoría verificables.
 - [ ] Rotación canaria demuestra revocación sin commit.
+- [ ] Runtime funciona sin secret/service-role key y browser audit bloquea nombres prohibidos.
 
 ## Supply chain
 
@@ -39,3 +42,4 @@
 - [ ] No existen findings críticos/altos abiertos sin aceptación explícita.
 - [ ] Respuesta a incidentes fue ejercitada.
 - [ ] Revisión legal/contractual requerida está registrada.
+- [ ] El scaffold no afirma ASVS L2 ni aptitud para datos reales.

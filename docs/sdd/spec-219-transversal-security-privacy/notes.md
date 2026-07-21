@@ -7,6 +7,8 @@
 - Defense in depth de tenancy combina contexto de aplicación, repositorios, SQL/RLS y pruebas.
 - Cifrado de campo se decide por amenaza y custodia de claves; cifrar sin un modelo de claves no reduce todos los riesgos.
 - El MVP usa herramientas open source/free disponibles, pero los gates no se relajan por ausencia de SaaS.
+- La verificación oficial del 2026-07-21 confirma ASVS 5.0.0 como versión estable y OWASP Top 10:2025 como edición vigente.
+- El threat model I0 es deliberadamente pequeño; cada feature fiscal, monetaria, pública o de archivos lo amplía antes de implementación.
 
 ## Fuentes
 
