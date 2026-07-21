@@ -1,7 +1,9 @@
 # TASKS — SPEC-208
 
-- [ ] Crear registro de proveedores, cuotas, términos y fecha de revisión.
+- [x] Crear registro documental de proveedores, cuotas, términos y fecha de revisión.
 - [ ] Confirmar elegibilidad de Vercel para desarrollo/demo.
+- [ ] Confirmar si el repositorio es público y elegible para SonarQube Cloud OSS.
+- [ ] Asignar owner y reviewer para Vercel, Supabase, GitHub Actions y Sonar.
 - [ ] Seleccionar PostgreSQL e identidad free tier mediante ADR.
 - [ ] Definir backup/exportación y restauración de datos.
 - [ ] Seleccionar email transaccional y fijar cuotas internas.
@@ -12,3 +14,5 @@
 - [ ] Documentar runbook cuando una cuota se agota.
 - [ ] Definir gate previo a piloto comercial.
 - [ ] Revisar costos y términos mensualmente.
+- [ ] Registrar mediciones 50/75/90 y fecha en cada revisión.
+- [ ] Verificar que Preview no puede ejecutar migraciones compartidas.
