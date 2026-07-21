@@ -79,6 +79,10 @@ La arquitectura mantiene dominio, datos e integraciones desacoplados de Vercel p
 - [Alcance y secuencia del MVP](docs/sdd/spec-222-transversal-mvp-scope-delivery-plan/)
 - [Distribución de estado en tiempo real](docs/sdd/spec-223-transversal-realtime-state-distribution/)
 - [Estrategia de testing y datos de prueba](docs/sdd/spec-224-transversal-testing-test-data/)
+- [Gobernanza de specs y ADRs](docs/sdd/spec-225-transversal-spec-adr-governance/)
+- [Readiness review del primer incremento](docs/sdd/I0_READINESS_REVIEW.md)
+- [Revisión de contratos funcionales de I0](docs/sdd/I0_FUNCTIONAL_CONTRACT_REVIEW.md)
+- [Registro de decisiones arquitectónicas](docs/adr/)
 
 ## Roadmap resumido
 

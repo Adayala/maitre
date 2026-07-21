@@ -1,5 +1,7 @@
 # Spec Format — Spec-Driven Development
 
+> El lifecycle, las aprobaciones, el versionado de cambios y la gobernanza normativa están definidos en [`SPEC-225`](../spec-225-transversal-spec-adr-governance/).
+
 Formato completo para cada especificación de Maitre, basado en metodología AI-native de Microsoft.
 
 ## Estructura completa
@@ -34,7 +36,7 @@ Metadata y overview rápido.
 | **Título** | Nombre descriptivo |
 | **Tipo** | Entity, API, Event, StateMachine, RBAC, Calculation, Connector, App, Transversal |
 | **Dominio** | Organization, Identity, Subscription, Floor, Kitchen, Ordering, etc |
-| **Status** | PLANNED, DRAFT, READY_FOR_IMPLEMENTATION, IN_PROGRESS, DONE |
+| **Status** | PLANNED, DRAFT, IN_REVIEW, READY_FOR_IMPLEMENTATION, IN_PROGRESS, VERIFIED, DEPRECATED, SUPERSEDED |
 | **Prioridad** | P0 (crítica), P1 (alta), P2 (media), P3 (baja) |
 | **Fase** | 1, 2, 3, 4, 5, 6 |
 | **Owner** | @nombre |

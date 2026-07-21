@@ -15,21 +15,19 @@ Maitre se implementará inicialmente con:
 
 Vercel acelera la primera entrega y operación, pero no constituye un límite arquitectónico. El sistema debe poder migrar total o parcialmente a otra plataforma cuando el volumen, la latencia, los costos, las conexiones persistentes, requisitos regulatorios u operación regional lo justifiquen.
 
-## Lo que esta decisión no define
+## Decisiones derivadas pendientes de aprobación
 
-Permanecen abiertas y requieren una decisión separada:
+React.js, Node.js y Vercel están aceptados por [ADR-001](../adr/ADR-001-initial-runtime-and-platform.md). Las siguientes selecciones están propuestas por specs/ADRs y no se consideran aceptadas sólo por aparecer en este documento:
 
-- Framework de React y estrategia de renderizado.
-- Framework HTTP de Node.js.
-- Proveedor y motor de base de datos.
-- Proveedor de identidad.
-- Almacenamiento de objetos.
+- Vite, React Router y estrategia SPA: ADR-003 / SPEC-211.
+- Fastify, Zod, Drizzle y toolchain: ADR-003 / SPEC-211.
+- Supabase PostgreSQL/Auth/Storage: ADR-002 / SPEC-210.
 - Procesamiento de colas y eventos.
 - Proveedor de observabilidad.
 - Proveedor de pagos.
 - Plataforma destino de una futura migración.
 
-Ninguna spec puede asumir Next.js, Supabase, Railway, AWS, Fastify, Prisma, Stripe u otro proveedor hasta que exista una decisión aceptada para ese componente.
+Ninguna implementación puede asumir una selección propuesta hasta que su ADR/spec alcance estado aceptado/`READY_FOR_IMPLEMENTATION`.
 
 ## Perfil de despliegue inicial
 
@@ -199,6 +197,7 @@ La implementación debe cumplir además:
 - [`SPEC-222 — MVP Scope & Delivery Plan`](spec-222-transversal-mvp-scope-delivery-plan/)
 - [`SPEC-223 — Realtime State Distribution`](spec-223-transversal-realtime-state-distribution/)
 - [`SPEC-224 — Testing & Test Data Strategy`](spec-224-transversal-testing-test-data/)
+- [`SPEC-225 — Specification & ADR Governance`](spec-225-transversal-spec-adr-governance/)
 
 Cuando una limitación de Vercel afecte una spec —por ejemplo tiempo real, procesamiento continuo u operación offline— la spec declara la capacidad requerida y la arquitectura selecciona el adaptador o despliegue que la satisfaga.
 

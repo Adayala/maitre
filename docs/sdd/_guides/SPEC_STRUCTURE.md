@@ -1,5 +1,7 @@
 # Estructura de directorios para specs
 
+> Esta guía describe formas de documento. La gobernanza normativa de IDs, estados, aprobación, ADRs y deprecación está en [`SPEC-225`](../spec-225-transversal-spec-adr-governance/).
+
 Cada spec vive en su propio directorio con múltiples documentos.
 
 ## Convención de nombres
@@ -401,4 +403,3 @@ touch /docs/sdd/spec-entity-order/examples.md
 
 # 5. Link en INDEX.md
 ```
-

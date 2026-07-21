@@ -66,6 +66,9 @@ Bienvenido a las especificaciones ejecutables de Maitre.
 19. Ejecuta [`SPEC-222`](spec-222-transversal-mvp-scope-delivery-plan/) para mantener alcance y secuencia del MVP
 20. Aplica [`SPEC-223`](spec-223-transversal-realtime-state-distribution/) para actualización live de Floor y Kitchen
 21. Usa [`SPEC-224`](spec-224-transversal-testing-test-data/) para estrategia de tests y datos sintéticos
+22. Aplica [`SPEC-225`](spec-225-transversal-spec-adr-governance/) para lifecycle, aprobación y ADRs
+23. Revisa [`I0_READINESS_REVIEW.md`](I0_READINESS_REVIEW.md) antes de iniciar scaffolding
+24. Resuelve [`I0_FUNCTIONAL_CONTRACT_REVIEW.md`](I0_FUNCTIONAL_CONTRACT_REVIEW.md) para alinear Tenant, User, Membership y Auth
 
 ### Para ver un ejemplo completo
 
