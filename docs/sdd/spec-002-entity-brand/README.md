@@ -12,7 +12,7 @@ Identidad comercial de un restaurante. Permite agrupar sucursales bajo una marca
 | **Dominio** | Organization |
 | **Estado** | DRAFT |
 | **Readiness** | NOT_ASSESSED |
-| **Prioridad** | P0 (Crítica) |
+| **Prioridad** | P0 |
 | **Fase** | 1 (Plataforma Fundacional) |
 | **Owner** | @faguero |
 | **Reviewer** | UNASSIGNED |

@@ -10,7 +10,8 @@ Contrato transversal para degradación, captura local y sincronización segura d
 | **Estado** | DRAFT |
 | **Readiness** | BLOCKED |
 | **Review target** | PROPOSED_FOR_REVIEW |
-| **Prioridad** | P0 para Floor/Kitchen; P1 para Guest |
+| **Prioridad** | P0 |
+| **Priority scope** | P0 para Floor/Kitchen; P1 para Guest |
 | **Owner** | UNASSIGNED |
 | **Reviewer** | UNASSIGNED |
 | **Blockers** | Asignar owner y reviewer |

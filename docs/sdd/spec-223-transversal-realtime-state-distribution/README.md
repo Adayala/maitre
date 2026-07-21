@@ -10,7 +10,8 @@ Contrato transversal para mantener Floor, Kitchen, Cash y Dash actualizados sin 
 | **Estado** | DRAFT |
 | **Readiness** | BLOCKED |
 | **Review target** | PROPOSED_FOR_REVIEW |
-| **Prioridad** | P0 para Floor/Kitchen |
+| **Prioridad** | P0 |
+| **Priority scope** | Floor/Kitchen |
 | **Owner** | UNASSIGNED |
 | **Reviewer** | UNASSIGNED |
 | **Blockers** | Asignar owner y reviewer |
