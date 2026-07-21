@@ -1,23 +1,63 @@
 # Especificación — SPEC-008
 
-## Brands API
+## Endpoints
 
-CRUD endpoints for Brands resource.
+### POST /brands (Crear marca)
+```
+Request:
+{
+  "name": "string (1-100)",
+  "description": "string | null",
+  "logo_url": "string (URL) | null",
+  "default_menu_id": "uuid | null"
+}
 
-### POST /brands
-Create new Brands.
+Response (201):
+{
+  "data": {
+    "id": "uuid",
+    "tenant_id": "uuid",
+    "name": "...",
+    "slug": "...",
+    "status": "ACTIVE",
+    "created_at": "ISO8601"
+  }
+}
+```
 
-### GET /brands/:id
-Fetch Brands by ID.
+### GET /brands (Listar marcas)
+Paginación con limit/offset.
 
-### PATCH /brands/:id
-Update Brands.
+Response (200):
+```json
+{
+  "data": [{ id, name, slug, status, created_at }, ...],
+  "meta": { "total": 5, "page": 1, "limit": 20 }
+}
+```
 
-### GET /brands?filter=...
-List Brands (filtered).
+### GET /brands/:id (Detalle marca)
+Response (200): Marca completa
 
-## Validations
+### PATCH /brands/:id (Actualizar marca)
+Campos: name, description, logo_url, status (ACTIVE/INACTIVE/ARCHIVED)
 
-- Multi-tenant isolation verified
-- Entitlements checked
-- Error codes: 400, 401, 403, 404, 409, 429, 500
+Response (200): Marca actualizada
+
+### DELETE /branches/:id (Archivar marca)
+Soft delete - transición a ARCHIVED.
+
+Response (204): No content
+
+## Authorization
+
+- POST /brands → OWNER, ADMIN
+- GET /brands, GET /brands/:id → OWNER, ADMIN, MANAGER
+- PATCH /brands/:id → OWNER, ADMIN
+- DELETE /brands/:id → OWNER only
+
+## Validaciones
+
+- name: min 3 chars, max 100
+- slug: auto-generated, unique per tenant
+- logo_url: must be valid URL
