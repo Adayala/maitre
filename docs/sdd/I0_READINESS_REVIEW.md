@@ -25,7 +25,7 @@ La base documental transversal está completa en estructura después de agregar 
 | --- | --- | --- |
 | I0-B01 | SPEC-207–225 están DRAFT | revisión/aprobación del subset realmente requerido |
 | I0-B02 | Metadata no declara owners/reviewers uniformes | asignar roles o `UNASSIGNED` explícito |
-| I0-B03 | Supabase y toolchain no tienen ADR aceptada | aprobar/rechazar ADR-002/003 tras spikes mínimos |
+| I0-B03 | Supabase y toolchain no tienen ADR aceptada | ejecutar [`SPEC-226`](spec-226-transversal-i0-platform-validation-spikes/) y aprobar/rechazar ADR-002/003 |
 | I0-B04 | Dependencias funcionales SPEC-001/004/017/020/023 contienen contradicciones P0 | resolver [`I0_FUNCTIONAL_CONTRACT_REVIEW.md`](I0_FUNCTIONAL_CONTRACT_REVIEW.md) |
 | I0-B05 | No existe implementación de `sdd:validate` | implementar gate mecánico antes de escalar cambios |
 | I0-B06 | Branch protection/GitHub checks no verificados | configurar según SPEC-221 cuando autenticación admin esté disponible |

@@ -83,6 +83,7 @@ La arquitectura mantiene dominio, datos e integraciones desacoplados de Vercel p
 - [Readiness review del primer incremento](docs/sdd/I0_READINESS_REVIEW.md)
 - [Revisión de contratos funcionales de I0](docs/sdd/I0_FUNCTIONAL_CONTRACT_REVIEW.md)
 - [Registro de decisiones arquitectónicas](docs/adr/)
+- [Spikes de validación de plataforma I0](docs/sdd/spec-226-transversal-i0-platform-validation-spikes/)
 
 ## Roadmap resumido
 

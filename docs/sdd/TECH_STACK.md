@@ -198,6 +198,7 @@ La implementación debe cumplir además:
 - [`SPEC-223 — Realtime State Distribution`](spec-223-transversal-realtime-state-distribution/)
 - [`SPEC-224 — Testing & Test Data Strategy`](spec-224-transversal-testing-test-data/)
 - [`SPEC-225 — Specification & ADR Governance`](spec-225-transversal-spec-adr-governance/)
+- [`SPEC-226 — I0 Platform Validation Spikes`](spec-226-transversal-i0-platform-validation-spikes/)
 
 Cuando una limitación de Vercel afecte una spec —por ejemplo tiempo real, procesamiento continuo u operación offline— la spec declara la capacidad requerida y la arquitectura selecciona el adaptador o despliegue que la satisfaga.
 

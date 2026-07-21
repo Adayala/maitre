@@ -1,22 +1,40 @@
-# Structure — SPEC-017
+# Estructura — SPEC-017
 
-## Database schema
+## Persistencia lógica
 
 ```sql
-CREATE TABLE users (
-  id UUID PRIMARY KEY,
-  tenant_id UUID NOT NULL,
-  email VARCHAR(255) NOT NULL,
-  name VARCHAR(100) NOT NULL,
-  status VARCHAR(20) DEFAULT 'INVITED',
-  role VARCHAR(20),
-  password_hash VARCHAR(255),
-  email_verified BOOLEAN DEFAULT FALSE,
-  email_verified_at TIMESTAMP,
-  last_login_at TIMESTAMP,
-  created_at TIMESTAMP DEFAULT NOW(),
-  created_by UUID,
-  UNIQUE(tenant_id, email),
-  FOREIGN KEY(tenant_id) REFERENCES tenants(id)
+create table identity_users (
+  id uuid primary key,
+  identity_provider text not null,
+  external_identity_id text not null,
+  display_name text not null,
+  email text,
+  status text not null,
+  created_at timestamptz not null,
+  created_by uuid,
+  updated_at timestamptz not null,
+  updated_by uuid,
+  suspended_at timestamptz,
+  deactivated_at timestamptz,
+  unique (identity_provider, external_identity_id)
 );
 ```
+
+El SQL es estructura lógica para review; la migración final define checks, FKs, grants y RLS conforme SPEC-210/219.
+
+## Mapping
+
+| Contrato/dominio | PostgreSQL |
+| --- | --- |
+| `externalIdentityId` | `external_identity_id` |
+| `displayName` | `display_name` |
+| `createdAt` | `created_at` |
+| `deactivatedAt` | `deactivated_at` |
+
+DTOs/API usan camelCase. Columnas usan snake_case únicamente dentro del adapter de persistencia.
+
+## Índices
+
+- unique provider + external identity;
+- status sólo si una query medida lo requiere;
+- email no recibe unique tenant-scoped.

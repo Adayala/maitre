@@ -29,8 +29,8 @@ Implementar estas specs literalmente introduciría duplicación de fuentes de ve
 
 | ID | Severidad | Contrato | Finding | Decisión requerida |
 | --- | --- | --- | --- | --- |
-| FC-B01 | P0 | SPEC-017 | `User` contiene `tenantId`, `role` y `password_hash` | identidad global con `externalIdentityId`; tenant/roles en Membership; credenciales sólo en Auth |
-| FC-B02 | P0 | SPEC-020 | Membership modela un único `role` y no branches | definir roles múltiples o assignments y scope explícito por branch |
+| FC-B01 | RESOLVED IN DRAFT | SPEC-017 | `User` contenía `tenantId`, `role` y `password_hash` | reconciliado como identidad global sin credenciales/autorización; pendiente review |
+| FC-B02 | RESOLVED IN DRAFT | SPEC-020 | Membership modelaba un único `role` y no branches | reconciliado con role assignments y branch scopes normalizados; pendiente review |
 | FC-B03 | P0 | SPEC-023 | Login/reset/verify y JWT propios contradicen Supabase Auth | convertir spec en boundary/session flow o aceptar backend auth propio mediante ADR |
 | FC-B04 | P0 | SPEC-001 | `plan_tier`, límites y `features_enabled` duplican Subscription/Entitlement | Tenant conserva identidad/config global; capacidades se calculan en dominio Subscription |
 | FC-B05 | P0 | SPEC-004 | `services_active` duplica entitlements | derivar capacidad efectiva; no persistir segunda fuente autoritativa |

@@ -69,6 +69,7 @@ Bienvenido a las especificaciones ejecutables de Maitre.
 22. Aplica [`SPEC-225`](spec-225-transversal-spec-adr-governance/) para lifecycle, aprobación y ADRs
 23. Revisa [`I0_READINESS_REVIEW.md`](I0_READINESS_REVIEW.md) antes de iniciar scaffolding
 24. Resuelve [`I0_FUNCTIONAL_CONTRACT_REVIEW.md`](I0_FUNCTIONAL_CONTRACT_REVIEW.md) para alinear Tenant, User, Membership y Auth
+25. Ejecuta [`SPEC-226`](spec-226-transversal-i0-platform-validation-spikes/) para decidir Supabase y toolchain con evidencia
 
 ### Para ver un ejemplo completo
 

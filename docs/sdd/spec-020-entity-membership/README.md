@@ -1,15 +1,27 @@
 # [SPEC-020] Membership Entity
 
-Usuario → Tenant + Roles + Branches (alcance).
+Vínculo de autorización entre un User global y un Tenant, con roles y alcance por sucursal normalizados.
 
-## Metadata
 | Campo | Valor |
 | --- | --- |
 | **ID** | SPEC-020 |
-| **Tipo** | Entity |
+| **Tipo** | Entity / Authorization Aggregate |
 | **Dominio** | Identity |
-| **Status** | PLANNED |
+| **Estado** | DRAFT — RECONCILED FOR I0 REVIEW |
 | **Prioridad** | P0 |
-| **Fase** | 1 |
+| **Fase** | SPEC-222 I0/I1 |
+| **Depende de** | SPEC-001, SPEC-004, SPEC-017, SPEC-018, SPEC-019, SPEC-023 |
 
-**Status: PLANNED**
+## Decisión principal
+
+Membership contiene el vínculo User ↔ Tenant. Roles y branches se modelan como assignments/scopes relacionados; no se guardan en User ni se confía en claims editables del cliente.
+
+## Documentos
+
+- [Objetivo](objective.md)
+- [Especificación](specification.md)
+- [Estructura](structure.md)
+- [Reglas](rules.md)
+- [Plan](plan.md)
+- [Tareas](tasks.md)
+- [Verificación](verification.md)

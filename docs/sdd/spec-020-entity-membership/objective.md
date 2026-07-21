@@ -2,10 +2,27 @@
 
 ## Propósito
 
-Membership vincula usuario a tenant con rol. Usuario puede tener múltiples memberships.
+Resolver qué puede hacer un User dentro de un Tenant y en qué sucursales, conservando revocación, mínimo privilegio y aislamiento verificable.
 
-## Resultado esperado
+## Resultados esperados
 
-1. ✅ User-Tenant-Role link
-2. ✅ Un user puede ser OWNER en tenant A y EMPLOYEE en tenant B
-3. ✅ CRUD API
+- Un User participa en uno o más tenants sin duplicar identidad.
+- Membership activa posee roles explícitos.
+- El alcance es todas las sucursales o un conjunto explícito.
+- Revocar/suspender Membership elimina acceso al tenant.
+- Cambios de roles/scopes son auditables y no dependen del token del cliente.
+
+## No objetivos
+
+- Almacenar credenciales o perfil global.
+- Definir el catálogo completo de permisos/entitlements.
+- Modelar asignaciones operativas por jornada/plaza.
+
+## Criterios de aceptación
+
+- [ ] Existe como máximo una Membership por User/Tenant.
+- [ ] Membership activa tiene al menos un role assignment válido.
+- [ ] `SELECTED_BRANCHES` tiene scopes no vacíos y tenant-consistentes.
+- [ ] `ALL_BRANCHES` no usa filas de scope como segunda fuente.
+- [ ] Tests bloquean acceso Tenant/Branch fuera de alcance.
+- [ ] No se puede revocar el último OWNER sin transferencia/cierre aprobado.
