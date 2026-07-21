@@ -8,10 +8,12 @@ Contrato estructural para implementar Maitre con React.js, Node.js y TypeScript 
 | **Tipo** | Transversal / Architecture |
 | **Dominio** | Platform / Engineering |
 | **Estado** | DRAFT |
-| **Readiness** | READY_FOR_I0_REVIEW |
+| **Readiness** | BLOCKED |
+| **Review target** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
 | **Owner** | UNASSIGNED |
 | **Reviewer** | UNASSIGNED |
+| **Blockers** | Asignar owner y reviewer |
 | **Fase** | Antes del scaffolding |
 | **Depende de** | SPEC-207, SPEC-208 |
 

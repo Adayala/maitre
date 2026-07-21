@@ -8,10 +8,12 @@ Contrato para configurar y desplegar Maitre de forma reproducible, segura y port
 | **Tipo** | Transversal / Platform Security |
 | **Dominio** | Platform / Operations |
 | **Estado** | DRAFT |
-| **Readiness** | READY_FOR_I0_REVIEW |
+| **Readiness** | BLOCKED |
+| **Review target** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
 | **Owner** | UNASSIGNED |
 | **Reviewer** | UNASSIGNED |
+| **Blockers** | Asignar owner y reviewer |
 | **Fase** | Antes del primer despliegue compartido |
 | **Depende de** | SPEC-207–211, SPEC-213 |
 

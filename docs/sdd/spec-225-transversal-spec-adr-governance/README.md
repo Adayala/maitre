@@ -8,10 +8,12 @@ Contrato transversal para crear, revisar, aprobar, cambiar, verificar y retirar 
 | **Tipo** | Transversal / Engineering Governance |
 | **Dominio** | Product / Architecture / Engineering |
 | **Estado** | DRAFT |
-| **Readiness** | PROPOSED_FOR_REVIEW |
+| **Readiness** | BLOCKED |
+| **Review target** | PROPOSED_FOR_REVIEW |
 | **Prioridad** | P0 |
 | **Owner** | UNASSIGNED |
 | **Reviewer** | UNASSIGNED |
+| **Blockers** | Asignar owner y reviewer |
 | **Fase** | Antes de marcar specs como READY_FOR_IMPLEMENTATION |
 | **Depende de** | SPEC-207, SPEC-221, SPEC-222 |
 

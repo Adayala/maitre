@@ -8,10 +8,12 @@ Contrato transversal para mantener Floor, Kitchen, Cash y Dash actualizados sin 
 | **Tipo** | Transversal / Realtime Architecture |
 | **Dominio** | Platform / Operations |
 | **Estado** | DRAFT |
-| **Readiness** | PROPOSED_FOR_REVIEW |
+| **Readiness** | BLOCKED |
+| **Review target** | PROPOSED_FOR_REVIEW |
 | **Prioridad** | P0 para Floor/Kitchen |
 | **Owner** | UNASSIGNED |
 | **Reviewer** | UNASSIGNED |
+| **Blockers** | Asignar owner y reviewer |
 | **Fase** | Antes de SPEC-222 I3 |
 | **Depende de** | SPEC-207–218, SPEC-222 |
 

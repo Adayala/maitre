@@ -8,10 +8,12 @@ Contrato transversal para degradación, captura local y sincronización segura d
 | **Tipo** | Transversal / Offline Architecture |
 | **Dominio** | Platform / Operations |
 | **Estado** | DRAFT |
-| **Readiness** | PROPOSED_FOR_REVIEW |
+| **Readiness** | BLOCKED |
+| **Review target** | PROPOSED_FOR_REVIEW |
 | **Prioridad** | P0 para Floor/Kitchen; P1 para Guest |
 | **Owner** | UNASSIGNED |
 | **Reviewer** | UNASSIGNED |
+| **Blockers** | Asignar owner y reviewer |
 | **Fase** | Antes del piloto operativo |
 | **Depende de** | SPEC-207–217 y specs funcionales de cada comando |
 

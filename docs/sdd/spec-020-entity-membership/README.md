@@ -8,10 +8,12 @@ Vínculo de autorización entre un User global y un Tenant, con roles y alcance 
 | **Tipo** | Entity / Authorization Aggregate |
 | **Dominio** | Identity |
 | **Estado** | DRAFT |
-| **Readiness** | READY_FOR_I0_REVIEW |
+| **Readiness** | BLOCKED |
+| **Review target** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
 | **Owner** | UNASSIGNED |
 | **Reviewer** | UNASSIGNED |
+| **Blockers** | Asignar owner y reviewer |
 | **Fase** | SPEC-222 I0/I1 |
 | **Depende de** | SPEC-001, SPEC-004, SPEC-017, SPEC-018, SPEC-019, SPEC-023 |
 

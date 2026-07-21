@@ -8,10 +8,12 @@ Contrato para detectar, entender y recuperar fallos de Maitre con telemetría po
 | **Tipo** | Transversal / Reliability Engineering |
 | **Dominio** | Platform / Operations |
 | **Estado** | DRAFT |
-| **Readiness** | READY_FOR_I0_REVIEW |
+| **Readiness** | BLOCKED |
+| **Review target** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
 | **Owner** | UNASSIGNED |
 | **Reviewer** | UNASSIGNED |
+| **Blockers** | Asignar owner y reviewer |
 | **Fase** | Antes del ambiente demo estable |
 | **Depende de** | SPEC-207–215 |
 

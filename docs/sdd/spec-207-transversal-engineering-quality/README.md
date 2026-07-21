@@ -8,10 +8,12 @@ Contrato transversal de calidad para todo cambio de Maitre.
 | **Tipo** | Transversal |
 | **Dominio** | Platform / Engineering |
 | **Estado** | DRAFT |
-| **Readiness** | READY_FOR_I0_REVIEW |
+| **Readiness** | BLOCKED |
+| **Review target** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
 | **Owner** | UNASSIGNED |
 | **Reviewer** | UNASSIGNED |
+| **Blockers** | Asignar owner y reviewer |
 | **Fase** | Todas, antes del primer código productivo |
 
 ## Propósito

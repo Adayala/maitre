@@ -8,10 +8,12 @@ Contrato de costo, capacidad y salida para operar el MVP con free tiers.
 | **Tipo** | Transversal |
 | **Dominio** | Platform / FinOps |
 | **Estado** | DRAFT |
-| **Readiness** | READY_FOR_I0_REVIEW |
+| **Readiness** | BLOCKED |
+| **Review target** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
 | **Owner** | UNASSIGNED |
 | **Reviewer** | UNASSIGNED |
+| **Blockers** | Asignar owner y reviewer |
 | **Fase** | MVP |
 
 ## Propósito

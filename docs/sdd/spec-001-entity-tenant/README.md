@@ -10,10 +10,12 @@ Tenant representa una organización cliente y es la raíz explícita del aislami
 | **Tipo** | Entity |
 | **Dominio** | Organization |
 | **Estado** | DRAFT |
-| **Readiness** | READY_FOR_I0_REVIEW |
+| **Readiness** | BLOCKED |
+| **Review target** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
 | **Owner** | UNASSIGNED |
 | **Reviewer** | UNASSIGNED |
+| **Blockers** | Asignar owner y reviewer |
 | **Fase** | I0 |
 
 ## Documentos

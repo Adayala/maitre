@@ -8,11 +8,13 @@ Spike técnico para definir la integración de Maitre con los servicios fiscales
 | **Tipo** | Connector / API |
 | **Dominio** | Billing & Tax |
 | **Estado** | DRAFT |
-| **Readiness** | PROPOSED_FOR_REVIEW |
+| **Readiness** | BLOCKED |
+| **Review target** | PROPOSED_FOR_REVIEW |
 | **Resultado del spike** | COMPLETED |
 | **Prioridad** | P0 |
 | **Owner** | UNASSIGNED |
 | **Reviewer** | UNASSIGNED |
+| **Blockers** | Asignar owner y reviewer |
 | **Fase** | 4 |
 | **Fecha de investigación** | 2026-07-21 |
 

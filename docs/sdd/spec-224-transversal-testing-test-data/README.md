@@ -8,10 +8,12 @@ Contrato transversal para obtener evidencia confiable con tests rápidos, manten
 | **Tipo** | Transversal / Quality Engineering |
 | **Dominio** | Engineering / Verification |
 | **Estado** | DRAFT |
-| **Readiness** | READY_FOR_I0_REVIEW |
+| **Readiness** | BLOCKED |
+| **Review target** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
 | **Owner** | UNASSIGNED |
 | **Reviewer** | UNASSIGNED |
+| **Blockers** | Asignar owner y reviewer |
 | **Fase** | Antes del primer código funcional |
 | **Depende de** | SPEC-207, SPEC-209–223 |
 

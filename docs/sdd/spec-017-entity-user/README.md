@@ -8,10 +8,12 @@ Perfil global de una persona autenticada, separado de credenciales, tenants, rol
 | **Tipo** | Entity |
 | **Dominio** | Identity |
 | **Estado** | DRAFT |
-| **Readiness** | READY_FOR_I0_REVIEW |
+| **Readiness** | BLOCKED |
+| **Review target** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
 | **Owner** | UNASSIGNED |
 | **Reviewer** | UNASSIGNED |
+| **Blockers** | Asignar owner y reviewer |
 | **Fase** | SPEC-222 I0/I1 |
 | **Depende de** | IdentityProviderPort, SPEC-020, SPEC-023, SPEC-210 |
 
