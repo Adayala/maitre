@@ -1,10 +1,13 @@
-# spec-053-entity-payment
+# [SPEC-053] Payment Entity
 
-**Status:** DRAFT
-**Phase:** TBD
-**Type:** TBD
-**Priority:** TBD
-
----
-
-Specification metadata to be filled during peer review.
+| Campo | Valor |
+| --- | --- |
+| **ID** | SPEC-053 |
+| **Tipo** | Entity |
+| **Dominio** | Billing & Payments |
+| **Estado** | DRAFT |
+| **Readiness** | NOT_ASSESSED |
+| **Prioridad** | UNASSIGNED |
+| **Owner** | UNASSIGNED |
+| **Reviewer** | UNASSIGNED |
+| **Blockers** | Revisar contrato y asignar prioridad/ownership |

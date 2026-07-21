@@ -1,10 +1,13 @@
-# spec-052-entity-check
+# [SPEC-052] Check Entity
 
-**Status:** DRAFT
-**Phase:** TBD
-**Type:** TBD
-**Priority:** TBD
-
----
-
-Specification metadata to be filled during peer review.
+| Campo | Valor |
+| --- | --- |
+| **ID** | SPEC-052 |
+| **Tipo** | Entity |
+| **Dominio** | Billing & Payments |
+| **Estado** | DRAFT |
+| **Readiness** | NOT_ASSESSED |
+| **Prioridad** | UNASSIGNED |
+| **Owner** | UNASSIGNED |
+| **Reviewer** | UNASSIGNED |
+| **Blockers** | Revisar contrato y asignar prioridad/ownership |

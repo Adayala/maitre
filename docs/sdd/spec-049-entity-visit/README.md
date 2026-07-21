@@ -1,10 +1,13 @@
-# spec-049-entity-visit
+# [SPEC-049] Visit Entity
 
-**Status:** DRAFT
-**Phase:** TBD
-**Type:** TBD
-**Priority:** TBD
-
----
-
-Specification metadata to be filled during peer review.
+| Campo | Valor |
+| --- | --- |
+| **ID** | SPEC-049 |
+| **Tipo** | Entity |
+| **Dominio** | Floor |
+| **Estado** | DRAFT |
+| **Readiness** | NOT_ASSESSED |
+| **Prioridad** | UNASSIGNED |
+| **Owner** | UNASSIGNED |
+| **Reviewer** | UNASSIGNED |
+| **Blockers** | Revisar contrato y asignar prioridad/ownership |
