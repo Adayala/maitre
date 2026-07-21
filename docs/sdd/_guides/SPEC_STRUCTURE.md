@@ -1,405 +1,172 @@
 # Estructura de directorios para specs
 
-> Esta guía describe formas de documento. La gobernanza normativa de IDs, estados, aprobación, ADRs y deprecación está en [`SPEC-225`](../spec-225-transversal-spec-adr-governance/).
+Guía práctica para organizar una spec de Maitre. La gobernanza normativa de IDs,
+metadata, estados, aprobación, ADRs, registro y deprecación pertenece a
+[`SPEC-225`](../spec-225-transversal-spec-adr-governance/).
 
-Cada spec vive en su propio directorio con múltiples documentos.
+## Convención de nombre
 
-## Convención de nombres
-
-```
-/docs/sdd/[spec-type]-[spec-name]/
-├── README.md (overview y quickstart)
-├── structure.md (schema, campos, tipos)
-├── rules.md (invariantes, reglas de negocio)
-├── examples.md (ejemplos concretos en JSON)
-├── [tipo-específico-1].md
-├── [tipo-específico-2].md
-└── [tipo-específico-n].md
+```text
+docs/sdd/spec-NNN-type-name/
 ```
 
----
+- `NNN`: ID decimal único, inmutable y no reutilizable.
+- `type`: tipo base en kebab-case (`entity`, `api`, `event`, `rbac`, `calculation`,
+  `app` o `transversal`).
+- `name`: slug descriptivo, estable y en kebab-case.
 
-## Tipos de specs y sus documentos
+Ejemplos vigentes:
 
-### Entity Spec: `spec-entity-[name]/`
+- [`spec-001-entity-tenant/`](../spec-001-entity-tenant/)
+- [`spec-023-api-auth/`](../spec-023-api-auth/)
+- [`spec-225-transversal-spec-adr-governance/`](../spec-225-transversal-spec-adr-governance/)
 
-**Propósito:** Define una entidad de dominio.
+El ID del directorio, el título y la fila `ID` del README deben coincidir.
 
-**Documentos:**
+## Paquete mínimo
 
-```
-spec-entity-tenant/
+```text
+spec-NNN-type-name/
 ├── README.md
-├── structure.md (JSON schema de Tenant)
-├── rules.md (invariantes: cada tenant es único, etc)
-├── lifecycle.md (creación, estados, eliminación)
-├── examples.md (ejemplos de Tenant en JSON)
-└── relationships.md (Tenant → Brands, FiscalEntities, Branches)
+├── objective.md
+├── specification.md
+├── rules.md
+├── plan.md
+├── tasks.md
+├── verification.md
+└── notes.md
 ```
 
-**README.md:**
-```markdown
-# Tenant Entity
-
-Entidad organizacional que compra Maitre y limita isolación de datos.
-
-- **Type:** Entity
-- **Domain:** Organization
-- **Status:** PLANNED | DRAFT | READY FOR IMPLEMENTATION
-- **Related specs:** spec-api-tenants, spec-event-tenant-created
-```
-
----
-
-### API Spec: `spec-api-[resource]/`
-
-**Propósito:** Define contratos HTTP para un recurso.
-
-**Documentos:**
-
-```
-spec-api-tenants/
-├── README.md
-├── post-create.md (POST /tenants)
-├── get-fetch.md (GET /tenants/:id)
-├── patch-update.md (PATCH /tenants/:id)
-├── errors.md (qué puede fallar)
-├── examples.md (ejemplos de request/response)
-└── authorization.md (quién puede, qué entitlements)
-```
-
-**README.md:**
-```markdown
-# Tenants API
-
-Contratos HTTP para gestionar tenants.
-
-- **Resource:** /tenants
-- **Domain:** Organization
-- **Status:** PLANNED | DRAFT | READY FOR IMPLEMENTATION
-- **Related specs:** spec-entity-tenant, spec-event-tenant-created
-```
-
----
-
-### Event Spec: `spec-event-[event-name]/`
-
-**Propósito:** Define un evento que publica un dominio.
-
-**Documentos:**
-
-```
-spec-event-tenant-created/
-├── README.md
-├── structure.md (schema del evento base)
-├── payload.md (qué contiene el payload)
-├── consumers.md (quién lo consume, qué hacen)
-├── examples.md (ejemplo completo del evento en JSON)
-└── timing.md (cuándo se publica, frecuencia)
-```
-
-**README.md:**
-```markdown
-# TenantCreated Event
-
-Emitido cuando se crea un nuevo tenant.
-
-- **Namespace:** maitre.organization
-- **Domain:** Organization
-- **Status:** PLANNED | DRAFT | READY FOR IMPLEMENTATION
-- **Related specs:** spec-entity-tenant, spec-api-tenants
-```
-
----
-
-### State Machine Spec: `spec-state-machine-[entity]/`
-
-**Propósito:** Define estados válidos y transiciones.
-
-**Documentos:**
-
-```
-spec-state-machine-order/
-├── README.md
-├── states.md (lista de estados válidos)
-├── transitions.md (transiciones, precondiciones, postcondiciones)
-├── diagram.md (diagrama ASCII o Mermaid)
-├── rules.md (reglas de transición)
-└── examples.md (escenarios de transición)
-```
-
-**README.md:**
-```markdown
-# Order State Machine
-
-Define ciclo de vida válido de una orden.
-
-- **Entity:** Order
-- **Domain:** Ordering
-- **Status:** PLANNED | DRAFT | READY FOR IMPLEMENTATION
-```
-
----
-
-### RBAC Spec: `spec-rbac-[domain]/`
-
-**Propósito:** Define quién puede hacer qué en un dominio.
-
-**Documentos:**
-
-```
-spec-rbac-floor/
-├── README.md
-├── roles.md (qué roles existen)
-├── permissions.md (qué permisos por rol)
-├── matrix.md (matriz de Role × Action × Resource)
-├── rules.md (reglas especiales)
-└── examples.md (escenarios: WAITER abre visita, etc)
-```
-
-**README.md:**
-```markdown
-# Floor RBAC
-
-Control de acceso en el dominio Floor.
-
-- **Domain:** Floor
-- **Status:** PLANNED | DRAFT | READY FOR IMPLEMENTATION
-```
-
----
-
-### Calculation Spec: `spec-calculation-[name]/`
-
-**Propósito:** Define una fórmula, algoritmo, o cálculo de negocio.
-
-**Documentos:**
-
-```
-spec-calculation-entitlements/
-├── README.md
-├── formula.md (la fórmula/algoritmo)
-├── inputs.md (qué datos de entrada)
-├── outputs.md (qué se calcula)
-├── examples.md (ejemplos con números reales)
-└── edge-cases.md (casos especiales)
-```
-
-**README.md:**
-```markdown
-# Entitlements Calculation
-
-Cómo se derivan entitlements desde subscription items.
-
-- **Type:** Calculation
-- **Domain:** Subscription
-- **Status:** PLANNED | DRAFT | READY FOR IMPLEMENTATION
-```
-
----
-
-### Connector Spec: `spec-connector-[provider]/`
-
-**Propósito:** Define integración con un sistema externo.
-
-**Documentos:**
-
-```
-spec-connector-gbp/
-├── README.md
-├── authentication.md (OAuth2, credenciales)
-├── sync.md (protocolo de sincronización)
-├── endpoints.md (qué endpoints del proveedor se usan)
-├── mapping.md (cómo mapean los datos)
-├── examples.md (flujos completos)
-└── error-handling.md (qué puede fallar)
-```
-
-**README.md:**
-```markdown
-# Google Business Profile Connector
-
-Integración con Google Business Profile para reputación.
-
-- **Provider:** Google
-- **Type:** Connector
-- **Domain:** Reputation
-- **Status:** PLANNED | DRAFT | READY FOR IMPLEMENTATION
-```
-
----
-
-### App Spec: `spec-app-[app-name]/`
-
-**Propósito:** Define un flujo de usuario en una app.
-
-**Documentos:**
-
-```
-spec-app-floor-take-order/
-├── README.md
-├── user-journey.md (pasos del usuario)
-├── states.md (estados de la UI)
-├── api-calls.md (qué endpoints llama)
-├── offline-behavior.md (cómo funciona sin conectividad)
-├── examples.md (screenshots, mockups)
-└── error-scenarios.md (qué pasa si falla)
-```
-
-**README.md:**
-```markdown
-# Floor App — Take Order Flow
-
-Flujo completo de tomar un pedido desde la tablet del mozo.
-
-- **App:** Maitre Floor
-- **Type:** App Flow
-- **Status:** PLANNED | DRAFT | READY FOR IMPLEMENTATION
-```
-
----
-
-### Transversal Spec: `spec-transversal-[name]/`
-
-**Propósito:** Define patrones o reglas que aplican a todo.
-
-**Documentos:**
-
-```
-spec-transversal-multi-tenancy/
-├── README.md
-├── principles.md (qué significa multi-tenancy en Maitre)
-├── data-isolation.md (cómo se aíslan datos)
-├── propagation.md (cómo se propagan tenant IDs)
-├── testing.md (cómo se testea)
-└── examples.md (flujos multi-tenant)
-```
-
-**README.md:**
-```markdown
-# Multi-tenancy
-
-Principios y patrones de aislamiento de datos.
-
-- **Type:** Transversal
-- **Applies to:** Todas las fases
-- **Status:** PLANNED | DRAFT | READY FOR IMPLEMENTATION
-```
-
----
-
-## Ejemplo completo: Tenant
-
-```
-/docs/sdd/
-├── spec-entity-tenant/
-│   ├── README.md (50 líneas)
-│   ├── structure.md (JSON schema)
-│   ├── rules.md (3-5 invariantes)
-│   ├── lifecycle.md (creación, estados)
-│   ├── examples.md (3 ejemplos JSON)
-│   └── relationships.md (cómo se relaciona con otros)
-│
-├── spec-api-tenants/
-│   ├── README.md
-│   ├── post-create.md (POST /tenants)
-│   ├── get-fetch.md (GET /tenants/:id)
-│   ├── patch-update.md (PATCH /tenants/:id)
-│   ├── errors.md (400, 401, 403, 404, 409)
-│   ├── examples.md (request/response JSON)
-│   └── authorization.md (OWNER, ADMIN)
-│
-├── spec-event-tenant-created/
-│   ├── README.md
-│   ├── structure.md (schema base)
-│   ├── payload.md (qué contiene)
-│   ├── consumers.md (Identity, Billing, Analytics)
-│   └── examples.md (evento completo)
-│
-├── spec-rbac-organization/
-│   ├── README.md
-│   ├── roles.md (OWNER, ADMIN, MANAGER)
-│   ├── permissions.md (crear tenant, editar tenant)
-│   ├── matrix.md (quién puede qué)
-│   └── examples.md (escenarios)
-│
-└── spec-calculation-entitlements/
-    ├── README.md
-    ├── formula.md (cómo se calculan)
-    ├── inputs.md (subscription items)
-    ├── outputs.md (TENANT.ACCESS, BRANCHES.MAX)
-    └── examples.md (ejemplos numéricos)
-```
-
-Total: 5 specs × 5-7 documentos cada una = 25-35 .md para una entidad (Tenant).
-
----
-
-## Ventajas de esta estructura
-
-✅ **Autocontendida:** Cada spec es independiente, se puede entender sin saltar a otro directorio.
-
-✅ **Escalable:** Agregar un nuevo documento a una spec no afecta a otras.
-
-✅ **Navegable:** `ls spec-entity-order/` te muestra todos los documentos sobre Order.
-
-✅ **Vincular:** Links internos: `../spec-api-orders/post-create.md`.
-
-✅ **CI/CD ready:** Se puede validar cada spec por separado.
-
----
-
-## Índice maestro
-
-Archivo `/docs/sdd/INDEX.md` lista todas las specs:
+Responsabilidades:
+
+| Archivo | Contenido |
+| --- | --- |
+| `README.md` | metadata autoritativa, resumen, alcance y navegación |
+| `objective.md` | problema, resultados, no objetivos y aceptación |
+| `specification.md` | contrato normativo observable |
+| `rules.md` | invariantes, prohibiciones y excepciones |
+| `plan.md` | estrategia y secuencia derivada del contrato |
+| `tasks.md` | trabajo trazable, no evidencia de implementación por sí solo |
+| `verification.md` | checks automáticos/manuales y evidencia requerida |
+| `notes.md` | decisiones menores, fuentes, riesgos y preguntas abiertas |
+
+Un documento especializado se agrega cuando mejora precisión. Ejemplos:
+
+- entidad: `structure.md`, `lifecycle.md`, `relationships.md`;
+- API: `openapi.yaml`, `errors.md`, `authorization.md`;
+- evento: `schema.md`, `consumers.md`, `delivery.md`;
+- cálculo: `formula.md`, `inputs.md`, `edge-cases.md`;
+- app: `user-journey.md`, `states.md`, `offline-behavior.md`;
+- transversal: contratos de calidad, seguridad, plataforma u operación.
+
+No se crean archivos vacíos sólo para completar una plantilla.
+
+## README autoritativo
+
+Ejemplo mínimo para una spec nueva:
 
 ```markdown
-# Specifications Index
+# [SPEC-NNN] Título
 
-## Fase 1: Plataforma Fundacional
+Descripción breve del contrato.
 
-### Organization
-- [spec-entity-tenant](spec-entity-tenant/)
-- [spec-entity-brand](spec-entity-brand/)
-- [spec-api-tenants](spec-api-tenants/)
-- [spec-api-branches](spec-api-branches/)
-- [spec-event-tenant-created](spec-event-tenant-created/)
-- [spec-rbac-organization](spec-rbac-organization/)
+| Campo | Valor |
+| --- | --- |
+| **ID** | SPEC-NNN |
+| **Tipo** | Entity |
+| **Subtype** | Aggregate |
+| **Dominio** | Organization |
+| **Estado** | DRAFT |
+| **Readiness** | NOT_ASSESSED |
+| **Prioridad** | UNASSIGNED |
+| **Owner** | UNASSIGNED |
+| **Reviewer** | UNASSIGNED |
+| **Blockers** | Revisar contrato y asignar prioridad/ownership |
+| **Depende de** | N/A |
 
-### Identity
-- [spec-entity-user](spec-entity-user/)
-- [spec-api-users](spec-api-users/)
-- [spec-api-auth](spec-api-auth/)
-- [spec-event-user-invited](spec-event-user-invited/)
-- [spec-rbac-identity](spec-rbac-identity/)
+## Documentos
 
-### Subscription
-- [spec-entity-subscription](spec-entity-subscription/)
-- [spec-api-subscriptions](spec-api-subscriptions/)
-- [spec-calculation-entitlements](spec-calculation-entitlements/)
-- [spec-event-service-activated](spec-event-service-activated/)
-
-## Fase 2: Operación Mínima
-...
+- [Objetivo](objective.md)
+- [Especificación](specification.md)
+- [Reglas](rules.md)
+- [Plan](plan.md)
+- [Tareas](tasks.md)
+- [Verificación](verification.md)
+- [Notas](notes.md)
 ```
 
----
+`Subtype` es opcional. `Blockers` es obligatorio cuando readiness es `BLOCKED` o hay
+decisiones pendientes que impiden review/implementación. Campos condicionales y enums
+completos están en el
+[`contrato del registro`](../spec-225-transversal-spec-adr-governance/registry-contract.md).
 
-## Cómo empezar a escribir una spec
+## Tipos base
 
-```bash
-# 1. Crear directorio
-mkdir -p /docs/sdd/spec-entity-order
+| Prefijo | `Tipo` | Uso |
+| --- | --- | --- |
+| `entity` | `Entity` | modelo/agregado de dominio |
+| `api` | `API` | contrato HTTP o conector expuesto como API |
+| `event` | `Event` | hecho publicado y su delivery |
+| `rbac` | `RBAC` | permisos y scopes de un dominio |
+| `calculation` | `Calculation` | fórmula/algoritmo de negocio |
+| `app` | `App` | flujo o contrato de experiencia |
+| `transversal` | `Transversal` | requisito que cruza features/dominios |
 
-# 2. Crear README.md con propósito y links relacionados
-echo "# Order Entity" > /docs/sdd/spec-entity-order/README.md
+Especializaciones como `Connector`, `Architecture Decision`, `Technical Spike` o
+`Security boundary` se expresan en `Subtype`, no dentro de `Tipo`.
 
-# 3. Crear documentos específicos
-touch /docs/sdd/spec-entity-order/structure.md
-touch /docs/sdd/spec-entity-order/rules.md
-touch /docs/sdd/spec-entity-order/examples.md
+## Estados y readiness
 
-# 4. Escribir cada documento
+`Estado` usa exclusivamente:
 
-# 5. Link en INDEX.md
+```text
+PLANNED | DRAFT | IN_REVIEW | READY_FOR_IMPLEMENTATION |
+IN_PROGRESS | VERIFIED | DEPRECATED | SUPERSEDED
 ```
+
+Readiness es una dimensión separada:
+
+```text
+NOT_ASSESSED | PROPOSED_FOR_REVIEW | READY_FOR_I0_REVIEW | BLOCKED
+```
+
+No se concatenan comentarios al estado. Un owner/reviewer sin asignar, una pregunta P0 o
+una dependencia pendiente se registra como blocker. Sólo `READY_FOR_IMPLEMENTATION`, con
+aprobaciones completas, autoriza comportamiento nuevo.
+
+## Cómo crear una spec
+
+1. Confirma que la necesidad no esté cubierta por otra spec o ADR.
+2. Reserva un ID sin colisión según SPEC-225; no renumeres IDs existentes.
+3. Crea el directorio canónico y el paquete mínimo.
+4. Completa metadata con valores conocidos; usa `UNASSIGNED` en lugar de inventar personas.
+5. Define problema, no objetivos, reglas, edge cases y aceptación observable.
+6. Enlaza dependencias por ID y actualiza consumidores afectados.
+7. Ejecuta `npm run sdd:validate` cuando el tooling esté disponible; mientras tanto revisa
+   manualmente identidad, links y archivos.
+8. Somete la spec a review; no promociones el estado mediante checkboxes o por completar documentos.
+
+## Cómo modificar una spec
+
+- Editorial: corrige formato/links sin cambiar comportamiento.
+- Compatible: actualiza criterios, tests y consumidores afectados.
+- Incompatible: vuelve a review, define migración/deprecación y crea ADR si cambia una
+  decisión arquitectónica significativa.
+
+Código, tests y documentación se actualizan atómicamente cuando la spec ya está
+implementada. Una spec verificada se conserva como historia y se supersede; no se elimina
+para limpiar el repositorio.
+
+## Índices
+
+El README de cada spec es la fuente autoritativa. [`INDEX.md`](../INDEX.md) es actualmente
+un roadmap histórico y será reemplazado por una proyección generada. No se usan sus
+checkboxes para representar lifecycle.
+
+## Referencias
+
+- [Inicio SDD](../START_HERE.md)
+- [Gobernanza SPEC-225](../spec-225-transversal-spec-adr-governance/)
+- [Contrato del registro](../spec-225-transversal-spec-adr-governance/registry-contract.md)
+- [Contrato del validador](../spec-225-transversal-spec-adr-governance/validation-contract.md)
+- [Registro ADR](../../adr/README.md)
