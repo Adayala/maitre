@@ -1,10 +1,13 @@
-# spec-066-entity-reservation
+# [SPEC-066] Reservation Entity
 
-**Status:** DRAFT
-**Phase:** TBD
-**Type:** TBD
-**Priority:** TBD
-
----
-
-Specification metadata to be filled during peer review.
+| Campo | Valor |
+| --- | --- |
+| **ID** | SPEC-066 |
+| **Tipo** | Entity |
+| **Dominio** | Reservations |
+| **Estado** | DRAFT |
+| **Readiness** | NOT_ASSESSED |
+| **Prioridad** | UNASSIGNED |
+| **Owner** | UNASSIGNED |
+| **Reviewer** | UNASSIGNED |
+| **Blockers** | Revisar contrato y asignar prioridad/ownership |
