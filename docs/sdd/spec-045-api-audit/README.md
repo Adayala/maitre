@@ -16,4 +16,9 @@ GET /audit/logs?resource=...&actor=...&dateRange=...
 | **Fase** | 1 |
 | **Estimación** | 4h |
 
-**Status: PLANNED**
+## Documentos
+
+- [Contrato](contract.md)
+- [Especificación](specification.md)
+- [Reglas](rules.md)
+- [Verificación](verification.md)

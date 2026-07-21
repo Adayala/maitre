@@ -23,4 +23,9 @@ App web para admin: configurar tenant, ver estado, entitlements.
 - Invite users
 - Setup status
 
-**Status: PLANNED**
+## Documentos
+
+- [Contrato](contract.md)
+- [Especificación](specification.md)
+- [Reglas](rules.md)
+- [Verificación](verification.md)
