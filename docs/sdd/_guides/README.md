@@ -1,298 +1,115 @@
-# /docs/sdd — Specifications (Spec-Driven Development)
+# Guías SDD de Maitre
 
-Artefactos de especificación ejecutable. **No es código; es el contrato que el código debe cumplir.**
+Mapa de lectura para trabajar con especificaciones. Las guías explican el proceso; no
+reemplazan contratos normativos ni autorizan implementación.
 
-## Documentos por tipo
+## Empieza aquí
 
-### Roadmap y Planning
+1. [Inicio SDD](../START_HERE.md): contexto, navegación y secuencia I0.
+2. [Estructura de una spec](SPEC_STRUCTURE.md): directorios, metadata y archivos.
+3. [Gobernanza SPEC-225](../spec-225-transversal-spec-adr-governance/): lifecycle,
+   ownership, aprobación, registro y ADRs.
+4. [Review I0](../I0_READINESS_REVIEW.md): blockers antes del scaffolding.
+5. [SPEC-226](../spec-226-transversal-i0-platform-validation-spikes/): evidencia para
+   decidir plataforma y toolchain.
 
-- **00-mvp-specifications-roadmap.md** — Listado completo de ~193 specs a realizar para MVP (Fases 1-5)
-  - Organizadas por fase
-  - Checklist de status
-  - Conteo y categorización
+## Documentos de orientación
 
-### Arquitectura y Diseño (de foundation)
+| Documento | Uso | Autoridad |
+| --- | --- | --- |
+| [Roadmap histórico](00-mvp-specifications-roadmap.md) | descubrir capacidades/fases originales | planificación histórica |
+| [Prioridades históricas](01-priority-specs-todo.md) | entender el orden propuesto originalmente | planificación histórica |
+| [Apps y dispositivos](15-applications-and-devices.md) | contexto de superficies y operación | guía de producto |
+| [APIs](16-api-specifications.md) | contexto de contratos HTTP | guía; SPEC-215 es normativa |
+| [Eventos](17-event-specifications.md) | contexto de eventos y consumidores | guía; SPEC-217 es normativa |
+| [Índice](../INDEX.md) | explorar alcance histórico | no autoritativo |
 
-- **15-applications-and-devices.md** — 6 apps, dispositivos, mobile-first, offline capabilities
-- **16-api-specifications.md** — Contratos HTTP formales: endpoints, request/response, status codes, entitlements
-- **17-event-specifications.md** — Eventos del sistema: estructura, payload, consumidores, versionamiento
+Los conteos y checkboxes históricos no representan `Estado`, `Readiness`, aprobación ni
+implementación. La metadata autoritativa vive en el README de cada `spec-NNN-*`.
 
----
+## Flujo spec-driven
 
-## Estructura de una especificación
-
-Cada spec sigue este formato:
-
-```markdown
-# [Nombre de entidad/API/Evento]
-
-## Propósito
-[Qué es, por qué existe]
-
-## Estructura / Definición
-[JSON schema, campos, tipos]
-
-## Reglas / Invariantes
-- [Regla 1]
-- [Regla 2]
-
-## Ejemplos
-[JSON o pseudo-código]
-
-## Consumidores / Publicadores
-[Quién usa esto]
-
-## Entitlements
-[Qué derechos se requieren]
-
-## Status
-[PLANNED, DRAFT, READY FOR IMPLEMENTATION, IN PROGRESS, DONE]
+```text
+necesidad / foundation / ADR
+  → spec PLANNED o DRAFT
+  → contrato + criterios + blockers explícitos
+  → IN_REVIEW con owner/reviewer
+  → READY_FOR_IMPLEMENTATION aprobado
+  → issue/task trazable
+  → código + tests + evidencia
+  → VERIFIED
 ```
 
----
-
-## Cómo se generan specs
-
-Para cada artefacto en el roadmap:
-
-1. **Create file:** `spec-[type]-[name].md`
-   - `spec-entity-order.md` — Entidad Order
-   - `spec-api-orders.md` — API de Orders
-   - `spec-event-order-submitted.md` — Evento OrderSubmitted
-   - `spec-state-machine-order.md` — Máquina de estados
-   - `spec-rbac-floor.md` — Control de acceso del dominio Floor
-
-2. **Write spec:** Seguir formato y completar todas las secciones.
-
-3. **Update roadmap:** Marcar como READY FOR IMPLEMENTATION.
-
-4. **Link in foundation:** Si la spec afecta docs en /foundation/, actualizar referencias.
-
----
-
-## Categorías de especificaciones
-
-### Entity Specs (`spec-entity-*.md`)
-
-Define una entidad de dominio: campos, tipos, ciclo de vida.
-
-```markdown
-## Estructura
-
-{
-  "id": "uuid",
-  "tenantId": "tenant_123",
-  "branchId": "branch_palermo",
-  "name": "string",
-  "status": "ACTIVE | INACTIVE",
-  "createdAt": "ISO8601",
-  "updatedAt": "ISO8601"
-}
-
-## Reglas
-
-- Cada orden pertenece a una visita
-- Los ítems de una orden no se eliminan, se cancelan
-```
-
-### API Specs (`spec-api-*.md`)
-
-Define contratos HTTP: endpoints, métodos, request/response.
-
-```markdown
-## Endpoints
-
-### POST /orders
-
-Crear orden.
-
-Request:
-{
-  "visitId": "visit_555",
-  "items": [...]
-}
-
-Response 201: { "id": "order_888", ... }
-```
-
-### Event Specs (`spec-event-*.md`)
-
-Define eventos que publica un dominio.
-
-```markdown
-## Estructura Base
-
-{
-  "eventId": "evt_unique",
-  "eventName": "OrderSubmitted",
-  "eventVersion": "1.0",
-  "aggregateId": "order_888",
-  "tenantId": "tenant_123",
-  "timestamp": "ISO8601",
-  "payload": {...}
-}
-
-## Payload
-
-{ "orderId", "items", "submittedAt" }
-
-## Consumidores
-
-Kitchen, Cash, Analytics
-```
-
-### State Machine Specs (`spec-state-machine-*.md`)
-
-Define estados válidos y transiciones.
-
-```markdown
-## Estados
-
-DRAFT → SUBMITTED → ACCEPTED → IN_PREP → READY → DELIVERED
-               ↓
-            CANCELLED (con reason, authorizer)
-
-## Transiciones
-
-- SUBMITTED → ACCEPTED: precondición = tiene ítems, entitlement = ORDERING.APPROVE
-- SUBMITTED → CANCELLED: precondición = ninguna, actor debe ser MANAGER+
-```
-
-### RBAC Specs (`spec-rbac-*.md`)
-
-Define quién puede hacer qué en un dominio.
-
-```markdown
-## Matriz
-
-WAITER:
-  - POST /orders (crear orden)
-  - PATCH /visits/:id (cambiar status)
-  - GET /menus (ver catálogo)
-
-COOK:
-  - GET /kitchen/tickets (ver comandas)
-  - PATCH /kitchen/tickets/:id/items/:id (cambiar estado)
-```
-
-### Calculation Specs (`spec-calculation-*.md`)
-
-Define cálculos, fórmulas, algoritmos.
-
-```markdown
-## Entitlements from Subscription
-
-FLOOR.ACCESS = (existe FLOOR en subscription items)
-FLOOR.BRANCHES = [lista de branches donde FLOOR está activo]
-MAX_USERS = (suma de capacidad en subscription items)
-```
-
-### Connector Specs (`spec-connector-*.md`)
-
-Define integraciones con terceros.
-
-```markdown
-## Google Business Profile
-
-1. OAuth2 flow → obtener access token
-2. Sincronizar reviews cada 4 horas
-3. Si review nueva → ConnectorSynchronized event
-```
-
-### Transversal Specs
-
-- `spec-tenant-isolation.md` — Datos multi-tenant
-- `spec-idempotency.md` — Deduplicación de requests
-- `spec-offline-sync.md` — Sincronización de datos offline
-- `spec-error-codes.md` — Catálogo de errores
-
----
-
-## Roadmap de escritura
-
-### Prioridad 1 (escribir primero)
-
-Specs de Fase 1 y Fase 2: los pilares.
-
-```
-spec-entity-tenant.md
-spec-entity-subscription.md
-spec-api-tenants.md
-spec-api-subscriptions.md
-spec-entity-order.md
-spec-state-machine-order.md
-spec-api-orders.md
-spec-event-order-submitted.md
-spec-rbac-floor.md
-```
-
-### Prioridad 2
-
-Specs de Fase 3: reservas y guest.
-
-### Prioridad 3
-
-Fases 4-5 y transversales.
-
----
-
-## Status de escritura
-
-```
-PLANNED       = Identificada en roadmap, no iniciada
-DRAFT         = Escritura en progreso
-READY FOR IMP = Completada, lista para implementar
-IN PROGRESS   = Se está implementando según la spec
-DONE          = Implementada y testeo pasa
-```
-
-Cada spec tiene un campo `Status` al inicio.
-
----
-
-## Versioning de especificaciones
-
-Si una spec cambia:
-
-1. **Cambio menor (no breaking):** Versión +0.1 (v1.1)
-   - Agregar un campo opcional
-   - Cambiar descripción
-   - Agregar un status válido
-
-2. **Cambio mayor (breaking):** Versión +1.0 (v2.0)
-   - Eliminar campo
-   - Cambiar tipo
-   - Cambiar comportamiento crítico
-   
-   En código: nueva versión de API (`POST /v2/orders`) o nuevo evento (`OrderSubmittedV2`)
-
----
-
-## Verificación
-
-Cada spec debe pasar:
-
-```
-✅ Estructura: campos definidos, tipos claros
-✅ Ejemplos: JSON válido, coherente
-✅ Reglas: invariantes posibles y verificables
-✅ Consumidores: linkeados correctamente
-✅ Errores: qué puede fallar y cómo responder
-✅ Status: actualizado
-```
-
----
-
-## Linking
-
-Las specs se referencian entre sí:
-
-```markdown
-Vea también:
-- spec-entity-order.md
-- spec-event-order-submitted.md
-- spec-api-orders.md
-```
-
-En herramientas futuras: grafo de specs, dependencias automáticas.
-
+Completar documentos o checkboxes no promueve una spec. Un cambio de estado es una decisión
+versionada que debe cumplir las reglas de SPEC-225.
+
+## Fuente correcta según la pregunta
+
+| Pregunta | Documento |
+| --- | --- |
+| ¿Por qué existe Maitre y qué principios aplica? | `docs/foundations/` |
+| ¿Qué comportamiento debe cumplir una feature? | spec funcional `SPEC-NNN` |
+| ¿Qué regla cruza varias features? | spec transversal `SPEC-NNN` |
+| ¿Por qué se eligió una arquitectura? | `docs/adr/ADR-NNN-*` |
+| ¿Qué se implementa primero? | SPEC-222 y readiness I0 |
+| ¿Cómo se implementará? | `plan.md` y `tasks.md` de una spec aprobada |
+| ¿Cómo se demuestra? | `verification.md`, tests y evidencia enlazada |
+| ¿Cómo se opera/recupera? | runbook asociado al comportamiento implementado |
+
+Si dos fuentes se contradicen, no se aplica precedencia silenciosa: se detiene el cambio
+afectado y se resuelve según SPEC-225.
+
+## Identidad y metadata
+
+- Directorio: `spec-NNN-type-name/`.
+- ID único, inmutable y coincidente con el directorio.
+- `Tipo` base separado de `Subtype`.
+- `Estado` separado de `Readiness` y `Blockers`.
+- Owner/reviewer desconocidos se registran `UNASSIGNED`.
+- Dependencias se enlazan por ID, no mediante slugs históricos.
+
+Consulta el [contrato del registro](../spec-225-transversal-spec-adr-governance/registry-contract.md)
+para enums y campos completos.
+
+## Clases de cambio
+
+- Editorial: formato, ortografía o links sin alterar comportamiento.
+- Compatible: precisión o capacidad adicional tolerada por consumidores actuales.
+- Incompatible: cambia significado, schema, API, evento, permiso o garantía.
+
+Un cambio incompatible vuelve a review, analiza consumidores/migración y crea o supersede
+un ADR cuando modifica una decisión arquitectónica.
+
+## Calidad y verificación
+
+Toda spec debe permitir comprobar:
+
+- problema, alcance y no objetivos;
+- reglas, edge cases y errores;
+- seguridad, tenancy, privacidad, offline y costo cuando aplican;
+- dependencias y consumidores;
+- criterios de aceptación observables;
+- evidencia requerida para `VERIFIED`.
+
+El contrato mecánico está en
+[`validation-contract.md`](../spec-225-transversal-spec-adr-governance/validation-contract.md).
+`npm run sdd:validate` será obligatorio cuando se implemente; nunca sustituirá review
+semántico.
+
+## Crear o modificar
+
+1. Comprueba que no exista una spec/ADR equivalente.
+2. Reserva ID y crea el paquete mínimo según [SPEC_STRUCTURE](SPEC_STRUCTURE.md).
+3. Registra sólo hechos conocidos; no inventes owners, prioridad o aceptación.
+4. Actualiza dependencias, ADRs y consumidores afectados en el mismo cambio.
+5. Ejecuta validaciones disponibles y solicita review proporcional al riesgo.
+6. Implementa comportamiento nuevo sólo desde una revisión `READY_FOR_IMPLEMENTATION`.
+
+## Referencias normativas
+
+- [SPEC-207 — Quality gates](../spec-207-transversal-engineering-quality/)
+- [SPEC-215 — HTTP API standards](../spec-215-transversal-http-api-standards/)
+- [SPEC-217 — Events](../spec-217-transversal-events-async-processing/)
+- [SPEC-221 — CI/CD](../spec-221-transversal-ci-cd-release-management/)
+- [SPEC-224 — Testing](../spec-224-transversal-testing-test-data/)
+- [SPEC-225 — Governance](../spec-225-transversal-spec-adr-governance/)
