@@ -2,9 +2,11 @@
 
 | Campo | Valor |
 | --- | --- |
+| **ID** | ADR-003 |
 | **Estado** | PROPOSED |
 | **Fecha** | 2026-07-21 |
-| **Decidido por** | Pendiente |
+| **Deciders** | UNASSIGNED |
+| **Blockers** | Asignar deciders y completar SPK-01, SPK-02, SPK-04 y SPK-05 |
 | **Specs relacionadas** | SPEC-207, SPEC-209, SPEC-211, SPEC-213, SPEC-224, SPEC-226 |
 
 ## Contexto

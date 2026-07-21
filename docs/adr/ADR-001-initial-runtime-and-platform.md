@@ -2,9 +2,11 @@
 
 | Campo | Valor |
 | --- | --- |
+| **ID** | ADR-001 |
 | **Estado** | ACCEPTED |
 | **Fecha** | 2026-07-21 |
-| **Decidido por** | Product owner |
+| **Deciders** | Product owner |
+| **Accepted revision** | `0e85355` |
 | **Specs relacionadas** | TECH_STACK, SPEC-208, SPEC-209 |
 
 ## Contexto
