@@ -1,133 +1,91 @@
 # Especificación — SPEC-001
 
-## Tipo de spec
+## 1. Definición
 
-Entity
+Tenant es una organización cliente de Maitre y la raíz de aislamiento de sus datos. No representa una suscripción ni una cuenta de autenticación.
 
-## Definición formal
+## 2. Contrato de dominio
 
-Un tenant es una organización (empresa de restaurantes) aislada en el sistema multi-tenant. 
-Es la raíz de toda la jerarquía: cada tenant tiene marcas, sucursales, usuarios, menú, datos de huéspedes, etc.
+```ts
+type TenantStatus = 'ACTIVE' | 'SUSPENDED' | 'ARCHIVED';
 
-Propiedades:
-- Identificador único global (id)
-- Nombre del tenant
-- Información de contacto
-- Configuración global
-- Estado (TRIAL, ACTIVE, SUSPENDED, CANCELLED)
-- Auditable: createdAt, createdBy, updatedAt, updatedBy
-
-## Schema JSON
-
-```json
-{
-  "id": "uuid (inmutable, PK)",
-  "name": "string (1-100 chars, ej: 'Grupo Gastronomía Argentina')",
-  "contact_email": "string (email único global)",
-  "contact_phone": "string (E.164 format, ej: +541140000000) | null",
-  "status": "enum: TRIAL | ACTIVE | SUSPENDED | CANCELLED",
-  "plan_tier": "enum: STARTER | PROFESSIONAL | ENTERPRISE",
-  "plan_expiry": "ISO8601 timestamp | null (fecha de vencimiento del plan)",
-  "max_branches": "integer (límite de sucursales)",
-  "max_users": "integer (límite de usuarios)",
-  "max_tables": "integer (límite de mesas en todas sucursales)",
-  "features_enabled": {
-    "reservations": "boolean",
-    "analytics": "boolean",
-    "integrations": "boolean",
-    "fiscal_printer": "boolean",
-    "multi_currency": "boolean"
-  },
-  "billing_country": "string (ISO 3166-1 alpha-2, ej: AR)",
-  "default_currency": "string (ISO 4217, ej: ARS)",
-  "default_timezone": "string (IANA tz, ej: America/Argentina/Buenos_Aires)",
-  "config": {
-    "business_type": "string (ej: restaurant, bar, cafe)",
-    "employee_count": "integer | null",
-    "revenue_annual": "number | null"
-  },
-  "created_at": "ISO8601 timestamp",
-  "created_by": "uuid (userId del owner inicial)",
-  "updated_at": "ISO8601 timestamp",
-  "updated_by": "uuid (userId del último cambio)",
-  "suspended_at": "ISO8601 timestamp | null",
-  "cancelled_at": "ISO8601 timestamp | null"
-}
+type Tenant = {
+  id: string;
+  name: string;
+  status: TenantStatus;
+  defaultLocale: string;
+  defaultCurrency: string;
+  defaultTimezone: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  createdAt: Date;
+  createdBy?: string;
+  updatedAt: Date;
+  updatedBy?: string;
+};
 ```
 
-## Enums
+`createdBy` y `updatedBy` identifican un User cuando existe. Durante bootstrap o automatizaciones autorizadas pueden ser nulos y el audit context registra actor `SYSTEM` y correlation ID.
 
-### Status
+## 3. Campos
 
-```
-TRIAL       = Período de prueba (14 días), sin pago
-ACTIVE      = Suscripción activa, todas las features según plan
-SUSPENDED   = Suspendido por falta de pago, sin acceso a operaciones
-CANCELLED   = Cancelado, solo lectura, datos preservados 1 año
-```
+| Campo | Restricción |
+| --- | --- |
+| `id` | UUID inmutable, generado por servidor |
+| `name` | trim, 1–120 caracteres |
+| `status` | `ACTIVE`, `SUSPENDED` o `ARCHIVED` |
+| `defaultLocale` | locale BCP 47 soportado |
+| `defaultCurrency` | ISO 4217 soportado |
+| `defaultTimezone` | identificador IANA soportado |
+| `contactEmail` | email normalizado opcional; no es identidad ni clave única |
+| `contactPhone` | E.164 opcional |
+| timestamps | UTC con timezone, asignados por servidor |
 
-Transiciones válidas:
-- TRIAL → ACTIVE (con pago)
-- ACTIVE ↔ SUSPENDED (reversible)
-- TRIAL → CANCELLED
-- ACTIVE → CANCELLED
-- SUSPENDED → CANCELLED
+La configuración futura debe introducir campos tipados y versionados. No se agrega un JSON `config` genérico como escape hatch en I0.
 
-## Validaciones
+## 4. Estados y transiciones
 
-- `name` — Mínimo 3 caracteres, máximo 100
-- `contact_email` — RFC 5322 válido, único globalmente
-- `contact_phone` — Formato E.164 si se provee
-- `plan_tier` — Debe corresponder a plan activo en Subscription
-- `plan_expiry` — Si es ACTIVE, debe estar en futuro
-- `max_branches`, `max_users`, `max_tables` — Números positivos, respetar plan_tier
-- `billing_country` — Código ISO válido
-- `default_timezone` — Debe ser IANA válido
-
-## Reglas e invariantes
-
-### 1. Email único globalmente
-
-**Regla:** No pueden existir dos tenants con el mismo contact_email.
-
-**Implementación:** Índice único en BD.
-
-### 2. Aislamiento de datos por tenant_id
-
-**Regla:** Todo dato de usuario, orden, mesa, etc. debe estar etiquetado con tenant_id.
-
-**Verificación:** Query sin tenant_id en WHERE debe ser explícitamente BLOCKED.
-
-### 3. Límites de recursos por plan
-
-**Regla:** No pueden crear más sucursales/usuarios/mesas que el plan permite.
-
-**Verificación:** En CREATE de Branch/User/Table, validar contra max_branches/max_users/max_tables.
-
-**Ejemplo:**
-```
-SELECT COUNT(*) FROM branches WHERE tenant_id = ? 
-  → Si >= max_branches, rechazar CREATE
+```text
+ACTIVE <-> SUSPENDED
+ACTIVE  -> ARCHIVED
+SUSPENDED -> ARCHIVED
 ```
 
-### 4. Estado SUSPENDED bloquea operaciones
+- `ACTIVE`: admite operaciones sujetas a Membership, RBAC y entitlements.
+- `SUSPENDED`: bloquea comandos operativos; las lecturas administrativas explícitas dependen de política.
+- `ARCHIVED`: terminal y de sólo lectura salvo procesos de retención/exportación autorizados.
 
-**Regla:** Un tenant SUSPENDED no puede:
-- Crear/modificar visitas
-- Procesar pagos
-- Crear órdenes
-- Pero SÍ puede: leer datos históricos, administración
+El estado comercial `TRIALING`, expiraciones y cancelaciones pertenecen a Subscription. Un cambio comercial puede solicitar una transición organizacional mediante un caso de uso, pero no modifica Tenant por acceso directo a tablas.
 
-**Implementación:** Middleware valida tenant.status antes de escritura.
+## 5. Aislamiento
 
-### 5. Estado CANCELLED es de solo lectura
+Toda entidad tenant-scoped contiene `tenantId`; repositories y casos de uso lo reciben explícitamente. Los identificadores de recurso no sustituyen el tenant context. La defensa combina:
 
-**Regla:** Un tenant CANCELLED no puede modificar nada. Solo lectura.
+- autorización de aplicación basada en Membership y branch scope;
+- predicates tenant-scoped en repositories;
+- RLS de PostgreSQL cuando el spike de SPEC-226 demuestre el patrón;
+- tests negativos entre Tenant A y Tenant B.
 
-**Implementación:** Todas las operaciones de escritura verifican status != CANCELLED.
+Tablas globales, como User, deben documentar expresamente por qué no contienen `tenant_id`.
 
-### 6. Trial expiry automático
+## 6. Capacidades delegadas
 
-**Regla:** Tras 14 días en TRIAL, sin pago → automáticamente CANCELLED.
+Tenant no persiste:
 
-**Implementación:** Background job diario revisa TRIAL con created_at < now - 14 días.
+- plan, precio, trial o vencimiento;
+- máximos de recursos o uso actual;
+- features habilitadas;
+- estado de pago;
+- roles o usuarios embebidos.
+
+Subscription/Entitlement son la fuente autoritativa de capacidades. Membership/RoleAssignment son la fuente autoritativa de acceso humano.
+
+## 7. Provisioning
+
+Crear una organización es un workflow orquestado, autenticado e idempotente; no un endpoint público de CRUD genérico. El workflow puede crear Tenant, Membership OWNER inicial y Subscription inicial mediante pasos independientes, claves de idempotencia y compensación/reintento.
+
+`TenantCreated` se registra en el outbox dentro de la transacción de Tenant. Los consumidores no asumen que Membership o Subscription ya estén disponibles salvo que el evento/versionado lo garantice.
+
+## 8. Contratos y persistencia
+
+La API representa campos en camelCase. PostgreSQL usa snake_case (`default_timezone`, `created_at`) y el repository realiza el mapping. Los timestamps se almacenan como `timestamptz` y se serializan ISO 8601 en UTC.

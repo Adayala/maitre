@@ -1,53 +1,33 @@
 # Verificación — SPEC-001
 
-## Criterios de terminación
+## Dominio
 
-- [ ] All 8 docs complete ✅
-- [ ] Code merged to main
-- [ ] Tests > 80% coverage
-- [ ] Deployed to staging
-- [ ] Code review approved by 2 reviewers
+- [ ] acepta nombre y defaults válidos;
+- [ ] rechaza locale, currency, timezone, email o teléfono inválidos;
+- [ ] sólo permite transiciones de estado declaradas;
+- [ ] `ARCHIVED` no retorna a estados operativos;
+- [ ] no contiene plan, cuotas, features, passwords, roles ni users embebidos.
 
-## Test plan
+## Persistencia
 
-### Unit tests
+- [ ] migración y rollback funcionan desde una base vacía;
+- [ ] timestamps se almacenan como `timestamptz` y se serializan en UTC;
+- [ ] mapper conserva camelCase en API y snake_case en DB;
+- [ ] actor de sistema permite bootstrap sin foreign-key circular;
+- [ ] evento y agregado se persisten atómicamente mediante outbox.
 
-- Email validation (valid, invalid, duplicates)
-- Timezone validation (valid IANA, invalid)
-- Country validation (ISO 3166-1)
-- Status transitions (valid only)
-- UUID generation
+## Seguridad y aislamiento
 
-### Integration tests
+- [ ] User de Tenant A no lee ni modifica Tenant B;
+- [ ] IDs conocidos de otro tenant no eluden autorización;
+- [ ] Membership suspendida o revocada bloquea acceso;
+- [ ] Tenant suspendido bloquea comandos operativos;
+- [ ] queries y políticas RLS aprobadas fallan cerrado sin tenant context.
 
-- POST /tenants → brand new tenant created
-- GET /tenants/:id → obtener datos correctos
-- PATCH /tenants/:id → update fields (name, email status)
-- TenantCreated event emitted to event bus
-- AuditLog entry created for each operation
-- Subscription auto-created on creation
-- Owner user auto-created on creation
-- Multi-tenant isolation verified (User A cannot access Tenant B)
+## Provisioning
 
-### E2E tests
+- [ ] reintentos con la misma idempotency key no duplican Tenant, OWNER ni Subscription;
+- [ ] fallos parciales son recuperables y observables;
+- [ ] ningún endpoint público crea organizaciones sin identidad y autorización verificadas.
 
-- Full registration flow: POST /tenants → GET /tenants/:id → verify created
-- Subscription verification: GET /subscriptions/:id from created tenant
-- Owner verification: GET /users for created tenant shows owner
-
-## Validación de criterios de aceptación
-
-| CAD | Test | Expected | Status |
-| --- | --- | --- | --- |
-| CAD-1 | test_create_tenant | email unique, name 3-100, country ISO, timezone IANA | ⏳ |
-| CAD-2 | test_status_transitions | ACTIVE ↔ SUSPENDED → ARCHIVED, no invalid | ⏳ |
-| CAD-3 | test_crud_api | POST 201, GET 200, PATCH 200, isolation 403 | ⏳ |
-| CAD-4 | test_event_emitted | TenantCreated event in event bus | ⏳ |
-| CAD-5 | test_isolation | Tenant A data not visible to Tenant B | ⏳ |
-| CAD-6 | test_auditlog | CREATE, UPDATE, SUSPEND events logged | ⏳ |
-
-## Sign-off
-
-**Reviewed by:** @peer1, @peer2 (pending)
-**Tested by:** @qa-team (pending)
-**Status:** PENDING ⏳
+Los checks sólo se completan con enlaces a tests, migraciones, ADRs y resultados ejecutados.

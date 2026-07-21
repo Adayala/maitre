@@ -1,35 +1,12 @@
-# Plan de implementación — SPEC-001
+# Plan — SPEC-001
 
-## Estrategia general
+1. Aprobar el agregado, estados y separación respecto de Subscription/Entitlement.
+2. Definir migración `tenants` con constraints, timestamps y actor system nullable.
+3. Implementar entity y value objects de locale, currency y timezone.
+4. Definir `TenantRepository` tenant-safe y adaptador PostgreSQL.
+5. Implementar casos de uso de provisioning, consulta y actualización permitida.
+6. Registrar `TenantCreated` mediante transactional outbox.
+7. Integrar Membership OWNER y Subscription como pasos orquestados, no como side effects de la entity.
+8. Añadir tests de estados, mapping, idempotencia y aislamiento Tenant A/B.
 
-Implementar Tenant como entity principal de Organization domain:
-- CRUD API con aislación multi-tenant
-- Suscripción vinculada automáticamente
-- Event publication
-- AuditLog de cambios
-
-## Componentes
-
-| Componente | Descripción |
-| --- | --- |
-| Tenant entity | Modelo de dominio |
-| tenants table | Persistencia en BD |
-| POST /tenants | Crear (público) |
-| GET /tenants/:id | Obtener (auth) |
-| PATCH /tenants/:id | Actualizar (auth) |
-| TenantCreated event | Domain event |
-| Subscription auto-create | Vinculación automática |
-
-## Dependencias
-
-**Must be DONE:** Ninguna (foundational)
-
-**Depends:** SPEC-002 Brand, SPEC-003 FiscalEntity, SPEC-004 Branch, SPEC-017 User
-
-## Consideraciones
-
-- Email validación y unicidad (índice unique global)
-- Timezone IANA válido
-- Suscripción se crea automáticamente en status TRIALING
-- Owner user se crea automáticamente al registrar tenant
-- Aislación: todas las queries filtradas por tenant_id
+La estimación se realiza tras aprobar contratos de provisioning y outbox.
