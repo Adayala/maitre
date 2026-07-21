@@ -7,10 +7,10 @@ Selección del toolchain open source para implementar el MVP con React.js, Node.
 | **ID** | SPEC-211 |
 | **Tipo** | Transversal / Architecture Decision |
 | **Dominio** | Platform / Engineering |
-| **Estado** | DRAFT — PROPOSED FOR APPROVAL |
+| **Estado** | DRAFT — READY FOR I0 REVIEW; ADOPTION PENDING ADR-003/SPK-01–05 |
 | **Prioridad** | P0 |
 | **Fase** | Antes del scaffolding |
-| **Depende de** | SPEC-207, SPEC-208, SPEC-209, SPEC-210 |
+| **Depende de** | ADR-002/003, SPEC-207–210, SPEC-226 |
 
 ## Decisiones propuestas
 

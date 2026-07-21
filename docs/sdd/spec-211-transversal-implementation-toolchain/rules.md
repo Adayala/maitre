@@ -9,7 +9,7 @@
 7. Drizzle vive en persistence adapters y no filtra sus tipos al dominio.
 8. `drizzle-kit push` solo puede utilizarse en una base local desechable.
 9. Toda migración SQL se revisa y prueba desde cero.
-10. Supavisor transaction mode requiere `prepare: false`.
+10. La configuración de Supavisor, incluido `prepare: false`, queda condicionada al resultado reproducible de SPK-02.
 11. Tests unitarios no hacen red, filesystem persistente ni DB.
 12. E2E cubre recorridos, no reemplaza tests de dominio o integración.
 13. No usar snapshots grandes como sustituto de assertions semánticas.
@@ -17,3 +17,5 @@
 15. Cada disable requiere motivo local; los de seguridad/calidad crítica requieren issue.
 16. El lockfile se versiona y `npm ci` es obligatorio en CI.
 17. No se incorpora una dependencia que duplique una capacidad ya cubierta sin ADR.
+18. Tooling experimental no se promociona a producción sin aprobar ADR-003 y review del scaffold.
+19. Scripts raíz y nombres de suites provienen de SPEC-207, no de aliases locales.

@@ -8,13 +8,16 @@ maitre/
 │   ├── web/                    # Aplicación React.js
 │   └── api/                    # API y webhooks Node.js
 ├── packages/
-│   ├── domain/                 # Entidades, value objects y reglas puras
-│   ├── application/            # Casos de uso y puertos
+│   ├── modules/                # Módulos de negocio con límites propios
+│   │   ├── identity/           # domain + application + API pública
+│   │   └── organization/       # domain + application + API pública
 │   ├── contracts/              # DTOs, schemas, APIs y eventos públicos
 │   ├── config/                 # Parsing tipado de configuración
 │   ├── observability/          # Contratos y adaptadores base de telemetría
+│   ├── ui/                     # Primitivas React compartidas aprobadas
+│   ├── design-tokens/          # Tokens sin dependencia de React
 │   ├── test-utils/             # Builders y fixtures sin datos reales
-│   └── tooling/                # Config compartida de lint, TS y tests
+│   └── tooling/                # Config compartida, sin runtime productivo
 ├── adapters/
 │   ├── persistence/            # Implementaciones de repositorios
 │   ├── identity/               # Proveedor de identidad
@@ -37,8 +40,8 @@ apps/api -----> application -> domain
     v               v           |
 adapters --------> ports -------+
 
-domain -> ninguna capa externa
-application -> domain + contracts propios
+module/domain -> ninguna capa externa
+module/application -> su domain + ports propios
 adapters -> application ports + contratos del proveedor
 apps -> composición, transporte y presentación
 ```
@@ -47,12 +50,17 @@ apps -> composición, transporte y presentación
 
 | Origen | Puede importar |
 | --- | --- |
-| `domain` | librería estándar y utilidades puras explícitamente permitidas |
-| `application` | `domain`, contratos y puertos propios |
+| `modules/*/domain` | librería estándar y primitives puras aprobadas |
+| `modules/*/application` | domain del mismo módulo y puertos propios |
+| API pública de módulo | domain/application exportados deliberadamente |
 | `contracts` | schemas/tipos sin lógica de infraestructura |
 | `adapters/*` | `application`, `domain`, `contracts` y SDK del proveedor adaptado |
 | `apps/api` | casos de uso, contratos y adaptadores durante composición |
-| `apps/web` | contratos, cliente API y componentes propios |
+| `apps/web` | contracts, config/browser, ui, design-tokens y código propio |
+
+Un módulo no importa internals de otro. La colaboración ocurre mediante una API pública, un port o un evento explícito. No se crean paquetes globales `domain`, `application`, `common` o `shared` que acumulen conceptos no relacionados.
+
+La matriz normativa completa está en [dependency-boundaries.md](dependency-boundaries.md).
 
 ## Workspaces y comandos raíz
 
@@ -60,14 +68,19 @@ Se usarán npm workspaces, consistente con SPEC-048. Todo desarrollador y CI ope
 
 ```text
 npm run format:check
+npm run specs:validate
 npm run lint
 npm run typecheck
-npm run test
+npm run deps:check
+npm run test:unit
 npm run test:integration
-npm run test:contracts
+npm run test:contract
+npm run test:coverage
 npm run build
+npm run security:audit
+npm run secrets:scan
 npm run sonar
-npm run sdd:validate
+npm run test:e2e:smoke
 ```
 
 Los scripts delegan a los workspaces afectados y devuelven código distinto de cero ante fallos.
@@ -83,7 +96,7 @@ Los scripts delegan a los workspaces afectados y devuelven código distinto de c
 
 ## Contratos
 
-`packages/contracts` contiene schemas versionados para:
+`packages/contracts` contiene contratos de transporte versionados para:
 
 - requests y responses HTTP;
 - eventos de dominio publicados;
@@ -92,6 +105,8 @@ Los scripts delegan a los workspaces afectados y devuelven código distinto de c
 - paginación y metadatos comunes.
 
 Los tipos TypeScript se derivan de los schemas cuando sea posible. No se mantienen manualmente dos representaciones equivalentes.
+
+Contracts no importa módulos de dominio. Cada route mapper traduce entre DTOs y tipos del módulo para impedir que una representación pública se convierta accidentalmente en entity.
 
 ## Composición
 

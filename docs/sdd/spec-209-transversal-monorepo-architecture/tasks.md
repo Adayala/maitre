@@ -5,12 +5,13 @@
 - [ ] Fijar versión Node.js LTS y package manager.
 - [ ] Crear configuración TypeScript base y por runtime.
 - [ ] Configurar exports públicos por paquete.
-- [ ] Configurar lint de boundaries y ciclos.
+- [ ] Codificar `dependency-boundaries.md` en dependency-cruiser y ESLint.
+- [ ] Añadir canarios de import prohibido, ciclo y deep import.
 - [ ] Crear comandos raíz de SPEC-207.
 - [ ] Crear shell React.js sin reglas de negocio.
 - [ ] Crear shell Node.js con composition root explícito.
 - [ ] Crear primer schema de contrato y derivar sus tipos.
-- [ ] Implementar `GET /health` como walking skeleton.
+- [ ] Implementar health live/ready y `/v1/me/context` como walking skeleton.
 - [ ] Ejecutar tests y build fuera de Vercel.
 - [ ] Desplegar preview gratuito en Vercel.
 - [ ] Documentar cómo agregar app, package y adapter.

@@ -1,7 +1,7 @@
 # RULES — SPEC-209
 
-1. `domain` no importa React, Node HTTP, Vercel, ORM ni SDKs de proveedor.
-2. `application` depende de interfaces propias, nunca de implementaciones de adapters.
+1. `modules/*/domain` no importa React, Node HTTP, Vercel, ORM, contracts ni SDKs.
+2. `modules/*/application` depende de su domain e interfaces propias, nunca de adapters.
 3. `apps/web` no importa adapters ni código server-only.
 4. `apps/api` no contiene reglas de negocio en handlers.
 5. Los DTOs externos no se reutilizan como entidades de dominio.
@@ -15,3 +15,7 @@
 13. Secretos y configuración server-only no pueden entrar al bundle web.
 14. Fixtures no contienen PII, credenciales ni datos fiscales reales.
 15. Una excepción arquitectónica requiere ADR e issue con fecha de revisión.
+16. Un módulo no hace deep import de otro; usa API pública, port o evento.
+17. Se prohíben paquetes genéricos `domain`, `application`, `common` y `shared` en la raíz.
+18. Contracts de transporte no se reutilizan como entities ni importan módulos.
+19. La lista de scripts raíz coincide con SPEC-207 y no crea aliases rivales.

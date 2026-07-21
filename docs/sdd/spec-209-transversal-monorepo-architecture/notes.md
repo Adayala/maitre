@@ -5,17 +5,14 @@
 - Monorepo con npm workspaces porque SPEC-048 ya establece npm.
 - TypeScript en frontend, backend y contratos.
 - Monolito modular antes que microservicios.
-- Paquetes organizados por responsabilidad arquitectónica y módulos de dominio, no por proveedor.
+- Módulos de negocio contienen sus propias capas domain/application; los paquetes transversales expresan una capacidad concreta.
 - Versionado conjunto durante el MVP.
 
-## Decisiones pendientes
+## Decisiones propuestas pendientes de evidencia
 
-- Framework React.js y estrategia SPA/SSR.
-- Framework HTTP Node.js.
-- Herramienta de schemas/validación.
-- Runner de tests y E2E.
-- Herramienta concreta para boundaries/ciclos.
-- Estrategia de build incremental y cache.
-- Base de datos, ORM y proveedor de identidad.
+- Vite SPA, Fastify, Zod, Vitest/Playwright y dependency-cruiser: ADR-003 + SPK-01/05.
+- Drizzle/postgres.js: ADR-003 + SPK-02/04.
+- Supabase PostgreSQL/Auth: ADR-002 + SPK-02/03/04/06.
+- Estrategia de build incremental/cache: SPK-05 con medición antes de agregar tooling.
 
 Cada decisión pendiente requiere comparación breve contra costo cero, portabilidad, mantenibilidad y compatibilidad con las specs.

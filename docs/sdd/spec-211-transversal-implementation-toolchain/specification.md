@@ -62,7 +62,7 @@ Reglas de dominio que requieren semántica propia permanecen en `domain`; un sch
 
 - Drizzle modela tablas y queries tipadas dentro del adapter de persistencia.
 - `postgres.js` conecta al pool de Supabase.
-- En Supavisor transaction mode se configura `prepare: false`.
+- La configuración candidata para Supavisor transaction mode usa `prepare: false`; SPK-02 debe demostrarla antes de adoptarla.
 - Repositorios devuelven objetos de dominio o resultados de aplicación, nunca rows crudos fuera del adapter.
 - SQL explícito se permite para RLS, índices, locking y queries donde sea más claro o eficiente.
 
@@ -74,6 +74,8 @@ Reglas de dominio que requieren semántica propia permanecen en `domain`; un sch
 - Migraciones se ejecutan como job separado, nunca al arrancar cada función serverless.
 - RLS, grants, funciones y datos de referencia usan migraciones custom cuando corresponda.
 - `drizzle-kit check` y una migración desde cero forman parte de CI.
+
+Nada de esta selección se considera aceptado hasta que ADR-003 incorpore evidencia de SPEC-226. El scaffolding de spike puede probar las herramientas, pero no convierte automáticamente código experimental en baseline productivo.
 
 ## Tests
 

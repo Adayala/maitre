@@ -3,16 +3,16 @@
 ## Incremento 1 — Esqueleto verificable
 
 1. Crear workspaces raíz y configuración compartida.
-2. Crear los paquetes mínimos `domain`, `application`, `contracts` y `tooling`.
+2. Crear sólo `modules/identity`, `modules/organization`, `contracts`, `config` y tooling requeridos por SPEC-213.
 3. Crear shells mínimos `apps/web` y `apps/api` sin funcionalidad de producto.
 4. Añadir comandos raíz y CI de SPEC-207.
 5. Verificar build local y build en Vercel.
 
 ## Incremento 2 — Walking skeleton
 
-1. Definir contrato `GET /health`.
+1. Definir contratos `GET /health/live`, `GET /health/ready` y `/v1/me/context` según SPEC-213.
 2. Implementar caso de uso y adapter mínimo.
-3. Consumirlo desde una pantalla React de diagnóstico.
+3. Consumir el contexto desde el shell React de diagnóstico.
 4. Probar frontera HTTP y build end-to-end.
 5. Demostrar ejecución del API fuera de Vercel.
 

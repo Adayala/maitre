@@ -1,6 +1,7 @@
 # TASKS — SPEC-211
 
 - [ ] Aprobar toolchain y registrar ADR.
+- [ ] Completar SPK-01/05 antes del scaffold productivo.
 - [ ] Fijar Node.js LTS y npm en archivos de versión/configuración.
 - [ ] Configurar npm workspaces y `npm ci`.
 - [ ] Configurar TypeScript estricto.
@@ -14,7 +15,7 @@
 - [ ] Configurar Zod y OpenAPI generado.
 - [ ] Configurar Testing Library y Playwright.
 - [ ] Configurar Drizzle ORM, postgres.js y Drizzle Kit.
-- [ ] Desactivar prepared statements para Supavisor transaction mode.
+- [ ] Validar pooling y prepared statements mediante SPK-02 antes de fijar configuración.
 - [ ] Prohibir `drizzle-kit push` fuera de local desechable.
 - [ ] Implementar y verificar walking skeleton de health.
 - [ ] Documentar comandos y troubleshooting.

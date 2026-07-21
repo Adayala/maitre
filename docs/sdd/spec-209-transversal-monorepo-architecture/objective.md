@@ -13,8 +13,8 @@ Definir un repositorio único con límites verificables para aplicaciones React.
 
 ## Fuera de alcance
 
-- Elegir framework React o estrategia SSR/SPA.
-- Elegir framework HTTP Node.js.
-- Elegir ORM, base de datos, auth, cache, colas o almacenamiento.
+- Aceptar definitivamente el toolchain antes de ADR-002/003 y SPEC-226.
+- Introducir SSR, microservicios, cache, colas o realtime sin necesidad aprobada.
+- Acoplar la estructura a un proveedor de base de datos, auth o hosting.
 - Crear microservicios anticipadamente.
 - Implementar comportamiento de producto.

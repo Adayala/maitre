@@ -6,7 +6,7 @@
 - [ ] Fastify responde health en Vercel y Node estándar usando la misma app.
 - [ ] Zod rechaza requests inválidos antes del caso de uso.
 - [ ] OpenAPI se genera desde contratos y CI detecta drift.
-- [ ] Drizzle conecta a Supabase mediante Supavisor con `prepare: false`.
+- [ ] SPK-02 demuestra la configuración de Supavisor/Drizzle y documenta prepared statements.
 - [ ] Migraciones crean el schema desde cero y `drizzle-kit check` pasa.
 - [ ] RLS/grants aparecen en SQL versionado.
 - [ ] Unit tests corren sin servicios externos.
@@ -16,3 +16,4 @@
 - [ ] dependency-cruiser bloquea un ciclo.
 - [ ] Sonar recibe cobertura y aprueba SPEC-207.
 - [ ] El toolchain completo funciona dentro de la cuota CI de SPEC-208.
+- [ ] ADR-003 enlaza evidencia PASS; ningún resultado `NOT_RUN`/inconclusive se presenta como adopción.

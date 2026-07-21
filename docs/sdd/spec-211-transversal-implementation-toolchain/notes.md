@@ -8,6 +8,8 @@
 - **Redux:** no se adopta inicialmente; React y TanStack Query cubren estado local/remoto del primer MVP.
 - **Jest:** Vitest reduce duplicación de configuración con Vite y ofrece cobertura compatible.
 
+Estas elecciones son propuestas sujetas a ADR-003 y SPEC-226; las razones comparativas no equivalen a evidencia de ejecución.
+
 ## Fuentes oficiales
 
 - [Vite: build de producción](https://vite.dev/guide/build)

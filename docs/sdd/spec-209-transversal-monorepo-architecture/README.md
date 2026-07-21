@@ -7,7 +7,7 @@ Contrato estructural para implementar Maitre con React.js, Node.js y TypeScript 
 | **ID** | SPEC-209 |
 | **Tipo** | Transversal / Architecture |
 | **Dominio** | Platform / Engineering |
-| **Estado** | DRAFT |
+| **Estado** | DRAFT — READY FOR I0 REVIEW |
 | **Prioridad** | P0 |
 | **Fase** | Antes del scaffolding |
 | **Depende de** | SPEC-207, SPEC-208 |
@@ -21,3 +21,4 @@ Contrato estructural para implementar Maitre con React.js, Node.js y TypeScript 
 - [Tareas](tasks.md)
 - [Verificación](verification.md)
 - [Decisiones abiertas](notes.md)
+- [Matriz de dependencias](dependency-boundaries.md)
