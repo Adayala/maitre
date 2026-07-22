@@ -5,6 +5,7 @@
     { "path": "packages/modules/organization" },
     { "path": "packages/modules/identity" },
     { "path": "adapters/persistence/memory" },
+    { "path": "adapters/persistence/supabase" },
     { "path": "apps/api" }
   ]
 }
