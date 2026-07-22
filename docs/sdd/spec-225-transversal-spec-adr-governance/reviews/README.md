@@ -50,4 +50,5 @@ El detalle accionable y las dependencias iniciales se mantienen en
 [findings-register.md](findings-register.md). La secuencia de cierre está definida en el
 [plan de remediación](remediation-plan.md). Gate R0 mantiene una
 [auditoría retroactiva de implementación](implementation-drift-audit.md) y una
-[propuesta de DAG acíclico](dependency-dag-remediation.md).
+[propuesta de DAG acíclico](dependency-dag-remediation.md). La migración de estados se define en
+[normalización lifecycle/readiness](lifecycle-readiness-remediation.md).
