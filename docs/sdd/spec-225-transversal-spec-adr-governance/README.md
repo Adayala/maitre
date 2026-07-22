@@ -51,5 +51,6 @@ Contrato transversal para crear, revisar, aprobar, cambiar, verificar y retirar 
 - [Revisión Ordering Core SPEC-081–086](reviews/ordering-core-spec-081-086.md)
 - [Revisión Ordering APIs/Events SPEC-087–097](reviews/ordering-api-events-spec-087-097.md)
 - [Revisión Kitchen SPEC-098–110](reviews/kitchen-spec-098-110.md)
+- [Revisión Workforce SPEC-111–123](reviews/workforce-spec-111-123.md)
 - [Auditoría inicial del registro](registry-baseline-audit.md)
 - [Decisiones](notes.md)
