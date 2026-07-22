@@ -34,7 +34,7 @@ export const ROLE_REGISTRY: Readonly<Record<string, Role>> = Object.freeze({
       "permission:read",
       // SPEC-007/008/010/011/012 §Authorization
       "tenant:read",
-      "tenant:usage:read",
+      "tenant:usage",
       "brand:read",
       "brand:write",
       "branch:read",

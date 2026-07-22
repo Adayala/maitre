@@ -24,5 +24,7 @@ export interface UserRepositoryPort {
 export interface MembershipRepositoryPort {
   listActiveByUser(userId: string): Promise<Membership[]>;
   findActiveByUserAndTenant(userId: string, tenantId: string): Promise<Membership | null>;
+  listByTenant(tenantId: string): Promise<Membership[]>;
+  findById(tenantId: string, id: string): Promise<Membership | null>;
   save(membership: Membership): Promise<void>;
 }

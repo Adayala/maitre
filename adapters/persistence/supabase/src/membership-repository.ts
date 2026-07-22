@@ -94,6 +94,26 @@ export class SupabaseMembershipRepository implements MembershipRepositoryPort {
     return data ? fromRow(data as unknown as MembershipRow) : null;
   }
 
+  async listByTenant(tenantId: string): Promise<Membership[]> {
+    const { data, error } = await this.client
+      .from(TABLE)
+      .select(SELECT_WITH_CHILDREN)
+      .eq("tenant_id", tenantId);
+    if (error) throw error;
+    return (data as unknown as MembershipRow[]).map(fromRow);
+  }
+
+  async findById(tenantId: string, id: string): Promise<Membership | null> {
+    const { data, error } = await this.client
+      .from(TABLE)
+      .select(SELECT_WITH_CHILDREN)
+      .eq("tenant_id", tenantId)
+      .eq("id", id)
+      .maybeSingle();
+    if (error) throw error;
+    return data ? fromRow(data as unknown as MembershipRow) : null;
+  }
+
   /**
    * Not atomic across the three tables (PostgREST issues separate HTTP
    * requests); acceptable for I0. A real production adapter should do this

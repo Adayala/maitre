@@ -8,8 +8,8 @@ Evento cuando se invita un usuario.
 | **ID** | SPEC-024 |
 | **Tipo** | Event |
 | **Dominio** | Identity |
-| **Estado** | PLANNED |
-| **Readiness** | NOT_ASSESSED |
+| **Estado** | IN_PROGRESS |
+| **Readiness** | WALKING_SKELETON_I0 |
 | **Prioridad** | P0 |
 | **Owner** | UNASSIGNED |
 | **Reviewer** | UNASSIGNED |

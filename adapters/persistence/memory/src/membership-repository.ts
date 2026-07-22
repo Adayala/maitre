@@ -21,6 +21,15 @@ export class InMemoryMembershipRepository implements MembershipRepositoryPort {
     return null;
   }
 
+  async listByTenant(tenantId: string): Promise<Membership[]> {
+    return [...this.byId.values()].filter((m) => m.tenantId === tenantId);
+  }
+
+  async findById(tenantId: string, id: string): Promise<Membership | null> {
+    const membership = this.byId.get(id);
+    return membership?.tenantId === tenantId ? membership : null;
+  }
+
   async save(membership: Membership): Promise<void> {
     this.byId.set(membership.id, membership);
   }

@@ -16,6 +16,12 @@ class FakeMembershipRepository implements MembershipRepositoryPort {
       ) ?? null
     );
   }
+  async listByTenant(tenantId: string) {
+    return this.items.filter((m) => m.tenantId === tenantId);
+  }
+  async findById(tenantId: string, id: string) {
+    return this.items.find((m) => m.tenantId === tenantId && m.id === id) ?? null;
+  }
   async save(membership: Membership) {
     this.items.push(membership);
   }
