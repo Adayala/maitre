@@ -1,0 +1,20 @@
+{
+  "name": "@maitre/adapter-identity-supabase-auth",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "test": "node --test dist/test/"
+  },
+  "dependencies": {
+    "@maitre/identity": "*",
+    "jose": "^5.9.6"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "typescript": "^5.5.4"
+  }
+}

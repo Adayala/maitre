@@ -6,6 +6,7 @@
     { "path": "packages/modules/identity" },
     { "path": "adapters/persistence/memory" },
     { "path": "adapters/persistence/supabase" },
+    { "path": "adapters/identity/supabase-auth" },
     { "path": "apps/api" }
   ]
 }

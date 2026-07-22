@@ -1,7 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { buildApp } from "../app.js";
-import { buildContainer } from "../composition/container.js";
+import { buildContainer, type Container } from "../composition/container.js";
+import type { FixtureSessionVerificationPort } from "@maitre/adapter-persistence-memory";
+
+function sessionsOf(container: Container): FixtureSessionVerificationPort {
+  return container.sessions as FixtureSessionVerificationPort;
+}
 
 // SPEC-224 §5 — Fastify inject() exercises transport without a real port.
 // Covers SPEC-023 §7 error contract: absent/invalid/expired token, and the
@@ -86,7 +91,7 @@ test("GET /v1/me/context does not require X-Tenant-Id/X-Branch-Id headers", asyn
 
 test("GET /v1/me/context rejects a token whose session has expired", async () => {
   const container = await buildContainer();
-  container.sessions.registerToken("expired-token", {
+  sessionsOf(container).registerToken("expired-token", {
     provider: "fixture",
     subject: "demo-owner",
     issuedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
@@ -105,7 +110,7 @@ test("GET /v1/me/context rejects a token whose session has expired", async () =>
 
 test("GET /v1/me/context rejects a principal with no matching User (identity-not-enabled)", async () => {
   const container = await buildContainer();
-  container.sessions.registerToken("unknown-subject-token", {
+  sessionsOf(container).registerToken("unknown-subject-token", {
     provider: "fixture",
     subject: "someone-else",
     issuedAt: new Date(),

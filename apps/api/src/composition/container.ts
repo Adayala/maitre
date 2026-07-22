@@ -40,7 +40,9 @@ import {
   createMembership,
   type UserRepositoryPort,
   type MembershipRepositoryPort,
+  type SessionVerificationPort,
 } from "@maitre/identity";
+import { SupabaseSessionVerificationPort } from "@maitre/adapter-identity-supabase-auth";
 
 export interface Container {
   tenants: TenantRepositoryPort;
@@ -52,7 +54,7 @@ export interface Container {
   users: UserRepositoryPort;
   memberships: MembershipRepositoryPort;
   outbox: OutboxPort;
-  sessions: FixtureSessionVerificationPort;
+  sessions: SessionVerificationPort;
   demoAccessToken: string;
 }
 
@@ -232,20 +234,40 @@ async function ensureSeed(repos: Repositories): Promise<void> {
   }
 }
 
+/**
+ * SPEC-023 — AUTH_DRIVER selects how bearer tokens are verified. "fixture"
+ * (default) accepts only tokens registered via registerToken(), used by
+ * tests and local dev. "supabase" verifies real Supabase Auth access
+ * tokens against the project's JWKS (SupabaseSessionVerificationPort) —
+ * no synthetic demoAccessToken exists in that mode; callers must obtain a
+ * real token via Supabase Auth (e.g. POST /auth/v1/token?grant_type=password).
+ */
+function buildSessionVerifier(): SessionVerificationPort {
+  const driver = process.env["AUTH_DRIVER"] ?? "fixture";
+  if (driver === "supabase") {
+    const url = process.env["SUPABASE_URL"];
+    if (!url) throw new Error("SUPABASE_URL must be set for AUTH_DRIVER=supabase");
+    return new SupabaseSessionVerificationPort(url);
+  }
+  return new FixtureSessionVerificationPort();
+}
+
 export async function buildContainer(): Promise<Container> {
   const repos = buildRepositories();
   await ensureSeed(repos);
 
-  const sessions = new FixtureSessionVerificationPort();
-  const now = new Date();
-  sessions.registerToken(DEMO_ACCESS_TOKEN, {
-    provider: "fixture",
-    subject: "demo-owner",
-    email: "owner@demo.maitre",
-    emailVerified: true,
-    issuedAt: now,
-    expiresAt: new Date(now.getTime() + 60 * 60 * 1000),
-  });
+  const sessions = buildSessionVerifier();
+  if (sessions instanceof FixtureSessionVerificationPort) {
+    const now = new Date();
+    sessions.registerToken(DEMO_ACCESS_TOKEN, {
+      provider: "fixture",
+      subject: "demo-owner",
+      email: "owner@demo.maitre",
+      emailVerified: true,
+      issuedAt: now,
+      expiresAt: new Date(now.getTime() + 60 * 60 * 1000),
+    });
+  }
 
   return { ...repos, sessions, demoAccessToken: DEMO_ACCESS_TOKEN };
 }

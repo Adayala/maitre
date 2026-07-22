@@ -3,10 +3,17 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { buildApp } from "../app.js";
 import { buildContainer, type Container } from "../composition/container.js";
-import type { InMemoryOutboxRepository } from "@maitre/adapter-persistence-memory";
+import type {
+  InMemoryOutboxRepository,
+  FixtureSessionVerificationPort,
+} from "@maitre/adapter-persistence-memory";
 
 function outboxOf(container: Container): InMemoryOutboxRepository {
   return container.outbox as InMemoryOutboxRepository;
+}
+
+function sessionsOf(container: Container): FixtureSessionVerificationPort {
+  return container.sessions as FixtureSessionVerificationPort;
 }
 
 // SPEC-224 §5 — Fastify inject() covers SPEC-007-012's Organization APIs:
@@ -37,7 +44,7 @@ async function seedEmployee(container: Container, tenantId: string) {
     updatedAt: now,
   });
   const token = "employee-token";
-  container.sessions.registerToken(token, {
+  sessionsOf(container).registerToken(token, {
     provider: "fixture",
     subject: "demo-employee",
     issuedAt: now,
