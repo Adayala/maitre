@@ -14,9 +14,17 @@ import type {
   SalonRepositoryPort,
   TableRepositoryPort,
 } from "../application/ports.js";
+import type { OutboxPort, OutboxRecord } from "../application/outbox.js";
 
 // Minimal in-memory fakes for application-layer unit tests (SPEC-224 §2:
 // domain/application must not touch real infra; ports are injected fakes).
+
+export class FakeOutboxRepository implements OutboxPort {
+  readonly records: OutboxRecord[] = [];
+  async append(record: OutboxRecord): Promise<void> {
+    this.records.push(record);
+  }
+}
 
 export class FakeTenantRepository implements TenantRepositoryPort {
   constructor(private readonly tenants: Tenant[] = []) {}

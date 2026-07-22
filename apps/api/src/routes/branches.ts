@@ -53,8 +53,8 @@ export async function registerBranchRoutes(
       const body = createBranchBodySchema.parse(req.body);
 
       const branch = await createBranch(
-        { brands: container.brands, branches: container.branches },
-        { tenantId: ctx.tenantId, ...omitUndefined(body), actorId: ctx.userId },
+        { brands: container.brands, branches: container.branches, outbox: container.outbox },
+        { tenantId: ctx.tenantId, ...omitUndefined(body), actorId: ctx.userId, correlationId },
       );
       reply.code(201);
       return toResponse(branch);

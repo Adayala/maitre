@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { normalizeBranchCode, type Branch } from "../domain/branch.js";
 import type { BrandRepositoryPort, BranchRepositoryPort } from "./ports.js";
+import type { OutboxPort } from "./outbox.js";
+import { branchCreatedEvent } from "./events.js";
 
 export class UnknownBrandError extends Error {
   constructor(brandId: string) {
@@ -26,11 +28,13 @@ export interface CreateBranchInput {
   contactEmail?: string;
   contactPhone?: string;
   actorId?: string;
+  correlationId?: string;
 }
 
 export interface CreateBranchDeps {
   brands: BrandRepositoryPort;
   branches: BranchRepositoryPort;
+  outbox: OutboxPort;
   now?: () => Date;
 }
 
@@ -66,5 +70,6 @@ export async function createBranch(
   };
 
   await deps.branches.save(branch);
+  await deps.outbox.append(branchCreatedEvent(branch, input.correlationId ?? randomUUID()));
   return branch;
 }

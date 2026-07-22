@@ -52,12 +52,13 @@ export async function registerBrandRoutes(
       const body = createBrandBodySchema.parse(req.body);
 
       const brand = await createBrand(
-        { tenants: container.tenants, brands: container.brands },
+        { tenants: container.tenants, brands: container.brands, outbox: container.outbox },
         {
           tenantId: ctx.tenantId,
           ...omitUndefined(body),
           config: omitUndefined(body.config),
           actorId: ctx.userId,
+          correlationId,
         },
       );
       reply.code(201);

@@ -6,7 +6,7 @@ import {
   DuplicateBranchCodeError,
 } from "../application/create-branch.js";
 import { InvalidBranchCodeError } from "../domain/branch.js";
-import { FakeBrandRepository, FakeBranchRepository, aBranch } from "./fakes.js";
+import { FakeBrandRepository, FakeBranchRepository, FakeOutboxRepository, aBranch } from "./fakes.js";
 import type { Brand } from "../domain/brand.js";
 
 const now = new Date("2026-05-01T00:00:00Z");
@@ -31,7 +31,7 @@ test("createBranch succeeds for a brand that exists in the same tenant", async (
   const branches = new FakeBranchRepository();
 
   const branch = await createBranch(
-    { brands, branches, now: () => now },
+    { brands, branches, outbox: new FakeOutboxRepository(), now: () => now },
     {
       tenantId,
       brandId: "33333333-3333-3333-3333-333333333333",
@@ -51,7 +51,7 @@ test("createBranch rejects an unknown brandId", async () => {
 
   await assert.rejects(
     createBranch(
-      { brands, branches, now: () => now },
+      { brands, branches, outbox: new FakeOutboxRepository(), now: () => now },
       {
         tenantId,
         brandId: "33333333-3333-3333-3333-333333333333",
@@ -70,7 +70,7 @@ test("createBranch rejects a brand belonging to a different tenant", async () =>
 
   await assert.rejects(
     createBranch(
-      { brands, branches, now: () => now },
+      { brands, branches, outbox: new FakeOutboxRepository(), now: () => now },
       {
         tenantId,
         brandId: "33333333-3333-3333-3333-333333333333",
@@ -89,7 +89,7 @@ test("createBranch rejects an invalid code", async () => {
 
   await assert.rejects(
     createBranch(
-      { brands, branches, now: () => now },
+      { brands, branches, outbox: new FakeOutboxRepository(), now: () => now },
       {
         tenantId,
         brandId: "33333333-3333-3333-3333-333333333333",
@@ -108,7 +108,7 @@ test("createBranch rejects a duplicate code within the same tenant", async () =>
 
   await assert.rejects(
     createBranch(
-      { brands, branches, now: () => now },
+      { brands, branches, outbox: new FakeOutboxRepository(), now: () => now },
       {
         tenantId,
         brandId: "33333333-3333-3333-3333-333333333333",
@@ -119,4 +119,25 @@ test("createBranch rejects a duplicate code within the same tenant", async () =>
     ),
     DuplicateBranchCodeError,
   );
+});
+
+test("createBranch appends BranchCreated to the outbox (SPEC-015/217)", async () => {
+  const brands = new FakeBrandRepository([aBrand()]);
+  const branches = new FakeBranchRepository();
+  const outbox = new FakeOutboxRepository();
+
+  const branch = await createBranch(
+    { brands, branches, outbox, now: () => now },
+    {
+      tenantId,
+      brandId: "33333333-3333-3333-3333-333333333333",
+      name: "Main Branch",
+      code: "MAIN",
+      timezone: "America/Argentina/Buenos_Aires",
+    },
+  );
+
+  assert.equal(outbox.records.length, 1);
+  assert.equal(outbox.records[0]!.eventName, "BranchCreated");
+  assert.equal(outbox.records[0]!.aggregateId, branch.id);
 });

@@ -6,6 +6,8 @@ export * from "./domain/salon.js";
 export * from "./domain/table.js";
 export * from "./application/ports.js";
 export * from "./application/errors.js";
+export * from "./application/outbox.js";
+export * from "./application/events.js";
 export * from "./application/create-tenant.js";
 export * from "./application/create-brand.js";
 export * from "./application/create-branch.js";

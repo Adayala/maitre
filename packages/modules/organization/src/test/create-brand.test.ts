@@ -6,6 +6,7 @@ import { DuplicateBrandSlugError } from "../application/create-brand.js";
 import {
   FakeTenantRepository,
   FakeBrandRepository,
+  FakeOutboxRepository,
   aTenant,
 } from "./fakes.js";
 
@@ -16,7 +17,7 @@ test("createBrand succeeds for an ACTIVE tenant and derives a slug", async () =>
   const brands = new FakeBrandRepository();
 
   const brand = await createBrand(
-    { tenants, brands, now: () => now },
+    { tenants, brands, outbox: new FakeOutboxRepository(), now: () => now },
     {
       tenantId: "11111111-1111-1111-1111-111111111111",
       name: "La Parrilla",
@@ -35,7 +36,7 @@ test("createBrand rejects a missing tenant", async () => {
 
   await assert.rejects(
     createBrand(
-      { tenants, brands, now: () => now },
+      { tenants, brands, outbox: new FakeOutboxRepository(), now: () => now },
       {
         tenantId: "does-not-exist",
         name: "La Parrilla",
@@ -52,7 +53,7 @@ test("createBrand rejects a suspended tenant", async () => {
 
   await assert.rejects(
     createBrand(
-      { tenants, brands, now: () => now },
+      { tenants, brands, outbox: new FakeOutboxRepository(), now: () => now },
       {
         tenantId: "11111111-1111-1111-1111-111111111111",
         name: "La Parrilla",
@@ -67,7 +68,7 @@ test("createBrand rejects a duplicate slug within the same tenant", async () => 
   const tenants = new FakeTenantRepository([aTenant()]);
   const brands = new FakeBrandRepository();
   await createBrand(
-    { tenants, brands, now: () => now },
+    { tenants, brands, outbox: new FakeOutboxRepository(), now: () => now },
     {
       tenantId: "11111111-1111-1111-1111-111111111111",
       name: "La Parrilla",
@@ -77,7 +78,7 @@ test("createBrand rejects a duplicate slug within the same tenant", async () => 
 
   await assert.rejects(
     createBrand(
-      { tenants, brands, now: () => now },
+      { tenants, brands, outbox: new FakeOutboxRepository(), now: () => now },
       {
         tenantId: "11111111-1111-1111-1111-111111111111",
         name: "La Parrilla",
@@ -95,7 +96,7 @@ test("createBrand allows the same slug across different tenants", async () => {
   ]);
   const brands = new FakeBrandRepository();
   await createBrand(
-    { tenants, brands, now: () => now },
+    { tenants, brands, outbox: new FakeOutboxRepository(), now: () => now },
     {
       tenantId: "11111111-1111-1111-1111-111111111111",
       name: "La Parrilla",
@@ -104,7 +105,7 @@ test("createBrand allows the same slug across different tenants", async () => {
   );
 
   const secondBrand = await createBrand(
-    { tenants, brands, now: () => now },
+    { tenants, brands, outbox: new FakeOutboxRepository(), now: () => now },
     {
       tenantId: "99999999-9999-9999-9999-999999999999",
       name: "La Parrilla",
@@ -113,4 +114,23 @@ test("createBrand allows the same slug across different tenants", async () => {
   );
 
   assert.equal(secondBrand.slug, "la-parrilla");
+});
+
+test("createBrand appends BrandCreated to the outbox (SPEC-014/217)", async () => {
+  const tenants = new FakeTenantRepository([aTenant()]);
+  const brands = new FakeBrandRepository();
+  const outbox = new FakeOutboxRepository();
+
+  const brand = await createBrand(
+    { tenants, brands, outbox, now: () => now },
+    {
+      tenantId: "11111111-1111-1111-1111-111111111111",
+      name: "La Parrilla",
+      config: { language: "es", currency: "ARS" },
+    },
+  );
+
+  assert.equal(outbox.records.length, 1);
+  assert.equal(outbox.records[0]!.eventName, "BrandCreated");
+  assert.equal(outbox.records[0]!.aggregateId, brand.id);
 });

@@ -9,8 +9,8 @@ Evento emitido cuando se crea un tenant.
 | **Tipo** | Event |
 | **Dominio** | Organization |
 | **Namespace** | maitre.organization |
-| **Estado** | PLANNED |
-| **Readiness** | NOT_ASSESSED |
+| **Estado** | IN_PROGRESS |
+| **Readiness** | WALKING_SKELETON_I0 |
 | **Prioridad** | P0 |
 | **Owner** | UNASSIGNED |
 | **Reviewer** | UNASSIGNED |

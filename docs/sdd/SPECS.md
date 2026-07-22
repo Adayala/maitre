@@ -22,9 +22,9 @@ Formato: **SPEC-NNN | Título | Tipo | Dominio | Fase | Prioridad | Estado | Rea
 - [ ] **SPEC-010** | Branches API | API | Organization | Fase 1 | P0 | IN_PROGRESS | WALKING_SKELETON_I0
 - [ ] **SPEC-011** | Salons API | API | Organization | Fase 1 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
 - [ ] **SPEC-012** | Tables API | API | Organization | Fase 1 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
-- [ ] **SPEC-013** | TenantCreated Event | Event | Organization | Fase 1 | P0 | PLANNED | NOT_ASSESSED
-- [ ] **SPEC-014** | BrandCreated Event | Event | Organization | Fase 1 | P0 | PLANNED | NOT_ASSESSED
-- [ ] **SPEC-015** | BranchCreated Event | Event | Organization | Fase 1 | P0 | PLANNED | NOT_ASSESSED
+- [ ] **SPEC-013** | TenantCreated Event | Event | Organization | Fase 1 | P0 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-014** | BrandCreated Event | Event | Organization | Fase 1 | P0 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-015** | BranchCreated Event | Event | Organization | Fase 1 | P0 | IN_PROGRESS | WALKING_SKELETON_I0
 - [ ] **SPEC-016** | Organization RBAC | RBAC | Organization | Fase 1 | P0 | PLANNED | NOT_ASSESSED
 
 ---

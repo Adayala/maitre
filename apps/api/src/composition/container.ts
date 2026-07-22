@@ -8,11 +8,10 @@ import {
   InMemoryTableRepository,
   InMemoryUserRepository,
   InMemoryMembershipRepository,
+  InMemoryOutboxRepository,
   FixtureSessionVerificationPort,
 } from "@maitre/adapter-persistence-memory";
-import { createBrand, createSalon, createTable } from "@maitre/organization";
-import type { Tenant } from "@maitre/organization";
-import type { Branch } from "@maitre/organization";
+import { createTenant, createBrand, createBranch, createSalon, createTable } from "@maitre/organization";
 import type { User, Membership } from "@maitre/identity";
 
 export interface Container {
@@ -24,6 +23,7 @@ export interface Container {
   tables: InMemoryTableRepository;
   users: InMemoryUserRepository;
   memberships: InMemoryMembershipRepository;
+  outbox: InMemoryOutboxRepository;
   sessions: FixtureSessionVerificationPort;
   demoAccessToken: string;
 }
@@ -42,24 +42,23 @@ export async function buildContainer(): Promise<Container> {
   const tables = new InMemoryTableRepository();
   const users = new InMemoryUserRepository();
   const memberships = new InMemoryMembershipRepository();
+  const outbox = new InMemoryOutboxRepository();
   const sessions = new FixtureSessionVerificationPort();
 
   const now = new Date();
 
-  const tenant: Tenant = {
-    id: randomUUID(),
-    name: "Maitre Demo Tenant",
-    status: "ACTIVE",
-    defaultLocale: "es-AR",
-    defaultCurrency: "ARS",
-    defaultTimezone: "America/Argentina/Buenos_Aires",
-    createdAt: now,
-    updatedAt: now,
-  };
-  await tenants.save(tenant);
+  const tenant = await createTenant(
+    { tenants, outbox, now: () => now },
+    {
+      name: "Maitre Demo Tenant",
+      defaultLocale: "es-AR",
+      defaultCurrency: "ARS",
+      defaultTimezone: "America/Argentina/Buenos_Aires",
+    },
+  );
 
   const brand = await createBrand(
-    { tenants, brands, now: () => now },
+    { tenants, brands, outbox, now: () => now },
     {
       tenantId: tenant.id,
       name: "Maitre Demo Brand",
@@ -67,18 +66,16 @@ export async function buildContainer(): Promise<Container> {
     },
   );
 
-  const branch: Branch = {
-    id: randomUUID(),
-    tenantId: tenant.id,
-    brandId: brand.id,
-    code: "MAIN",
-    name: "Sucursal Principal",
-    timezone: tenant.defaultTimezone,
-    status: "ACTIVE",
-    createdAt: now,
-    updatedAt: now,
-  };
-  await branches.save(branch);
+  const branch = await createBranch(
+    { brands, branches, outbox, now: () => now },
+    {
+      tenantId: tenant.id,
+      brandId: brand.id,
+      name: "Sucursal Principal",
+      code: "MAIN",
+      timezone: tenant.defaultTimezone,
+    },
+  );
 
   const salon = await createSalon(
     { branches, salons, now: () => now },
@@ -143,6 +140,7 @@ export async function buildContainer(): Promise<Container> {
     tables,
     users,
     memberships,
+    outbox,
     sessions,
     demoAccessToken,
   };

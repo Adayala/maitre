@@ -3,6 +3,8 @@ import { isTenantOperable } from "../domain/tenant.js";
 import { slugify, type Brand, type BrandConfig } from "../domain/brand.js";
 import type { BrandRepositoryPort, TenantRepositoryPort } from "./ports.js";
 import { TenantNotOperableError } from "./errors.js";
+import type { OutboxPort } from "./outbox.js";
+import { brandCreatedEvent } from "./events.js";
 
 export class DuplicateBrandSlugError extends Error {
   constructor(slug: string, tenantId: string) {
@@ -19,11 +21,13 @@ export interface CreateBrandInput {
   website?: string;
   config: BrandConfig;
   actorId?: string;
+  correlationId?: string;
 }
 
 export interface CreateBrandDeps {
   tenants: TenantRepositoryPort;
   brands: BrandRepositoryPort;
+  outbox: OutboxPort;
   now?: () => Date;
 }
 
@@ -62,5 +66,6 @@ export async function createBrand(
   };
 
   await deps.brands.save(brand);
+  await deps.outbox.append(brandCreatedEvent(brand, input.correlationId ?? randomUUID()));
   return brand;
 }

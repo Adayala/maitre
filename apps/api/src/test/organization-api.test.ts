@@ -303,3 +303,42 @@ test("PATCH /v1/tenants/:id for a tenant outside the caller's membership returns
   assert.equal(response.statusCode, 403);
   await app.close();
 });
+
+test("POST /v1/tenants appends TenantCreated to the outbox with the request's correlationId", async () => {
+  const container = await buildContainer();
+  const app = await buildApp(container);
+  const before = container.outbox.all().length;
+  const response = await app.inject({
+    method: "POST",
+    url: "/v1/tenants",
+    headers: { authorization: `Bearer ${container.demoAccessToken}` },
+    payload: { name: "Second Restaurant Group" },
+  });
+  const records = container.outbox.all();
+  assert.equal(records.length, before + 1);
+  const tenantCreated = records[records.length - 1]!;
+  assert.equal(tenantCreated.eventName, "TenantCreated");
+  assert.equal(tenantCreated.aggregateId, response.json().data.id);
+  await app.close();
+});
+
+test("POST /v1/brands appends BrandCreated to the outbox", async () => {
+  const container = await buildContainer();
+  const tenantId = await getTenantId(container);
+  const app = await buildApp(container);
+  const before = container.outbox.all().length;
+  const response = await app.inject({
+    method: "POST",
+    url: "/v1/brands",
+    headers: {
+      authorization: `Bearer ${container.demoAccessToken}`,
+      "x-tenant-id": tenantId,
+    },
+    payload: { name: "Pizzeria Bella", config: { language: "es", currency: "ARS" } },
+  });
+  const records = container.outbox.all();
+  assert.equal(records.length, before + 1);
+  assert.equal(records[records.length - 1]!.eventName, "BrandCreated");
+  assert.equal(records[records.length - 1]!.aggregateId, response.json().data.id);
+  await app.close();
+});

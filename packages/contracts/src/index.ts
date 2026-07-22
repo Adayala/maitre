@@ -4,6 +4,7 @@ export * from "./brand.js";
 export * from "./fiscal-entity.js";
 export * from "./role.js";
 export * from "./permission.js";
+export * from "./event-envelope.js";
 export * from "./salon.js";
 export * from "./table.js";
 export * from "./user.js";

@@ -53,8 +53,8 @@ export async function registerTenantRoutes(
       const body = createTenantBodySchema.parse(req.body);
 
       const tenant = await createTenant(
-        { tenants: container.tenants },
-        { ...omitUndefined(body), actorId: auth.userId },
+        { tenants: container.tenants, outbox: container.outbox },
+        { ...omitUndefined(body), actorId: auth.userId, correlationId },
       );
       await createMembership(
         { memberships: container.memberships },

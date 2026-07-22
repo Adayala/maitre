@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
 import type { Tenant } from "../domain/tenant.js";
 import type { TenantRepositoryPort } from "./ports.js";
+import type { OutboxPort } from "./outbox.js";
+import { tenantCreatedEvent } from "./events.js";
 
 export interface CreateTenantInput {
   name: string;
@@ -10,16 +12,20 @@ export interface CreateTenantInput {
   contactEmail?: string;
   contactPhone?: string;
   actorId?: string;
+  correlationId?: string;
 }
 
 export interface CreateTenantDeps {
   tenants: TenantRepositoryPort;
+  outbox: OutboxPort;
   now?: () => Date;
 }
 
 // SPEC-001 §7 — Tenant creation is one step of an orchestrated provisioning
 // workflow (see apps/api composition), not a standalone public CRUD op.
-// This use case only creates the Tenant record itself.
+// This use case creates the Tenant record and appends TenantCreated
+// (SPEC-013) to the outbox — in a real adapter, both happen in one
+// PostgreSQL transaction (SPEC-217 §4).
 export async function createTenant(
   deps: CreateTenantDeps,
   input: CreateTenantInput,
@@ -41,5 +47,6 @@ export async function createTenant(
       : {}),
   };
   await deps.tenants.save(tenant);
+  await deps.outbox.append(tenantCreatedEvent(tenant, input.correlationId ?? randomUUID()));
   return tenant;
 }
