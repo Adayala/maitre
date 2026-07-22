@@ -51,4 +51,5 @@ El detalle accionable y las dependencias iniciales se mantienen en
 [plan de remediación](remediation-plan.md). Gate R0 mantiene una
 [auditoría retroactiva de implementación](implementation-drift-audit.md) y una
 [propuesta de DAG acíclico](dependency-dag-remediation.md). La migración de estados se define en
-[normalización lifecycle/readiness](lifecycle-readiness-remediation.md).
+[normalización lifecycle/readiness](lifecycle-readiness-remediation.md), y los responsables en la
+[matriz de ownership/review](ownership-review-matrix.md).
