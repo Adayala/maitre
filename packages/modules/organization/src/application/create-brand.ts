@@ -2,13 +2,7 @@ import { randomUUID } from "node:crypto";
 import { isTenantOperable } from "../domain/tenant.js";
 import { slugify, type Brand, type BrandConfig } from "../domain/brand.js";
 import type { BrandRepositoryPort, TenantRepositoryPort } from "./ports.js";
-
-export class TenantNotOperableError extends Error {
-  constructor(tenantId: string) {
-    super(`Tenant ${tenantId} does not exist or is not operable`);
-    this.name = "TenantNotOperableError";
-  }
-}
+import { TenantNotOperableError } from "./errors.js";
 
 export class DuplicateBrandSlugError extends Error {
   constructor(slug: string, tenantId: string) {

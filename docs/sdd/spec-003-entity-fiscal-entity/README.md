@@ -10,8 +10,8 @@ Persona humana o jurídica que emite comprobantes fiscales. Contiene CUIT, condi
 | **Título** | FiscalEntity Entity |
 | **Tipo** | Entity |
 | **Dominio** | Organization |
-| **Estado** | PLANNED |
-| **Readiness** | NOT_ASSESSED |
+| **Estado** | IN_PROGRESS |
+| **Readiness** | WALKING_SKELETON_I0 |
 | **Prioridad** | P0 |
 | **Owner** | UNASSIGNED |
 | **Reviewer** | UNASSIGNED |
