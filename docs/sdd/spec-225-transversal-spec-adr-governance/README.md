@@ -53,5 +53,6 @@ Contrato transversal para crear, revisar, aprobar, cambiar, verificar y retirar 
 - [Revisión Kitchen SPEC-098–110](reviews/kitchen-spec-098-110.md)
 - [Revisión Workforce SPEC-111–123](reviews/workforce-spec-111-123.md)
 - [Revisión Cash Management SPEC-124–136](reviews/cash-spec-124-136.md)
+- [Revisión Fiscal/ARCA SPEC-137–156](reviews/fiscal-arca-spec-137-156.md)
 - [Auditoría inicial del registro](registry-baseline-audit.md)
 - [Decisiones](notes.md)
