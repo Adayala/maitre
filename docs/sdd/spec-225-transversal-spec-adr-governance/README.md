@@ -43,5 +43,6 @@ Contrato transversal para crear, revisar, aprobar, cambiar, verificar y retirar 
 - [Revisión Identity SPEC-017–026](reviews/identity-spec-017-026.md)
 - [Revisión Subscription SPEC-027–036](reviews/subscription-spec-027-036.md)
 - [Revisión Catalog SPEC-037–043](reviews/catalog-spec-037-043.md)
+- [Revisión Audit/Dashboard SPEC-044–048](reviews/audit-dashboard-spec-044-048.md)
 - [Auditoría inicial del registro](registry-baseline-audit.md)
 - [Decisiones](notes.md)
