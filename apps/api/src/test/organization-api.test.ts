@@ -3,6 +3,11 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { buildApp } from "../app.js";
 import { buildContainer, type Container } from "../composition/container.js";
+import type { InMemoryOutboxRepository } from "@maitre/adapter-persistence-memory";
+
+function outboxOf(container: Container): InMemoryOutboxRepository {
+  return container.outbox as InMemoryOutboxRepository;
+}
 
 // SPEC-224 §5 — Fastify inject() covers SPEC-007-012's Organization APIs:
 // tenant-context resolution, RBAC per SPEC-016/026, and error contracts.
@@ -307,14 +312,14 @@ test("PATCH /v1/tenants/:id for a tenant outside the caller's membership returns
 test("POST /v1/tenants appends TenantCreated to the outbox with the request's correlationId", async () => {
   const container = await buildContainer();
   const app = await buildApp(container);
-  const before = container.outbox.all().length;
+  const before = outboxOf(container).all().length;
   const response = await app.inject({
     method: "POST",
     url: "/v1/tenants",
     headers: { authorization: `Bearer ${container.demoAccessToken}` },
     payload: { name: "Second Restaurant Group" },
   });
-  const records = container.outbox.all();
+  const records = outboxOf(container).all();
   assert.equal(records.length, before + 1);
   const tenantCreated = records[records.length - 1]!;
   assert.equal(tenantCreated.eventName, "TenantCreated");
@@ -326,7 +331,7 @@ test("POST /v1/brands appends BrandCreated to the outbox", async () => {
   const container = await buildContainer();
   const tenantId = await getTenantId(container);
   const app = await buildApp(container);
-  const before = container.outbox.all().length;
+  const before = outboxOf(container).all().length;
   const response = await app.inject({
     method: "POST",
     url: "/v1/brands",
@@ -336,7 +341,7 @@ test("POST /v1/brands appends BrandCreated to the outbox", async () => {
     },
     payload: { name: "Pizzeria Bella", config: { language: "es", currency: "ARS" } },
   });
-  const records = container.outbox.all();
+  const records = outboxOf(container).all();
   assert.equal(records.length, before + 1);
   assert.equal(records[records.length - 1]!.eventName, "BrandCreated");
   assert.equal(records[records.length - 1]!.aggregateId, response.json().data.id);

@@ -9,7 +9,8 @@
     { "path": "../../packages/contracts" },
     { "path": "../../packages/modules/organization" },
     { "path": "../../packages/modules/identity" },
-    { "path": "../../adapters/persistence/memory" }
+    { "path": "../../adapters/persistence/memory" },
+    { "path": "../../adapters/persistence/supabase" }
   ],
   "include": ["src"]
 }

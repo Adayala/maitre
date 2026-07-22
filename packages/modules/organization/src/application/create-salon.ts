@@ -17,6 +17,7 @@ export interface CreateSalonInput {
   capacity: number;
   description?: string;
   actorId?: string;
+  id?: string;
 }
 
 export interface CreateSalonDeps {
@@ -36,7 +37,7 @@ export async function createSalon(
 
   const now = (deps.now ?? (() => new Date()))();
   const salon: Salon = {
-    id: randomUUID(),
+    id: input.id ?? randomUUID(),
     tenantId: input.tenantId,
     branchId: input.branchId,
     name: input.name,

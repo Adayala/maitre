@@ -29,6 +29,7 @@ export interface CreateBranchInput {
   contactPhone?: string;
   actorId?: string;
   correlationId?: string;
+  id?: string;
 }
 
 export interface CreateBranchDeps {
@@ -52,7 +53,7 @@ export async function createBranch(
 
   const now = (deps.now ?? (() => new Date()))();
   const branch: Branch = {
-    id: randomUUID(),
+    id: input.id ?? randomUUID(),
     tenantId: input.tenantId,
     brandId: input.brandId,
     code,

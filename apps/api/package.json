@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@maitre/adapter-persistence-memory": "*",
+    "@maitre/adapter-persistence-supabase": "*",
     "@maitre/contracts": "*",
     "@maitre/identity": "*",
     "@maitre/organization": "*",

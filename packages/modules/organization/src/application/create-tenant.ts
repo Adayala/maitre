@@ -13,6 +13,7 @@ export interface CreateTenantInput {
   contactPhone?: string;
   actorId?: string;
   correlationId?: string;
+  id?: string;
 }
 
 export interface CreateTenantDeps {
@@ -32,7 +33,7 @@ export async function createTenant(
 ): Promise<Tenant> {
   const now = (deps.now ?? (() => new Date()))();
   const tenant: Tenant = {
-    id: randomUUID(),
+    id: input.id ?? randomUUID(),
     name: input.name,
     status: "ACTIVE",
     defaultLocale: input.defaultLocale,

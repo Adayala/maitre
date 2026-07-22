@@ -22,6 +22,7 @@ export interface CreateBrandInput {
   config: BrandConfig;
   actorId?: string;
   correlationId?: string;
+  id?: string;
 }
 
 export interface CreateBrandDeps {
@@ -49,7 +50,7 @@ export async function createBrand(
 
   const now = (deps.now ?? (() => new Date()))();
   const brand: Brand = {
-    id: randomUUID(),
+    id: input.id ?? randomUUID(),
     tenantId: input.tenantId,
     name: input.name,
     slug,

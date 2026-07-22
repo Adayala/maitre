@@ -25,6 +25,7 @@ export interface CreateTableInput {
   capacity: number;
   name?: string;
   actorId?: string;
+  id?: string;
 }
 
 export interface CreateTableDeps {
@@ -56,7 +57,7 @@ export async function createTable(
 
   const now = (deps.now ?? (() => new Date()))();
   const table: Table = {
-    id: randomUUID(),
+    id: input.id ?? randomUUID(),
     tenantId: input.tenantId,
     branchId: input.branchId,
     salonId: input.salonId,

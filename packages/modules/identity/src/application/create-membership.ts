@@ -9,6 +9,7 @@ export interface CreateMembershipInput {
   branchScopeType: BranchScopeType;
   branchIds?: string[];
   actorId?: string;
+  id?: string;
 }
 
 export interface CreateMembershipDeps {
@@ -24,7 +25,7 @@ export async function createMembership(
 ): Promise<Membership> {
   const now = (deps.now ?? (() => new Date()))();
   const membership: Membership = {
-    id: randomUUID(),
+    id: input.id ?? randomUUID(),
     tenantId: input.tenantId,
     userId: input.userId,
     status: "ACTIVE",
