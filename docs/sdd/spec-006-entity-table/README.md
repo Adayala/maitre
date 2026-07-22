@@ -10,8 +10,8 @@ Mesa física con capacidad, número, ubicación.
 | **Título** | Table Entity |
 | **Tipo** | Entity |
 | **Dominio** | Organization |
-| **Estado** | PLANNED |
-| **Readiness** | NOT_ASSESSED |
+| **Estado** | IN_PROGRESS |
+| **Readiness** | WALKING_SKELETON_I0 |
 | **Prioridad** | P1 |
 | **Owner** | UNASSIGNED |
 | **Reviewer** | UNASSIGNED |
