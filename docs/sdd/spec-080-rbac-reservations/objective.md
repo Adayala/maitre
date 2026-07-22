@@ -1,3 +1,3 @@
 # Objetivo — SPEC-080
 
-RBAC para Reservations domain
+Definir permisos canónicos para reservas, waitlist, Guest PII y capabilities públicas.

@@ -1,7 +1,7 @@
 # Contrato — SPEC-098 Command
 
-Command representa una unidad de trabajo de cocina con tipo, target, payload versionado,
-priority, status `QUEUED | ACKNOWLEDGED | IN_PROGRESS | COMPLETED | CANCELLED | FAILED`,
-idempotency key y auditoría. Transiciones requieren versión/actor autorizado; completion es
-idempotente y failure conserva reason categorizado. Comandos no cruzan branch/station.
-Tests cubren duplicados, concurrencia, retry, cancel race y orden parcial.
+Command es una TicketLine autoritativa de KitchenTicket con payload discriminado, priority y
+status `RECEIVED | CLAIMED | IN_PROGRESS | ON_HOLD | READY | COMPLETED | CANCELLED`. READY termina
+producción y COMPLETED confirma handoff; errores técnicos son attempts reintentables, no estado
+`FAILED`. Transiciones requieren versión/actor y no cruzan branch/station. Tests cubren duplicados,
+concurrencia, retry, cancel race y producción parcial.

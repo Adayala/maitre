@@ -1,3 +1,4 @@
-# Objetivo — SPEC-pi-
+# Objetivo — SPEC-073
 
-API CRUD para WaitList
+Definir la operación auditable de waitlist y el seating atómico sin confundir notificación con
+reserva de capacidad.

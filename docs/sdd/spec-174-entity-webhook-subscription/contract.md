@@ -1,6 +1,6 @@
-# Contrato de entidad — SPEC-174 Webhook Subscription
+# Contrato de entidad — SPEC-174 Inbound/Outbound Webhooks
 
-WebhookSubscription define endpoint HTTPS, eventos permitidos, referencia de secreto, versión
-de firma, filtros, estado y política de entrega. El endpoint se valida contra SSRF y la rotación
-admite solapamiento controlado de secretos. Tests cubren URLs privadas, DNS rebinding, eventos
-desconocidos, rotación, pausa, reactivación, permisos, auditoría y aislamiento entre tenants.
+OutboundWebhookSubscription/Delivery define endpoint tenant, eventos, firma y retries.
+ProviderWebhookEndpoint/Receipt define recepción, firma raw-body, replay y procesamiento de
+providers. No comparten secrets, IDs, lifecycle ni permisos. Outbound valida SSRF en cada conexión;
+inbound deduplica receipts. Tests cubren DNS rebinding, replay, rotación, DLQ y aislamiento.

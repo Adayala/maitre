@@ -1,3 +1,4 @@
-# Objetivo — SPEC-pi-
+# Objetivo — SPEC-072
 
-API CRUD para Guests
+Definir acceso y gestión segura de Guest, incluyendo PII, consentimiento, merge, exportación y
+anonimización sin romper referencias históricas.

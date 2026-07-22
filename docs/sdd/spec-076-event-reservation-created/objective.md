@@ -1,3 +1,3 @@
-# Objetivo — SPEC-ven
+# Objetivo — SPEC-076
 
-Evento: ReservationCreated
+Publicar el hecho de creación de una Reservation sin implicar confirmación ni revelar PII.

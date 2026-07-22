@@ -1,7 +1,7 @@
-# Contrato de evento — SPEC-096 OrderDelivered
+# Contrato de evento — SPEC-096 OrderItemDelivered / OrderDelivered
 
-Publicar mediante outbox al confirmar la entrega de una orden completa, identificando actor,
-canal y timestamp sin exponer PII. La transición es idempotente, conserva correlación con
-OrderPlaced y no implica cierre automático de la cuenta. Tests cubren entrega parcial,
-confirmaciones repetidas, orden cancelada, reordenamiento, evolución compatible, auditoría
-y aislamiento entre tenants.
+Publicar `ordering.order-item.delivered.v1` por cada allocation entregada y
+`ordering.order.delivered.v1` sólo cuando la derivación agregada alcanza DELIVERED, identificando
+actor, canal, timestamp y revisiones sin PII. La transición es idempotente, conserva correlación
+con OrderSubmitted y no cierra automáticamente la cuenta. Tests cubren entrega parcial,
+confirmaciones repetidas, cancelación, reordenamiento y auditoría.

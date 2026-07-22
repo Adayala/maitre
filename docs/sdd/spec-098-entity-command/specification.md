@@ -1,40 +1,13 @@
-# Especificación — SPEC-098
+# Especificación — SPEC-098 Command
 
-## Tipo de spec
-Entity
+Command es una TicketLine autoritativa de KitchenTicket (SPEC-086), no sinónimo ni segundo
+agregado. Existe uno por OrderItem allocation + station routing revision y su ID permanece estable
+durante el lifecycle.
 
-## Definición formal
-Un comando es la instrucción centralizada para la cocina.
-Es sinónimo de KitchenTicket pero desde perspectiva de cocina.
+Estados únicos: `RECEIVED | CLAIMED | IN_PROGRESS | ON_HOLD | READY | COMPLETED | CANCELLED`.
+READY significa producción terminada; COMPLETED confirma retiro/handoff por expediter. Los errores
+técnicos no son estado: quedan como attempt/error y retry; un fallo de negocio termina CANCELLED.
 
-Propiedades:
-- Items a preparar
-- Estación
-- Estado: RECEIVED | IN_PROGRESS | COMPLETED | CANCELLED
-- Prioridad
-
-## Schema JSON
-
-```json
-{
-  "id": "uuid (PK)",
-  "kitchen_ticket_id": "uuid (referencia a comanda)",
-  "station_id": "uuid",
-  "status": "enum: RECEIVED | IN_PROGRESS | COMPLETED | CANCELLED",
-  "priority": "enum: NORMAL | HIGH | URGENT",
-  "items_count": "integer",
-  "started_at": "ISO8601 | null",
-  "completed_at": "ISO8601 | null",
-  "created_at": "ISO8601"
-}
-```
-
-## Status Lifecycle
-
-RECEIVED → IN_PROGRESS → COMPLETED (o CANCELLED)
-
-## Validaciones
-
-- station_id: debe existir
-- items_count: >= 1
-- priority: válido enum
+Payload usa union discriminada allowlisted por `commandType + schemaVersion`, con tamaño máximo y
+campos tipados. No admite blobs, PII, precios ni notas libres fuera del campo sanitizado permitido.
+Toda transición usa expected revision, idempotency key, actor y timestamp del servidor.

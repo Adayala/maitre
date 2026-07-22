@@ -1,3 +1,3 @@
-# Objetivo — SPEC-ven
+# Objetivo — SPEC-077
 
-Evento: ReservationConfirmed
+Publicar el hecho de confirmación después del consumo transaccional de capacidad.

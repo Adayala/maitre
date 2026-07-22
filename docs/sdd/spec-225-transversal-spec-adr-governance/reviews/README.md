@@ -33,6 +33,11 @@ Cobertura: 19 informes, 226 specs, ningún `APPROVE`. Esto no significa que todo
 tengan igual riesgo: muchos criterios positivos están documentados, pero al menos un finding
 bloqueante impide aprobar cada bloque.
 
+Las decisiones normativas que pueden cerrarse sin inventar evidencia externa están consolidadas
+en [Especificaciones faltantes](../../MISSING_SPECIFICATIONS.md). Ese documento no promueve
+readiness: owners, revisiones expertas, ADRs, spikes y mediciones continúan bloqueados hasta contar
+con evidencia real.
+
 ## Orden de resolución
 
 1. Gobernanza: owners/reviewers, enum de readiness, DAG de dependencias y revisión retroactiva

@@ -1,6 +1,7 @@
-# Contrato de evento — SPEC-120 ShiftEnded
+# Contrato de evento — SPEC-120 WorkShiftCompleted
 
-Publicar mediante outbox al completar o cerrar administrativamente un turno. El sobre
+Publicar `workforce.work-shift.completed.v1` al completar administrativamente WorkShift; no
+representa clock-out individual. El sobre
 versionado incluye eventId, occurredAt, tenantId, branchId, shiftId, outcome y agregados no
 personales; no incluye fichadas individuales ni datos salariales. Tests cubren jornadas aún
 abiertas, cierre forzado, reintento, duplicados, reordenamiento, compatibilidad, correlación y

@@ -1,7 +1,7 @@
-# Contrato de evento — SPEC-108 CommandCompleted
+# Contrato de evento — SPEC-108 CommandReady / CommandCompleted
 
-Publicar mediante outbox al completar todas las unidades requeridas de una comanda, sin
-confundir ready con delivered. El sobre versionado incluye eventId, occurredAt, tenantId,
-branchId, commandId, orderId y resumen de estaciones, sin PII ni contenido libre. Tests
-cubren finalización parcial, duplicados, reapertura excepcional, eventos tardíos, evolución
-compatible, correlación y aislamiento entre tenants.
+Publicar `kitchen.command.ready.v1` al terminar producción y
+`kitchen.command.completed.v1` al confirmar retiro/handoff. Ninguno implica entrega al Guest.
+Cada evento refiere una unidad Command y permite avance parcial; el envelope incluye IDs,
+timestamps y revisions sin PII. Tests cubren finalización parcial, duplicados, rollback
+excepcional, eventos tardíos, compatibilidad, correlación y aislamiento.

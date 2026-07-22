@@ -1,3 +1,4 @@
-# Objetivo — SPEC-pi-
+# Objetivo — SPEC-075
 
-API CRUD para Notifications
+Definir intenciones de notificación desacopladas, idempotentes y gobernadas por purpose,
+consentimiento, opt-out, template y channel.

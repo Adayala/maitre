@@ -1,93 +1,24 @@
-# Especificación — SPEC-081
+# Especificación — SPEC-081 Order
 
-## Tipo de spec
-Entity
+## Autoridad y lifecycle
 
-## Definición formal
-Una orden es la solicitud de comida/bebida de una visita.
-Contiene items (productos), modificaciones, estado.
+Order es el agregado comercial de una Visit. Tenant, branch y visit son inmutables. Sólo `DRAFT`
+y `SUBMITTED` son estados comandables del agregado; fulfillment se determina desde OrderItem:
 
-Propiedades:
-- Pertenece a una visita
-- Contiene 1+ items
-- Estado: PENDING | CONFIRMED | PREPARED | DELIVERED | CANCELLED
-- Se puede modificar hasta confirmación
-- Vinculada a Comanda (kitchen ticket)
+- `DRAFT -> SUBMITTED`: submit idempotente después de revalidar catálogo y congelar snapshot.
+- `SUBMITTED -> CANCELLED`: sólo cuando todos los items quedan cancelados antes de entrega.
+- `IN_PREP`, `READY`, `PARTIALLY_DELIVERED` y `DELIVERED` son estados derivados de items.
 
-## Schema JSON
+Derivación, en orden de precedencia: todos cancelados = `CANCELLED`; todos terminales y al menos
+uno entregado = `DELIVERED`; algún entregado = `PARTIALLY_DELIVERED`; todos los no cancelados ready
+= `READY`; algún item en producción/ready = `IN_PREP`; en otro caso = `SUBMITTED`.
 
-```json
-{
-  "id": "uuid (PK)",
-  "tenant_id": "uuid",
-  "branch_id": "uuid",
-  "visit_id": "uuid",
-  "table_id": "uuid",
-  "order_number": "integer (secuencial por branch/día)",
-  "status": "enum: PENDING | CONFIRMED | PREPARED | DELIVERED | CANCELLED",
-  "items": [
-    {
-      "order_item_id": "uuid",
-      "product_id": "uuid",
-      "quantity": "integer",
-      "unit_price": "decimal",
-      "line_total": "decimal",
-      "modifiers": ["array of modifier_ids"],
-      "special_instructions": "string | null"
-    }
-  ],
-  "subtotal": "decimal (suma items)",
-  "discount_amount": "decimal",
-  "tax_amount": "decimal",
-  "total": "decimal",
-  "sent_to_kitchen_at": "ISO8601 | null",
-  "ready_at": "ISO8601 | null",
-  "delivered_at": "ISO8601 | null",
-  "created_at": "ISO8601",
-  "created_by": "uuid"
-}
-```
+## Submit y cambios
 
-## Status Lifecycle
+Submit recibe `catalogRevisionId` e `Idempotency-Key`. En una transacción revalida producto,
+modifier, disponibilidad, precio, impuestos, moneda y restricciones. Un cambio devuelve
+`409 CATALOG_CHANGED` con diferencias; no se acepta silenciosamente. Al aceptar congela snapshot,
+crea unidades de producción y outbox. Cambios posteriores crean OrderAdjustment auditado.
 
-```
-PENDING (recién creada, se puede editar)
-  ↓ (mesero confirma y envía a cocina)
-CONFIRMED
-  ↓ (cocina prepara)
-PREPARED (lista para entregar)
-  ↓ (mesero entrega)
-DELIVERED (irreversible)
-
-O en cualquier momento antes de DELIVERED:
-CANCELLED
-```
-
-## Validaciones
-
-- items: no vacío
-- total: coherente (subtotal - discount + tax)
-- order_number: único (tenant, branch, date)
-- special_instructions: max 500 chars
-
-## Reglas e invariantes
-
-### 1. No se puede modificar después de CONFIRMED
-
-**Regla:** status=CONFIRMED, PREPARED, DELIVERED, CANCELLED → read-only
-
-### 2. Items no pueden estar vacíos
-
-**Regla:** items.length >= 1 siempre
-
-### 3. Total debe ser coherente
-
-**Regla:** total = (subtotal - discount_amount + tax_amount)
-
-### 4. PENDING → CONFIRMED crea Comanda
-
-**Regla:** Al transicionar a CONFIRMED, se crea automáticamente Command en Kitchen.
-
-### 5. Orden CANCELLED no genera comanda
-
-**Regla:** Si se cancela en PENDING, no se crea Command.
+Order conserva totales comerciales bajo la convención compartida con Catalog/Check/Fiscal, pero
+no es factura ni autoridad fiscal.

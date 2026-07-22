@@ -1,6 +1,8 @@
-# Contrato de evento — SPEC-094 OrderPlaced
+# Contrato de evento — SPEC-094 OrderSubmitted
 
-Publicar una vez por transición lógica al aceptar una orden, mediante outbox transaccional.
+Publicar `ordering.order.submitted.v1` una vez por la transición lógica de submit que congela el
+snapshot y crea el despacho de producción, mediante outbox transaccional. `OrderPlaced` queda como
+nombre legado no publicable.
 El sobre versionado incluye eventId, occurredAt, tenantId, branchId, orderId, visitId,
 catalogVersion e importes resumidos; no incluye PII ni notas libres. Consumidores deduplican
 por eventId y toleran reordenamiento. Tests cubren rollback, reintento, evolución compatible,

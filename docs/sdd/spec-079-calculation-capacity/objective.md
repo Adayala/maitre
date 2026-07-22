@@ -1,3 +1,3 @@
 # Objetivo — SPEC-079
 
-Business logic: calcular disponibilidad de mesas.
+Definir un cálculo puro, determinista y explicable de combinaciones y slots disponibles.

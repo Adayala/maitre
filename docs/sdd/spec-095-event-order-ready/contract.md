@@ -1,7 +1,7 @@
-# Contrato de evento — SPEC-095 OrderReady
+# Contrato de evento — SPEC-095 OrderItemReady / OrderReady
 
-Publicar cuando todos los componentes requeridos de una orden alcanzan ready, preservando
-una única emisión lógica aunque existan reintentos. El sobre versionado incluye eventId,
-occurredAt, tenantId, branchId, orderId y referencias operativas mínimas, sin PII ni notas
-libres. Tests cubren preparación parcial, eventos duplicados o tardíos, reapertura autorizada,
-compatibilidad de esquema, correlación y deduplicación.
+Publicar `ordering.order-item.ready.v1` por allocation preparada y
+`ordering.order.ready.v1` únicamente cuando la derivación agregada alcanza READY. Cada hecho tiene
+una única emisión lógica aunque existan reintentos. El envelope incluye IDs/revisiones y
+referencias operativas mínimas, sin PII ni notas. Tests cubren preparación parcial, duplicados,
+eventos tardíos, compatibilidad, correlación y deduplicación.

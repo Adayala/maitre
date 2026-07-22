@@ -1,6 +1,6 @@
 # Contrato de entidad — SPEC-175 Sync Log
 
-SyncLog registra cada ejecución o lote con integración, dirección, cursor, conteos, timestamps,
-outcome y errores normalizados. Es append-only, no almacena payloads completos ni secretos y
-enlaza reintentos mediante correlationId. Tests cubren ejecución parcial, cursor, reintento,
-redacción, retención, grandes volúmenes, observabilidad y aislamiento entre tenants.
+SyncCheckpoint es autoridad transaccional de cursor/lease por partition; SyncRun congela cursor
+original/candidate y outcome. SyncLog es sólo evidencia append-only, sin payloads ni secrets. El
+checkpoint avanza únicamente después de persistencia confirmada. Tests cubren partial, lease,
+crash/retry, cursor corrupto, redacción y aislamiento.

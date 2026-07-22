@@ -1,3 +1,4 @@
-# Objetivo — SPEC-pi-
+# Objetivo — SPEC-074
 
-API CRUD para Availability
+Exponer disponibilidad explicable y temporalmente inequívoca como consulta, sin prometer ni
+consumir capacidad.

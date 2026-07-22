@@ -1,7 +1,7 @@
 # Contrato de entidad — SPEC-124 Cash Register
 
-CashRegister representa una caja física o lógica de una sucursal, con moneda, identificador
-único por branch, responsables y estado CLOSED/OPEN/SUSPENDED. Sólo admite una sesión abierta
-por caja; apertura y cierre conservan saldo declarado, versión y actor. Tests cubren doble
-apertura, cambio de responsable, suspensión con actividad, concurrencia, precisión monetaria,
-auditoría y aislamiento entre tenants.
+CashRegister configura una caja física o lógica por Branch y no guarda el saldo corriente.
+CashSession es el agregado autoritativo de cada apertura, con currency, responsables, opening,
+cutoff, ledger revision y lifecycle OPEN/CLOSING/CLOSED/RECONCILED. Sólo admite una sesión abierta
+por register/currency. Tests cubren doble apertura, suspensión, concurrencia, precisión monetaria,
+auditoría y aislamiento.
