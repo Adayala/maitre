@@ -46,5 +46,6 @@ Contrato transversal para crear, revisar, aprobar, cambiar, verificar y retirar 
 - [Revisión Audit/Dashboard SPEC-044–048](reviews/audit-dashboard-spec-044-048.md)
 - [Revisión Floor Core SPEC-049–054](reviews/floor-core-spec-049-054.md)
 - [Revisión Floor APIs/Events SPEC-055–065](reviews/floor-api-events-spec-055-065.md)
+- [Revisión Reservations Core SPEC-066–070](reviews/reservations-core-spec-066-070.md)
 - [Auditoría inicial del registro](registry-baseline-audit.md)
 - [Decisiones](notes.md)
