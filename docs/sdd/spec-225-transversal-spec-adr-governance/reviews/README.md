@@ -47,4 +47,5 @@ bloqueante impide aprobar cada bloque.
    sólo después de spikes de costo/viabilidad y con fallback.
 
 El detalle accionable y las dependencias iniciales se mantienen en
-[findings-register.md](findings-register.md).
+[findings-register.md](findings-register.md). La secuencia de cierre está definida en el
+[plan de remediación](remediation-plan.md).
