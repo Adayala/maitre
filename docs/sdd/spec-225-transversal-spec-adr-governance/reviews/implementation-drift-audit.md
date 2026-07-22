@@ -69,7 +69,9 @@ Los commits referencian IDs en títulos, pero no guardan una manifestación mach
 - comandos/resultados de lint, types, tests, build y seguridad;
 - ADR/spike vigente y excepciones.
 
-Gate R0 debe definir este manifest/evidence contract antes de nuevos commits `feat`.
+El formato requerido queda definido por
+[`implementation-evidence-contract.md`](../implementation-evidence-contract.md) y debe
+implementarse/validarse antes de nuevos commits `feat`.
 
 ## Matriz de revisión retroactiva
 
