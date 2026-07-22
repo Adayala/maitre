@@ -38,5 +38,6 @@ Contrato transversal para crear, revisar, aprobar, cambiar, verificar y retirar 
 - [Contrato del validador](validation-contract.md)
 - [Contrato del registro](registry-contract.md)
 - [Contrato del registro ADR](adr-registry-contract.md)
+- [Protocolo de revisión de contratos](contract-review-checklist.md)
 - [Auditoría inicial del registro](registry-baseline-audit.md)
 - [Decisiones](notes.md)
