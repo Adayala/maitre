@@ -40,5 +40,6 @@ Contrato transversal para crear, revisar, aprobar, cambiar, verificar y retirar 
 - [Contrato del registro ADR](adr-registry-contract.md)
 - [Protocolo de revisión de contratos](contract-review-checklist.md)
 - [Revisión Organization SPEC-001–016](reviews/organization-spec-001-016.md)
+- [Revisión Identity SPEC-017–026](reviews/identity-spec-017-026.md)
 - [Auditoría inicial del registro](registry-baseline-audit.md)
 - [Decisiones](notes.md)
