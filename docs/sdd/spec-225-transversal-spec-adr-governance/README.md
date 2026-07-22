@@ -41,5 +41,6 @@ Contrato transversal para crear, revisar, aprobar, cambiar, verificar y retirar 
 - [Protocolo de revisión de contratos](contract-review-checklist.md)
 - [Revisión Organization SPEC-001–016](reviews/organization-spec-001-016.md)
 - [Revisión Identity SPEC-017–026](reviews/identity-spec-017-026.md)
+- [Revisión Subscription SPEC-027–036](reviews/subscription-spec-027-036.md)
 - [Auditoría inicial del registro](registry-baseline-audit.md)
 - [Decisiones](notes.md)
