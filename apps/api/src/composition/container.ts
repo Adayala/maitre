@@ -2,10 +2,12 @@ import { randomUUID } from "node:crypto";
 import {
   InMemoryTenantRepository,
   InMemoryBranchRepository,
+  InMemoryBrandRepository,
   InMemoryUserRepository,
   InMemoryMembershipRepository,
   FixtureSessionVerificationPort,
 } from "@maitre/adapter-persistence-memory";
+import { createBrand } from "@maitre/organization";
 import type { Tenant } from "@maitre/organization";
 import type { Branch } from "@maitre/organization";
 import type { User, Membership } from "@maitre/identity";
@@ -13,6 +15,7 @@ import type { User, Membership } from "@maitre/identity";
 export interface Container {
   tenants: InMemoryTenantRepository;
   branches: InMemoryBranchRepository;
+  brands: InMemoryBrandRepository;
   users: InMemoryUserRepository;
   memberships: InMemoryMembershipRepository;
   sessions: FixtureSessionVerificationPort;
@@ -27,6 +30,7 @@ export interface Container {
 export async function buildContainer(): Promise<Container> {
   const tenants = new InMemoryTenantRepository();
   const branches = new InMemoryBranchRepository();
+  const brands = new InMemoryBrandRepository();
   const users = new InMemoryUserRepository();
   const memberships = new InMemoryMembershipRepository();
   const sessions = new FixtureSessionVerificationPort();
@@ -45,10 +49,19 @@ export async function buildContainer(): Promise<Container> {
   };
   await tenants.save(tenant);
 
+  const brand = await createBrand(
+    { tenants, brands, now: () => now },
+    {
+      tenantId: tenant.id,
+      name: "Maitre Demo Brand",
+      config: { language: "es", currency: tenant.defaultCurrency },
+    },
+  );
+
   const branch: Branch = {
     id: randomUUID(),
     tenantId: tenant.id,
-    brandId: randomUUID(),
+    brandId: brand.id,
     code: "MAIN",
     name: "Sucursal Principal",
     timezone: tenant.defaultTimezone,
@@ -96,5 +109,5 @@ export async function buildContainer(): Promise<Container> {
     expiresAt,
   });
 
-  return { tenants, branches, users, memberships, sessions, demoAccessToken };
+  return { tenants, branches, brands, users, memberships, sessions, demoAccessToken };
 }

@@ -1,5 +1,6 @@
 import type { Tenant } from "../domain/tenant.js";
 import type { Branch } from "../domain/branch.js";
+import type { Brand } from "../domain/brand.js";
 
 // SPEC-210 — application ports, implemented by adapters/persistence/*
 export interface TenantRepositoryPort {
@@ -12,4 +13,11 @@ export interface BranchRepositoryPort {
   findByCode(tenantId: string, code: string): Promise<Branch | null>;
   listByTenant(tenantId: string): Promise<Branch[]>;
   save(branch: Branch): Promise<void>;
+}
+
+export interface BrandRepositoryPort {
+  findById(tenantId: string, id: string): Promise<Brand | null>;
+  findBySlug(tenantId: string, slug: string): Promise<Brand | null>;
+  listByTenant(tenantId: string): Promise<Brand[]>;
+  save(brand: Brand): Promise<void>;
 }

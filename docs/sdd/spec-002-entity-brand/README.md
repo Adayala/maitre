@@ -10,8 +10,8 @@ Identidad comercial de un restaurante. Permite agrupar sucursales bajo una marca
 | **Título** | Brand Entity |
 | **Tipo** | Entity |
 | **Dominio** | Organization |
-| **Estado** | DRAFT |
-| **Readiness** | NOT_ASSESSED |
+| **Estado** | IN_PROGRESS |
+| **Readiness** | WALKING_SKELETON_I0 |
 | **Prioridad** | P0 |
 | **Fase** | 1 (Plataforma Fundacional) |
 | **Owner** | @faguero |

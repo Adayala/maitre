@@ -11,7 +11,7 @@ Formato: **SPEC-NNN | Título | Tipo | Dominio | Fase | Prioridad | Estado | Rea
 ## Organization
 
 - [ ] **SPEC-001** | Tenant | Entity | Organization | Fase I0 | P0 | IN_PROGRESS | WALKING_SKELETON_I0
-- [ ] **SPEC-002** | Brand Entity | Entity | Organization | Fase 1 (Plataforma Fundacional) | P0 | DRAFT | NOT_ASSESSED
+- [ ] **SPEC-002** | Brand Entity | Entity | Organization | Fase 1 (Plataforma Fundacional) | P0 | IN_PROGRESS | WALKING_SKELETON_I0
 - [ ] **SPEC-003** | FiscalEntity Entity | Entity | Organization | Fase 1 | P0 | PLANNED | NOT_ASSESSED
 - [ ] **SPEC-004** | Branch | Entity | Organization | Fase I0 | P0 | IN_PROGRESS | WALKING_SKELETON_I0
 - [ ] **SPEC-005** | Salon Entity | Entity | Organization | Fase 1 | P1 | PLANNED | NOT_ASSESSED
