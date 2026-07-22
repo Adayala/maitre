@@ -57,5 +57,6 @@ Contrato transversal para crear, revisar, aprobar, cambiar, verificar y retirar 
 - [Revisión Feedback/Reputation SPEC-157–171](reviews/feedback-reputation-spec-157-171.md)
 - [Revisión Integrations SPEC-172–186](reviews/integrations-spec-172-186.md)
 - [Revisión Analytics/AI SPEC-187–206](reviews/analytics-ai-spec-187-206.md)
+- [Revisión Platform/Governance SPEC-207–226](reviews/platform-transversal-spec-207-226.md)
 - [Auditoría inicial del registro](registry-baseline-audit.md)
 - [Decisiones](notes.md)
