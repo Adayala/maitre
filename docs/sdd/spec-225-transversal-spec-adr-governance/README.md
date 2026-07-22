@@ -55,5 +55,6 @@ Contrato transversal para crear, revisar, aprobar, cambiar, verificar y retirar 
 - [Revisión Cash Management SPEC-124–136](reviews/cash-spec-124-136.md)
 - [Revisión Fiscal/ARCA SPEC-137–156](reviews/fiscal-arca-spec-137-156.md)
 - [Revisión Feedback/Reputation SPEC-157–171](reviews/feedback-reputation-spec-157-171.md)
+- [Revisión Integrations SPEC-172–186](reviews/integrations-spec-172-186.md)
 - [Auditoría inicial del registro](registry-baseline-audit.md)
 - [Decisiones](notes.md)
