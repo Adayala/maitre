@@ -1,0 +1,19 @@
+{
+  "name": "maitre",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "packages/modules/*",
+    "adapters/*/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "tsc -b --pretty",
+    "dev:api": "npm run dev --workspace apps/api"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4"
+  }
+}

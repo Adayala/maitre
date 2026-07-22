@@ -10,8 +10,8 @@ Define el límite entre el proveedor de identidad, el cliente React y la API Nod
 | **Tipo** | API |
 | **Subtype** | Security boundary |
 | **Dominio** | Identity |
-| **Estado** | DRAFT |
-| **Readiness** | BLOCKED |
+| **Estado** | IN_PROGRESS |
+| **Readiness** | WALKING_SKELETON_I0 |
 | **Review target** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
 | **Owner** | UNASSIGNED |

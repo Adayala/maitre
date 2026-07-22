@@ -8,8 +8,8 @@ Vínculo de autorización entre un User global y un Tenant, con roles y alcance 
 | **Tipo** | Entity |
 | **Subtype** | Authorization Aggregate |
 | **Dominio** | Identity |
-| **Estado** | DRAFT |
-| **Readiness** | BLOCKED |
+| **Estado** | IN_PROGRESS |
+| **Readiness** | WALKING_SKELETON_I0 |
 | **Review target** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
 | **Owner** | UNASSIGNED |

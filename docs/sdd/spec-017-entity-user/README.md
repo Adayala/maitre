@@ -7,8 +7,8 @@ Perfil global de una persona autenticada, separado de credenciales, tenants, rol
 | **ID** | SPEC-017 |
 | **Tipo** | Entity |
 | **Dominio** | Identity |
-| **Estado** | DRAFT |
-| **Readiness** | BLOCKED |
+| **Estado** | IN_PROGRESS |
+| **Readiness** | WALKING_SKELETON_I0 |
 | **Review target** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
 | **Owner** | UNASSIGNED |

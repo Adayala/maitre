@@ -1,0 +1,25 @@
+{
+  "name": "@maitre/api",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc -b",
+    "dev": "tsx watch src/server.ts",
+    "start": "node dist/server.js",
+    "test": "node --test dist/**/*.test.js"
+  },
+  "dependencies": {
+    "@maitre/adapter-persistence-memory": "*",
+    "@maitre/contracts": "*",
+    "@maitre/identity": "*",
+    "@maitre/organization": "*",
+    "fastify": "^4.28.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.4"
+  }
+}
