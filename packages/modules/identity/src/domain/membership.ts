@@ -1,5 +1,7 @@
 // SPEC-020 — Membership domain model and invariants.
 
+import { resolveRoles } from "./role.js";
+
 export type MembershipStatus = "INVITED" | "ACTIVE" | "SUSPENDED" | "REVOKED";
 export type BranchScopeType = "ALL_BRANCHES" | "SELECTED_BRANCHES";
 
@@ -61,6 +63,8 @@ export function assertMembershipInvariants(membership: Membership): void {
   if (membership.status === "ACTIVE" && membership.roleIds.length === 0) {
     throw new MembershipInvariantError("ACTIVE membership requires at least one role");
   }
+  // SPEC-020 §Roles — unknown/inactive roles are not ignored, they invalidate the change.
+  resolveRoles(membership.roleIds);
 }
 
 export function isMembershipActive(membership: Membership): boolean {

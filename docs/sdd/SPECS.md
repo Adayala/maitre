@@ -32,15 +32,15 @@ Formato: **SPEC-NNN | Título | Tipo | Dominio | Fase | Prioridad | Estado | Rea
 ## Identity
 
 - [ ] **SPEC-017** | User Entity | Entity | Identity | Fase SPEC-222 I0/I1 | P0 | IN_PROGRESS | WALKING_SKELETON_I0
-- [ ] **SPEC-018** | Role Entity | Entity | Identity | Fase 1 | P0 | PLANNED | NOT_ASSESSED
-- [ ] **SPEC-019** | Permission Entity | Entity | Identity | Fase 1 | P1 | PLANNED | NOT_ASSESSED
+- [ ] **SPEC-018** | Role Entity | Entity | Identity | Fase 1 | P0 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-019** | Permission Entity | Entity | Identity | Fase 1 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
 - [ ] **SPEC-020** | Membership Entity | Entity | Identity | Fase SPEC-222 I0/I1 | P0 | IN_PROGRESS | WALKING_SKELETON_I0
 - [ ] **SPEC-021** | Users API | API | Identity | Fase 1 | P0 | PLANNED | NOT_ASSESSED
 - [ ] **SPEC-022** | Roles API | API | Identity | Fase 1 | P1 | PLANNED | NOT_ASSESSED
 - [ ] **SPEC-023** | Authentication and Session Boundary | API | Identity | Fase I0 | P0 | IN_PROGRESS | WALKING_SKELETON_I0
 - [ ] **SPEC-024** | UserInvited Event | Event | Identity | Fase 1 | P0 | PLANNED | NOT_ASSESSED
 - [ ] **SPEC-025** | UserAuthenticated Event | Event | Identity | Fase 1 | P1 | PLANNED | NOT_ASSESSED
-- [ ] **SPEC-026** | Identity RBAC | RBAC | Identity | Fase 1 | P0 | PLANNED | NOT_ASSESSED
+- [ ] **SPEC-026** | Identity RBAC | RBAC | Identity | Fase 1 | P0 | IN_PROGRESS | WALKING_SKELETON_I0
 
 ---
 

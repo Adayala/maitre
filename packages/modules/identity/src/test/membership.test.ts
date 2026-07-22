@@ -47,6 +47,11 @@ test("ACTIVE membership requires at least one role", () => {
   assert.throws(() => assertMembershipInvariants(membership), MembershipInvariantError);
 });
 
+test("membership with an unknown role id invalidates the change (SPEC-020 §Roles)", () => {
+  const membership = makeMembership({ roleIds: ["role_does_not_exist"] });
+  assert.throws(() => assertMembershipInvariants(membership));
+});
+
 test("SELECTED_BRANCHES requires at least one branch id", () => {
   const membership = makeMembership({
     branchScopeType: "SELECTED_BRANCHES",
