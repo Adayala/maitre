@@ -9,6 +9,18 @@ export class InMemoryMembershipRepository implements MembershipRepositoryPort {
     );
   }
 
+  async findActiveByUserAndTenant(
+    userId: string,
+    tenantId: string,
+  ): Promise<Membership | null> {
+    for (const m of this.byId.values()) {
+      if (m.userId === userId && m.tenantId === tenantId && m.status === "ACTIVE") {
+        return m;
+      }
+    }
+    return null;
+  }
+
   async save(membership: Membership): Promise<void> {
     this.byId.set(membership.id, membership);
   }

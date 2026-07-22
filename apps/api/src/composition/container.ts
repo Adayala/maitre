@@ -3,11 +3,14 @@ import {
   InMemoryTenantRepository,
   InMemoryBranchRepository,
   InMemoryBrandRepository,
+  InMemoryFiscalEntityRepository,
+  InMemorySalonRepository,
+  InMemoryTableRepository,
   InMemoryUserRepository,
   InMemoryMembershipRepository,
   FixtureSessionVerificationPort,
 } from "@maitre/adapter-persistence-memory";
-import { createBrand } from "@maitre/organization";
+import { createBrand, createSalon, createTable } from "@maitre/organization";
 import type { Tenant } from "@maitre/organization";
 import type { Branch } from "@maitre/organization";
 import type { User, Membership } from "@maitre/identity";
@@ -16,6 +19,9 @@ export interface Container {
   tenants: InMemoryTenantRepository;
   branches: InMemoryBranchRepository;
   brands: InMemoryBrandRepository;
+  fiscalEntities: InMemoryFiscalEntityRepository;
+  salons: InMemorySalonRepository;
+  tables: InMemoryTableRepository;
   users: InMemoryUserRepository;
   memberships: InMemoryMembershipRepository;
   sessions: FixtureSessionVerificationPort;
@@ -31,6 +37,9 @@ export async function buildContainer(): Promise<Container> {
   const tenants = new InMemoryTenantRepository();
   const branches = new InMemoryBranchRepository();
   const brands = new InMemoryBrandRepository();
+  const fiscalEntities = new InMemoryFiscalEntityRepository();
+  const salons = new InMemorySalonRepository();
+  const tables = new InMemoryTableRepository();
   const users = new InMemoryUserRepository();
   const memberships = new InMemoryMembershipRepository();
   const sessions = new FixtureSessionVerificationPort();
@@ -71,6 +80,22 @@ export async function buildContainer(): Promise<Container> {
   };
   await branches.save(branch);
 
+  const salon = await createSalon(
+    { branches, salons, now: () => now },
+    { tenantId: tenant.id, branchId: branch.id, name: "Salón Principal", capacity: 40 },
+  );
+
+  await createTable(
+    { salons, tables, now: () => now },
+    {
+      tenantId: tenant.id,
+      branchId: branch.id,
+      salonId: salon.id,
+      number: "1",
+      capacity: 4,
+    },
+  );
+
   const user: User = {
     id: randomUUID(),
     identityProvider: "fixture",
@@ -109,5 +134,16 @@ export async function buildContainer(): Promise<Container> {
     expiresAt,
   });
 
-  return { tenants, branches, brands, users, memberships, sessions, demoAccessToken };
+  return {
+    tenants,
+    branches,
+    brands,
+    fiscalEntities,
+    salons,
+    tables,
+    users,
+    memberships,
+    sessions,
+    demoAccessToken,
+  };
 }

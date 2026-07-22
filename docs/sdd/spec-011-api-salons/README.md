@@ -8,8 +8,8 @@ CRUD API para salones.
 | **ID** | SPEC-011 |
 | **Tipo** | API |
 | **Dominio** | Organization |
-| **Estado** | PLANNED |
-| **Readiness** | NOT_ASSESSED |
+| **Estado** | IN_PROGRESS |
+| **Readiness** | WALKING_SKELETON_I0 |
 | **Prioridad** | P1 |
 | **Owner** | UNASSIGNED |
 | **Reviewer** | UNASSIGNED |
