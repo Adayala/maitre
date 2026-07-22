@@ -81,3 +81,7 @@ menor. Agregar enlaces sólo cuando no colisione con la normalización/generaci�
 Revisar nuevamente después de resolver ORG-REV-001–003 y de elegir una estrategia única para
 metadata histórica. El reviewer debe comprobar además compatibilidad con Identity SPEC-017–026,
 Subscription SPEC-027–036 y los contratos transversales SPEC-207–225 antes de emitir `APPROVE`.
+
+La normalización propuesta de dependencias, readiness, navegación y revisión retroactiva está en
+[Contrato de readiness de Organization](../../spec-016-rbac-organization/organization-readiness-contract.md).
+Mantiene owner/reviewer y approval bloqueados hasta contar con decisiones humanas verificables.

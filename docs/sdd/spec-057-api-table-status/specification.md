@@ -1,9 +1,7 @@
-# Especificación — SPEC-'"$num"'
+# Especificación — SPEC-057 Table Status API
 
-## Endpoints
+GET por Branch/Salon y table devuelve proyección con status/reason, related ref redactada, source
+revisions, cursor y `asOf`. Admite realtime/polling pero no writes.
 
-- GET /'"${name}"' (list)
-- POST /'"${name}"' (create)
-- GET /'"${name}"'/:id (detail)
-- PATCH /'"${name}"'/:id (update)
-- DELETE /'"${name}"'/:id (archive)
+Stale/lag se declara. Filtros no permiten inferir Guest. Toda acción sugerida lleva a command API que
+revalida Occupancy/Reservation/blocks; nunca muta basado en esta vista.

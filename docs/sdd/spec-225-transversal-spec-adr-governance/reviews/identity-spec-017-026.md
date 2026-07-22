@@ -81,3 +81,11 @@ ruta crítica y consumidores.
 Revisar después de resolver ID-REV-001–005. La evidencia debe incluir ADR de sesión, catálogo
 canónico de roles/permisos, matriz completa API→permission y contract tests de aislamiento,
 revocación, rotación JWKS e invitación concurrente.
+
+Contratos de remediación:
+
+- [Sesión browser propuesta](../../spec-023-api-auth/browser-session-contract.md)
+- [DAG y códigos canónicos](../../spec-026-rbac-identity/identity-dependency-contract.md)
+
+La estrategia de sesión continúa bloqueada hasta ADR/spike aprobado; los documentos no asignan
+owner/reviewer ni promueven readiness.

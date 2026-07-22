@@ -1,9 +1,8 @@
-# Especificación — SPEC-'"$num"'
+# Especificación — SPEC-060 ServicePeriods API
 
-## Endpoints
+Create/list/detail y commands `open`, `begin-close`, `close`, `force-close`, `cancel-planned`.
+Business date/timezone se derivan de Branch; `If-Match` e idempotency aplican.
 
-- GET /'"${name}"' (list)
-- POST /'"${name}"' (create)
-- GET /'"${name}"'/:id (detail)
-- PATCH /'"${name}"'/:id (update)
-- DELETE /'"${name}"'/:id (archive)
+Open valida ServicePeriodPolicy/overlap. Begin-close bloquea nuevas Visits. Close devuelve blockers
+tipados (visits, checks, payments, cash sessions). Timeout mantiene CLOSING y escala; force-close
+registra reason/findings sin falsificar cierres dependientes.

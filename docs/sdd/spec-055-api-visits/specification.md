@@ -1,9 +1,8 @@
-# Especificación — SPEC-'"$num"'
+# Especificación — SPEC-055 Visits API
 
-## Endpoints
+Create/list/detail y commands `assign-tables`, `move`, `request-close`, `close`, `cancel`, `reopen`.
+No PATCH status. Create/commands usan idempotency; transitions, `If-Match`.
 
-- GET /'"${name}"' (list)
-- POST /'"${name}"' (create)
-- GET /'"${name}"'/:id (detail)
-- PATCH /'"${name}"'/:id (update)
-- DELETE /'"${name}"'/:id (archive)
+Seat/move adquiere Occupancy con locks/constraints, no TableStatus. Request-close pasa a CLOSING;
+close valida Check/payment/kitchen/occupancy. `409` exclusión/idempotencia, `412` revisión, `422`
+transición. Reopen exige manager/reason y workflow correctivo.

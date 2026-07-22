@@ -113,3 +113,14 @@ las specs.
 Resolver primero PLAT-REV-001–005. Luego validar DAG, ejecutar spikes/gates, aceptar ADRs y
 producir auditoría retroactiva de los commits `feat`. Sólo entonces puede evaluarse el walking
 skeleton para `READY_FOR_IMPLEMENTATION` o `VERIFIED` con evidencia reproducible.
+
+## Contratos de remediación agregados
+
+- [DAG transversal acíclico](../platform-dependency-contract.md)
+- [Baseline de calidad](../../spec-207-transversal-engineering-quality/quality-baseline-contract.md)
+- [Registro de presupuesto](../../spec-208-transversal-zero-cost-mvp/budget-register-contract.md)
+- [Matriz offline/realtime](../../spec-218-transversal-offline-sync/command-matrix.md)
+- [Restore y exit strategy](../../spec-220-transversal-data-lifecycle-disaster-recovery/restore-exit-contract.md)
+
+Estos contratos especifican la evidencia requerida pero mantienen resultados `NOT_RUN/BLOCKED`
+hasta ejecutar gates, mediciones y ejercicios reales.
