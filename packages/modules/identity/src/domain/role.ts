@@ -50,6 +50,21 @@ export const ROLE_REGISTRY: Readonly<Record<string, Role>> = Object.freeze({
       "service:manage",
       "entitle:read",
       "quota:read",
+      // SPEC-043 §Catalog RBAC (simplified for the CRUD model — see
+      // packages/modules/catalog/src/domain/menu.ts's note on the deferred
+      // versioned/publish model, which SPEC-043's full permission set
+      // targets: catalog.menu.publish, catalog.draft.write, etc.)
+      "menu:create",
+      "menu:read",
+      "menu:write",
+      "menu:archive",
+      "category:create",
+      "category:read",
+      "category:write",
+      "product:create",
+      "product:read",
+      "product:write",
+      "product:archive",
     ],
   },
   role_manager: {
@@ -70,6 +85,14 @@ export const ROLE_REGISTRY: Readonly<Record<string, Role>> = Object.freeze({
       "subscription:read",
       "entitle:read",
       "quota:read",
+      // SPEC-043 — MANAGER may edit but not archive (matches contract.md's
+      // "MANAGER puede editar drafts... sólo con permisos explícitos")
+      "menu:read",
+      "menu:write",
+      "category:read",
+      "category:write",
+      "product:read",
+      "product:write",
     ],
   },
   role_employee: {
@@ -78,19 +101,28 @@ export const ROLE_REGISTRY: Readonly<Record<string, Role>> = Object.freeze({
     description: "No organization management; read-only identity access",
     // SPEC-012 §Authorization — EMPLOYEE may list/read tables (operational),
     // unlike brands/branches/salons which stay administrative (SPEC-016).
-    permissions: ["user:read", "role:read", "permission:read", "table:read"],
+    // SPEC-043 — "roles operativos leen menú publicado necesario".
+    permissions: [
+      "user:read",
+      "role:read",
+      "permission:read",
+      "table:read",
+      "menu:read",
+      "category:read",
+      "product:read",
+    ],
   },
   role_maitre: {
     id: "role_maitre",
     name: "Maître",
     description: "Floor coordination (permissions defined by SPEC-066 RBAC, Fase 2)",
-    permissions: [],
+    permissions: ["menu:read", "category:read", "product:read"],
   },
   role_waiter: {
     id: "role_waiter",
     name: "Waiter",
     description: "Order taking (permissions defined by SPEC-074 RBAC, Fase 2)",
-    permissions: [],
+    permissions: ["menu:read", "category:read", "product:read"],
   },
   role_cook: {
     id: "role_cook",

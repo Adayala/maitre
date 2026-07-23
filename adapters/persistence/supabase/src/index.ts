@@ -12,3 +12,6 @@ export * from "./subscription-repository.js";
 export * from "./subscription-item-repository.js";
 export * from "./entitlement-repository.js";
 export * from "./quota-repository.js";
+export * from "./menu-repository.js";
+export * from "./category-repository.js";
+export * from "./product-repository.js";

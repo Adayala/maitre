@@ -8,8 +8,8 @@ Categoría de productos (Entrada, Plato Principal, Bebida).
 | **ID** | SPEC-038 |
 | **Tipo** | Entity |
 | **Dominio** | Catalog |
-| **Estado** | PLANNED |
-| **Readiness** | NOT_ASSESSED |
+| **Estado** | IN_PROGRESS |
+| **Readiness** | WALKING_SKELETON_I0 |
 | **Prioridad** | P1 |
 | **Owner** | UNASSIGNED |
 | **Reviewer** | UNASSIGNED |

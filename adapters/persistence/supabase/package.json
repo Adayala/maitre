@@ -13,6 +13,7 @@
     "@maitre/identity": "*",
     "@maitre/organization": "*",
     "@maitre/subscription": "*",
+    "@maitre/catalog": "*",
     "@supabase/supabase-js": "^2.45.4",
     "ws": "^8.21.1"
   },

@@ -11,7 +11,8 @@
   "dependencies": {
     "@maitre/organization": "*",
     "@maitre/identity": "*",
-    "@maitre/subscription": "*"
+    "@maitre/subscription": "*",
+    "@maitre/catalog": "*"
   },
   "devDependencies": {
     "typescript": "^5.5.4"

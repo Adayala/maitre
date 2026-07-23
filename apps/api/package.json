@@ -18,6 +18,7 @@
     "@maitre/identity": "*",
     "@maitre/organization": "*",
     "@maitre/subscription": "*",
+    "@maitre/catalog": "*",
     "fastify": "^4.28.1",
     "zod": "^3.23.8"
   },

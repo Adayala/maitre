@@ -61,13 +61,13 @@ Formato: **SPEC-NNN | Título | Tipo | Dominio | Fase | Prioridad | Estado | Rea
 
 ## Catalog
 
-- [ ] **SPEC-037** | Menu Entity | Entity | Catalog | Fase 1 | P1 | PLANNED | NOT_ASSESSED
-- [ ] **SPEC-038** | Category Entity | Entity | Catalog | Fase 1 | P1 | PLANNED | NOT_ASSESSED
-- [ ] **SPEC-039** | Product Entity | Entity | Catalog | Fase 1 | P1 | PLANNED | NOT_ASSESSED
-- [ ] **SPEC-040** | Menus API | API | Catalog | Fase 1 | P1 | PLANNED | NOT_ASSESSED
-- [ ] **SPEC-041** | Categories API | API | Catalog | Fase 1 | P1 | PLANNED | NOT_ASSESSED
-- [ ] **SPEC-042** | Products API | API | Catalog | Fase 1 | P1 | PLANNED | NOT_ASSESSED
-- [ ] **SPEC-043** | Catalog RBAC | RBAC | Catalog | Fase 1 | P1 | PLANNED | NOT_ASSESSED
+- [ ] **SPEC-037** | Menu Entity | Entity | Catalog | Fase 1 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-038** | Category Entity | Entity | Catalog | Fase 1 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-039** | Product Entity | Entity | Catalog | Fase 1 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-040** | Menus API | API | Catalog | Fase 1 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-041** | Categories API | API | Catalog | Fase 1 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-042** | Products API | API | Catalog | Fase 1 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-043** | Catalog RBAC | RBAC | Catalog | Fase 1 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
 
 ---
 

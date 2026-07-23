@@ -12,6 +12,9 @@ import { registerUserRoutes } from "./routes/users.js";
 import { registerRoleRoutes } from "./routes/roles.js";
 import { registerSubscriptionRoutes } from "./routes/subscriptions.js";
 import { registerEntitlementRoutes } from "./routes/entitlements.js";
+import { registerMenuRoutes } from "./routes/menus.js";
+import { registerCategoryRoutes } from "./routes/categories.js";
+import { registerProductRoutes } from "./routes/products.js";
 
 // SPEC-211 — app.ts instantiates and wires plugins/routes without listen().
 // server.ts (local/process) and api/serverless.ts (Vercel) both consume this.
@@ -31,6 +34,9 @@ export async function buildApp(container?: Container): Promise<FastifyInstance> 
   await registerRoleRoutes(app, resolvedContainer);
   await registerSubscriptionRoutes(app, resolvedContainer);
   await registerEntitlementRoutes(app, resolvedContainer);
+  await registerMenuRoutes(app, resolvedContainer);
+  await registerCategoryRoutes(app, resolvedContainer);
+  await registerProductRoutes(app, resolvedContainer);
 
   return app;
 }

@@ -12,6 +12,9 @@ import {
   InMemorySubscriptionItemRepository,
   InMemoryEntitlementRepository,
   InMemoryQuotaRepository,
+  InMemoryMenuRepository,
+  InMemoryCategoryRepository,
+  InMemoryProductRepository,
   FixtureSessionVerificationPort,
 } from "@maitre/adapter-persistence-memory";
 import {
@@ -29,6 +32,9 @@ import {
   SupabaseSubscriptionItemRepository,
   SupabaseEntitlementRepository,
   SupabaseQuotaRepository,
+  SupabaseMenuRepository,
+  SupabaseCategoryRepository,
+  SupabaseProductRepository,
 } from "@maitre/adapter-persistence-supabase";
 import {
   createTenant,
@@ -58,6 +64,14 @@ import {
   type EntitlementRepositoryPort,
   type QuotaRepositoryPort,
 } from "@maitre/subscription";
+import {
+  createMenu,
+  createCategory,
+  createProduct,
+  type MenuRepositoryPort,
+  type CategoryRepositoryPort,
+  type ProductRepositoryPort,
+} from "@maitre/catalog";
 
 export interface Container {
   tenants: TenantRepositoryPort;
@@ -73,6 +87,9 @@ export interface Container {
   subscriptionItems: SubscriptionItemRepositoryPort;
   entitlements: EntitlementRepositoryPort;
   quotas: QuotaRepositoryPort;
+  menus: MenuRepositoryPort;
+  categories: CategoryRepositoryPort;
+  products: ProductRepositoryPort;
   sessions: SessionVerificationPort;
   demoAccessToken: string;
 }
@@ -88,6 +105,9 @@ const DEMO_TABLE_ID = "00000000-0000-0000-0000-000000000005";
 const DEMO_USER_ID = "00000000-0000-0000-0000-000000000006";
 const DEMO_MEMBERSHIP_ID = "00000000-0000-0000-0000-000000000007";
 const DEMO_SUBSCRIPTION_ID = "00000000-0000-0000-0000-000000000008";
+const DEMO_MENU_ID = "00000000-0000-0000-0000-000000000009";
+const DEMO_CATEGORY_ID = "00000000-0000-0000-0000-00000000000a";
+const DEMO_PRODUCT_ID = "00000000-0000-0000-0000-00000000000b";
 const DEMO_ACCESS_TOKEN = "demo-token";
 
 interface Repositories {
@@ -104,6 +124,9 @@ interface Repositories {
   subscriptionItems: SubscriptionItemRepositoryPort;
   entitlements: EntitlementRepositoryPort;
   quotas: QuotaRepositoryPort;
+  menus: MenuRepositoryPort;
+  categories: CategoryRepositoryPort;
+  products: ProductRepositoryPort;
 }
 
 /**
@@ -131,6 +154,9 @@ function buildRepositories(): Repositories {
       subscriptionItems: new SupabaseSubscriptionItemRepository(client),
       entitlements: new SupabaseEntitlementRepository(client),
       quotas: new SupabaseQuotaRepository(client),
+      menus: new SupabaseMenuRepository(client),
+      categories: new SupabaseCategoryRepository(client),
+      products: new SupabaseProductRepository(client),
     };
   }
 
@@ -148,6 +174,9 @@ function buildRepositories(): Repositories {
     subscriptionItems: new InMemorySubscriptionItemRepository(),
     entitlements: new InMemoryEntitlementRepository(),
     quotas: new InMemoryQuotaRepository(),
+    menus: new InMemoryMenuRepository(),
+    categories: new InMemoryCategoryRepository(),
+    products: new InMemoryProductRepository(),
   };
 }
 
@@ -275,6 +304,37 @@ async function ensureSeed(repos: Repositories): Promise<void> {
         now: () => now,
       },
       { id: DEMO_SUBSCRIPTION_ID, tenantId: tenant.id, planCode: "PROFESSIONAL" },
+    );
+  }
+
+  let menu = await repos.menus.findById(tenant.id, DEMO_MENU_ID);
+  if (!menu) {
+    menu = await createMenu(
+      { menus: repos.menus, now: () => now },
+      { id: DEMO_MENU_ID, tenantId: tenant.id, brandId: brand.id, name: "Menú Principal", isDefault: true },
+    );
+  }
+
+  let category = await repos.categories.findById(tenant.id, DEMO_CATEGORY_ID);
+  if (!category) {
+    category = await createCategory(
+      { menus: repos.menus, categories: repos.categories, now: () => now },
+      { id: DEMO_CATEGORY_ID, tenantId: tenant.id, menuId: menu.id, name: "Entradas" },
+    );
+  }
+
+  const product = await repos.products.findById(tenant.id, DEMO_PRODUCT_ID);
+  if (!product) {
+    await createProduct(
+      { categories: repos.categories, products: repos.products, now: () => now },
+      {
+        id: DEMO_PRODUCT_ID,
+        tenantId: tenant.id,
+        categoryId: category.id,
+        name: "Empanadas de Carne",
+        priceMinorUnits: 350000,
+        currency: tenant.defaultCurrency,
+      },
     );
   }
 }

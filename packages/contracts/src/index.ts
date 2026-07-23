@@ -11,3 +11,4 @@ export * from "./user.js";
 export * from "./membership.js";
 export * from "./auth.js";
 export * from "./subscription.js";
+export * from "./catalog.js";
