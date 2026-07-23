@@ -19,7 +19,11 @@ export async function registerMeRoutes(
       (req.headers["x-correlation-id"] as string | undefined) ?? randomUUID();
 
     try {
-      const context = await resolveMeContext(container, req.headers.authorization);
+      const context = await resolveMeContext(
+        container,
+        req.headers.authorization,
+        correlationId,
+      );
       reply.header("x-correlation-id", correlationId);
       return context;
     } catch (err) {

@@ -10,7 +10,9 @@ export interface OutboxRecord<TPayload = unknown> {
   eventVersion: number;
   occurredAt: Date;
   producer: string;
-  tenantId: string;
+  // Optional: some events are tenant-agnostic/platform-level (e.g. identity's
+  // UserAuthenticated, SPEC-025 — "tenant context opcional validado").
+  tenantId?: string;
   aggregateType: string;
   aggregateId: string;
   correlationId: string;

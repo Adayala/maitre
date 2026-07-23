@@ -1,5 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Membership } from "../domain/membership.js";
+import type { User } from "../domain/user.js";
+import type { AuthenticatedPrincipal } from "./ports.js";
 import type { OutboxRecord } from "./outbox.js";
 
 export interface UserInvitedPayload {
@@ -34,6 +36,41 @@ export function userInvitedEvent(
       userId: membership.userId,
       createdAt: membership.createdAt,
       ...(membership.createdBy ? { invitedBy: membership.createdBy } : {}),
+    },
+    status: "PENDING",
+    attempts: 0,
+  };
+}
+
+export interface UserAuthenticatedPayload {
+  userId: string;
+  provider: string;
+  authMethod: string;
+}
+
+// SPEC-025 §Payload — audit-only fact of a successful authentication, not
+// an authorization event. No token/password/full IP/raw user-agent/
+// memberships. Tenant context is genuinely optional (this fires from
+// GET /v1/me/context, SPEC-213's discovery endpoint, before any tenant is
+// selected) — the outbox record itself carries no tenantId.
+export function userAuthenticatedEvent(
+  user: User,
+  principal: AuthenticatedPrincipal,
+  correlationId: string,
+): OutboxRecord<UserAuthenticatedPayload> {
+  return {
+    eventId: randomUUID(),
+    eventName: "UserAuthenticated",
+    eventVersion: 1,
+    occurredAt: principal.issuedAt,
+    producer: "identity",
+    aggregateType: "User",
+    aggregateId: user.id,
+    correlationId,
+    payload: {
+      userId: user.id,
+      provider: principal.provider,
+      authMethod: principal.provider,
     },
     status: "PENDING",
     attempts: 0,

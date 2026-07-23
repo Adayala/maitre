@@ -1,5 +1,5 @@
 import type { MeContextResponse } from "@maitre/contracts";
-import { isUserEligibleForSession } from "@maitre/identity";
+import { isUserEligibleForSession, userAuthenticatedEvent } from "@maitre/identity";
 import { isTenantOperable } from "@maitre/organization";
 import type { Container } from "./container.js";
 
@@ -14,6 +14,7 @@ export class IdentityNotEnabledError extends Error {}
 export async function resolveMeContext(
   container: Container,
   authorizationHeader: string | undefined,
+  correlationId: string,
 ): Promise<MeContextResponse> {
   const token = extractBearerToken(authorizationHeader);
   if (!token) throw new AuthenticationRequiredError();
@@ -35,6 +36,10 @@ export async function resolveMeContext(
   if (!user || !isUserEligibleForSession(user)) {
     throw new IdentityNotEnabledError();
   }
+
+  // SPEC-025 — audit fact of a successful authentication, fired from this
+  // discovery endpoint since Maitre has no /auth/login of its own (SPEC-023).
+  await container.outbox.append(userAuthenticatedEvent(user, principal, correlationId));
 
   const activeMemberships = await container.memberships.listActiveByUser(user.id);
 

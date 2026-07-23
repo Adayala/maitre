@@ -2,10 +2,17 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { buildApp } from "../app.js";
 import { buildContainer, type Container } from "../composition/container.js";
-import type { FixtureSessionVerificationPort } from "@maitre/adapter-persistence-memory";
+import type {
+  FixtureSessionVerificationPort,
+  InMemoryOutboxRepository,
+} from "@maitre/adapter-persistence-memory";
 
 function sessionsOf(container: Container): FixtureSessionVerificationPort {
   return container.sessions as FixtureSessionVerificationPort;
+}
+
+function outboxOf(container: Container): InMemoryOutboxRepository {
+  return container.outbox as InMemoryOutboxRepository;
 }
 
 // SPEC-224 §5 — Fastify inject() exercises transport without a real port.
@@ -70,6 +77,23 @@ test("GET /v1/me/context with the seeded demo token returns the authorized conte
   assert.equal(body.tenants.length, 1);
   assert.equal(body.tenants[0].branches.length, 1);
   assert.equal(body.tenants[0].branches[0].code, "MAIN");
+  await app.close();
+});
+
+test("GET /v1/me/context appends UserAuthenticated to the outbox with no tenantId", async () => {
+  const container = await buildContainer();
+  const app = await buildApp(container);
+  const before = outboxOf(container).all().length;
+  await app.inject({
+    method: "GET",
+    url: "/v1/me/context",
+    headers: { authorization: `Bearer ${container.demoAccessToken}` },
+  });
+  const records = outboxOf(container).all();
+  assert.equal(records.length, before + 1);
+  const event = records[records.length - 1]!;
+  assert.equal(event.eventName, "UserAuthenticated");
+  assert.equal(event.tenantId, undefined);
   await app.close();
 });
 

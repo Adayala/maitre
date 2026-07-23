@@ -13,7 +13,7 @@ export class SupabaseOutboxRepository implements OutboxPort {
       event_version: record.eventVersion,
       occurred_at: record.occurredAt.toISOString(),
       producer: record.producer,
-      tenant_id: record.tenantId,
+      tenant_id: record.tenantId ?? null,
       aggregate_type: record.aggregateType,
       aggregate_id: record.aggregateId,
       correlation_id: record.correlationId,

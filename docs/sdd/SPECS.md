@@ -39,7 +39,7 @@ Formato: **SPEC-NNN | Título | Tipo | Dominio | Fase | Prioridad | Estado | Rea
 - [ ] **SPEC-022** | Roles API | API | Identity | Fase 1 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
 - [ ] **SPEC-023** | Authentication and Session Boundary | API | Identity | Fase I0 | P0 | IN_PROGRESS | WALKING_SKELETON_I0
 - [ ] **SPEC-024** | UserInvited Event | Event | Identity | Fase 1 | P0 | IN_PROGRESS | WALKING_SKELETON_I0
-- [ ] **SPEC-025** | UserAuthenticated Event | Event | Identity | Fase 1 | P1 | PLANNED | NOT_ASSESSED
+- [ ] **SPEC-025** | UserAuthenticated Event | Event | Identity | Fase 1 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
 - [ ] **SPEC-026** | Identity RBAC | RBAC | Identity | Fase 1 | P0 | IN_PROGRESS | WALKING_SKELETON_I0
 
 ---
