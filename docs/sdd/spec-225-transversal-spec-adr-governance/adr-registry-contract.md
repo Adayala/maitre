@@ -49,6 +49,9 @@ Campos de lifecycle que no aplican se omiten; no se completan con valores fictic
 
 La resolución de un link externo se ejecuta fuera del gate determinista de pull request.
 
+La estructura de autoría, checklist, change classes y transiciones detalladas se rigen por
+`adr-authoring-readiness-contract.md`.
+
 ## 5. Checkpoint actual
 
 ADR-001–004 cumplen identidad, estado canónico y relaciones locales existentes. El índice

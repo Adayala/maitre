@@ -85,3 +85,8 @@ transversales. Normalizar metadata para validar ciclos, ruta crítica y consumid
 Revisar luego de resolver CAT-REV-001–003 y documentar algoritmo de publicación, convención de
 impuestos/precios y media port. La evidencia debe incluir fixtures de snapshot, publicación
 concurrente, cache invalidation y consumo coherente por QR Menu y Ordering.
+
+La identidad Product/MenuItem, disponibilidad, publicación atómica, tax/money, media port,
+dependencias y permisos están especificados en
+[Contrato de autoridad de Catalog](../../spec-043-rbac-catalog/catalog-authority-contract.md).
+Owner/reviewer y aprobación permanecen bloqueados.

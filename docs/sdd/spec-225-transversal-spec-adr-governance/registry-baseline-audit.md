@@ -56,6 +56,9 @@ La ruta legacy tampoco se elimina desde esta auditoría, porque puede pertenecer
 concurrente. Hasta resolver ambos casos, los conteos del filesystem no equivalen al
 catálogo publicable desde Git.
 
+La evidencia y los criterios de aceptación para resolverla están definidos en el
+[contrato de retiro de rutas legacy](legacy-path-retirement-contract.md).
+
 ## 2.2 Checkpoint del conjunto versionado
 
 Después de normalizar los lotes seguros, los 90 README raíz versionados cumplen este

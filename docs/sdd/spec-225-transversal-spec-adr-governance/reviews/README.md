@@ -38,6 +38,10 @@ en [Especificaciones faltantes](../../MISSING_SPECIFICATIONS.md). Ese documento 
 readiness: owners, revisiones expertas, ADRs, spikes y mediciones continúan bloqueados hasta contar
 con evidencia real.
 
+El estado residual del checkout, incluidos README no versionados y auxiliares corruptos, se registra
+en la [auditoría final de especificación](../final-specification-audit.md). Sus conteos son una foto
+reproducible, no una declaración de readiness.
+
 ## Orden de resolución
 
 1. Gobernanza: owners/reviewers, enum de readiness, DAG de dependencias y revisión retroactiva

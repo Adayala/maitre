@@ -83,3 +83,8 @@ Para Dash, fijar rutas y journeys I0 verificables sin convertir navegación en a
 Revisar después de resolver AUD-DASH-REV-001–003 y documentar checklist capability-aware,
 frontera operativa/analítica y soporte privilegiado. La evidencia debe cubrir audit failure,
 gap detection, redacción por permiso, dashboard parcial y journeys accesibles I0.
+
+La clasificación de operaciones, integridad/hash chain, soporte privilegiado, setup capability-aware,
+frontera Overview/Analytics, dependencias y journeys están especificados en
+[Contrato de autoridad Audit/Dashboard](../../spec-048-app-dash/audit-dashboard-authority-contract.md).
+Los checks/evidencia continúan pendientes de ejecución y revisión humana.

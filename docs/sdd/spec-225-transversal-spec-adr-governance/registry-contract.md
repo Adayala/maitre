@@ -24,6 +24,10 @@ El directorio usa `spec-NNN-slug`, donde:
 - renombrar el slug conserva el ID y actualiza referencias en el mismo cambio;
 - el título puede evolucionar sin modificar ID o slug salvo decisión explícita.
 
+Las rutas históricas sin `NNN` se gobiernan mediante el
+[contrato de retiro de rutas legacy](legacy-path-retirement-contract.md). Su ausencia local no las
+convierte automáticamente en retiradas.
+
 ## 3. Campos
 
 Campos obligatorios para specs nuevas y para el subset I0 normalizado:
@@ -36,10 +40,10 @@ Campos obligatorios para specs nuevas y para el subset I0 normalizado:
 | `Dominio` | valor no vacío; puede ser compuesto para contratos transversales |
 | `Estado` | enum canónico de SPEC-225 |
 | `Readiness` | enum separado de estado |
-| `Prioridad` | `P0`–`P3` o regla de migración explícita |
+| `Prioridad` | `P0`–`P3` según `spec-priority-contract.md`, o `UNASSIGNED` durante migración |
 | `Owner` | rol estable o `UNASSIGNED` |
 | `Reviewer` | rol/lista estable o `UNASSIGNED` |
-| `Depende de` | lista de IDs/ADRs o `N/A` |
+| `Depende de` | lista de IDs/ADRs, `N/A` o `UNASSESSED` durante migración, según `dependency-relation-contract.md` |
 
 Campos condicionales:
 
@@ -80,6 +84,9 @@ Readiness informa preparación y no autoriza implementación. Sólo el campo `Es
 
 Agregar o renombrar un valor exige modificar el schema, fixtures y documentación en el
 mismo commit.
+
+La separación completa entre estado, readiness, fase, target y blockers está definida en
+`lifecycle-readiness-contract.md`.
 
 ## 5. Catálogo generado
 

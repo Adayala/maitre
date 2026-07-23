@@ -82,3 +82,8 @@ evitar borrado automático.
 Revisar después de resolver SUB-REV-001–003 y documentar catálogo, matriz de lifecycle y
 remediation de cuotas. La evidencia debe incluir fixtures dorados del cálculo, matrices
 rol→acción y convergencia ante eventos activated/deactivated desordenados.
+
+El catálogo autoritativo, la matriz de lifecycle, la remediación de cuota, el boundary de plataforma
+y las dependencias están especificados en
+[Contrato de autoridad de Subscription](../../spec-036-rbac-subscription/subscription-authority-contract.md).
+La asignación humana y aprobación permanecen bloqueadas.

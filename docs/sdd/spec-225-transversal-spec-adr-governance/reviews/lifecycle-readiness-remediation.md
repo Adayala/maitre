@@ -9,11 +9,11 @@ aprobación.
 | Forma | Campo/valor | Cantidad |
 | --- | --- | ---: |
 | Metadata tabular | `Estado: DRAFT` | 42 |
-| Metadata tabular | `Estado: PLANNED` | 30 |
-| Metadata tabular | `Estado: IN_PROGRESS` | 18 |
-| Metadata tabular | `Readiness: NOT_ASSESSED` | 51 |
+| Metadata tabular | `Estado: PLANNED` | 12 |
+| Metadata tabular | `Estado: IN_PROGRESS` | 36 |
+| Metadata tabular | `Readiness: NOT_ASSESSED` | 33 |
 | Metadata tabular | `Readiness: BLOCKED` | 21 |
-| Metadata tabular | `Readiness: WALKING_SKELETON_I0` | 18 |
+| Metadata tabular | `Readiness: WALKING_SKELETON_I0` | 36 |
 | Placeholder legado | `Status: DRAFT` | 136 |
 
 Total: 226 specs. Los 136 placeholders no poseen metadata autoritativa completa y no pueden
@@ -46,7 +46,7 @@ NOT_ASSESSED | PROPOSED_FOR_REVIEW | READY_FOR_I0_REVIEW | BLOCKED
 No se revierte `IN_PROGRESS` a `DRAFT` automáticamente: existe código y ocultarlo degradaría la
 trazabilidad. Tampoco se interpreta como aprobación.
 
-Para las 18 specs afectadas:
+Para las 36 specs afectadas:
 
 ```text
 Estado: IN_PROGRESS
@@ -112,7 +112,7 @@ No existe mapping automático hacia `READY_FOR_IMPLEMENTATION` o `VERIFIED`.
 
 1. Aprobar enums/mapping y owner de SPEC-225.
 2. Actualizar schema, fixtures y baseline antes de README masivos.
-3. Migrar primero las 18 specs implementadas y revisar su evidencia.
+3. Migrar primero las 36 specs implementadas y revisar su evidencia.
 4. Migrar los 136 placeholders por dominio, asignando metadata real; no usar defaults ficticios.
 5. Regenerar catálogo/índice y comparar conteos deterministas.
 6. Ejecutar revisión humana por bloque y sólo entonces considerar nuevos estados.

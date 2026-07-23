@@ -2,26 +2,172 @@
 
 - [ ] Aprobar lifecycle y estados.
 - [x] Definir contrato determinista y códigos del validador.
-- [ ] Definir owners/reviewers por dominio.
+- [x] Definir roles owner/reviewer requeridos por dominio y su contrato de asignación.
+- [ ] Registrar assignees efectivos con aceptación verificable.
+- [x] Especificar capabilities, risk tiers, delegación y escalamiento de autoridad.
+- [x] Especificar fixtures `OWNA` de autoridad.
+- [ ] Materializar fixtures `OWNA` después de aprobar registry/identity model.
+- [ ] Aprobar registry/provider/matrix y crear authority relations aceptadas.
+- [x] Especificar registro, allocator, identity refs y provider profiles de ownership.
+- [x] Especificar fixtures `OWNR` del registro de autoridad.
+- [ ] Materializar fixtures `OWNR` después de aprobar schema/privacy.
+- [ ] Aprobar root/schema/provider/privacy e inicializar registry.
+- [x] Definir escala, autoridad y evidencia para prioridad de specs.
+- [ ] Resolver las prioridades `UNASSIGNED` con Product/Domain Owner aceptados.
 - [x] Auditar cobertura inicial de IDs, metadata, títulos y estados actuales.
 - [ ] Migrar metadata placeholder de SPEC-049–205 por lotes.
 - [x] Normalizar metadata mecánica de los 90 README raíz versionados.
 - [ ] Reconciliar 136 README no rastreados antes de incorporarlos al registro.
-- [ ] Resolver la ruta legacy ausente `spec-entity-tenant/README.md` sin perder historia.
+- [ ] Resolver la ruta legacy ausente `spec-entity-tenant/README.md` según
+  `legacy-path-retirement-contract.md`, sin perder historia.
 - [ ] Asignar owners/reviewers o `UNASSIGNED` en las specs normalizadas.
 - [x] Definir fuente de verdad y contrato del registro.
 - [ ] Implementar generación/validación del catálogo e índices.
 - [ ] Implementar asignación de ID sin colisiones.
 - [ ] Implementar `npm run sdd:validate`.
+- [x] Especificar catálogo integrado de fixtures `SDD001`–`008` y `ADR001/002`.
+- [ ] Materializar fixtures del validador después de aprobación.
 - [ ] Crear auditoría y línea base versionada de deuda histórica.
+- [x] Especificar schema, fingerprint, lifecycle y ratchet de deuda histórica.
+- [x] Especificar fixtures `SDBL` antes de bootstrap.
+- [ ] Materializar fixtures `SDBL` después de aprobar schema/path/policy.
+- [x] Especificar root, pointer, historia y activación atómica del baseline.
+- [x] Especificar fixtures `SDBS` del repositorio de baselines.
+- [ ] Materializar fixtures `SDBS` después de aprobar el contrato.
+- [ ] Aprobar ownership/root/schema/policy del repositorio mediante `DOC-REV`.
+- [x] Especificar proceso extraordinario y segregación para excepciones nuevas.
+- [x] Especificar fixtures `SDEX` de excepciones de deuda.
+- [ ] Materializar fixtures `SDEX` después de aprobar authority/policy.
+- [ ] Aprobar authority matrix, vigencia máxima, escalamiento y ruta de excepciones.
+- [x] Proponer policy profile, límites por severidad y authority matrix.
+- [x] Especificar fixtures `SDBP` del policy profile.
+- [ ] Materializar fixtures `SDBP` después de aprobar schema y authority model.
+- [ ] Resolver authority refs y aprobar `SDD-DEBT-POLICY-001`.
 - [ ] Normalizar estados compuestos del subset I0.
+- [x] Definir lifecycle, readiness, fases, targets y blockers como dimensiones separadas.
+- [ ] Revisar y migrar las 36 specs con readiness `WALKING_SKELETON_I0`.
+- [x] Identificar commits candidatos para las 36 specs `IN_PROGRESS`.
+- [ ] Crear manifests retroactivos por spec y registrar outcomes.
+- [x] Definir identidad, lifecycle y outcomes de criterios de aceptación.
+- [ ] Migrar los 226 `verification.md` a IDs estables por bloque.
+- [x] Definir identidad, tipos, estados y cierre de tareas.
+- [ ] Migrar los 800 items de `tasks.md` a IDs estables.
+- [ ] Auditar evidencia de los 25 checks históricos marcados.
+- [x] Definir identidad, aliases y lifecycle de reglas/invariantes.
+- [ ] Migrar los 226 `rules.md` y preservar 43 aliases legacy.
+- [x] Definir identidad de hitos, etapas y evidencia mínima de estimaciones.
+- [ ] Migrar los 226 planes y clasificar 59 encabezados “Fase”.
+- [ ] Auditar estimaciones temporales en 51 planes.
+- [x] Definir identidad, alcance y señales de objetivos/outcomes.
+- [ ] Migrar los 226 `objective.md` y enlazar outcome→regla.
+- [x] Definir identidad, tipos y fuerza normativa de requisitos.
+- [ ] Migrar las 226 specifications y separar requisitos de rationale/ejemplos.
+- [x] Definir revisión contractual, schemaVersion y clases de compatibilidad.
+- [ ] Revisar y versionar los 226 contratos `UNVERSIONED_LEGACY`.
+- [x] Definir identidad, autoridad y dependencias de boundaries.
+- [ ] Refinar los 20 `DOCUMENT_SKELETON` transversales.
+- [ ] Migrar estructuras implementables a boundaries trazables.
+- [x] Definir nodos, edges, cardinalidades y cobertura del grafo de trazabilidad.
+- [ ] Construir el primer lote de nodos/edges y medir huérfanos.
+- [x] Definir lifecycle, baseline, mapping y ratchet de lotes documentales.
+- [x] Especificar scope y condiciones de entrada de SDD-MIG-001.
+- [ ] Baselinear y ejecutar SDD-MIG-001 sin cambios productivos.
+- [x] Definir schema común, hashing y clasificación de mappings.
+- [ ] Aprobar schemaVersion 1 y fixtures antes de baselinear el piloto.
+- [x] Especificar catálogo de fixtures positivas/negativas y códigos MAP.
+- [ ] Convertir el catálogo en fixtures ejecutables después de aprobación.
+- [x] Definir snapshot baseline, provenance, freeze y staleness.
+- [x] Preparar manifest DRAFT de SDD-SNAP-001.
+- [ ] Resolver provenance, revisar y congelar SDD-SNAP-001.
+- [x] Especificar fixtures y códigos del snapshot schema v1.
+- [ ] Convertir el catálogo SNAP en fixtures ejecutables después de aprobación.
+- [x] Definir schema de evidencia para revisión documental sobre commit exacto.
+- [x] Especificar fixtures y códigos DOC-REV.
+- [ ] Convertir DOC-REV fixtures en casos ejecutables después de aprobación.
+- [ ] Asignar reviewers efectivos para schemas, snapshot y piloto.
+- [x] Definir roles documentales, autoridad y detección de huérfanos.
+- [x] Relevar cobertura de metadata documental: 0/2.153 Markdown tracked.
+- [x] Especificar envelope, identidad, lifecycle y ratchet documental.
+- [x] Especificar fixtures `DOCM`.
+- [ ] Materializar fixtures `DOCM` y aprobar schemaVersion 1.
+- [x] Preparar mapping/piloto `SDD-DOCM-001` sin aplicar envelopes.
+- [x] Especificar registro, allocator, concurrencia y tombstones de document IDs.
+- [x] Especificar fixtures `DIDA`.
+- [ ] Materializar fixtures `DIDA` y aprobar inicialización del registro.
+- [x] Especificar preservación byte-exacta del body al aplicar envelopes.
+- [x] Especificar fixtures `DOCB`.
+- [ ] Materializar fixtures `DOCB` y congelar hashes del piloto.
+- [x] Especificar referencias tipadas y relevar cuatro refs legacy del piloto.
+- [x] Especificar fixtures `DREF`.
+- [ ] Materializar fixtures `DREF` y reconciliar refs con review.
+- [ ] Baselinear, revisar y ejecutar `SDD-DOCM-001`.
+- [x] Relevar subdirectorios e indexación: 2 requeridos, 2 presentes, 31/31 hijos.
+- [x] Especificar umbral, lifecycle y ratchet de índices de subdirectorios.
+- [x] Especificar fixtures `NAVD`.
+- [x] Proponer metadata lógica y registrar findings de los dos índices existentes.
+- [ ] Asignar responsables, revisar roles y aplicar metadata/backlinks de índices.
+- [ ] Materializar fixtures `NAVD` e implementar gate después de aprobación.
+- [x] Enlazar los seis Markdown raíz huérfanos de SPEC-225.
+- [ ] Auditar roles/navegación en las 226 specs.
+- [x] Relevar candidatos sin enlace directo en specs versionadas/no versionadas.
+- [x] Ejecutar clasificación de reachability NAV-01/NAV-02.
+- [ ] Remediar 279 artefactos base y 10 contratos especializados huérfanos.
+- [x] Especificar manifests, template y ratchets NAV-01/NAV-02.
+- [ ] Congelar snapshot y ejecutar NAV-02/NAV-01 después de asignar reviewers.
+- [x] Relevar reachability global desde START_HERE/INDEX/SPECS.
+- [x] Especificar NAV-04A versionado y NAV-04B completo.
+- [ ] Ejecutar NAV-04A; mantener NAV-04B bloqueado por NAV-03.
+- [x] Registrar LINK-001/002 y alternativas de resolución.
+- [x] Especificar extracción, resolución, reachability, reporte y ratchet de links Markdown.
+- [x] Especificar catálogo de fixtures `NAVL`.
+- [x] Especificar auditoría segura/programada de links externos y baseline sintáctico.
+- [x] Especificar fixtures `XURL`.
+- [ ] Materializar fixtures `XURL` y aprobar policy/runner.
+- [x] Especificar schema, candidatos, lifecycle y upgrades del renderer profile.
+- [x] Relevar baseline sintáctico de links con fragment.
+- [x] Registrar individualmente los 10 fragments y headings candidatos.
+- [ ] Congelar hashes y evaluar los 10 fragments con profile activo.
+- [x] Inventariar consumidores Markdown configurados/observables.
+- [ ] Confirmar autoridad/materialidad de consumidores y seleccionar renderer/slugger exactos.
+- [x] Especificar catálogo de conformidad del renderer profile.
+- [x] Especificar manifest de evaluación/selección `MD-RENDER-001`.
+- [x] Especificar schema y códigos de evidence packages `MD-RENDER-EVAL`.
+- [x] Especificar catálogo de fixtures `RSEL`.
+- [ ] Materializar fixtures `RSEL` y aprobar schema/catálogo.
+- [ ] Baselinear y ejecutar `MD-RENDER-001` después de asignar reviewers.
+- [ ] Materializar inputs, observar candidatos y aprobar outputs normativos del renderer.
+- [ ] Aprobar renderer profile y catálogo de fixtures `NAVL`.
+- [ ] Materializar fixtures `NAVL` como árboles y expected outputs ejecutables.
+- [ ] Implementar scanner de links/reachability después de aprobar contrato y fixtures.
+- [ ] Confirmar ownership y resolver los dos links sin pérdida de contenido.
+- [ ] Mantener NAV-03 bloqueado hasta resolver ownership.
+- [ ] Clasificar los 26 blockers declarados fuera de readiness `BLOCKED`.
+- [x] Definir valores y trazabilidad de review targets y blockers.
+- [ ] Asignar target a los 71 README versionados todavía `UNASSESSED`.
+- [ ] Descomponer los 40 blockers genéricos en unidades trazables.
 - [ ] Validar metadata y archivos mínimos.
 - [ ] Validar links, dependencias y successors.
 - [ ] Detectar ciclos/contradicciones mecánicas.
+- [x] Definir semántica, valores migratorios y autoridad de relaciones/dependencias.
+- [ ] Relevar `Depende de` en los 70 README versionados todavía `UNASSESSED`.
 - [ ] Crear template ADR y directorio.
+- [x] Especificar template lógico, readiness y change classes de ADRs.
+- [x] Especificar fixtures `ADRT`.
+- [ ] Materializar fixtures `ADRT` y aprobar contrato antes de crear template físico.
 - [x] Definir metadata y validaciones mecánicas del registro ADR.
-- [ ] Crear checklist readiness/change class.
+- [x] Definir checklist readiness/change class con IDs estables.
 - [ ] Integrar validación en CI.
+- [x] Especificar readiness integrado y transición de modos de gobernanza.
+- [x] Especificar fixtures `GACT` de activación.
+- [ ] Materializar fixtures `GACT` después de aprobar availability/rollback.
+- [ ] Aprobar availability/rollback policy antes de crear activation manifests.
+- [x] Especificar outcomes de disponibilidad, retries, continuidad y recovery.
+- [x] Especificar fixtures `VAVL` de disponibilidad.
+- [ ] Materializar fixtures `VAVL` después de aprobar budgets/retry policy.
+- [ ] Observar shadow y aprobar budgets/SLO/alertas/rollback.
+- [x] Especificar integración CI, rollout, aggregator y canarios del validador SDD.
+- [x] Especificar fixtures `SDDCI`.
+- [ ] Materializar fixtures `SDDCI` antes de crear workflow.
 - [ ] Revisar SPEC-207–225 P0.
 - [ ] Crear ADRs de decisiones aceptadas.
 - [ ] Aprobar subset de SPEC-222 I0.

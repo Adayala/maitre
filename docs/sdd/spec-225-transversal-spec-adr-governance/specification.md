@@ -65,6 +65,10 @@ El README declara:
 
 No se inventa un owner nominal si todavía no existe; se registra rol/`UNASSIGNED`, que bloquea readiness cuando el ownership es obligatorio.
 
+La asignación, aceptación, expiración, conflictos y offboarding se rigen por
+`ownership-assignment-contract.md`; la matriz de roles por bloque no constituye por sí sola una
+asignación efectiva.
+
 `Estado` contiene exclusivamente uno de los valores de la sección 3. La preparación para
 review, blockers y gates se expresan en campos separados (`Readiness`, `Blockers` o
 `Implementation gate`); no se concatenan al estado. El texto documental puede explicar

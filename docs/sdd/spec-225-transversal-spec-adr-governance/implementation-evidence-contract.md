@@ -96,6 +96,15 @@ conserva ID si la semántica no cambia; un cambio incompatible crea nuevo ID y m
 como superseded. Un test puede demostrar varios criterios y un criterio puede necesitar varias
 evidencias, pero la relación siempre es explícita.
 
+El formato canónico, lifecycle, outcomes y procedimiento de migración están definidos en
+`acceptance-criteria-identity-contract.md`; la forma normalizada usa tres dígitos:
+`SPEC-010-AC-001`.
+
+Las unidades de trabajo y su cierre se identifican mediante `SPEC-NNN-TSK-MMM` según
+`task-traceability-contract.md`. Una tarea marcada no sustituye evidence refs de criterios.
+
+La integridad end-to-end de nodos y referencias se rige por `traceability-graph-contract.md`.
+
 ## Uso retroactivo
 
 Para commits existentes:
@@ -105,6 +114,10 @@ Para commits existentes:
 - evidencia posterior se etiqueta como tal y no fabrica aprobación histórica;
 - gaps producen findings vinculados a `implementation-drift-audit.md`;
 - el reviewer puede aprobar la conformidad actual en un commit nuevo sin reescribir el anterior.
+
+Los commits candidatos y su cobertura inicial se mantienen en
+`retroactive-implementation-review-register.md`. Estar listado allí sólo significa
+`CANDIDATE_OBSERVED`.
 
 ## Aceptación
 

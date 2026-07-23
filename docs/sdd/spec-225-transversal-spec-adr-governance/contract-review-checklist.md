@@ -12,20 +12,21 @@ del owner/reviewer ni autoriza implementación por sí mismo.
 
 ## Revisión obligatoria
 
-| Dimensión | Evidencia mínima | Bloquea aprobación cuando |
-| --- | --- | --- |
-| Alcance | resultado, exclusiones y términos definidos | mezcla capacidades o deja autoridad ambigua |
-| Dominio | invariantes, estados y ownership | lógica crítica queda en UI, handler o proveedor |
-| Datos | identidad, tenant, timestamps, moneda y retención | admite cross-tenant, pérdida de precisión o PII innecesaria |
-| API | schemas, errores, idempotencia y concurrencia | confía en contexto/importes del cliente o permite doble efecto |
-| Eventos | sobre, versión, outbox y deduplicación | supone exactly-once o expone secretos/PII |
-| Seguridad | RBAC, abuso, auditoría y threat cases | autorización no es server-side y deny-by-default |
-| Diseño | responsabilidades y dependencias dirigidas | duplica reglas o crea acoplamiento a framework/proveedor |
-| Portabilidad | puertos, configuración, export y fallback | Vercel, Supabase o un SDK se vuelve dominio |
-| Free tier | cuotas, volumen, costo y degradación | el MVP puede generar cobro o quedar sin salida segura |
-| UX/a11y | estados, errores, teclado y privacidad | un flujo crítico no es accesible o explica mal incertidumbre |
-| Calidad | unit, contract, integration y E2E por riesgo | criterios no son automatizables o falta test de aislamiento |
-| Operación | telemetría, SLO, retry, recovery y runbook | un fallo crítico no es detectable o recuperable |
+| ID | Dimensión | Evidencia mínima | Bloquea aprobación cuando |
+| --- | --- | --- | --- |
+| `REV-SCOPE` | Alcance | resultado, exclusiones y términos definidos | mezcla capacidades o deja autoridad ambigua |
+| `REV-DOMAIN` | Dominio | invariantes, estados y ownership | lógica crítica queda en UI, handler o proveedor |
+| `REV-DATA` | Datos | identidad, tenant, timestamps, moneda y retención | admite cross-tenant, pérdida de precisión o PII innecesaria |
+| `REV-API` | API | schemas, errores, idempotencia y concurrencia | confía en contexto/importes del cliente o permite doble efecto |
+| `REV-EVENTS` | Eventos | sobre, versión, outbox y deduplicación | supone exactly-once o expone secretos/PII |
+| `REV-SECURITY` | Seguridad | RBAC, abuso, auditoría y threat cases | autorización no es server-side y deny-by-default |
+| `REV-DESIGN` | Diseño | responsabilidades y dependencias dirigidas | duplica reglas o crea acoplamiento a framework/proveedor |
+| `REV-PORTABILITY` | Portabilidad | puertos, configuración, export y fallback | Vercel, Supabase o un SDK se vuelve dominio |
+| `REV-COST` | Free tier | cuotas, volumen, costo y degradación | el MVP puede generar cobro o quedar sin salida segura |
+| `REV-UX-A11Y` | UX/a11y | estados, errores, teclado y privacidad | un flujo crítico no es accesible o explica mal incertidumbre |
+| `REV-QUALITY` | Calidad | unit, contract, integration y E2E por riesgo | criterios no son automatizables o falta test de aislamiento |
+| `REV-OPERATIONS` | Operación | telemetría, SLO, retry, recovery y runbook | un fallo crítico no es detectable o recuperable |
+| `REV-TRACEABILITY` | Trazabilidad | IDs, edges, mappings, commit y evidence refs | existen nodos huérfanos, hashes stale o outcomes sin evidencia |
 
 DRY significa una sola autoridad por regla, schema o cálculo. No obliga a compartir código entre
 conceptos que sólo se parecen ni justifica una abstracción antes de tener consumidores reales.
@@ -48,3 +49,6 @@ Un outcome incluye commit revisado y fecha, no texto genérico. Findings crític
 `READY_FOR_IMPLEMENTATION`; los aceptados excepcionalmente requieren owner, motivo, mitigación y
 vencimiento. Después de cambios incompatibles se invalida la aprobación previa y se revisan los
 consumidores afectados.
+
+La serialización autoritativa de subject, paths, dimensiones, reviewer y outcome se rige por
+`document-review-evidence-contract.md`.

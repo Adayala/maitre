@@ -15,6 +15,9 @@ El validador inspecciona, sin acceso a red:
 Las URLs externas se comprueban en un job programado no bloqueante. Una caída externa
 no vuelve indeterminista el gate de pull request.
 
+Extracción, seguridad SSRF, redirects, outcomes, confirmación, evidence y scheduling se rigen por
+`external-link-validation-contract.md`.
+
 ## 2. Salida y proceso
 
 - Cada hallazgo incluye `severity`, `code`, ruta, línea cuando sea posible y mensaje.
@@ -82,6 +85,9 @@ La adopción se activa en este orden:
 
 No se agrega deuda nueva a la línea base para aprobar un PR.
 
+El schema, fingerprint, elegibilidad, expiración, bootstrap, delta y successor se rigen por
+`historical-validation-debt-baseline-contract.md`.
+
 ## 6. Coherencia de lifecycle
 
 El validador rechaza mecánicamente:
@@ -101,8 +107,14 @@ La implementación incluye al menos una fixture válida y una inválida por cód
 de orden estable, ciclo, link relativo, estado compuesto, crecimiento/reducción de baseline
 y ausencia de red. Los tests verifican stdout normalizado y exit code.
 
+Los casos integrados normativos están especificados en `sdd-validator-fixture-catalog.md`; el
+catálogo no implica que existan tests ejecutables.
+
 ## 8. Integración
 
 `npm run sdd:validate` forma parte de `ci/required` según SPEC-207 y SPEC-221. El job usa
 runtime fijado por lockfile, permisos de sólo lectura y no recibe secretos. Cualquier modo
 de auditoría adicional debe tener nombre explícito y no puede reemplazar el gate estricto.
+
+Eventos, permisos, rollout, outcomes, aggregator, artifacts y canarios están definidos en
+`sdd-validation-ci-integration-contract.md`.
