@@ -25,7 +25,7 @@ Formato: **SPEC-NNN | Título | Tipo | Dominio | Fase | Prioridad | Estado | Rea
 - [ ] **SPEC-013** | TenantCreated Event | Event | Organization | Fase 1 | P0 | IN_PROGRESS | WALKING_SKELETON_I0
 - [ ] **SPEC-014** | BrandCreated Event | Event | Organization | Fase 1 | P0 | IN_PROGRESS | WALKING_SKELETON_I0
 - [ ] **SPEC-015** | BranchCreated Event | Event | Organization | Fase 1 | P0 | IN_PROGRESS | WALKING_SKELETON_I0
-- [ ] **SPEC-016** | Organization RBAC | RBAC | Organization | Fase 1 | P0 | PLANNED | NOT_ASSESSED
+- [ ] **SPEC-016** | Organization RBAC | RBAC | Organization | Fase 1 | P0 | IN_PROGRESS | WALKING_SKELETON_I0
 
 ---
 

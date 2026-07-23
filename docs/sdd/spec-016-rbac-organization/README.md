@@ -8,8 +8,8 @@ Control de acceso en el dominio Organization (quién puede crear/editar tenant, 
 | **ID** | SPEC-016 |
 | **Tipo** | RBAC |
 | **Dominio** | Organization |
-| **Estado** | PLANNED |
-| **Readiness** | NOT_ASSESSED |
+| **Estado** | IN_PROGRESS |
+| **Readiness** | WALKING_SKELETON_I0 |
 | **Prioridad** | P0 |
 | **Owner** | UNASSIGNED |
 | **Reviewer** | UNASSIGNED |
