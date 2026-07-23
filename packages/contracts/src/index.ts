@@ -10,3 +10,4 @@ export * from "./table.js";
 export * from "./user.js";
 export * from "./membership.js";
 export * from "./auth.js";
+export * from "./subscription.js";

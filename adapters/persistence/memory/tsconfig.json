@@ -6,7 +6,8 @@
   },
   "references": [
     { "path": "../../../packages/modules/organization" },
-    { "path": "../../../packages/modules/identity" }
+    { "path": "../../../packages/modules/identity" },
+    { "path": "../../../packages/modules/subscription" }
   ],
   "include": ["src"]
 }

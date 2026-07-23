@@ -8,8 +8,8 @@ Cómo se derivan entitlements desde subscription items.
 | **ID** | SPEC-035 |
 | **Tipo** | Calculation |
 | **Dominio** | Subscription |
-| **Estado** | PLANNED |
-| **Readiness** | NOT_ASSESSED |
+| **Estado** | IN_PROGRESS |
+| **Readiness** | WALKING_SKELETON_I0 |
 | **Prioridad** | P0 |
 | **Owner** | UNASSIGNED |
 | **Reviewer** | UNASSIGNED |

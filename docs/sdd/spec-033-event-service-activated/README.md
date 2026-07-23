@@ -8,8 +8,8 @@ Evento cuando se activa un servicio.
 | **ID** | SPEC-033 |
 | **Tipo** | Event |
 | **Dominio** | Subscription |
-| **Estado** | PLANNED |
-| **Readiness** | NOT_ASSESSED |
+| **Estado** | IN_PROGRESS |
+| **Readiness** | WALKING_SKELETON_I0 |
 | **Prioridad** | P0 |
 | **Owner** | UNASSIGNED |
 | **Reviewer** | UNASSIGNED |

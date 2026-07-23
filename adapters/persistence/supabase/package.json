@@ -12,6 +12,7 @@
   "dependencies": {
     "@maitre/identity": "*",
     "@maitre/organization": "*",
+    "@maitre/subscription": "*",
     "@supabase/supabase-js": "^2.45.4",
     "ws": "^8.21.1"
   },

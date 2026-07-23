@@ -8,8 +8,8 @@ Límite cuantitativo: MAX_USERS, MAX_BRANCHES.
 | **ID** | SPEC-030 |
 | **Tipo** | Entity |
 | **Dominio** | Subscription |
-| **Estado** | PLANNED |
-| **Readiness** | NOT_ASSESSED |
+| **Estado** | IN_PROGRESS |
+| **Readiness** | WALKING_SKELETON_I0 |
 | **Prioridad** | P1 |
 | **Owner** | UNASSIGNED |
 | **Reviewer** | UNASSIGNED |

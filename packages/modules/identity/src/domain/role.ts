@@ -45,6 +45,11 @@ export const ROLE_REGISTRY: Readonly<Record<string, Role>> = Object.freeze({
       "table:create",
       "table:read",
       "table:write",
+      // SPEC-036 §Permission Matrix
+      "subscription:read",
+      "service:manage",
+      "entitle:read",
+      "quota:read",
     ],
   },
   role_manager: {
@@ -61,6 +66,10 @@ export const ROLE_REGISTRY: Readonly<Record<string, Role>> = Object.freeze({
       "branch:read",
       "salon:read",
       "table:read",
+      // SPEC-036 §Permission Matrix
+      "subscription:read",
+      "entitle:read",
+      "quota:read",
     ],
   },
   role_employee: {

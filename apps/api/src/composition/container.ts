@@ -8,6 +8,10 @@ import {
   InMemoryUserRepository,
   InMemoryMembershipRepository,
   InMemoryOutboxRepository,
+  InMemorySubscriptionRepository,
+  InMemorySubscriptionItemRepository,
+  InMemoryEntitlementRepository,
+  InMemoryQuotaRepository,
   FixtureSessionVerificationPort,
 } from "@maitre/adapter-persistence-memory";
 import {
@@ -21,6 +25,10 @@ import {
   SupabaseUserRepository,
   SupabaseMembershipRepository,
   SupabaseOutboxRepository,
+  SupabaseSubscriptionRepository,
+  SupabaseSubscriptionItemRepository,
+  SupabaseEntitlementRepository,
+  SupabaseQuotaRepository,
 } from "@maitre/adapter-persistence-supabase";
 import {
   createTenant,
@@ -43,6 +51,13 @@ import {
   type SessionVerificationPort,
 } from "@maitre/identity";
 import { SupabaseSessionVerificationPort } from "@maitre/adapter-identity-supabase-auth";
+import {
+  createSubscription,
+  type SubscriptionRepositoryPort,
+  type SubscriptionItemRepositoryPort,
+  type EntitlementRepositoryPort,
+  type QuotaRepositoryPort,
+} from "@maitre/subscription";
 
 export interface Container {
   tenants: TenantRepositoryPort;
@@ -54,6 +69,10 @@ export interface Container {
   users: UserRepositoryPort;
   memberships: MembershipRepositoryPort;
   outbox: OutboxPort;
+  subscriptions: SubscriptionRepositoryPort;
+  subscriptionItems: SubscriptionItemRepositoryPort;
+  entitlements: EntitlementRepositoryPort;
+  quotas: QuotaRepositoryPort;
   sessions: SessionVerificationPort;
   demoAccessToken: string;
 }
@@ -68,6 +87,7 @@ const DEMO_SALON_ID = "00000000-0000-0000-0000-000000000004";
 const DEMO_TABLE_ID = "00000000-0000-0000-0000-000000000005";
 const DEMO_USER_ID = "00000000-0000-0000-0000-000000000006";
 const DEMO_MEMBERSHIP_ID = "00000000-0000-0000-0000-000000000007";
+const DEMO_SUBSCRIPTION_ID = "00000000-0000-0000-0000-000000000008";
 const DEMO_ACCESS_TOKEN = "demo-token";
 
 interface Repositories {
@@ -80,6 +100,10 @@ interface Repositories {
   users: UserRepositoryPort;
   memberships: MembershipRepositoryPort;
   outbox: OutboxPort;
+  subscriptions: SubscriptionRepositoryPort;
+  subscriptionItems: SubscriptionItemRepositoryPort;
+  entitlements: EntitlementRepositoryPort;
+  quotas: QuotaRepositoryPort;
 }
 
 /**
@@ -103,6 +127,10 @@ function buildRepositories(): Repositories {
       users: new SupabaseUserRepository(client),
       memberships: new SupabaseMembershipRepository(client),
       outbox: new SupabaseOutboxRepository(client),
+      subscriptions: new SupabaseSubscriptionRepository(client),
+      subscriptionItems: new SupabaseSubscriptionItemRepository(client),
+      entitlements: new SupabaseEntitlementRepository(client),
+      quotas: new SupabaseQuotaRepository(client),
     };
   }
 
@@ -116,6 +144,10 @@ function buildRepositories(): Repositories {
     users: new InMemoryUserRepository(),
     memberships: new InMemoryMembershipRepository(),
     outbox: new InMemoryOutboxRepository(),
+    subscriptions: new InMemorySubscriptionRepository(),
+    subscriptionItems: new InMemorySubscriptionItemRepository(),
+    entitlements: new InMemoryEntitlementRepository(),
+    quotas: new InMemoryQuotaRepository(),
   };
 }
 
@@ -230,6 +262,19 @@ async function ensureSeed(repos: Repositories): Promise<void> {
         roleIds: ["role_owner"],
         branchScopeType: "ALL_BRANCHES",
       },
+    );
+  }
+
+  const subscription = await repos.subscriptions.findById(DEMO_SUBSCRIPTION_ID);
+  if (!subscription) {
+    await createSubscription(
+      {
+        subscriptions: repos.subscriptions,
+        subscriptionItems: repos.subscriptionItems,
+        entitlements: repos.entitlements,
+        now: () => now,
+      },
+      { id: DEMO_SUBSCRIPTION_ID, tenantId: tenant.id, planCode: "PROFESSIONAL" },
     );
   }
 }

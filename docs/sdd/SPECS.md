@@ -46,16 +46,16 @@ Formato: **SPEC-NNN | Título | Tipo | Dominio | Fase | Prioridad | Estado | Rea
 
 ## Subscription
 
-- [ ] **SPEC-027** | Subscription Entity | Entity | Subscription | Fase 1 | P0 | PLANNED | NOT_ASSESSED
-- [ ] **SPEC-028** | SubscriptionItem Entity | Entity | Subscription | Fase 1 | P0 | PLANNED | NOT_ASSESSED
-- [ ] **SPEC-029** | Entitlement Entity | Entity | Subscription | Fase 1 | P0 | PLANNED | NOT_ASSESSED
-- [ ] **SPEC-030** | Quota Entity | Entity | Subscription | Fase 1 | P1 | PLANNED | NOT_ASSESSED
-- [ ] **SPEC-031** | Subscriptions API | API | Subscription | Fase 1 | P0 | PLANNED | NOT_ASSESSED
-- [ ] **SPEC-032** | Entitlements API | API | Subscription | Fase 1 | P0 | PLANNED | NOT_ASSESSED
-- [ ] **SPEC-033** | ServiceActivated Event | Event | Subscription | Fase 1 | P0 | PLANNED | NOT_ASSESSED
-- [ ] **SPEC-034** | ServiceDeactivated Event | Event | Subscription | Fase 1 | P1 | PLANNED | NOT_ASSESSED
-- [ ] **SPEC-035** | Entitlements Calculation | Calculation | Subscription | Fase 1 | P0 | PLANNED | NOT_ASSESSED
-- [ ] **SPEC-036** | Subscription RBAC | RBAC | Subscription | Fase 1 | P0 | PLANNED | NOT_ASSESSED
+- [ ] **SPEC-027** | Subscription Entity | Entity | Subscription | Fase 1 | P0 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-028** | SubscriptionItem Entity | Entity | Subscription | Fase 1 | P0 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-029** | Entitlement Entity | Entity | Subscription | Fase 1 | P0 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-030** | Quota Entity | Entity | Subscription | Fase 1 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-031** | Subscriptions API | API | Subscription | Fase 1 | P0 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-032** | Entitlements API | API | Subscription | Fase 1 | P0 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-033** | ServiceActivated Event | Event | Subscription | Fase 1 | P0 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-034** | ServiceDeactivated Event | Event | Subscription | Fase 1 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-035** | Entitlements Calculation | Calculation | Subscription | Fase 1 | P0 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-036** | Subscription RBAC | RBAC | Subscription | Fase 1 | P0 | IN_PROGRESS | WALKING_SKELETON_I0
 
 ---
 
@@ -88,47 +88,47 @@ Formato: **SPEC-NNN | Título | Tipo | Dominio | Fase | Prioridad | Estado | Rea
 
 ## Floor
 
-- [ ] **SPEC-049** | Visit Entity | Entity | Floor | Fase  | UNASSIGNED | DRAFT | NOT_ASSESSED
-- [ ] **SPEC-050** | Occupancy Entity | Entity | Floor | Fase  | UNASSIGNED | DRAFT | NOT_ASSESSED
-- [ ] **SPEC-051** | Table Status Entity | Entity | Floor | Fase  | UNASSIGNED | DRAFT | NOT_ASSESSED
-- [ ] **SPEC-054** | Service Entity | Entity | Floor | Fase  | UNASSIGNED | DRAFT | NOT_ASSESSED
+- [ ] **SPEC-049** | Visit Entity | Entity | Floor | Fase 2 | UNASSIGNED | DRAFT | NOT_ASSESSED
+- [ ] **SPEC-050** | Occupancy Entity | Entity | Floor | Fase 2 | UNASSIGNED | DRAFT | NOT_ASSESSED
+- [ ] **SPEC-051** | Table Status Entity | Entity | Floor | Fase 2 | UNASSIGNED | DRAFT | NOT_ASSESSED
+- [ ] **SPEC-054** | Service Entity | Entity | Floor | Fase 2 | UNASSIGNED | DRAFT | NOT_ASSESSED
 
 ---
 
 ## Billing & Payments
 
-- [ ] **SPEC-052** | Check Entity | Entity | Billing & Payments | Fase  | UNASSIGNED | DRAFT | NOT_ASSESSED
-- [ ] **SPEC-053** | Payment Entity | Entity | Billing & Payments | Fase  | UNASSIGNED | DRAFT | NOT_ASSESSED
+- [ ] **SPEC-052** | Check Entity | Entity | Billing & Payments | Fase 2 | UNASSIGNED | DRAFT | NOT_ASSESSED
+- [ ] **SPEC-053** | Payment Entity | Entity | Billing & Payments | Fase 2 | UNASSIGNED | DRAFT | NOT_ASSESSED
 
 ---
 
 ## Reservations
 
-- [ ] **SPEC-066** | Reservation Entity | Entity | Reservations | Fase  | UNASSIGNED | DRAFT | NOT_ASSESSED
-- [ ] **SPEC-067** | Guest Entity | Entity | Reservations | Fase  | UNASSIGNED | DRAFT | NOT_ASSESSED
-- [ ] **SPEC-068** | Waitlist Entity | Entity | Reservations | Fase  | UNASSIGNED | DRAFT | NOT_ASSESSED
-- [ ] **SPEC-069** | Reservation Preference Entity | Entity | Reservations | Fase  | UNASSIGNED | DRAFT | NOT_ASSESSED
-- [ ] **SPEC-070** | Cancellation Policy Entity | Entity | Reservations | Fase  | UNASSIGNED | DRAFT | NOT_ASSESSED
+- [ ] **SPEC-066** | Reservation Entity | Entity | Reservations | Fase 3 | UNASSIGNED | DRAFT | NOT_ASSESSED
+- [ ] **SPEC-067** | Guest Entity | Entity | Reservations | Fase 3 | UNASSIGNED | DRAFT | NOT_ASSESSED
+- [ ] **SPEC-068** | Waitlist Entity | Entity | Reservations | Fase 3 | UNASSIGNED | DRAFT | NOT_ASSESSED
+- [ ] **SPEC-069** | Reservation Preference Entity | Entity | Reservations | Fase 3 | UNASSIGNED | DRAFT | NOT_ASSESSED
+- [ ] **SPEC-070** | Cancellation Policy Entity | Entity | Reservations | Fase 3 | UNASSIGNED | DRAFT | NOT_ASSESSED
 
 ---
 
 ## Ordering
 
-- [ ] **SPEC-081** | Order Entity | Entity | Ordering | Fase  | UNASSIGNED | DRAFT | NOT_ASSESSED
-- [ ] **SPEC-082** | Order Item Entity | Entity | Ordering | Fase  | UNASSIGNED | DRAFT | NOT_ASSESSED
-- [ ] **SPEC-083** | Order Modifier Entity | Entity | Ordering | Fase  | UNASSIGNED | DRAFT | NOT_ASSESSED
-- [ ] **SPEC-084** | QR Menu Entity | Entity | Ordering | Fase  | UNASSIGNED | DRAFT | NOT_ASSESSED
-- [ ] **SPEC-085** | Digital Bill Entity | Entity | Ordering | Fase  | UNASSIGNED | DRAFT | NOT_ASSESSED
+- [ ] **SPEC-081** | Order Entity | Entity | Ordering | Fase 2 | UNASSIGNED | DRAFT | NOT_ASSESSED
+- [ ] **SPEC-082** | Order Item Entity | Entity | Ordering | Fase 2 | UNASSIGNED | DRAFT | NOT_ASSESSED
+- [ ] **SPEC-083** | Order Modifier Entity | Entity | Ordering | Fase 2 | UNASSIGNED | DRAFT | NOT_ASSESSED
+- [ ] **SPEC-084** | QR Menu Entity | Entity | Ordering | Fase 2 | UNASSIGNED | DRAFT | NOT_ASSESSED
+- [ ] **SPEC-085** | Digital Bill Entity | Entity | Ordering | Fase 2 | UNASSIGNED | DRAFT | NOT_ASSESSED
 
 ---
 
 ## Kitchen
 
-- [ ] **SPEC-086** | Kitchen Ticket Entity | Entity | Kitchen | Fase  | UNASSIGNED | DRAFT | NOT_ASSESSED
-- [ ] **SPEC-098** | Command Entity | Entity | Kitchen | Fase  | UNASSIGNED | DRAFT | NOT_ASSESSED
-- [ ] **SPEC-099** | Station Entity | Entity | Kitchen | Fase  | UNASSIGNED | DRAFT | NOT_ASSESSED
-- [ ] **SPEC-100** | Production Queue Entity | Entity | Kitchen | Fase  | UNASSIGNED | DRAFT | NOT_ASSESSED
-- [ ] **SPEC-101** | Kitchen Alert Entity | Entity | Kitchen | Fase  | UNASSIGNED | DRAFT | NOT_ASSESSED
+- [ ] **SPEC-086** | Kitchen Ticket Entity | Entity | Kitchen | Fase 2 | UNASSIGNED | DRAFT | NOT_ASSESSED
+- [ ] **SPEC-098** | Command Entity | Entity | Kitchen | Fase 2 | UNASSIGNED | DRAFT | NOT_ASSESSED
+- [ ] **SPEC-099** | Station Entity | Entity | Kitchen | Fase 2 | UNASSIGNED | DRAFT | NOT_ASSESSED
+- [ ] **SPEC-100** | Production Queue Entity | Entity | Kitchen | Fase 2 | UNASSIGNED | DRAFT | NOT_ASSESSED
+- [ ] **SPEC-101** | Kitchen Alert Entity | Entity | Kitchen | Fase 2 | UNASSIGNED | DRAFT | NOT_ASSESSED
 
 ---
 

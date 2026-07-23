@@ -8,8 +8,8 @@ Evento cuando se desactiva un servicio.
 | **ID** | SPEC-034 |
 | **Tipo** | Event |
 | **Dominio** | Subscription |
-| **Estado** | PLANNED |
-| **Readiness** | NOT_ASSESSED |
+| **Estado** | IN_PROGRESS |
+| **Readiness** | WALKING_SKELETON_I0 |
 | **Prioridad** | P1 |
 | **Owner** | UNASSIGNED |
 | **Reviewer** | UNASSIGNED |

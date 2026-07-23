@@ -10,7 +10,8 @@
   },
   "dependencies": {
     "@maitre/organization": "*",
-    "@maitre/identity": "*"
+    "@maitre/identity": "*",
+    "@maitre/subscription": "*"
   },
   "devDependencies": {
     "typescript": "^5.5.4"

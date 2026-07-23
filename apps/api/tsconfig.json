@@ -9,6 +9,7 @@
     { "path": "../../packages/contracts" },
     { "path": "../../packages/modules/organization" },
     { "path": "../../packages/modules/identity" },
+    { "path": "../../packages/modules/subscription" },
     { "path": "../../adapters/persistence/memory" },
     { "path": "../../adapters/persistence/supabase" },
     { "path": "../../adapters/identity/supabase-auth" }
