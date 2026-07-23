@@ -8,8 +8,8 @@ GET /audit/logs?resource=...&actor=...&dateRange=...
 | **ID** | SPEC-045 |
 | **Tipo** | API |
 | **Dominio** | Audit |
-| **Estado** | PLANNED |
-| **Readiness** | NOT_ASSESSED |
+| **Estado** | IN_PROGRESS |
+| **Readiness** | WALKING_SKELETON_I0 |
 | **Prioridad** | P0 |
 | **Owner** | UNASSIGNED |
 | **Reviewer** | UNASSIGNED |

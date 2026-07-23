@@ -15,6 +15,7 @@ import {
   InMemoryMenuRepository,
   InMemoryCategoryRepository,
   InMemoryProductRepository,
+  InMemoryAuditLogRepository,
   FixtureSessionVerificationPort,
 } from "@maitre/adapter-persistence-memory";
 import {
@@ -35,6 +36,7 @@ import {
   SupabaseMenuRepository,
   SupabaseCategoryRepository,
   SupabaseProductRepository,
+  SupabaseAuditLogRepository,
 } from "@maitre/adapter-persistence-supabase";
 import {
   createTenant,
@@ -72,6 +74,7 @@ import {
   type CategoryRepositoryPort,
   type ProductRepositoryPort,
 } from "@maitre/catalog";
+import type { AuditLogRepositoryPort } from "@maitre/audit";
 
 export interface Container {
   tenants: TenantRepositoryPort;
@@ -90,6 +93,7 @@ export interface Container {
   menus: MenuRepositoryPort;
   categories: CategoryRepositoryPort;
   products: ProductRepositoryPort;
+  auditLogs: AuditLogRepositoryPort;
   sessions: SessionVerificationPort;
   demoAccessToken: string;
 }
@@ -127,6 +131,7 @@ interface Repositories {
   menus: MenuRepositoryPort;
   categories: CategoryRepositoryPort;
   products: ProductRepositoryPort;
+  auditLogs: AuditLogRepositoryPort;
 }
 
 /**
@@ -157,6 +162,7 @@ function buildRepositories(): Repositories {
       menus: new SupabaseMenuRepository(client),
       categories: new SupabaseCategoryRepository(client),
       products: new SupabaseProductRepository(client),
+      auditLogs: new SupabaseAuditLogRepository(client),
     };
   }
 
@@ -177,6 +183,7 @@ function buildRepositories(): Repositories {
     menus: new InMemoryMenuRepository(),
     categories: new InMemoryCategoryRepository(),
     products: new InMemoryProductRepository(),
+    auditLogs: new InMemoryAuditLogRepository(),
   };
 }
 

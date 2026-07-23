@@ -11,6 +11,7 @@
     { "path": "../../packages/modules/identity" },
     { "path": "../../packages/modules/subscription" },
     { "path": "../../packages/modules/catalog" },
+    { "path": "../../packages/modules/audit" },
     { "path": "../../adapters/persistence/memory" },
     { "path": "../../adapters/persistence/supabase" },
     { "path": "../../adapters/identity/supabase-auth" }

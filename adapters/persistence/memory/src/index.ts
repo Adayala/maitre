@@ -15,3 +15,4 @@ export * from "./quota-repository.js";
 export * from "./menu-repository.js";
 export * from "./category-repository.js";
 export * from "./product-repository.js";
+export * from "./audit-log-repository.js";

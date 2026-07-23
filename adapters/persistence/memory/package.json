@@ -12,7 +12,8 @@
     "@maitre/organization": "*",
     "@maitre/identity": "*",
     "@maitre/subscription": "*",
-    "@maitre/catalog": "*"
+    "@maitre/catalog": "*",
+    "@maitre/audit": "*"
   },
   "devDependencies": {
     "typescript": "^5.5.4"

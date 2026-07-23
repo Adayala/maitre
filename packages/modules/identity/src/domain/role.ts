@@ -65,6 +65,8 @@ export const ROLE_REGISTRY: Readonly<Record<string, Role>> = Object.freeze({
       "product:read",
       "product:write",
       "product:archive",
+      // SPEC-045 §contract — "Acceso requiere permiso sensible"; OWNER/ADMIN only.
+      "audit:read",
     ],
   },
   role_manager: {

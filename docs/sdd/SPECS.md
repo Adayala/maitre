@@ -73,8 +73,8 @@ Formato: **SPEC-NNN | Título | Tipo | Dominio | Fase | Prioridad | Estado | Rea
 
 ## Audit
 
-- [ ] **SPEC-044** | AuditLog Entity | Entity | Audit | Fase 1 | P0 | PLANNED | NOT_ASSESSED
-- [ ] **SPEC-045** | Audit API | API | Audit | Fase 1 | P0 | PLANNED | NOT_ASSESSED
+- [ ] **SPEC-044** | AuditLog Entity | Entity | Audit | Fase 1 | P0 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-045** | Audit API | API | Audit | Fase 1 | P0 | IN_PROGRESS | WALKING_SKELETON_I0
 
 ---
 
