@@ -1,4 +1,5 @@
 import Fastify, { type FastifyInstance } from "fastify";
+import cors from "@fastify/cors";
 import { buildContainer, type Container } from "./composition/container.js";
 import { registerHealthRoutes } from "./routes/health.js";
 import { registerMeRoutes } from "./routes/me.js";
@@ -16,12 +17,23 @@ import { registerMenuRoutes } from "./routes/menus.js";
 import { registerCategoryRoutes } from "./routes/categories.js";
 import { registerProductRoutes } from "./routes/products.js";
 import { registerAuditLogRoutes } from "./routes/audit-logs.js";
+import { registerDashboardRoutes } from "./routes/dashboard.js";
 
 // SPEC-211 — app.ts instantiates and wires plugins/routes without listen().
 // server.ts (local/process) and api/serverless.ts (Vercel) both consume this.
 export async function buildApp(container?: Container): Promise<FastifyInstance> {
   const app = Fastify({ logger: true });
   const resolvedContainer = container ?? (await buildContainer());
+
+  // SPEC-210 topology: browser -> Maitre API. The browser sends only a
+  // bearer token (no cookies), so an open CORS policy here doesn't grant
+  // cross-origin credential access — it just lets apps/web (or any other
+  // client) call this API from a different origin during local dev.
+  await app.register(cors, {
+    origin: true,
+    methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Tenant-Id", "X-Branch-Id"],
+  });
 
   await registerHealthRoutes(app, resolvedContainer);
   await registerMeRoutes(app, resolvedContainer);
@@ -39,6 +51,7 @@ export async function buildApp(container?: Container): Promise<FastifyInstance> 
   await registerCategoryRoutes(app, resolvedContainer);
   await registerProductRoutes(app, resolvedContainer);
   await registerAuditLogRoutes(app, resolvedContainer);
+  await registerDashboardRoutes(app, resolvedContainer);
 
   return app;
 }

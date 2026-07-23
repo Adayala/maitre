@@ -80,9 +80,9 @@ Formato: **SPEC-NNN | Título | Tipo | Dominio | Fase | Prioridad | Estado | Rea
 
 ## Dashboard
 
-- [ ] **SPEC-046** | Dashboard Setup Status API | API | Dashboard | Fase 1 | P1 | PLANNED | NOT_ASSESSED
-- [ ] **SPEC-047** | Dashboard Overview API | API | Dashboard | Fase 1 | P1 | PLANNED | NOT_ASSESSED
-- [ ] **SPEC-048** | Dash App (Setup & Overview) | App | Dashboard | Fase 1 | P0 | PLANNED | NOT_ASSESSED
+- [ ] **SPEC-046** | Dashboard Setup Status API | API | Dashboard | Fase 1 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-047** | Dashboard Overview API | API | Dashboard | Fase 1 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-048** | Dash App (Setup & Overview) | App | Dashboard | Fase 1 | P0 | IN_PROGRESS | WALKING_SKELETON_I0
 
 ---
 

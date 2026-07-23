@@ -8,8 +8,8 @@ GET /dashboard (resumen tenant, suscripción, sucursales).
 | **ID** | SPEC-047 |
 | **Tipo** | API |
 | **Dominio** | Dashboard |
-| **Estado** | PLANNED |
-| **Readiness** | NOT_ASSESSED |
+| **Estado** | IN_PROGRESS |
+| **Readiness** | WALKING_SKELETON_I0 |
 | **Prioridad** | P1 |
 | **Owner** | UNASSIGNED |
 | **Reviewer** | UNASSIGNED |

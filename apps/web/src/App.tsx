@@ -1,0 +1,45 @@
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AuthProvider } from "./app/auth-context.js";
+import { TenantProvider } from "./app/tenant-context.js";
+import { DashboardLayout } from "./app/dashboard-layout.js";
+import { LoginPage } from "./features/login/login-page.js";
+import { OverviewPage } from "./features/overview/overview-page.js";
+import { SetupPage } from "./features/setup/setup-page.js";
+import { BrandsPage } from "./features/brands/brands-page.js";
+import { BranchesPage } from "./features/branches/branches-page.js";
+import { UsersPage } from "./features/users/users-page.js";
+import { SubscriptionPage } from "./features/subscription/subscription-page.js";
+import { AuditLogsPage } from "./features/audit/audit-logs-page.js";
+import { SettingsPage } from "./features/settings/settings-page.js";
+
+const queryClient = new QueryClient();
+
+export function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TenantProvider>
+          <BrowserRouter>
+            <a href="#main-content" className="skip-link">
+              Saltar al contenido principal
+            </a>
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/" element={<DashboardLayout />}>
+                <Route index element={<OverviewPage />} />
+                <Route path="setup" element={<SetupPage />} />
+                <Route path="brands" element={<BrandsPage />} />
+                <Route path="branches" element={<BranchesPage />} />
+                <Route path="users" element={<UsersPage />} />
+                <Route path="subscription" element={<SubscriptionPage />} />
+                <Route path="audit" element={<AuditLogsPage />} />
+                <Route path="settings" element={<SettingsPage />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </TenantProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+}
