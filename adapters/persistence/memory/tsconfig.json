@@ -9,7 +9,8 @@
     { "path": "../../../packages/modules/identity" },
     { "path": "../../../packages/modules/subscription" },
     { "path": "../../../packages/modules/catalog" },
-    { "path": "../../../packages/modules/audit" }
+    { "path": "../../../packages/modules/audit" },
+    { "path": "../../../packages/modules/floor" }
   ],
   "include": ["src"]
 }

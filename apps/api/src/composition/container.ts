@@ -16,6 +16,11 @@ import {
   InMemoryCategoryRepository,
   InMemoryProductRepository,
   InMemoryAuditLogRepository,
+  InMemoryVisitRepository,
+  InMemoryOccupancyRepository,
+  InMemoryCheckRepository,
+  InMemoryPaymentRepository,
+  InMemoryServicePeriodRepository,
   FixtureSessionVerificationPort,
 } from "@maitre/adapter-persistence-memory";
 import {
@@ -37,6 +42,11 @@ import {
   SupabaseCategoryRepository,
   SupabaseProductRepository,
   SupabaseAuditLogRepository,
+  SupabaseVisitRepository,
+  SupabaseOccupancyRepository,
+  SupabaseCheckRepository,
+  SupabasePaymentRepository,
+  SupabaseServicePeriodRepository,
 } from "@maitre/adapter-persistence-supabase";
 import {
   createTenant,
@@ -75,6 +85,13 @@ import {
   type ProductRepositoryPort,
 } from "@maitre/catalog";
 import type { AuditLogRepositoryPort } from "@maitre/audit";
+import type {
+  VisitRepositoryPort,
+  OccupancyRepositoryPort,
+  CheckRepositoryPort,
+  PaymentRepositoryPort,
+  ServicePeriodRepositoryPort,
+} from "@maitre/floor";
 
 export interface Container {
   tenants: TenantRepositoryPort;
@@ -94,6 +111,11 @@ export interface Container {
   categories: CategoryRepositoryPort;
   products: ProductRepositoryPort;
   auditLogs: AuditLogRepositoryPort;
+  visits: VisitRepositoryPort;
+  occupancies: OccupancyRepositoryPort;
+  checks: CheckRepositoryPort;
+  payments: PaymentRepositoryPort;
+  servicePeriods: ServicePeriodRepositoryPort;
   sessions: SessionVerificationPort;
   demoAccessToken: string;
 }
@@ -132,6 +154,11 @@ interface Repositories {
   categories: CategoryRepositoryPort;
   products: ProductRepositoryPort;
   auditLogs: AuditLogRepositoryPort;
+  visits: VisitRepositoryPort;
+  occupancies: OccupancyRepositoryPort;
+  checks: CheckRepositoryPort;
+  payments: PaymentRepositoryPort;
+  servicePeriods: ServicePeriodRepositoryPort;
 }
 
 /**
@@ -163,6 +190,11 @@ function buildRepositories(): Repositories {
       categories: new SupabaseCategoryRepository(client),
       products: new SupabaseProductRepository(client),
       auditLogs: new SupabaseAuditLogRepository(client),
+      visits: new SupabaseVisitRepository(client),
+      occupancies: new SupabaseOccupancyRepository(client),
+      checks: new SupabaseCheckRepository(client),
+      payments: new SupabasePaymentRepository(client),
+      servicePeriods: new SupabaseServicePeriodRepository(client),
     };
   }
 
@@ -184,6 +216,11 @@ function buildRepositories(): Repositories {
     categories: new InMemoryCategoryRepository(),
     products: new InMemoryProductRepository(),
     auditLogs: new InMemoryAuditLogRepository(),
+    visits: new InMemoryVisitRepository(),
+    occupancies: new InMemoryOccupancyRepository(),
+    checks: new InMemoryCheckRepository(),
+    payments: new InMemoryPaymentRepository(),
+    servicePeriods: new InMemoryServicePeriodRepository(),
   };
 }
 

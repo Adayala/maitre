@@ -69,6 +69,22 @@ export const ROLE_REGISTRY: Readonly<Record<string, Role>> = Object.freeze({
       "audit:read",
       // SPEC-046/047
       "dashboard:read",
+      // SPEC-065 §Floor RBAC — ADMIN gets full Floor operational access.
+      "visit:create",
+      "visit:move",
+      "visit:close",
+      "visit:reopen",
+      "occupancy:manage",
+      "table-status:read",
+      "check:read",
+      "check:adjust",
+      "check:void",
+      "check:settle",
+      "payment:create",
+      "payment:capture",
+      "payment:refund",
+      "payment:reconcile",
+      "service-period:manage",
     ],
   },
   role_manager: {
@@ -99,6 +115,24 @@ export const ROLE_REGISTRY: Readonly<Record<string, Role>> = Object.freeze({
       "category:write",
       "product:read",
       "product:write",
+      // SPEC-065 §Floor RBAC — MANAGER "supervisa/corrige con permisos
+      // explícitos": authorizes reopen/void/refund/force-close plus full
+      // read/operate access, matching contract.md.
+      "visit:create",
+      "visit:move",
+      "visit:close",
+      "visit:reopen",
+      "occupancy:manage",
+      "table-status:read",
+      "check:read",
+      "check:adjust",
+      "check:void",
+      "check:settle",
+      "payment:create",
+      "payment:capture",
+      "payment:refund",
+      "payment:reconcile",
+      "service-period:manage",
     ],
   },
   role_employee: {
@@ -118,29 +152,71 @@ export const ROLE_REGISTRY: Readonly<Record<string, Role>> = Object.freeze({
       "product:read",
     ],
   },
+  // SPEC-065 §Floor RBAC — "MAITRE administra seating/moves y ve Floor
+  // completo por branch scope". Full operational Floor access except the
+  // manager-only corrective/authorization actions (reopen, void, refund).
   role_maitre: {
     id: "role_maitre",
     name: "Maître",
-    description: "Floor coordination (permissions defined by SPEC-066 RBAC, Fase 2)",
-    permissions: ["menu:read", "category:read", "product:read"],
+    description: "Floor coordination — seating, moves, full Floor read",
+    permissions: [
+      "menu:read",
+      "category:read",
+      "product:read",
+      "visit:create",
+      "visit:move",
+      "visit:close",
+      "occupancy:manage",
+      "table-status:read",
+      "check:read",
+      "service-period:manage",
+    ],
   },
+  // SPEC-065 — "WAITER opera Visits y mesas asignadas/permitidas": takes
+  // orders, opens/closes own Visits and Checks, cannot void/refund/reopen
+  // (those require MANAGER authorization per contract.md).
   role_waiter: {
     id: "role_waiter",
     name: "Waiter",
-    description: "Order taking (permissions defined by SPEC-074 RBAC, Fase 2)",
-    permissions: ["menu:read", "category:read", "product:read"],
+    description: "Order taking — operates Visit/Check per branch/ownership",
+    permissions: [
+      "menu:read",
+      "category:read",
+      "product:read",
+      "visit:create",
+      "visit:move",
+      "visit:close",
+      "occupancy:manage",
+      "table-status:read",
+      "check:read",
+      "check:adjust",
+    ],
   },
+  // SPEC-065 — "COOK sólo lectura mínima si requerida": no guest/check
+  // access per contract.md ("COOK no accede a guest/check salvo
+  // contrato"); read-only table status for kitchen-adjacent awareness.
   role_cook: {
     id: "role_cook",
     name: "Cook",
-    description: "Kitchen operations (permissions defined by SPEC-085 RBAC, Fase 2)",
-    permissions: [],
+    description: "Kitchen operations — read-only minimal Floor access",
+    permissions: ["table-status:read"],
   },
+  // SPEC-065 — "CASHIER cobra/refund dentro de LimitsPolicy": handles
+  // payment capture/refund and reads Check/Payment, without managing
+  // seating (matches contract.md's "CASHIER lee Check/Payment necesarios
+  // sin gestionar seating"). LimitsPolicy itself is out of this MVP scope.
   role_cashier: {
     id: "role_cashier",
     name: "Cashier",
-    description: "Cash/payments (permissions defined by SPEC-135 RBAC, Fase 4)",
-    permissions: [],
+    description: "Cash/payments — capture, refund, Check/Payment read",
+    permissions: [
+      "check:read",
+      "check:settle",
+      "payment:create",
+      "payment:capture",
+      "payment:refund",
+      "payment:reconcile",
+    ],
   },
 });
 

@@ -13,7 +13,8 @@
     "@maitre/identity": "*",
     "@maitre/subscription": "*",
     "@maitre/catalog": "*",
-    "@maitre/audit": "*"
+    "@maitre/audit": "*",
+    "@maitre/floor": "*"
   },
   "devDependencies": {
     "typescript": "^5.5.4"

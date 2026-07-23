@@ -88,17 +88,28 @@ Formato: **SPEC-NNN | Título | Tipo | Dominio | Fase | Prioridad | Estado | Rea
 
 ## Floor
 
-- [ ] **SPEC-049** | Visit Entity | Entity | Floor | Fase 2 | UNASSIGNED | DRAFT | NOT_ASSESSED
-- [ ] **SPEC-050** | Occupancy Entity | Entity | Floor | Fase 2 | UNASSIGNED | DRAFT | NOT_ASSESSED
-- [ ] **SPEC-051** | Table Status Entity | Entity | Floor | Fase 2 | UNASSIGNED | DRAFT | NOT_ASSESSED
-- [ ] **SPEC-054** | Service Entity | Entity | Floor | Fase 2 | UNASSIGNED | DRAFT | NOT_ASSESSED
+- [ ] **SPEC-049** | Visit Entity | Entity | Floor | Fase 2 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-050** | Occupancy Entity | Entity | Floor | Fase 2 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-051** | Table Status Entity | Entity | Floor | Fase 2 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-054** | Service Entity | Entity | Floor | Fase 2 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-055** | Visits API | API | Floor | Fase 2 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-056** | Occupancy API | API | Floor | Fase 2 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-057** | Table Status API | API | Floor | Fase 2 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-058** | Checks API | API | Floor | Fase 2 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-059** | Payments API | API | Floor | Fase 2 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-060** | ServicePeriods API | API | Floor | Fase 2 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-061** | VisitOpened Event | Event | Floor | Fase 2 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-062** | VisitClosed Event | Event | Floor | Fase 2 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-063** | PaymentProcessed Event | Event | Floor | Fase 2 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-064** | CheckGenerated Event | Event | Floor | Fase 2 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-065** | Floor RBAC | RBAC | Floor | Fase 2 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
 
 ---
 
 ## Billing & Payments
 
-- [ ] **SPEC-052** | Check Entity | Entity | Billing & Payments | Fase 2 | UNASSIGNED | DRAFT | NOT_ASSESSED
-- [ ] **SPEC-053** | Payment Entity | Entity | Billing & Payments | Fase 2 | UNASSIGNED | DRAFT | NOT_ASSESSED
+- [ ] **SPEC-052** | Check Entity | Entity | Billing & Payments | Fase 2 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-053** | Payment Entity | Entity | Billing & Payments | Fase 2 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
 
 ---
 
@@ -227,17 +238,6 @@ Formato: **SPEC-NNN | Título | Tipo | Dominio | Fase | Prioridad | Estado | Rea
 
 Estas carpetas existen pero su `README.md` no fue completado (contenido tipo TBD / plantilla de peer review).
 
-- [ ] **SPEC-055** | spec-055-api-visits | STUB
-- [ ] **SPEC-056** | spec-056-api-occupancy | STUB
-- [ ] **SPEC-057** | spec-057-api-table-status | STUB
-- [ ] **SPEC-058** | spec-058-api-checks | STUB
-- [ ] **SPEC-059** | spec-059-api-payments | STUB
-- [ ] **SPEC-060** | spec-060-api-services | STUB
-- [ ] **SPEC-061** | spec-061-event-visitopened | STUB
-- [ ] **SPEC-062** | spec-062-event-visitclosed | STUB
-- [ ] **SPEC-063** | spec-063-event-paymentprocessed | STUB
-- [ ] **SPEC-064** | spec-064-event-checkgenerated | STUB
-- [ ] **SPEC-065** | spec-065-rbac-floor | STUB
 - [ ] **SPEC-071** | spec-071-api-reservations | STUB
 - [ ] **SPEC-072** | spec-072-api-guests | STUB
 - [ ] **SPEC-073** | spec-073-api-waitlist | STUB

@@ -16,3 +16,8 @@ export * from "./menu-repository.js";
 export * from "./category-repository.js";
 export * from "./product-repository.js";
 export * from "./audit-log-repository.js";
+export * from "./visit-repository.js";
+export * from "./occupancy-repository.js";
+export * from "./check-repository.js";
+export * from "./payment-repository.js";
+export * from "./service-period-repository.js";
