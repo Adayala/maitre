@@ -135,17 +135,28 @@ Formato: **SPEC-NNN | Título | Tipo | Dominio | Fase | Prioridad | Estado | Rea
 
 ## Ordering
 
-- [ ] **SPEC-081** | Order Entity | Entity | Ordering | Fase 2 | UNASSIGNED | DRAFT | NOT_ASSESSED
-- [ ] **SPEC-082** | Order Item Entity | Entity | Ordering | Fase 2 | UNASSIGNED | DRAFT | NOT_ASSESSED
-- [ ] **SPEC-083** | Order Modifier Entity | Entity | Ordering | Fase 2 | UNASSIGNED | DRAFT | NOT_ASSESSED
-- [ ] **SPEC-084** | QR Menu Entity | Entity | Ordering | Fase 2 | UNASSIGNED | DRAFT | NOT_ASSESSED
-- [ ] **SPEC-085** | Digital Bill Entity | Entity | Ordering | Fase 2 | UNASSIGNED | DRAFT | NOT_ASSESSED
+- [ ] **SPEC-081** | Order Entity | Entity | Ordering | Fase 2 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-082** | Order Item Entity | Entity | Ordering | Fase 2 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-083** | Order Modifier Entity | Entity | Ordering | Fase 2 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-084** | QR Menu Entity | Entity | Ordering | Fase 2 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-085** | Digital Bill Entity | Entity | Ordering | Fase 2 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-087** | Orders API | API | Ordering | Fase 2 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-088** | QR Menu API | API | Ordering | Fase 2 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-089** | Order Modifications API | API | Ordering | Fase 2 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-090** | Digital Bill API | API | Ordering | Fase 2 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-091** | Order Tracking API | API | Ordering | Fase 2 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-092** | Menu Recommendations API | API | Ordering | Fase 2 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-093** | Special Requests API | API | Ordering | Fase 2 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-094** | OrderSubmitted Event | Event | Ordering | Fase 2 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-095** | OrderReady Event | Event | Ordering | Fase 2 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-096** | OrderDelivered Event | Event | Ordering | Fase 2 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-097** | Ordering RBAC | RBAC | Ordering | Fase 2 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
 
 ---
 
 ## Kitchen
 
-- [ ] **SPEC-086** | Kitchen Ticket Entity | Entity | Kitchen | Fase 2 | UNASSIGNED | DRAFT | NOT_ASSESSED
+- [ ] **SPEC-086** | Kitchen Ticket Entity | Entity | Kitchen | Fase 2 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
 - [ ] **SPEC-098** | Command Entity | Entity | Kitchen | Fase 2 | UNASSIGNED | DRAFT | NOT_ASSESSED
 - [ ] **SPEC-099** | Station Entity | Entity | Kitchen | Fase 2 | UNASSIGNED | DRAFT | NOT_ASSESSED
 - [ ] **SPEC-100** | Production Queue Entity | Entity | Kitchen | Fase 2 | UNASSIGNED | DRAFT | NOT_ASSESSED
@@ -248,17 +259,6 @@ Formato: **SPEC-NNN | Título | Tipo | Dominio | Fase | Prioridad | Estado | Rea
 
 Estas carpetas existen pero su `README.md` no fue completado (contenido tipo TBD / plantilla de peer review).
 
-- [ ] **SPEC-087** | spec-087-api-orders | STUB
-- [ ] **SPEC-088** | spec-088-api-qr-menu | STUB
-- [ ] **SPEC-089** | spec-089-api-order-modifications | STUB
-- [ ] **SPEC-090** | spec-090-api-digital-bill | STUB
-- [ ] **SPEC-091** | spec-091-api-order-tracking | STUB
-- [ ] **SPEC-092** | spec-092-api-menu-recommendations | STUB
-- [ ] **SPEC-093** | spec-093-api-special-requests | STUB
-- [ ] **SPEC-094** | spec-094-event-order-placed | STUB
-- [ ] **SPEC-095** | spec-095-event-order-ready | STUB
-- [ ] **SPEC-096** | spec-096-event-order-delivered | STUB
-- [ ] **SPEC-097** | spec-097-rbac-ordering | STUB
 - [ ] **SPEC-102** | spec-102-api-commands | STUB
 - [ ] **SPEC-103** | spec-103-api-stations | STUB
 - [ ] **SPEC-104** | spec-104-api-production | STUB

@@ -11,7 +11,8 @@
     { "path": "../../../packages/modules/catalog" },
     { "path": "../../../packages/modules/audit" },
     { "path": "../../../packages/modules/floor" },
-    { "path": "../../../packages/modules/reservations" }
+    { "path": "../../../packages/modules/reservations" },
+    { "path": "../../../packages/modules/ordering" }
   ],
   "include": ["src"]
 }

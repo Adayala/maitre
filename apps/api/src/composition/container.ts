@@ -27,6 +27,10 @@ import {
   InMemoryReservationPreferenceRepository,
   InMemoryCancellationPolicyRepository,
   InMemoryNotificationIntentRepository,
+  InMemoryOrderRepository,
+  InMemoryCapabilityTokenRepository,
+  InMemoryKitchenTicketRepository,
+  InMemorySpecialRequestRepository,
   FixtureSessionVerificationPort,
 } from "@maitre/adapter-persistence-memory";
 import {
@@ -59,6 +63,10 @@ import {
   SupabaseReservationPreferenceRepository,
   SupabaseCancellationPolicyRepository,
   SupabaseNotificationIntentRepository,
+  SupabaseOrderRepository,
+  SupabaseCapabilityTokenRepository,
+  SupabaseKitchenTicketRepository,
+  SupabaseSpecialRequestRepository,
 } from "@maitre/adapter-persistence-supabase";
 import {
   createTenant,
@@ -112,6 +120,13 @@ import type {
   CancellationPolicyRepositoryPort,
   NotificationIntentRepositoryPort,
 } from "@maitre/reservations";
+import {
+  hashToken,
+  type OrderRepositoryPort,
+  type CapabilityTokenRepositoryPort,
+  type KitchenTicketRepositoryPort,
+  type SpecialRequestRepositoryPort,
+} from "@maitre/ordering";
 
 export interface Container {
   tenants: TenantRepositoryPort;
@@ -142,8 +157,13 @@ export interface Container {
   reservationPreferences: ReservationPreferenceRepositoryPort;
   cancellationPolicies: CancellationPolicyRepositoryPort;
   notificationIntents: NotificationIntentRepositoryPort;
+  orders: OrderRepositoryPort;
+  capabilityTokens: CapabilityTokenRepositoryPort;
+  kitchenTickets: KitchenTicketRepositoryPort;
+  specialRequests: SpecialRequestRepositoryPort;
   sessions: SessionVerificationPort;
   demoAccessToken: string;
+  demoQrMenuToken: string;
 }
 
 // Fixed, deterministic ids for the seeded demo data — required so seeding
@@ -161,6 +181,12 @@ const DEMO_MENU_ID = "00000000-0000-0000-0000-000000000009";
 const DEMO_CATEGORY_ID = "00000000-0000-0000-0000-00000000000a";
 const DEMO_PRODUCT_ID = "00000000-0000-0000-0000-00000000000b";
 const DEMO_ACCESS_TOKEN = "demo-token";
+// Demo public MENU_READ capability for manual QR-menu curl testing against the
+// seeded demo Menu. Only its SHA-256 hash is stored (hash-at-rest); the raw
+// token below is the value a client presents to GET /public/menu/:token. Fixed
+// id keeps the seed idempotent across boots. Synthetic testing data only.
+const DEMO_QR_MENU_TOKEN = "demo-qr-menu-token";
+const DEMO_QR_TOKEN_ID = "00000000-0000-0000-0000-00000000000c";
 
 interface Repositories {
   tenants: TenantRepositoryPort;
@@ -191,6 +217,10 @@ interface Repositories {
   reservationPreferences: ReservationPreferenceRepositoryPort;
   cancellationPolicies: CancellationPolicyRepositoryPort;
   notificationIntents: NotificationIntentRepositoryPort;
+  orders: OrderRepositoryPort;
+  capabilityTokens: CapabilityTokenRepositoryPort;
+  kitchenTickets: KitchenTicketRepositoryPort;
+  specialRequests: SpecialRequestRepositoryPort;
 }
 
 /**
@@ -233,6 +263,10 @@ function buildRepositories(): Repositories {
       reservationPreferences: new SupabaseReservationPreferenceRepository(client),
       cancellationPolicies: new SupabaseCancellationPolicyRepository(client),
       notificationIntents: new SupabaseNotificationIntentRepository(client),
+      orders: new SupabaseOrderRepository(client),
+      capabilityTokens: new SupabaseCapabilityTokenRepository(client),
+      kitchenTickets: new SupabaseKitchenTicketRepository(client),
+      specialRequests: new SupabaseSpecialRequestRepository(client),
     };
   }
 
@@ -265,6 +299,10 @@ function buildRepositories(): Repositories {
     reservationPreferences: new InMemoryReservationPreferenceRepository(),
     cancellationPolicies: new InMemoryCancellationPolicyRepository(),
     notificationIntents: new InMemoryNotificationIntentRepository(),
+    orders: new InMemoryOrderRepository(),
+    capabilityTokens: new InMemoryCapabilityTokenRepository(),
+    kitchenTickets: new InMemoryKitchenTicketRepository(),
+    specialRequests: new InMemorySpecialRequestRepository(),
   };
 }
 
@@ -425,6 +463,27 @@ async function ensureSeed(repos: Repositories): Promise<void> {
       },
     );
   }
+
+  // Ordering (SPEC-084/088): a demo MENU_READ capability token pointing at the
+  // seeded demo Menu, so the public GET /public/menu/:token route can be
+  // exercised by hand. Idempotent via the fixed token hash. This is the only
+  // Ordering seed — Orders/KitchenTickets/etc. are transactional, not seeded.
+  const existingQr = await repos.capabilityTokens.findByHash(hashToken(DEMO_QR_MENU_TOKEN));
+  if (!existingQr) {
+    await repos.capabilityTokens.save({
+      id: DEMO_QR_TOKEN_ID,
+      tenantId: tenant.id,
+      purpose: "MENU_READ",
+      tokenHash: hashToken(DEMO_QR_MENU_TOKEN),
+      resourceType: "MENU",
+      resourceId: DEMO_MENU_ID,
+      branchId: branch.id,
+      status: "ACTIVE",
+      issuedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
 }
 
 /**
@@ -462,5 +521,10 @@ export async function buildContainer(): Promise<Container> {
     });
   }
 
-  return { ...repos, sessions, demoAccessToken: DEMO_ACCESS_TOKEN };
+  return {
+    ...repos,
+    sessions,
+    demoAccessToken: DEMO_ACCESS_TOKEN,
+    demoQrMenuToken: DEMO_QR_MENU_TOKEN,
+  };
 }

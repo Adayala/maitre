@@ -27,3 +27,7 @@ export * from "./waitlist-entry-repository.js";
 export * from "./reservation-preference-repository.js";
 export * from "./cancellation-policy-repository.js";
 export * from "./notification-intent-repository.js";
+export * from "./order-repository.js";
+export * from "./capability-token-repository.js";
+export * from "./kitchen-ticket-repository.js";
+export * from "./special-request-repository.js";

@@ -103,6 +103,22 @@ export const ROLE_REGISTRY: Readonly<Record<string, Role>> = Object.freeze({
       "guest:anonymize",
       "reservation:notification_send",
       "reservation:policy_override",
+      // SPEC-097 §Ordering RBAC — ADMIN gets the full canonical set including
+      // the elevated exceptions (cancel_prepared) and audit read. The spec's
+      // dotted names (order.read, kitchen.line.start, ...) are mapped to the
+      // codebase's resource:action convention, exactly as SPEC-080's
+      // reservation.notification.send became reservation:notification_send.
+      "order:read",
+      "order:create",
+      "order:submit",
+      "order:modify",
+      "order:cancel",
+      "order:cancel_prepared",
+      "kitchen:line_start",
+      "kitchen:line_ready",
+      "order:deliver",
+      "special_request:review",
+      "order:audit_read",
     ],
   },
   role_manager: {
@@ -168,6 +184,19 @@ export const ROLE_REGISTRY: Readonly<Record<string, Role>> = Object.freeze({
       "guest:anonymize",
       "reservation:notification_send",
       "reservation:policy_override",
+      // SPEC-097 §Ordering RBAC — MANAGER authorizes exceptions (prepared
+      // cancellation, overrides) and sees the full Ordering surface.
+      "order:read",
+      "order:create",
+      "order:submit",
+      "order:modify",
+      "order:cancel",
+      "order:cancel_prepared",
+      "kitchen:line_start",
+      "kitchen:line_ready",
+      "order:deliver",
+      "special_request:review",
+      "order:audit_read",
     ],
   },
   role_employee: {
@@ -250,16 +279,28 @@ export const ROLE_REGISTRY: Readonly<Record<string, Role>> = Object.freeze({
       "reservation:seat",
       "waitlist:read",
       "waitlist:manage",
+      // SPEC-097 §Ordering RBAC — WAITER operates Orders within branch/
+      // ownership: take/submit/modify/cancel orders and deliver to the table,
+      // but NOT cancel already-prepared items (manager exception) nor read the
+      // order audit trail.
+      "order:read",
+      "order:create",
+      "order:submit",
+      "order:modify",
+      "order:cancel",
+      "order:deliver",
     ],
   },
-  // SPEC-065 — "COOK sólo lectura mínima si requerida": no guest/check
-  // access per contract.md ("COOK no accede a guest/check salvo
-  // contrato"); read-only table status for kitchen-adjacent awareness.
+  // SPEC-097 §Ordering RBAC — "COOK actúa sólo sobre líneas de stations
+  // asignadas": drives kitchen line start/ready and reads the orders it works.
+  // This is the role's first real content (was empty pre-Ordering). Station
+  // ownership scoping itself is a documented deferred gap (no ShiftAssignment
+  // entity yet).
   role_cook: {
     id: "role_cook",
     name: "Cook",
-    description: "Kitchen operations — read-only minimal Floor access",
-    permissions: ["table-status:read"],
+    description: "Kitchen operations — drives kitchen lines, reads worked orders",
+    permissions: ["table-status:read", "kitchen:line_start", "kitchen:line_ready", "order:read"],
   },
   // SPEC-065 — "CASHIER cobra/refund dentro de LimitsPolicy": handles
   // payment capture/refund and reads Check/Payment, without managing
@@ -276,6 +317,9 @@ export const ROLE_REGISTRY: Readonly<Record<string, Role>> = Object.freeze({
       "payment:capture",
       "payment:refund",
       "payment:reconcile",
+      // SPEC-097 §Ordering RBAC — "CASHIER lee el mínimo necesario para
+      // coordinación con Check": order read only.
+      "order:read",
     ],
   },
 });
