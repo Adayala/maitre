@@ -1,8 +1,25 @@
 # Especificación — SPEC-059 Payments API
 
-Commands `create-intent`, `authorize`, `capture`, `void`, `refund`, `reconcile`. Amount/currency/
-balance se validan contra Check revision. Idempotency end-to-end incluye provider operation.
+Superficie I0 autenticada:
 
-Refund refiere capture y admite amount parcial acumulado <= captured. Timeout/callback ambiguo queda
+- `POST /v1/checks/{checkId}/payments`;
+- `GET /v1/checks/{checkId}/payments`;
+- `GET /v1/payments/{paymentId}`;
+- `POST /v1/payments/{paymentId}/authorize`;
+- `POST /v1/payments/{paymentId}/capture`;
+- `POST /v1/payments/{paymentId}/void`;
+- `POST /v1/payments/{paymentId}/refunds`;
+- `POST /v1/payments/{paymentId}/reconcile`.
+
+Los comandos requieren `Idempotency-Key` e `If-Match` cuando mutan un Payment existente.
+Amount/currency/tip/balance se validan contra Check revision. La identidad idempotente
+end-to-end incluye la operación del provider.
+
+El ingreso `POST /v1/payment-provider-callbacks/{providerCode}` es exclusivo de adapters:
+valida firma sobre el cuerpo original, timestamp/ventana anti-replay y credencial del
+provider antes de persistir un receipt deduplicable. La respuesta no revela existencia de
+Payment ni scope tenant.
+
+Refund refiere una capture y admite amount parcial acumulado <= captured. Timeout/callback ambiguo queda
 PENDING_RECONCILIATION y se consulta antes de retry. Cash capture crea CashMovement una vez. API
 nunca recibe/devuelve PAN, CVV, provider secrets ni referencias completas.

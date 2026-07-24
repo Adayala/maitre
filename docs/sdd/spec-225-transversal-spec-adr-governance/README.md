@@ -12,8 +12,7 @@ Contrato transversal para crear, revisar, aprobar, cambiar, verificar y retirar 
 | **Readiness** | BLOCKED |
 | **Review target** | PROPOSED_FOR_REVIEW |
 | **Prioridad** | P0 |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
 | **Blockers** | Asignar owner y reviewer |
 | **Fase** | Antes de marcar specs como READY_FOR_IMPLEMENTATION |
 | **Depende de** | SPEC-207, SPEC-221, SPEC-222 |
@@ -89,6 +88,8 @@ Contrato transversal para crear, revisar, aprobar, cambiar, verificar y retirar 
 - [Catálogo de fixtures GACT v1](governance-activation-fixture-catalog.md)
 - [Contrato de disponibilidad y continuidad del validator](validation-availability-continuity-contract.md)
 - [Catálogo de fixtures VAVL v1](validation-availability-fixture-catalog.md)
+- [Contrato de respuesta a incidentes del validator](validation-incident-response-contract.md)
+- [Catálogo de fixtures VINC v1](validation-incident-response-fixture-catalog.md)
 - [Contrato](contract.md)
 - [Objetivo](objective.md)
 - [Especificación](specification.md)
@@ -119,6 +120,7 @@ Contrato transversal para crear, revisar, aprobar, cambiar, verificar y retirar 
 - [Migración de README placeholders](placeholder-readme-migration.md)
 - [Contrato de dependencias de plataforma](platform-dependency-contract.md)
 - [Auditoría final de especificación](final-specification-audit.md)
+- [Auditoría de cierre de definición normativa](specification-definition-gap-audit.md)
 - [Auditoría de consistencia semántica](semantic-consistency-audit.md)
 - [Registro de revisiones y findings](reviews/README.md)
 - [Revisión Organization SPEC-001–016](reviews/organization-spec-001-016.md)

@@ -2,6 +2,7 @@
 
 - [ ] Aprobar lifecycle y estados.
 - [x] Definir contrato determinista y códigos del validador.
+- [x] Auditar cierre de definición normativa del marco transversal.
 - [x] Definir roles owner/reviewer requeridos por dominio y su contrato de asignación.
 - [ ] Registrar assignees efectivos con aceptación verificable.
 - [x] Especificar capabilities, risk tiers, delegación y escalamiento de autoridad.
@@ -165,6 +166,10 @@
 - [x] Especificar fixtures `VAVL` de disponibilidad.
 - [ ] Materializar fixtures `VAVL` después de aprobar budgets/retry policy.
 - [ ] Observar shadow y aprobar budgets/SLO/alertas/rollback.
+- [x] Especificar respuesta, custodia de evidencia y cierre de incidentes.
+- [x] Especificar fixtures `VINC` de incident response.
+- [ ] Materializar fixtures `VINC` después de aprobar incident policy.
+- [ ] Aprobar cadencias/destinos/retention y asignar on-call.
 - [x] Especificar integración CI, rollout, aggregator y canarios del validador SDD.
 - [x] Especificar fixtures `SDDCI`.
 - [ ] Materializar fixtures `SDDCI` antes de crear workflow.

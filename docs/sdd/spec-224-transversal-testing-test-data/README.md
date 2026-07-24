@@ -12,8 +12,7 @@ Contrato transversal para obtener evidencia confiable con tests rápidos, manten
 | **Readiness** | BLOCKED |
 | **Review target** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
 | **Blockers** | Asignar owner y reviewer |
 | **Fase** | Antes del primer código funcional |
 | **Depende de** | SPEC-207, SPEC-209–223 |
@@ -30,6 +29,7 @@ Contrato transversal para obtener evidencia confiable con tests rápidos, manten
 
 ## Documentos
 
+- [Contrato](contract.md)
 - [Objetivo](objective.md)
 - [Especificación](specification.md)
 - [Reglas](rules.md)

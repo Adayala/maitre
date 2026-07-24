@@ -1,12 +1,7 @@
-# Rules — RBAC
+# Reglas — SPEC-016
 
-- OWNER can manage all
-- ADMIN can create resources
-- MANAGER can view
-- EMPLOYEE has no org access
-
-Authorization middleware checks:
-1. User authenticated
-2. User in tenant
-3. User role
-4. Permission for action+resource
+- No existe autorización genérica por `EMPLOYEE` ni comparación ordinal de roles.
+- OWNER/ADMIN/MANAGER operan sólo mediante permissions y scopes efectivos.
+- Nadie crea/edita recursos cross-tenant ni se autoasigna permisos.
+- Fiscal/archivo/soporte son acciones sensibles auditadas.
+- Revocación de Membership/assignment invalida autorización server-side.

@@ -12,8 +12,7 @@ Contrato transversal de seguridad y privacidad para diseñar, implementar y veri
 | **Readiness** | BLOCKED |
 | **Blockers** | Gate de piloto no aprobado; asignar owner y reviewer |
 | **Prioridad** | P0 |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
 | **Fase** | Desde el walking skeleton; gate obligatorio antes del piloto |
 | **Depende de** | SPEC-016, SPEC-023, SPEC-044–045, SPEC-207–218 |
 
@@ -28,6 +27,7 @@ Contrato transversal de seguridad y privacidad para diseñar, implementar y veri
 
 ## Documentos
 
+- [Contrato](contract.md)
 - [Objetivo](objective.md)
 - [Especificación](specification.md)
 - [Reglas](rules.md)

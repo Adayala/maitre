@@ -1,45 +1,44 @@
 # Verificación — SPEC-002
 
-## Criterios de terminación
+## Criterios
 
-- [ ] Code merged a main
-- [ ] All tests passing (coverage > 80%)
-- [ ] Deployed a staging
-- [ ] Documentation updated
-- [ ] Code review approved
+### CAD-002-01 — Brand modela identidad comercial con alcance tenant
 
-## Test plan
+- [ ] Brand requiere `tenantId` válido y no existe fuera de ese alcance;
+- [ ] acepta nombre y assets opcionales válidos;
+- [ ] no embebe usuarios, sucursales ni recursos hijos;
+- [ ] consultas y lecturas devuelven únicamente marcas del tenant autorizado.
 
-### Unit tests
+### CAD-002-02 — `slug` es estable, normalizado y único dentro del tenant
 
-- Test slug generation (normalización)
-- Test status transitions (máquina de estados)
-- Test config inheritance
-- Test validation (name length, etc)
+- [ ] normalización produce valores determinísticos;
+- [ ] duplicado de `slug` dentro del mismo tenant falla;
+- [ ] el mismo `slug` puede existir en tenants distintos;
+- [ ] cambios de nombre no rompen unicidad ni trazabilidad aprobada.
 
-### Integration tests
+### CAD-002-03 — Los defaults de marca son explícitos y acotados
 
-- Create brand → BrandCreated event emitido
-- List brands por tenant → aislación verificada
-- Intentar acceder a brand de otro tenant → 403
-- Update brand → AuditLog entry created
+- [ ] los defaults aprobados están modelados con campos claros o referencias explícitas;
+- [ ] no existe `config` JSON abierto para decisiones de dominio no revisadas;
+- [ ] sucursal sólo hereda lo declarado por contrato;
+- [ ] overrides de sucursal no mutan retrospectivamente la marca.
 
-### E2E tests
+### CAD-002-04 — Brand no absorbe menús, fiscalidad ni capacidades
 
-- POST /brands → GET /brands/:id → PATCH → verificar cambios
+- [ ] Brand no guarda menú completo, certificados, KMS material, cuotas ni entitlements;
+- [ ] referencias a otros agregados usan IDs explícitos y same-tenant cuando aplica;
+- [ ] el contrato distingue referencias de ownership.
 
-## Validación de criterios de aceptación
+### CAD-002-05 — El ciclo de vida comercial es consistente y restrictivo al archivar
 
-| CAD | Test | Status |
-| --- | --- | --- |
-| CAD-1 | test_create_brand | ⏳ |
-| CAD-2 | test_inheritance | ⏳ |
-| CAD-3 | test_crud_api | ⏳ |
-| CAD-4 | test_brand_created_event | ⏳ |
-| CAD-5 | test_tenant_isolation | ⏳ |
+- [ ] sólo permite transiciones declaradas;
+- [ ] `ARCHIVED` bloquea cambios operativos nuevos;
+- [ ] lecturas históricas siguen disponibles según autorización;
+- [ ] timestamps se almacenan como `timestamptz` y UTC.
 
-## Sign-off
+### CAD-002-06 — Cambios en Brand conservan aislamiento, auditoría y publicación de eventos
 
-**Verificado por:** @faguero (pending)
-**Fecha:** 2026-07-20 (pending)
-**Status:** PENDING ⏳
+- [ ] User de Tenant A no lista, lee ni modifica Brand de Tenant B;
+- [ ] creación y mutaciones registran auditoría;
+- [ ] `BrandCreated` o evento equivalente se persiste atómicamente con outbox;
+- [ ] existe evidencia enlazada en tests, migraciones y revisión.

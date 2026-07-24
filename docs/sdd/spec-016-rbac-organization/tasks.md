@@ -1,5 +1,7 @@
 # Tasks — RBAC
 
+**Spec:** SPEC-016
+
 - [ ] Authorization middleware
 - [ ] Permission checks
 - [ ] Role assignment validation

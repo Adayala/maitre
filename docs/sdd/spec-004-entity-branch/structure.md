@@ -1,4 +1,8 @@
-# Structure — SPEC-004
+# Estructura — SPEC-004
+
+> **Estado:** antecedente no implementable. El baseline físico reconciliado está en
+> [SPEC-210 — diccionario I0](../spec-210-transversal-data-identity-platform/i0-physical-dictionary.md#maitrebranches--spec-004)
+> y su ciclo de vida continúa pendiente de sign-off en OPEN-004.
 
 ## Persistencia propuesta
 

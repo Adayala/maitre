@@ -12,8 +12,7 @@ Evento emitido cuando se crea un tenant.
 | **Estado** | IN_PROGRESS |
 | **Readiness** | WALKING_SKELETON_I0 |
 | **Prioridad** | P0 |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
 | **Fase** | 1 |
 | **Estimación** | 2h |
 
@@ -21,6 +20,7 @@ Evento emitido cuando se crea un tenant.
 
 ## Documentos
 
+- [Especificación](specification.md)
 - [Contrato del evento](contract.md)
 - [Reglas](rules.md)
 - [Verificación](verification.md)

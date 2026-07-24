@@ -1,5 +1,7 @@
 # Plan — API
 
+**Spec:** SPEC-008
+
 - HTTP handler per endpoint
 - Repository layer for DB
 - Validation layer for input

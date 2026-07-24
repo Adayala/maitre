@@ -12,8 +12,7 @@ Contrato para configurar y desplegar Maitre de forma reproducible, segura y port
 | **Readiness** | BLOCKED |
 | **Review target** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
 | **Blockers** | Asignar owner y reviewer |
 | **Fase** | Antes del primer despliegue compartido |
 | **Depende de** | SPEC-207–211, SPEC-213 |
@@ -26,6 +25,7 @@ Los secretos nunca se incluyen en Git, bundles web, previews no autorizadas, log
 
 ## Documentos
 
+- [Contrato](contract.md)
 - [Objetivo](objective.md)
 - [Especificación](specification.md)
 - [Reglas](rules.md)
@@ -34,3 +34,4 @@ Los secretos nunca se incluyen en Git, bundles web, previews no autorizadas, log
 - [Verificación](verification.md)
 - [Decisiones](notes.md)
 - [Inventario de configuración](configuration-inventory.md)
+- [Handoff Vercel/Supabase](provider-handoff.md)

@@ -1,36 +1,48 @@
 # Verificación — SPEC-224
 
-## Determinismo y aislamiento
+## Criterios
 
-- [ ] Suite repetida con mismo seed produce igual resultado.
-- [ ] Tests corren en orden aleatorio/paralelo sin interferencia.
-- [ ] Clock/IDs controlan expiración y snapshots.
-- [ ] No existen sleeps arbitrarios ni dependencia de hora local.
-- [ ] Cleanup no deja datos entre ejecuciones.
+### CAD-224-01 — Los tests representan riesgo real en la capa más barata y determinista posible
 
-## Capas
+- [ ] defecto corregido incluye regresión en capa adecuada;
+- [ ] E2E cubre sólo recorridos MVP críticos;
+- [ ] la selección de capa evita evidencia cara o engañosa.
 
-- [ ] Unit tests de domain/application corren sin red/DB.
-- [ ] Integration usa PostgreSQL compatible real.
-- [ ] RLS prueba acceso positivo y negativo con dos tenants.
-- [ ] API tests verifican schemas, Problem Details e idempotencia.
-- [ ] UI tests usan roles/labels y axe.
-- [ ] E2E cubre sólo recorridos MVP críticos.
+### CAD-224-02 — Unit, integration, API, UI y E2E tienen fronteras claras y sin mocks engañosos
 
-## Datos y proveedores
+- [ ] unit tests de domain/application corren sin red/DB;
+- [ ] integration usa PostgreSQL compatible real;
+- [ ] RLS prueba acceso positivo y negativo con dos tenants;
+- [ ] API tests verifican schemas, Problem Details e idempotencia;
+- [ ] UI tests usan roles/labels y axe;
+- [ ] MSW falla ante requests inesperadas;
+- [ ] adapter tests cubren mapping/error/timeout/reconciliación.
 
-- [ ] Fixtures/builders son sintéticos y mínimos.
-- [ ] Ningún artefacto contiene PII, credencial o certificado real.
-- [ ] MSW falla ante requests inesperadas.
-- [ ] Adapter tests cubren mapping/error/timeout/reconciliación.
+### CAD-224-03 — Los datos de prueba son sintéticos, mínimos, deterministas y multi-tenant por defecto
+
+- [ ] fixtures/builders son sintéticos y mínimos;
+- [ ] ningún artefacto contiene PII, credencial o certificado real;
 - [ ] PR no puede contactar ARCA/pagos productivos.
 
-## Calidad de suite
+### CAD-224-04 — Los contratos incompatibles entre API, eventos y clientes bloquean CI
 
-- [ ] Cobertura nueva y Sonar cumplen SPEC-207.
-- [ ] Defecto corregido incluye regresión en capa adecuada.
-- [ ] Flake produce issue/evidencia y no se oculta con retries.
-- [ ] Reports incluyen seed, ambiente y artefactos sólo cuando aportan diagnóstico.
-- [ ] Duración/consumo permanece dentro de SPEC-208/221.
-- [ ] Cada suite se invoca mediante la matriz única de SPEC-207.
-- [ ] Un cambio compartido invalida filtros y ejecuta suites dependientes.
+- [ ] contract/API drift falla en la matriz correspondiente;
+- [ ] los clientes se regeneran o validan contra la fuente aprobada;
+- [ ] un cambio breaking incompatible no pasa CI.
+
+### CAD-224-05 — La suite es reproducible, aislada y resistente a flake por diseño
+
+- [ ] suite repetida con mismo seed produce igual resultado;
+- [ ] tests corren en orden aleatorio/paralelo sin interferencia;
+- [ ] clock/IDs controlan expiración y snapshots;
+- [ ] no existen sleeps arbitrarios ni dependencia de hora local;
+- [ ] cleanup no deja datos entre ejecuciones;
+- [ ] flake produce issue/evidencia y no se oculta con retries;
+- [ ] reports incluyen seed, ambiente y artefactos sólo cuando aportan diagnóstico.
+
+### CAD-224-06 — La estrategia de testing cabe dentro del presupuesto y se integra con la matriz única de calidad
+
+- [ ] cobertura nueva y Sonar cumplen SPEC-207;
+- [ ] duración/consumo permanece dentro de SPEC-208/221;
+- [ ] cada suite se invoca mediante la matriz única de SPEC-207;
+- [ ] un cambio compartido invalida filtros y ejecuta suites dependientes.

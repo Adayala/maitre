@@ -1,20 +1,9 @@
 # Especificación — SPEC-002
 
-## Tipo de spec
-
-Entity
-
 ## Definición formal
 
-Una marca es una identidad comercial dentro de un tenant. Agrupa sucursales, comparte configuración y menú.
-
-Propiedades:
-- Pertenece a un tenant (tenant_id)
-- Tiene nombre y slug único dentro del tenant
-- Puede tener logo, descripción, website
-- Tiene configuración heredable (menú, políticas, tono de voz)
-- Estado: ACTIVE, INACTIVE, ARCHIVED
-- Auditable: createdAt, createdBy, updatedAt, updatedBy
+Brand es una identidad comercial dentro de un tenant. Agrupa sucursales y puede publicar defaults
+explícitos para presentación o catálogos, sin absorber capacidades, fiscalidad ni configuración abierta.
 
 ## Schema JSON
 
@@ -26,20 +15,13 @@ Propiedades:
   "slug": "string (normalizado, único en tenant, ej: 'la-parrilla')",
   "description": "string (0-500 chars) | null",
   "status": "enum: ACTIVE | INACTIVE | ARCHIVED",
-  "logo_url": "string (URL a logo) | null",
+  "logoUrl": "string (URL a logo) | null",
   "website": "string (URL) | null",
-  "default_menu_id": "uuid | null (menú heredado por sucursales)",
-  "config": {
-    "cancellation_policy": "string | null",
-    "brand_voice": "string | null (tono para respuestas)",
-    "allergen_policy": "string | null",
-    "language": "string (ISO 639-1, ej: es, en)",
-    "currency": "string (ISO 4217, ej: ARS)"
-  },
+  "defaultMenuId": "uuid | null",
   "createdAt": "ISO8601 timestamp",
-  "createdBy": "uuid (userId)",
+  "createdBy": "uuid (userId) | null",
   "updatedAt": "ISO8601 timestamp",
-  "updatedBy": "uuid (userId)",
+  "updatedBy": "uuid (userId) | null",
   "archivedAt": "ISO8601 timestamp | null",
   "archivedBy": "uuid | null"
 }
@@ -50,9 +32,9 @@ Propiedades:
 ### Status
 
 ```
-ACTIVE       = Operando, sucursales pueden usarla
-INACTIVE     = Pausada, no se pueden crear sucursales nuevas
-ARCHIVED     = Cerrada, solo lectura, no se crean sucursales
+ACTIVE       = Operando, sujeto a tenant/autorización/capacidades
+INACTIVE     = Pausada, no se crean sucursales nuevas ni mutaciones operativas
+ARCHIVED     = Terminal, solo lectura autorizada
 ```
 
 Transiciones válidas:
@@ -63,13 +45,11 @@ Transiciones válidas:
 ## Validaciones
 
 - `name` — Mínimo 3 caracteres, máximo 100
-- `slug` — Generado automáticamente desde `name`, único en tenant
+- `slug` — Normalizado, único en tenant y estable salvo workflow explícito
 - `tenantId` — Debe existir en BD
-- `default_menu_id` — Si se especifica, debe existir y pertenecer al tenant
-- `logo_url` — Si se especifica, debe ser URL válida
+- `defaultMenuId` — Si se especifica, debe existir y pertenecer al tenant
+- `logoUrl` — Si se especifica, debe ser URL válida
 - `website` — Si se especifica, debe ser URL válida
-- `config.language` — Debe ser código ISO 639-1 válido
-- `config.currency` — Debe ser código ISO 4217 válido
 
 ## Reglas e invariantes
 
@@ -89,13 +69,13 @@ Transiciones válidas:
 
 ---
 
-### 3. Menú heredable
+### 3. Default de menú explícito
 
-**Regla:** Si brand tiene `default_menu_id`, las sucursales lo heredan a menos que especifiquen otro.
+**Regla:** Si Brand tiene `defaultMenuId`, las sucursales lo heredan sólo cuando el contrato dependiente lo habilita.
 
 **Cascada:**
 ```
-Brand config → Branch hereda → Branch puede sobrescribir
+Brand default → Branch hereda → Branch puede sobrescribir si el contrato lo permite
 ```
 
 ---
@@ -110,7 +90,7 @@ Brand config → Branch hereda → Branch puede sobrescribir
 
 **Regla:** Si status = ARCHIVED:
 - No se pueden crear sucursales nuevas
-- No se pueden cambiar configuraciones
+- No se pueden cambiar defaults operativos
 - Sí se pueden leer todos los datos
 
 ---
@@ -127,16 +107,9 @@ Brand config → Branch hereda → Branch puede sobrescribir
   "slug": "la-parrilla",
   "description": "Parrilla tradicional con carnes premium",
   "status": "ACTIVE",
-  "logo_url": "https://s3.../logo-la-parrilla.png",
+  "logoUrl": "https://s3.../logo-la-parrilla.png",
   "website": "https://laparrilla.com.ar",
-  "default_menu_id": "menu_parrilla_v2",
-  "config": {
-    "cancellation_policy": "Cancelar hasta 24hs antes",
-    "brand_voice": "Profesional y cálido",
-    "allergen_policy": "Consultar siempre con chef",
-    "language": "es",
-    "currency": "ARS"
-  },
+  "defaultMenuId": "menu_parrilla_v2",
   "createdAt": "2026-01-10T10:00:00Z",
   "createdBy": "user_owner_123",
   "updatedAt": "2026-01-10T10:00:00Z",
@@ -155,11 +128,7 @@ Brand config → Branch hereda → Branch puede sobrescribir
   "name": "Pizzería Bella",
   "slug": "pizzeria-bella",
   "status": "INACTIVE",
-  "default_menu_id": null,
-  "config": {
-    "language": "es",
-    "currency": "ARS"
-  }
+  "defaultMenuId": null
 }
 ```
 
@@ -169,35 +138,33 @@ Brand config → Branch hereda → Branch puede sobrescribir
 
 ### Renombrar brand
 
-Si se cambia `name`, se regenera `slug`:
-- Verificar que nuevo slug es único en tenant
-- Si no es único, error 409 Conflict
-- AuditLog registra el cambio
+Si se cambia `name`, un workflow explícito decide si `slug` debe cambiar:
+- verificar que el nuevo slug sea único en tenant;
+- si no es único, falla cerrado;
+- auditoría registra el cambio.
 
 ### Cambiar menú default
 
 ```
 PATCH /brands/:id
-{
-  "default_menu_id": "menu_nueva_v3"
-}
+{ "defaultMenuId": "menu_nueva_v3" }
 ```
 
-Las sucursales que heredan automáticamente reciben el nuevo menú. Las que lo sobrescribieron, no se afectan.
+Las sucursales que heredan automáticamente reciben el nuevo menú. Las que lo sobrescribieron no se afectan.
 
 ### Archivar brand
 
 Cuando se archiva un brand:
 1. Status → ARCHIVED
-2. Sucursales existentes quedan en estado READ_ONLY
+2. La marca deja de aceptar mutaciones operativas nuevas
 3. No se pueden crear sucursales nuevas
-4. Datos se conservan para auditoría
+4. Los datos se conservan para auditoría
 
 ---
 
 ## Relaciones
 
 - Brand belongs to Tenant (1:N)
-- Brand has many Branches (1:N, a través de brand_id en Branch)
+- Brand has many Branches (1:N, a través de brandId en Branch)
 - Brand has optional default Menu (1:1 a Menu)
 - Brand created/updated by User (N:1 a User)

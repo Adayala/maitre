@@ -1,8 +1,8 @@
 # Tasks — SPEC-022
 
-- [ ] GET /roles
-- [ ] GET /roles/:id
-- [ ] GET /permissions
-- [ ] Tests
+- [ ] Aprobar contrato/schema de `GET /v1/roles`.
+- [ ] Aprobar reglas de visibilidad, redacción y assignability.
+- [ ] Aprobar semántica ETag/version del catálogo.
+- [ ] Materializar fixtures y contract tests después de aprobación.
 
-**Est: ~3h**
+Detalle por ID, catálogo global de permissions y mutaciones quedan fuera de I0.

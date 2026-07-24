@@ -13,8 +13,7 @@ Branch representa una unidad operativa física o lógica dentro de un Tenant y u
 | **Readiness** | WALKING_SKELETON_I0 |
 | **Review target** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
 | **Blockers** | Asignar owner y reviewer |
 | **Fase** | I0 |
 
@@ -40,3 +39,4 @@ Branch representa una unidad operativa física o lógica dentro de un Tenant y u
 ## Contrato especializado
 
 - [Contrato](contract.md)
+- [Jerarquía Tenant–Brand–Branch](../spec-001-entity-tenant/organization-hierarchy-contract.md)

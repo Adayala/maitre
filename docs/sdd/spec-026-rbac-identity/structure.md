@@ -1,9 +1,11 @@
-# Structure — SPEC-026
+# Estructura — SPEC-026
 
-Middleware checks:
+Controles del middleware:
 1. Authenticated
-2. In tenant via X-Tenant-Id
-3. Has role in tenant (from membership)
-4. Has permission for action+resource
+2. Resolver tenant solicitado y Membership ACTIVE server-side
+3. Resolver permisos efectivos y authorization version
+4. Validar alcance por sucursal, delegation policy y regla de dominio
+5. Auditar allow/deny sensible
 
-Entrypoint: authorization middleware.
+Un header/path sólo solicita contexto; no prueba pertenencia. El middleware orquesta la decisión,
+pero permisos/alcances y reglas viven en aplicación/dominio.

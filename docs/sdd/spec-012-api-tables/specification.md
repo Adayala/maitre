@@ -6,7 +6,7 @@
 ```
 Request:
 {
-  "salon_id": "uuid",
+  "salonId": "uuid",
   "number": "string (1-10, ej: '1', 'A3')",
   "capacity": "integer (1-20)",
   "shape": "ROUND | RECTANGULAR | SQUARE",
@@ -17,16 +17,16 @@ Response (201):
 {
   "data": {
     "id": "uuid",
-    "salon_id": "uuid",
+    "salonId": "uuid",
     "number": "...",
     "capacity": 4,
     "status": "AVAILABLE" (DERIVED),
-    "created_at": "ISO8601"
+    "createdAt": "ISO8601"
   }
 }
 ```
 
-### GET /tables?salon_id=uuid (Listar)
+### GET /tables?salonId=uuid (Listar)
 Con estado derivado.
 
 Response (200):
@@ -51,19 +51,19 @@ Response (200):
 {
   "status": "OCCUPIED",
   "occupancy": {
-    "guest_count": 4,
-    "visit_id": "uuid",
-    "arrival_at": "ISO8601"
+    "guestCount": 4,
+    "visitId": "uuid",
+    "arrivalAt": "ISO8601"
   }
 }
 ```
 
 ## Authorization
 
-- POST /tables → OWNER, ADMIN (respeta max_tables del plan)
-- GET /tables → OWNER, ADMIN, MANAGER, EMPLOYEE
-- PATCH /tables/:id → OWNER, ADMIN
-- GET /tables/:id/status → All authenticated users
+- POST/PATCH `/tables` requiere `table.manage` y revalida cuota server-side.
+- GET configuración requiere `table.read` y alcance por sucursal.
+- GET status requiere `table.status.read`; roles operativos reciben sólo este permiso si aplica.
+- No se autoriza por `EMPLOYEE` genérico ni por estar meramente autenticado.
 
 ## Notas
 

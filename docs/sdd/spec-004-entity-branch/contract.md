@@ -1,6 +1,6 @@
 # Contrato — SPEC-004 Branch
 
-Branch es una sucursal operativa de Brand dentro de Tenant y referencia FiscalEntity.
+Branch es una sucursal operativa de Brand dentro de un tenant y referencia FiscalEntity.
 Campos: ids inmutables, name, structured address, timezone IANA, contacts, status
 `ACTIVE | INACTIVE`, version y auditoría. Business dates siempre derivan de timezone.
 

@@ -10,11 +10,13 @@ Tech stack:
 Features:
 - SPA routing
 - Protected routes (auth)
-- State management (React Context or Redux)
-- Real-time updates (polling)
+- State/cache adapter seleccionado por ADR o implementación aprobada
+- Revalidation según ETag/freshness de cada API
+- Estados partial/stale/error como first-class UI
 
 Portability:
 - No direct database access from the browser
 - No Vercel SDK imports in UI or domain code
 - API base URL and runtime configuration injected per environment
 - Build and tests runnable outside Vercel
+- No vendor-specific auth/storage/network authority dentro de componentes de dominio/UX

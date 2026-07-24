@@ -1,7 +1,10 @@
-# Tasks — SPEC-'"$num"'
+# Tareas — SPEC-061
 
-- [ ] Event struct
-- [ ] Emit logic
-- [ ] Tests
-
-**Est: ~3h**
+- [ ] Aprobar `CAD-061-01..06`.
+- [ ] Resolver owner, reviewer y blockers.
+- [ ] Congelar schema, partition key y campos mínimos.
+- [ ] Probar atomicidad/outbox.
+- [ ] Probar duplicate/retry/DLQ.
+- [ ] Verificar redacción y tenant isolation.
+- [ ] Congelar consumers, recovery y compatibility.
+- [ ] Autorizar publicación sólo después del cierre de especificación.

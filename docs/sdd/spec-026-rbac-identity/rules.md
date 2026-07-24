@@ -1,7 +1,9 @@
-# Rules — SPEC-026
+# Reglas — SPEC-026
 
-- Role + permission resolved at runtime
-- Check permission before action
-- OWNER has all permissions
-- Cannot downgrade own role
-- ADMIN can invite, not demote OWNER
+- Permiso, estado de Membership y alcance se resuelven server-side en cada decisión.
+- Toda acción requiere permiso explícito y además satisface reglas de dominio/segregación.
+- OWNER recibe el conjunto versionado del catálogo; no existe wildcard implícito “all”.
+- Ningún actor modifica sus propios roles/alcances ni aprueba su propia elevación.
+- ADMIN sólo invita/asigna roles delegables y no modifica OWNER o peer protegido.
+- No se revoca/degrada el último OWNER sin workflow de transferencia/cierre aprobado.
+- Claims, headers y visibilidad UI no sustituyen autoridad.

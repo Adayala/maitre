@@ -7,4 +7,4 @@ API administrativa para consultar/provisionar Subscription sin procesar pagos. O
 Tenant objetivo nunca se confía desde cliente común. Idempotency-Key protege provisión;
 respuestas incluyen revisión y no exponen términos internos. `409` cubre vigente duplicada,
 `412` concurrencia y `422` transición/config inválida. Toda mutación audita y dispara
-recomputación/outbox transaccional. Tests incluyen cross-tenant y cero integración de cobro.
+recomputación/outbox transaccional. Tests incluyen aislamiento entre tenants y cero integración de cobro.

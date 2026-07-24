@@ -1,81 +1,55 @@
-# Structure — SPEC-002
+# Estructura — SPEC-002
 
-## Database schema
+> **Estado:** antecedente no implementable. El baseline físico reconciliado está en
+> [SPEC-210 — diccionario I0](../spec-210-transversal-data-identity-platform/i0-physical-dictionary.md#maitrebrands--spec-002)
+> y la separación de configuración continúa pendiente de sign-off en OPEN-002.
+
+## Persistencia propuesta
 
 ```sql
-CREATE TABLE brands (
-  id UUID PRIMARY KEY,
-  tenant_id UUID NOT NULL,
-  name VARCHAR(100) NOT NULL,
-  slug VARCHAR(100) NOT NULL,
-  description TEXT,
-  status VARCHAR(20) DEFAULT 'ACTIVE',
-  logo_url VARCHAR(2048),
-  website VARCHAR(2048),
-  default_menu_id UUID,
-  config JSONB,
-  created_at TIMESTAMP DEFAULT NOW(),
-  created_by UUID,
-  updated_at TIMESTAMP DEFAULT NOW(),
-  updated_by UUID,
-  archived_at TIMESTAMP,
-  archived_by UUID,
-  UNIQUE(tenant_id, slug),
-  FOREIGN KEY(tenant_id) REFERENCES tenants(id),
-  FOREIGN KEY(created_by) REFERENCES users(id),
-  FOREIGN KEY(updated_by) REFERENCES users(id),
-  FOREIGN KEY(archived_by) REFERENCES users(id)
+create table brands (
+  id uuid primary key,
+  tenant_id uuid not null,
+  name varchar(120) not null,
+  slug varchar(120) not null,
+  description text,
+  status varchar(16) not null,
+  logo_asset_id uuid,
+  website_url varchar(2048),
+  voice_profile varchar(64),
+  cancellation_policy_summary text,
+  allergen_policy_summary text,
+  default_menu_id uuid,
+  created_at timestamptz not null,
+  created_by uuid,
+  updated_at timestamptz not null,
+  updated_by uuid,
+  archived_at timestamptz,
+  archived_by uuid,
+  constraint brands_tenant_slug_uq unique (tenant_id, slug),
+  constraint brands_tenant_id_uq unique (tenant_id, id),
+  constraint brands_status_chk
+    check (status in ('ACTIVE', 'INACTIVE', 'ARCHIVED')),
+  foreign key (tenant_id) references tenants(id)
 );
-
-CREATE INDEX idx_brands_tenant_id ON brands(tenant_id);
-CREATE INDEX idx_brands_status ON brands(status);
 ```
 
-## Fields detail
+`default_menu_id` sólo puede activarse cuando Menu quede aprobado como referencia same-tenant; mientras tanto se mantiene como contrato pendiente y no como mandato de implementación inmediata.
 
-| Field | Type | Null | Unique | Notes |
-| --- | --- | --- | --- | --- |
-| id | UUID | ❌ | ✅ | PK, auto-generated |
-| tenant_id | UUID | ❌ | (with slug) | FK to tenants |
-| name | VARCHAR | ❌ | ❌ | 3-100 chars |
-| slug | VARCHAR | ❌ | (with tenant) | normalized, unique per tenant |
-| description | TEXT | ✅ | ❌ | 0-500 chars |
-| status | VARCHAR | ❌ | ❌ | ACTIVE, INACTIVE, ARCHIVED |
-| logo_url | VARCHAR | ✅ | ❌ | 2048 chars max |
-| website | VARCHAR | ✅ | ❌ | 2048 chars max |
-| default_menu_id | UUID | ✅ | ❌ | FK to menus (optional) |
-| config | JSONB | ✅ | ❌ | { language, currency, policies } |
-| created_at | TIMESTAMP | ❌ | ❌ | Immutable |
-| created_by | UUID | ❌ | ❌ | FK to users |
-| updated_at | TIMESTAMP | ❌ | ❌ | Auto-updated |
-| updated_by | UUID | ❌ | ❌ | FK to users |
-| archived_at | TIMESTAMP | ✅ | ❌ | Set on archive |
-| archived_by | UUID | ✅ | ❌ | FK to users |
+## Componentes
 
-## Constraints
-
-- `UNIQUE(tenant_id, slug)` — Slug is unique per tenant, not global
-- `status IN ('ACTIVE', 'INACTIVE', 'ARCHIVED')`
-- `name` length: 3-100
-- `slug` normalized: lowercase, no spaces, alphanumeric + hyphen
-
-## Config JSONB structure
-
-```json
-{
-  "cancellation_policy": "string",
-  "brand_voice": "string",
-  "allergen_policy": "string",
-  "language": "es | en | ...",
-  "currency": "ARS | USD | ..."
-}
+```text
+domain/organization/brand
+application/organization/create-brand
+application/organization/update-brand
+application/ports/brand-repository
+infrastructure/postgres/brand-repository
+infrastructure/postgres/outbox
 ```
 
-## Migrations
+## Índices
 
-**From Tenant to Brand:**
-- When creating a brand, inherit tenant.language and tenant.currency as defaults
-
-**Backward compatibility:**
-- Brands can exist without a default_menu_id (null)
-- Branches must handle nullable default_menu_id
+- primary key por `id`;
+- unique compuesto `(tenant_id, slug)`;
+- índice por `(tenant_id, status)` si el plan de consultas lo justifica;
+- no existe índice funcional para un `config` libre porque ese contenedor queda fuera de contrato.

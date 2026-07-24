@@ -1,1 +1,9 @@
-# STRUCTURE — SPEC-199
+# Estructura — SPEC-199
+
+```text
+/reports
+├── POST create job
+└── /{reportId}
+    ├── GET status/manifest
+    └── :download
+```

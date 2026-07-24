@@ -12,8 +12,7 @@ Selección del toolchain open source para implementar el MVP con React.js, Node.
 | **Readiness** | BLOCKED |
 | **Blockers** | Adopción pendiente de ADR-003 y SPK-01–05; asignar owner y reviewer |
 | **Prioridad** | P0 |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
 | **Fase** | Antes del scaffolding |
 | **Depende de** | ADR-002/003, SPEC-207–210, SPEC-226 |
 
@@ -38,6 +37,7 @@ Selección del toolchain open source para implementar el MVP con React.js, Node.
 
 ## Documentos
 
+- [Contrato](contract.md)
 - [Objetivo](objective.md)
 - [Especificación](specification.md)
 - [Reglas](rules.md)

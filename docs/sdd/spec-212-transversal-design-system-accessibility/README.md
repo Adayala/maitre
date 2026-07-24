@@ -12,8 +12,7 @@ Contrato transversal para una experiencia React.js consistente, accesible, rápi
 | **Readiness** | BLOCKED |
 | **Blockers** | Tooling pendiente de ADR-004 y SPK-05; asignar owner y reviewer |
 | **Prioridad** | P0 |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
 | **Fase** | Antes del scaffolding de UI |
 | **Depende de** | ADR-004, SPEC-207–209, SPEC-211, SPEC-213, SPEC-224, SPEC-226 |
 
@@ -33,6 +32,7 @@ Contrato transversal para una experiencia React.js consistente, accesible, rápi
 
 ## Documentos
 
+- [Contrato](contract.md)
 - [Objetivo](objective.md)
 - [Especificación](specification.md)
 - [Reglas](rules.md)

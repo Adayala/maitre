@@ -1,6 +1,6 @@
 # Especificación — SPEC-020
 
-## Aggregate
+## Agregado
 
 ```json
 {
@@ -22,7 +22,7 @@
 }
 ```
 
-`roleIds` y `branchIds` son representación del aggregate/DTO. Persistencia usa tablas normalizadas.
+`roleIds` y `branchIds` son representación del agregado/DTO. Persistencia usa tablas normalizadas.
 
 ## Estados
 
@@ -33,7 +33,7 @@ ACTIVE → REVOKED
 ```
 
 - `INVITED`: vínculo preparado pero no habilita sesión operativa.
-- `ACTIVE`: elegible para roles/scopes efectivos.
+- `ACTIVE`: elegible para roles/alcances efectivos.
 - `SUSPENDED`: bloqueo reversible dentro del tenant.
 - `REVOKED`: terminal; preserva historia y no concede acceso.
 
@@ -49,17 +49,17 @@ ACTIVE → REVOKED
 
 ### ALL_BRANCHES
 
-- Acceso potencial a todas las branches activas del tenant, sujeto a role/permission/entitlement.
-- No se mantienen branch scope rows redundantes.
-- Una branch nueva entra al alcance, pero no activa un servicio sin entitlement.
+- Acceso potencial a todas las sucursales activas del tenant, sujeto a rol/permiso/entitlement.
+- No se mantienen filas redundantes de alcance por sucursal.
+- Una sucursal nueva entra al alcance, pero no activa un servicio sin entitlement.
 
 ### SELECTED_BRANCHES
 
-- Requiere al menos una branch activa del mismo tenant.
-- Branch IDs de otro tenant son rechazados.
-- Remover el último scope exige cambiar tipo, suspender o revocar Membership.
+- Requiere al menos una sucursal activa del mismo tenant.
+- `branchIds` de otro tenant son rechazados.
+- Remover el último alcance exige cambiar tipo, suspender o revocar Membership.
 
-Branch scope limita dónde puede actuar; no significa asignación a plaza/turno/estación.
+El alcance por sucursal limita dónde puede actuar; no significa asignación a plaza/turno/estación.
 
 ## Contexto efectivo
 
@@ -74,7 +74,8 @@ User ACTIVE
   = acción autorizada
 ```
 
-El servidor calcula este contexto. Un token/header solicita contexto, pero no agrega roles o branches.
+El servidor calcula este contexto. Un token/header solicita contexto, pero no agrega roles o
+sucursales.
 
 ## Invitación
 

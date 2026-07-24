@@ -1,6 +1,6 @@
 # Contrato API — SPEC-023
 
-## Boundary
+## Límite
 
 Supabase Auth u otro proveedor autentica; Maitre verifica token y resuelve User/Membership
 autoritativos. El browser nunca recibe service-role, connection string ni claves privadas.
@@ -10,8 +10,8 @@ autoritativos. El browser nunca recibe service-role, connection string ni claves
 | Operación | Contrato |
 | --- | --- |
 | `GET /v1/me` | perfil User mínimo autenticado |
-| `GET /v1/me/context` | memberships/scopes seleccionables y contexto activo autorizado |
-| `POST /v1/auth/context` | selecciona tenant/branch permitido sin elevar claims |
+| `GET /v1/me/context` | memberships/alcances seleccionables y contexto activo autorizado |
+| `POST /v1/auth/context` | selecciona tenant/sucursal permitidos sin elevar claims |
 | logout/reset/verify | delegados al provider mediante adapter y ownership documentado |
 
 Login/refresh pueden ocurrir en SDK/provider, pero toda API verifica issuer, audience,
@@ -20,7 +20,7 @@ fallan cerrado con retry acotado; nunca aceptan algoritmo o issuer del token sin
 
 ## Resolución
 
-`subject/provider → User → Membership ACTIVE → roles/permissions/scopes`. Tenant solicitado
+`subject/provider → User → Membership ACTIVE → roles/permisos/alcances`. Tenant solicitado
 de header/path debe pertenecer a la membership; no se toma de metadata editable. User o
 membership disabled/revoked devuelve denegación aunque el JWT siga vigente.
 

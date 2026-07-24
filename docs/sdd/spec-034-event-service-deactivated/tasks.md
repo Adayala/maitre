@@ -1,7 +1,7 @@
 # Tasks — SPEC-034
 
-- [ ] Define event struct
-- [ ] Emit on service deactivate
-- [ ] Tests
-
-**Est: ~3h**
+- [ ] Aprobar schema `subscription.service.deactivated.v1`.
+- [ ] Aprobar reason/revision/ordering.
+- [ ] Aprobar atomicidad, consumidores y retention boundaries.
+- [ ] Materializar fixtures y contract tests.
+- [ ] Implementar sólo después de `READY_FOR_IMPLEMENTATION`.

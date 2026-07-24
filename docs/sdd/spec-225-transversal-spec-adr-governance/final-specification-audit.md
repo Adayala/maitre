@@ -483,6 +483,16 @@ clasificación, subject, budgets, retries, fuente autoritativa, degradación, ro
 métricas, seguridad y determinismo. Cubre los doce códigos con 12 positivos y 48 negativos; no
 existen fixtures ejecutables ni configuración operativa.
 
+El [contrato de incident response](validation-incident-response-contract.md) define record,
+severidades propuestas, roles, lifecycle, contención, comunicación, cadena de custodia, recovery,
+root cause, corrective actions, cierre y códigos `VINC001`–`VINC012`. No hay registry, destinos,
+cadencias aprobadas, on-call asignado ni incidentes creados.
+
+El [catálogo VINC](validation-incident-response-fixture-catalog.md) especifica 58 escenarios para
+record, detección, severidad, ownership, lifecycle, comunicación, contención, evidence, recovery,
+root cause, cierre, seguridad y determinismo. Cubre los doce códigos con 12 positivos y 46
+negativos; no existen fixtures ejecutables, incidents, alerts ni assignments.
+
 El [contrato de renderer profile](markdown-renderer-profile-contract.md) especifica identidad,
 versiones exactas, candidatos, semántica mínima, múltiples renderers, reporte y upgrades. El
 baseline sintáctico contiene 10 links con fragment en 10 archivos, todos hacia SPEC-210; ninguno fue
@@ -517,6 +527,11 @@ packages válidos, provenance, runs, cobertura 48+10, determinismo, divergencias
 decisiones, reviews, seguridad y staleness. Los casos no están materializados ni ejecutados.
 
 ## Orden de cierre
+
+La [auditoría de cierre de definición](specification-definition-gap-audit.md) encuentra cero checks
+abiertos cuyo objetivo sea especificar/definir/proponer dentro del marco transversal. El outcome es
+`COMPLETE_PENDING_REVIEW`, no readiness del portfolio: el trabajo restante es materialización,
+aprobación, migración y revisión por dominio.
 
 1. Resolver ownership de los README no versionados.
 2. Normalizar metadata/readiness mediante el manifiesto de migración.

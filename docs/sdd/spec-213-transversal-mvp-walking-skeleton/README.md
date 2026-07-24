@@ -12,8 +12,7 @@ Primer corte vertical ejecutable de Maitre: desde el navegador hasta persistenci
 | **Readiness** | BLOCKED |
 | **Review target** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
 | **Blockers** | Asignar owner y reviewer |
 | **Fase** | Primer incremento implementable |
 | **Depende de** | SPEC-001, SPEC-004, SPEC-017, SPEC-020, SPEC-023, SPEC-207–212 |
@@ -28,6 +27,7 @@ El corte no introduce lógica ficticia que luego deba descartarse.
 
 ## Documentos
 
+- [Contrato](contract.md)
 - [Objetivo](objective.md)
 - [Especificación](specification.md)
 - [Reglas](rules.md)

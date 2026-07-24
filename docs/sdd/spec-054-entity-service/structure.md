@@ -1,13 +1,14 @@
 # Structure — SPEC-054
 
-```sql
-CREATE TABLE services (
-  id UUID PRIMARY KEY,
-  branch_id UUID NOT NULL,
-  name VARCHAR(100) NOT NULL,
-  description TEXT,
-  applicable_to VARCHAR(50)[],
-  status VARCHAR(20) DEFAULT 'ACTIVE',
-  FOREIGN KEY(branch_id) REFERENCES branches(id)
-);
-```
+Estructura lógica:
+
+- identidad y scope: `servicePeriodId`, `tenantId`, `branchId`;
+- calendario: `businessDate`, `timezone`, `type`, `name`;
+- planificación: `plannedStartLocal`, `plannedEndLocal`,
+  `servicePeriodPolicyVersion`;
+- ejecución: `status`, `openedAt?`, `closingAt?`, `closedAt?`, `cancelledAt?`;
+- excepciones: `cancellationReason?`, `forceCloseReason?`, findings pendientes;
+- control: `revision`, actor, idempotency keys y auditoría.
+
+Los instantes reales son inequívocos y conservan timezone/contexto local usado para derivar
+businessDate. Orders, Check y cargos no se embeben ni se generan por pertenecer al período.

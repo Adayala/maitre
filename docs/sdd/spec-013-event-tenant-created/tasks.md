@@ -1,5 +1,7 @@
 # Tasks — Event
 
+**Spec:** SPEC-013
+
 - [ ] Event struct definition
 - [ ] Serialization
 - [ ] Publisher integration

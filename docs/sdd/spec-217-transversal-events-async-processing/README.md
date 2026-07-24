@@ -12,8 +12,7 @@ Contrato transversal para publicar y consumir eventos de integración sin perder
 | **Readiness** | BLOCKED |
 | **Review target** | PROPOSED_FOR_REVIEW |
 | **Prioridad** | P0 |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
 | **Blockers** | Asignar owner y reviewer |
 | **Fase** | Antes del primer efecto asíncrono |
 | **Depende de** | SPEC-207–216 |
@@ -29,6 +28,7 @@ Contrato transversal para publicar y consumir eventos de integración sin perder
 
 ## Documentos
 
+- [Contrato](contract.md)
 - [Objetivo](objective.md)
 - [Especificación](specification.md)
 - [Reglas](rules.md)

@@ -11,8 +11,7 @@ Contrato de costo, capacidad y salida para operar el MVP con free tiers.
 | **Readiness** | BLOCKED |
 | **Review target** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
 | **Blockers** | Asignar owner y reviewer |
 | **Fase** | MVP |
 
@@ -22,6 +21,7 @@ Mantener costo de infraestructura en USD 0 durante desarrollo y demo, conocer lo
 
 ## Documentos
 
+- [Contrato](contract.md)
 - [Especificación](specification.md)
 - [Reglas](rules.md)
 - [Tareas](tasks.md)

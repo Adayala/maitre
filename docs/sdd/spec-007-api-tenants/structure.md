@@ -1,5 +1,7 @@
 # Structure — API
 
+**Spec:** SPEC-007
+
 ## Endpoint structure
 
 All endpoints require:

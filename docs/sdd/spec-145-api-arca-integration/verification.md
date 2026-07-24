@@ -1,24 +1,27 @@
-# VERIFICATION — SPEC-145
+# Verificación — SPEC-145
 
-## Factura electrónica
+## Criterios
 
-- [ ] Maitre obtiene un Ticket de Acceso válido en homologación sin exponer la clave privada.
-- [ ] Emite al menos una factura y una nota de crédito con CAE.
-- [ ] Consulta un comprobante autorizado y obtiene el mismo resultado persistido.
-- [ ] Un reintento después de timeout no duplica numeración ni comprobantes.
-- [ ] Las tablas y puntos de venta se obtienen de ARCA, no de valores fijos.
+### CAD-145-01 — El adapter separa homologación y producción sin contaminación cruzada
 
-## Libro IVA Digital
+- [ ] homologación y producción quedan separadas por credenciales, endpoints y runbooks.
 
-- [ ] Los archivos cumplen el diseño oficial vigente, codificación y límites de tamaño.
-- [ ] Totales de ventas/compras coinciden con el ledger fiscal del período.
-- [ ] El paquete se importa correctamente en Portal IVA.
-- [ ] Maitre distingue claramente `exportado` de `presentado`.
-- [ ] La confirmación de presentación queda auditada.
+### CAD-145-02 — La identidad lógica de emisión garantiza idempotencia y reconciliación
 
-## Seguridad y operación
+- [ ] la identidad lógica evita duplicados y soporta reconciliación determinista.
 
-- [ ] Credenciales aisladas por tenant, CUIT y ambiente.
-- [ ] Logs sin certificados, claves, token ni sign.
-- [ ] Alarmas para vencimiento de certificado y fallas/rechazos de ARCA.
-- [ ] Runbook para indisponibilidad, rechazo y recuperación.
+### CAD-145-03 — Resultados oficiales se normalizan con códigos y evidencia auditables
+
+- [ ] resultados oficiales se normalizan con códigos y evidencia auditables.
+
+### CAD-145-04 — Secretos, certificados y raw SOAP quedan fuera de browser y APIs no privilegiadas
+
+- [ ] secretos, certificados y raw SOAP quedan fuera de browser y logs generales.
+
+### CAD-145-05 — Libro IVA Digital queda acotado a export validado y presentación asistida
+
+- [ ] Libro IVA queda acotado a exportación validada y presentación asistida.
+
+### CAD-145-06 — La aprobación exige evidencia de auth, timeout ambiguo y export IVA
+
+- [ ] fixtures cubren auth, emisión, timeout ambiguo, tablas, export IVA y operación.

@@ -7,11 +7,9 @@
 Request:
 {
   "name": "string (1-100)",
-  "contact_email": "string (unique globally)",
-  "contact_phone": "string | null (E.164)",
-  "billing_country": "string (ISO 3166-1)",
-  "business_type": "string",
-  "plan_tier": "STARTER | PROFESSIONAL | ENTERPRISE"
+  "contactEmail": "string | null",
+  "contactPhone": "string | null (E.164)",
+  "defaultTimezone": "string (IANA)"
 }
 
 Response (201):
@@ -19,9 +17,8 @@ Response (201):
   "data": {
     "id": "uuid",
     "name": "...",
-    "status": "TRIAL",
-    "plan_tier": "STARTER",
-    "created_at": "ISO8601"
+    "status": "ACTIVE",
+    "createdAt": "ISO8601"
   },
   "meta": { "correlationId" }
 }
@@ -36,12 +33,10 @@ Response (200):
   "data": {
     "id": "uuid",
     "name": "...",
-    "contact_email": "...",
+    "contactEmail": "...",
     "status": "ACTIVE",
-    "plan_tier": "PROFESSIONAL",
-    "max_branches": 10,
-    "max_users": 50,
-    "created_at": "ISO8601"
+    "defaultTimezone": "America/Argentina/Buenos_Aires",
+    "createdAt": "ISO8601"
   }
 }
 ```
@@ -49,29 +44,12 @@ Response (200):
 ### PATCH /tenants/:id (Actualizar tenant)
 Solo OWNER puede actualizar.
 
-Campos permitidos: name, contact_phone, billing_country, default_timezone
+Campos permitidos: name, contactPhone, defaultTimezone
 
 Response (200): Tenant actualizado
 
-### GET /tenants/:id/usage (Uso de recursos)
-```json
-{
-  "data": {
-    "branches": { "used": 3, "limit": 10 },
-    "users": { "used": 12, "limit": 50 },
-    "tables": { "used": 45, "limit": 200 }
-  }
-}
-```
-
 ## Authorization
 
-- POST /tenants → Public (primer tenant)
+- POST /tenants → provisioning privilegiado
 - GET /tenants/:id → OWNER, ADMIN
 - PATCH /tenants/:id → OWNER only
-- GET /tenants/:id/usage → OWNER, ADMIN
-
-## Rate Limits
-
-- 10 requests per minute per tenant
-- Throttle response: 429 Too Many Requests

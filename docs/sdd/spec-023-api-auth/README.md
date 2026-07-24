@@ -14,9 +14,8 @@ Define el límite entre el proveedor de identidad, el cliente React y la API Nod
 | **Readiness** | WALKING_SKELETON_I0 |
 | **Review target** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
-| **Blockers** | Asignar owner y reviewer |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
+| **Blockers** | Acordar boundary authn/authz, validación JWT y fallback ante outage del provider |
 | **Fase** | I0 |
 
 ## Documentos
@@ -33,7 +32,7 @@ Define el límite entre el proveedor de identidad, el cliente React y la API Nod
 
 - [SPEC-017 — User](../spec-017-entity-user/README.md)
 - [SPEC-020 — Membership](../spec-020-entity-membership/README.md)
-- [SPEC-210 — Platform foundations](../spec-210-transversal-mvp-platform-foundations/README.md)
+- [SPEC-210 — Data and identity platform](../spec-210-transversal-data-identity-platform/README.md)
 - [SPEC-213 — Walking skeleton](../spec-213-transversal-mvp-walking-skeleton/README.md)
 - [SPEC-226 — Platform validation spikes](../spec-226-transversal-i0-platform-validation-spikes/README.md)
 

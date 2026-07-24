@@ -1,8 +1,5 @@
-# Structure — SPEC-'"$num"'
+# Estructura — SPEC-060
 
-Rutas CRUD estándar.
-
-Headers:
-- Authorization: Bearer <token>
-- X-Tenant-Id: <tenant>
-- X-Branch-Id: <branch>
+API → autorización/idempotencia → ServicePeriod commands/query → policy + blocker ports
+(Visit, Check, Payment, CashSession) → repository/outbox. Business clock, timezone y
+resolución DST se inyectan; las dependencias sólo se consultan.

@@ -1,5 +1,9 @@
 # Structure — SPEC-001
 
+> **Estado:** antecedente no implementable. El baseline físico reconciliado está en
+> [SPEC-210 — diccionario I0](../spec-210-transversal-data-identity-platform/i0-physical-dictionary.md#maitretenants--spec-001)
+> y su lifecycle continúa pendiente de sign-off en OPEN-001.
+
 ## Persistencia propuesta
 
 ```sql

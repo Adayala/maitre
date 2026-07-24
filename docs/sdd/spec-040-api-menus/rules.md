@@ -1,6 +1,8 @@
-# Rules — SPEC-040
+# Reglas — SPEC-040
 
-- Brand edit: ADMIN+ permission
-- Slug unique per brand
-- Menu can't be deleted if products exist (archive instead)
-- Archived menus read-only
+- Toda acción requiere permiso efectivo SPEC-043; etiqueta ADMIN no basta.
+- Sólo DRAFT es mutable.
+- Publicación valida snapshot y el puntero activo cambia atómicamente.
+- PUBLISHED/ARCHIVED son read-only y conservan historia.
+- Brand/alcances/Product refs pertenecen al mismo tenant.
+- No existe eliminación física.

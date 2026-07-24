@@ -1,49 +1,39 @@
-# [SPEC-003] FiscalEntity Entity
+# [SPEC-003] FiscalEntity
 
-Persona humana o jurídica que emite comprobantes fiscales. Contiene CUIT, condición tributaria, certificados ARCA.
+FiscalEntity representa a la persona humana o jurídica que emite comprobantes dentro de un Tenant. Centraliza identidad fiscal, condición tributaria y material criptográfico referenciado sin mezclarlo con operación de sucursales.
 
 ## Metadata
 
 | Campo | Valor |
 | --- | --- |
 | **ID** | SPEC-003 |
-| **Título** | FiscalEntity Entity |
 | **Tipo** | Entity |
 | **Dominio** | Organization |
 | **Estado** | IN_PROGRESS |
 | **Readiness** | WALKING_SKELETON_I0 |
 | **Prioridad** | P0 |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
-| **Fase** | 1 |
-| **Estimación** | 8h |
+| **Review target** | READY_FOR_I0_REVIEW |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
+| **Blockers** | Aprobar manejo de certificados y puntos de venta sin exponer secretos |
+| **Fase** | I0 |
 
-## Overview
+## Documentos
 
-Cada tenant puede tener múltiples entidades fiscales (personas o empresas). Cada entidad fiscal:
-- Tiene CUIT único
-- Emite comprobantes (facturas, recibos, notas de crédito)
-- Registra puntos de venta en ARCA
-- Tiene condición tributaria (Responsable Inscripto, Monotributista, etc)
+- [Objetivo](./objective.md)
+- [Especificación](./specification.md)
+- [Estructura](./structure.md)
+- [Reglas](./rules.md)
+- [Plan](./plan.md)
+- [Tareas](./tasks.md)
+- [Verificación](./verification.md)
 
-## Related Specs
+## Relacionadas
 
-**Dependencias:** [SPEC-001] Tenant Entity ✅
+- [SPEC-001 — Tenant](../spec-001-entity-tenant/README.md)
+- [SPEC-004 — Branch](../spec-004-entity-branch/README.md)
+- [SPEC-009 — FiscalEntities API](../spec-009-api-fiscal-entities/README.md)
+- [SPEC-127 — FiscalPoint](../spec-127-entity-fiscal-point/README.md)
 
-**Dependientes:** [SPEC-004] Branch Entity, [SPEC-009] FiscalEntities API, [SPEC-127] FiscalPoint Entity
+## Contrato especializado
 
-## Status tracking
-
-- [ ] objective.md
-- [ ] specification.md
-- [ ] structure.md
-- [ ] rules.md
-- [ ] plan.md
-- [ ] tasks.md
-- [ ] verification.md
-- [ ] notes.md
-- [ ] Peer review
-
-## Documentos normativos
-
-- [Contrato](contract.md)
+- [Contrato](./contract.md)

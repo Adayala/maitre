@@ -1,7 +1,9 @@
 # Tasks — SPEC-019
 
-- [ ] Define permission matrix
-- [ ] GET /permissions
-- [ ] Tests
+- [ ] Aprobar catálogo y versión inicial.
+- [ ] Registrar matriz Role → Permission sin wildcards persistidos.
+- [ ] Registrar endpoint/command → Permission.
+- [ ] Especificar mappings de successor/deprecation.
+- [ ] Materializar fixtures y contract tests después de aprobación.
 
-**Est: ~2h**
+No pertenece a esta spec implementar un endpoint de catálogo.

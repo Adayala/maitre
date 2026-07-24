@@ -1,15 +1,13 @@
 # Structure — SPEC-050
 
-```sql
-CREATE TABLE occupancies (
-  id UUID PRIMARY KEY,
-  visit_id UUID NOT NULL,
-  table_id UUID NOT NULL,
-  seated_at TIMESTAMP,
-  occupied_seats INT NOT NULL,
-  capacity INT NOT NULL,
-  UNIQUE(visit_id, table_id),
-  FOREIGN KEY(visit_id) REFERENCES visits(id),
-  FOREIGN KEY(table_id) REFERENCES tables(id)
-);
-```
+Estructura lógica:
+
+- identidad y scope: `occupancyId`, `tenantId`, `branchId`;
+- relación: `visitId`, `tableId`;
+- intervalo: `startedAt`, `endedAt?`, `status: ACTIVE | CLOSED`;
+- asignación: `allocatedGuests`;
+- control: `revision`, `createdBy`, `closedBy?`, reason codes y auditoría.
+
+La capacidad pertenece a Table/CapacityPolicyVersion y no se copia como autoridad en
+Occupancy. La persistencia debe imponer la exclusión de intervalos ACTIVE por Table y
+preservar los intervalos cerrados.

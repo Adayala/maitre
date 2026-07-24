@@ -13,8 +13,7 @@ Tenant representa una organización cliente y es la raíz explícita del aislami
 | **Readiness** | WALKING_SKELETON_I0 |
 | **Review target** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
 | **Blockers** | Asignar owner y reviewer |
 | **Fase** | I0 |
 
@@ -39,3 +38,4 @@ Tenant representa una organización cliente y es la raíz explícita del aislami
 ## Contrato especializado
 
 - [Contrato](contract.md)
+- [Jerarquía Tenant–Brand–Branch](organization-hierarchy-contract.md)

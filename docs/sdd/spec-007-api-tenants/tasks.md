@@ -1,5 +1,7 @@
 # Tasks — API
 
+**Spec:** SPEC-007
+
 - [ ] TASK-1: Handler setup
 - [ ] TASK-2: POST endpoint
 - [ ] TASK-3: GET endpoints

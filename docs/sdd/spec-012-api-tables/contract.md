@@ -15,7 +15,7 @@ edita desde esta API.
 | `GET /v1/tables/{tableId}` | devuelve configuración |
 | `PATCH /v1/tables/{tableId}` | modifica campos configurables con `If-Match` |
 
-No hay hard delete. Una mesa referenciada se inactiva; moverla entre salones no está
+No hay eliminación física. Una mesa referenciada se inactiva; moverla entre salones no está
 permitido en PATCH y requiere workflow explícito futuro.
 
 ## Datos
@@ -26,7 +26,7 @@ geográfica ni afectan aislamiento.
 
 ## Reglas
 
-- salon, branch y tenant deben ser coherentes;
+- salón, sucursal y tenant deben ser coherentes;
 - capacidad total respeta el límite administrativo del salón;
 - no se reduce capacidad por debajo de una asignación/ocupación activa;
 - `status` derivado no se acepta en body;
@@ -34,7 +34,7 @@ geográfica ni afectan aislamiento.
 
 ## Errores, permisos y aceptación
 
-Problem Details según SPEC-215; `404` también cubre cross-tenant, `409` número duplicado,
+Problem Details según SPEC-215; `404` también cubre otro tenant, `409` número duplicado,
 `412` versión y `422` regla operativa/capacidad. Create/PATCH requieren permisos de
-configuración SPEC-016; lectura requiere scope de branch. Tests cubren tenant isolation,
+configuración SPEC-016; lectura requiere alcance de sucursal. Tests cubren aislamiento entre tenants,
 unicidad, límites, rechazo de `status`, concurrencia, auditoría y schema OpenAPI.

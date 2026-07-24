@@ -11,12 +11,12 @@ Evento emitido cuando se crea una marca.
 | **Estado** | IN_PROGRESS |
 | **Readiness** | WALKING_SKELETON_I0 |
 | **Prioridad** | P0 |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
 | **Fase** | 1 |
 
 ## Documentos
 
+- [Especificación](specification.md)
 - [Contrato del evento](contract.md)
 - [Reglas](rules.md)
 - [Verificación](verification.md)

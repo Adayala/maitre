@@ -12,8 +12,7 @@ Contrato transversal para APIs HTTP consistentes, seguras, observables y evoluti
 | **Readiness** | BLOCKED |
 | **Review target** | PROPOSED_FOR_REVIEW |
 | **Prioridad** | P0 |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
 | **Blockers** | Asignar owner y reviewer |
 | **Fase** | Antes del primer endpoint funcional |
 | **Depende de** | SPEC-016, SPEC-023, SPEC-207, SPEC-209, SPEC-211, SPEC-213 |
@@ -30,6 +29,7 @@ Contrato transversal para APIs HTTP consistentes, seguras, observables y evoluti
 
 ## Documentos
 
+- [Contrato](contract.md)
 - [Objetivo](objective.md)
 - [Especificación](specification.md)
 - [Reglas](rules.md)

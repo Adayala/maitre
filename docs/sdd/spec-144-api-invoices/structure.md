@@ -1,1 +1,15 @@
-# STRUCTURE — SPEC-144
+# Estructura — SPEC-144
+
+```text
+/invoices
+├── POST create draft
+├── GET list
+└── /{invoiceId}
+    ├── GET detail
+    ├── :validate
+    ├── :issue
+    ├── :reconcile
+    ├── :credit
+    ├── :debit
+    └── :void-draft
+```

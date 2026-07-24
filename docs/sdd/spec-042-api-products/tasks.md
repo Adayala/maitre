@@ -1,12 +1,8 @@
 # Tasks — SPEC-042
 
-- [ ] GET /products list + detail
-- [ ] POST /products create
-- [ ] PATCH /products update
-- [ ] DELETE soft archive
-- [ ] Image upload logic
-- [ ] CDN integration
-- [ ] Authorization
-- [ ] Tests
-
-**Est: ~12h**
+- [ ] Aprobar OpenAPI/Problem Details.
+- [ ] Aprobar tax/declaration/modifier/media refs.
+- [ ] Aprobar idempotencia/ETag/archive.
+- [ ] Aprobar RBAC/auditoría/redacción.
+- [ ] Materializar fixtures y contract tests.
+- [ ] Implementar sólo después de `READY_FOR_IMPLEMENTATION`.

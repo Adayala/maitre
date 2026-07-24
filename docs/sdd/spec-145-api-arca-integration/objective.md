@@ -1,17 +1,36 @@
-# OBJECTIVE — SPEC-145
+# Objetivo — SPEC-145
 
-## Objetivo
+Definir el conector fiscal oficial con ARCA como boundary multi-tenant, idempotente y auditable para
+autorización electrónica, consulta y reconciliación tributaria sin depender de scraping.
 
-Determinar qué integraciones fiscales oficiales de ARCA puede consumir Maitre para emitir comprobantes electrónicos, asistir la registración del Libro IVA Digital y validar datos fiscales sin depender de scraping ni automatización de interfaces web.
+## Criterios de aceptación
 
-## Preguntas del spike
+### CAD-145-01 — El adapter separa homologación y producción sin contaminación cruzada
 
-1. ¿Existe un servicio oficial para obtener CAE/CAEA y emitir facturas, notas de crédito y notas de débito?
-2. ¿Cómo se autentica un tenant y cómo se separan homologación y producción?
-3. ¿Existe una API pública para generar o presentar Libro IVA Digital?
-4. ¿Qué alternativa oficial permite automatizar la preparación del Libro IVA?
-5. ¿Qué otros servicios de ARCA aportan valor a Maitre?
+el adapter separa homologación y producción por credenciales, endpoints, secretos y
+runbooks, sin contaminación cruzada.
 
-## Decisión esperada
+### CAD-145-02 — La identidad lógica de emisión garantiza idempotencia y reconciliación
 
-Definir un conector fiscal multi-tenant que almacene certificados de forma segura, abstraiga SOAP detrás de contratos internos y preserve trazabilidad completa de cada solicitud fiscal.
+la identidad lógica de emisión queda definida por environment, fiscal entity, point of
+sale, voucher type e internal invoice, garantizando idempotencia y reconciliación.
+
+### CAD-145-03 — Resultados oficiales se normalizan con códigos y evidencia auditables
+
+resultados oficiales se normalizan en `AUTHORIZED`, `REJECTED` o
+`PENDING_RECONCILIATION`, preservando códigos y evidencia auditables.
+
+### CAD-145-04 — Secretos, certificados y raw SOAP quedan fuera de browser y APIs no privilegiadas
+
+certificados, private keys, TA/tokens y SOAP raw payloads quedan fuera de browser, logs
+generales y APIs no privilegiadas.
+
+### CAD-145-05 — Libro IVA Digital queda acotado a export validado y presentación asistida
+
+Libro IVA Digital queda especificado como exportación validada y presentación humana
+asistida mientras no exista API pública oficial confirmada.
+
+### CAD-145-06 — La aprobación exige evidencia de auth, timeout ambiguo y export IVA
+
+La aprobación exige fixtures de auth, emisión, timeout ambiguo, consulta, tablas
+paramétricas, export IVA y controles de seguridad/operación.

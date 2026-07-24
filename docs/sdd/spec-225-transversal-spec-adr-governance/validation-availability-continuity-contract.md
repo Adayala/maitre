@@ -201,6 +201,8 @@ Alertas mínimas:
 - rollback aplicado.
 
 Alertar no reemplaza bloqueo. Destinos, on-call y severidades permanecen `UNASSIGNED`.
+La declaración, contención, comunicación y cierre siguen el
+[contrato de respuesta a incidentes](validation-incident-response-contract.md).
 
 ## Artefactos y retención
 

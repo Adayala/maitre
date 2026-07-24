@@ -1,9 +1,8 @@
 # Tasks — SPEC-046
 
-- [ ] GET endpoint
-- [ ] Setup status calculation
-- [ ] Next steps generation
-- [ ] Caching
-- [ ] Tests
-
-**Est: ~6h**
+- [ ] Aprobar OpenAPI y setup item catalog.
+- [ ] Aprobar dependency/status derivation.
+- [ ] Aprobar revision/freshness/cache.
+- [ ] Aprobar RBAC/action refs/redacción.
+- [ ] Materializar fixtures y contract tests.
+- [ ] Implementar sólo después de `READY_FOR_IMPLEMENTATION`.

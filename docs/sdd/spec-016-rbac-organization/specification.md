@@ -1,27 +1,16 @@
-# Especificación — SPEC-016
+# Especificación — SPEC-016 Organization RBAC
 
-## Organization RBAC
+## Permisos canónicos
 
-### Roles
+`tenant.read/update`, `brand.read/create/update/archive`, `fiscal_entity.read/create/update`,
+`branch.read/create/update/archive`, `salon.manage`, `table.manage` y `organization.audit.read`.
 
-- OWNER: Create tenant, manage admins
-- ADMIN: Create brand, fiscal entity, branch
-- MANAGER: View configuration
-- EMPLOYEE: Cannot manage organization
+OWNER/ADMIN reciben assignments versionados según política. MANAGER sólo recibe permisos concretos y
+alcances por sucursal; no existe herencia implícita por “nivel”. Roles funcionales como
+WAITER/COOK/CASHIER no tienen acceso Organization salvo permiso explícito mínimo.
 
-### Permissions
+Crear Tenant pertenece al control-plane/onboarding, no a un actor que ya elige tenant desde el body.
+FiscalEntity y cambios sensibles requieren permiso separado, motivo/auditoría y eventualmente step-up.
 
-| Role | Create Tenant | Create Brand | Create Branch | View | Edit |
-| --- | --- | --- | --- | --- | --- |
-| OWNER | ✅ | ✅ | ✅ | ✅ | ✅ |
-| ADMIN | ❌ | ✅ | ✅ | ✅ | ✅ |
-| MANAGER | ❌ | ❌ | ❌ | ✅ | ❌ |
-| EMPLOYEE | ❌ | ❌ | ❌ | ❌ | ❌ |
-
-## Enforcement
-
-All API endpoints check:
-1. User authenticated
-2. User has role in tenant
-3. User has permission for action
-4. User has branch scope (if applicable)
+La autorización valida autenticación, Membership ACTIVE, permiso, tenant, alcance por sucursal y reglas
+de dominio. Deny-by-default; claims/headers seleccionan contexto pero no conceden autoridad.

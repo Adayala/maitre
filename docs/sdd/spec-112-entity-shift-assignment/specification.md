@@ -1,4 +1,4 @@
-# Especificación — SPEC-112 ShiftAssignment y Employment authority
+# Especificación — SPEC-112 ShiftAssignment y autoridad de Employment
 
 `Employment` es la autoridad laboral mínima, separada de User/Membership: tenant, person reference,
 employee code, relationship type, validity interval, eligible branches, capabilities laborales y

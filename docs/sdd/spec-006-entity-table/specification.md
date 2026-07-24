@@ -1,9 +1,5 @@
 # Especificación — SPEC-006
 
-## Tipo de spec
-
-Entity
-
 ## Definición formal
 
 Una mesa es una ubicación física en un salón donde se sientan huéspedes.
@@ -14,9 +10,9 @@ Cada mesa tiene capacidad, número/nombre, y estado derivado (AVAILABLE, OCCUPIE
 ```json
 {
   "id": "uuid (inmutable, PK)",
-  "tenant_id": "uuid (aislamiento multi-tenant)",
-  "branch_id": "uuid (sucursal donde está la mesa)",
-  "salon_id": "uuid (salón donde está la mesa)",
+  "tenantId": "uuid (aislamiento multi-tenant)",
+  "branchId": "uuid (sucursal donde está la mesa)",
+  "salonId": "uuid (salón donde está la mesa)",
   "number": "string (1-10 chars, ej: '1', 'A3', 'VIP-1')",
   "name": "string (0-50 chars, ej: 'Mesa cerca ventana') | null",
   "capacity": "integer (1-20, capacidad de personas)",
@@ -25,16 +21,16 @@ Cada mesa tiene capacidad, número/nombre, y estado derivado (AVAILABLE, OCCUPIE
     "zone": "string | null (ej: 'terraza', 'bar', 'privado')"
   },
   "features": {
-    "is_wheelchair_accessible": "boolean",
-    "has_power_outlet": "boolean",
-    "is_outdoors": "boolean"
+    "isWheelchairAccessible": "boolean",
+    "hasPowerOutlet": "boolean",
+    "isOutdoors": "boolean"
   },
   "shape": "enum: ROUND | RECTANGULAR | SQUARE | IRREGULAR | null",
-  "min_duration_minutes": "integer | null (duración mínima de reserva, ej: 90)",
-  "created_at": "ISO8601 timestamp",
-  "created_by": "uuid",
-  "updated_at": "ISO8601 timestamp",
-  "updated_by": "uuid"
+  "minDurationMinutes": "integer | null (duración mínima de reserva, ej: 90)",
+  "createdAt": "ISO8601 timestamp",
+  "createdBy": "uuid | null",
+  "updatedAt": "ISO8601 timestamp",
+  "updatedBy": "uuid | null"
 }
 ```
 
@@ -52,10 +48,10 @@ Status se calcula en tiempo real:
 
 - `number` — 1-10 chars, único en salon
 - `capacity` — Entre 1 y 20 personas
-- `salon_id` — Debe existir y pertenecer a branch_id
-- `branch_id` — Debe existir en el tenant
-- `tenant_id` — Debe coincidir con tenant de branch
-- `min_duration_minutes` — Si se especifica, debe ser >= 30
+- `salonId` — Debe existir y pertenecer a branchId
+- `branchId` — Debe existir en el tenant
+- `tenantId` — Debe coincidir con tenant de branch
+- `minDurationMinutes` — Si se especifica, debe ser >= 30
 
 ## Reglas e invariantes
 

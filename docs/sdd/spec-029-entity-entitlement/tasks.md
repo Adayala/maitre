@@ -1,8 +1,7 @@
 # Tasks — SPEC-029
 
-- [ ] Schema + entity
-- [ ] Entitlement resolver
-- [ ] Override logic
-- [ ] Tests
-
-**Est: ~8h**
+- [ ] Aprobar catálogo de codes/value types.
+- [ ] Aprobar cálculo, precedence y override source.
+- [ ] Aprobar recomputation/invalidation/auditoría.
+- [ ] Materializar fixtures y contract tests.
+- [ ] Implementar sólo después de `READY_FOR_IMPLEMENTATION`.

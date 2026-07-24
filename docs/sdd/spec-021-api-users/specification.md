@@ -2,26 +2,54 @@
 
 ## Endpoints
 
-### POST /users (Invitar)
-```
-Request:
+### `POST /v1/users/invitations`
+
+Ejemplo ilustrativo:
+
+```json
 {
   "email": "string",
-  "name": "string"
-}
-
-Response (201):
-{
-  "data": { id, email, name, status: "INVITED" },
-  "meta": { correlationId }
+  "roles": ["WAITER"],
+  "branchScope": {
+    "mode": "SELECTED_BRANCHES",
+    "branchIds": ["branch-id"]
+  },
+  "locale": "es-AR"
 }
 ```
 
-### GET /users
-Listar usuarios del tenant.
+La respuesta contiene User mínimo y Membership del tenant actual; nunca incluye token/link de
+invitación.
 
-### GET /users/:id
-Detalle usuario.
+### `GET /v1/users`
 
-### PATCH /users/:id
-Actualizar name, estado.
+Lista miembros visibles del tenant con cursor, filtros autorizados y PII minimizada.
+
+### `GET /v1/users/{userId}`
+
+Devuelve perfil mínimo y Membership del contexto actual. No lista memberships de otros tenants.
+
+### `PATCH /v1/users/{userId}`
+
+Requiere `If-Match`. Campos permitidos:
+
+```json
+{
+  "displayName": "string",
+  "membershipStatus": "ACTIVE",
+  "roles": ["WAITER"],
+  "branchScope": {
+    "mode": "SELECTED_BRANCHES",
+    "branchIds": ["branch-id"]
+  }
+}
+```
+
+Email, provider/subject y tenants no son mutables mediante este PATCH.
+
+## Fuera de alcance
+
+- passwords, MFA, refresh/access tokens o service-role credentials;
+- eliminación física;
+- modificación de memberships ajenas al tenant actual;
+- delegación de roles/capabilities superiores a las del actor.

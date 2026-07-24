@@ -13,7 +13,7 @@ Guest participa inicialmente mediante consulta de menú QR. Pedido QR, reserva y
 
 ## 2. Restricciones de alcance
 
-- Una organización demo, una marca, una entidad fiscal y una sucursal visibles en el happy path.
+- Una organización demo, una marca, una entidad fiscal y una sucursal visibles en el recorrido principal.
 - Un salón, conjunto pequeño de mesas y uno/dos centros de preparación.
 - Roles predefinidos; no existe editor arbitrario de permisos.
 - Un menú activo con categorías, productos, precios, alérgenos y disponibilidad básica.
@@ -21,7 +21,7 @@ Guest participa inicialmente mediante consulta de menú QR. Pedido QR, reserva y
 - Sin billing automático: plan/entitlements se aprovisionan por administración/seed controlado.
 - Sin hardware fiscal, impresoras o terminales propietarias en MVP Demo.
 
-La base sigue tenant-scoped y se prueba con dos tenants para no introducir deuda estructural aunque la UI demuestre uno.
+La base sigue con alcance tenant y se prueba con dos tenants para no introducir deuda estructural aunque la UI demuestre uno.
 
 ## 3. Recorrido mínimo autoritativo
 
@@ -46,7 +46,7 @@ Una acción no se completa mediante edición directa de base, dashboard del prov
 ### I0 — Walking skeleton
 
 - monorepo, CI, Vercel, Supabase y configuración;
-- login, contexto tenant/branch y Dash shell;
+- login, contexto tenant/sucursal y shell de Dash;
 - health, telemetría, seguridad y backup mínimo;
 - contratos, diseño y gates de SPEC-207–221.
 
@@ -196,7 +196,7 @@ Cada incremento requiere:
 
 - spec aprobada y trazabilidad a tareas/tests;
 - happy path y fallos críticos demostrados;
-- auth/tenant/RBAC negativo;
+- auth/tenant/RBAC en casos negativos;
 - lint, typecheck, tests, coverage y Sonar;
 - accesibilidad y viewport relevante;
 - logs, métricas, trazas y runbook mínimo;

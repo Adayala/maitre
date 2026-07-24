@@ -1,9 +1,7 @@
 # Tasks — SPEC-035
 
-- [ ] Define calculation algorithm
-- [ ] Implement calculator
-- [ ] Wire event listeners
-- [ ] Audit logging
-- [ ] Tests
-
-**Est: ~6h**
+- [ ] Aprobar catalogs y policies por entitlement code.
+- [ ] Aprobar canonical input/output y algorithm revision.
+- [ ] Aprobar invalidation/replacement/auditoría.
+- [ ] Materializar fixtures y contract tests.
+- [ ] Implementar sólo después de `READY_FOR_IMPLEMENTATION`.

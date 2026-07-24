@@ -1,8 +1,18 @@
 # Especificación — SPEC-056 Occupancy API
 
-List/detail historial y commands seat/move/release sobre Visit. Mutations son atómicas y bloquean
-Tables en orden estable; expected revisions cubren Visit y Occupancies. No acepta intervalos ni
-tenant/branch del cliente.
+Superficie I0:
 
-Conflicto de mesa activa devuelve `409` con reason no sensible. Reintento devuelve resultado previo.
+- `GET /v1/visits/{visitId}/occupancies`;
+- `GET /v1/visits/{visitId}/occupancies/{occupancyId}`;
+- `POST /v1/visits/{visitId}/occupancies/seat`;
+- `POST /v1/visits/{visitId}/occupancies/move`;
+- `POST /v1/visits/{visitId}/occupancies/release`.
+
+Lecturas incluyen ACTIVE e historia mediante filtros allowlisted y cursor estable. Mutaciones
+son atómicas y bloquean Tables en orden estable; `If-Match` cubre Visit y el body declara el
+mapa mínimo de revisiones esperadas de Occupancy/Table config. No acepta status, timestamps,
+tenant ni Branch del cliente.
+
+Conflicto de mesa activa devuelve `409` con reason no sensible; revisión obsoleta usa `412`.
+Reintento devuelve el resultado previo.
 Cerrar parcial revalida capacity; TableStatus se actualiza por outbox/proyección.

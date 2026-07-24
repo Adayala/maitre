@@ -1,19 +1,21 @@
-# Rules — API
+# Reglas — API
 
-## Authorization
+**Spec:** SPEC-007
 
-Every endpoint checks:
-1. User authenticated
-2. User in tenant (X-Tenant-Id)
-3. User has permission
-4. User has branch scope (if applicable)
+## Autorización
 
-## Validation
+Todo endpoint verifica:
+1. User autenticado
+2. User dentro del tenant (`X-Tenant-Id`)
+3. User con permiso suficiente
+4. User con alcance por sucursal cuando aplique
 
-- Input validated before DB
-- Errors returned with field+reason
-- Idempotency-Key for POST/PATCH
+## Validación
 
-## Isolation
+- input validado antes de DB
+- errores devueltos con campo + motivo
+- `Idempotency-Key` para `POST`/`PATCH` cuando corresponda
 
-All queries filtered by tenant_id.
+## Aislamiento
+
+Toda query se filtra por `tenant_id`.

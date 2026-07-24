@@ -2,7 +2,7 @@
 
 ## Principio
 
-Autenticación no concede acceso. La API resuelve `User → Membership → roles/scopes` según
+Autenticación no concede acceso. La API resuelve `User → Membership → roles/alcances` según
 SPEC-017/020/023 en cada tenant. Claims del cliente no sustituyen esa autorización.
 
 ## Acciones
@@ -12,9 +12,9 @@ SPEC-017/020/023 en cada tenant. Claims del cliente no sustituyen esa autorizaci
 | Tenant | read/update | sí | read limitado | read limitado |
 | Brand | create/read/update | sí | sí | read |
 | FiscalEntity | create/read/update | sí | sí | read permitido por scope |
-| Branch | create/read/update/status | sí | sí | read por branch scope |
-| Salon | create/read/update/status | sí | sí | read por branch scope |
-| Table config | create/read/update/status | sí | sí | read por branch scope |
+| Branch | create/read/update/status | sí | sí | read por alcance de sucursal |
+| Salon | create/read/update/status | sí | sí | read por alcance de sucursal |
+| Table config | create/read/update/status | sí | sí | read por alcance de sucursal |
 | Membership/admin | delegar | sí | sólo permisos delegables explícitos | no |
 
 `EMPLOYEE` no es una autorización genérica: necesita rol funcional y scope explícito. Un
@@ -25,7 +25,7 @@ ADMIN no puede otorgar un permiso que no posee ni crear otro OWNER.
 1. verificar token/identidad;
 2. resolver membership activa del tenant autoritativo;
 3. evaluar permiso de acción/recurso;
-4. evaluar scope de branch cuando aplica;
+4. evaluar alcance por sucursal cuando aplica;
 5. aplicar regla de dominio/cuota;
 6. auditar mutaciones y denegaciones sensibles.
 
@@ -40,7 +40,7 @@ evita enumeración. La respuesta no revela existencia, rol requerido ni membersh
 ## Aceptación
 
 - Matriz positiva y negativa por rol/acción.
-- Cross-tenant y branch fuera de scope siempre denegados.
+- Cross-tenant y sucursal fuera de alcance siempre denegados.
 - Membership inactiva/revocada surte efecto sin confiar en claims editables.
 - Elevación, self-grant y confused deputy poseen regresiones.
 - Auditoría incluye actor, tenant, acción, recurso y correlation ID sin secretos.

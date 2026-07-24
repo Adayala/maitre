@@ -1,8 +1,9 @@
 # Tasks — SPEC-018
 
-- [ ] Define roles + permissions
-- [ ] GET /roles endpoint
-- [ ] Tests
-- [ ] Review
+- [ ] Aprobar catálogo y versión inicial.
+- [ ] Aprobar Role → Permission y assignableBy.
+- [ ] Aprobar deprecation/successor/migration.
+- [ ] Materializar fixtures y contract tests.
+- [ ] Implementar catálogo sólo después de `READY_FOR_IMPLEMENTATION`.
 
-**Est: ~4h**
+La API de lectura se rastrea en SPEC-022.

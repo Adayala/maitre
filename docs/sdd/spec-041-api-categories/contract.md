@@ -1,6 +1,6 @@
 # Contrato API — SPEC-041
 
-Rutas anidadas `/v1/menus/{menuId}/categories` para crear/listar y
+Rutas anidadas `/v1/menu-revisions/{menuRevisionId}/categories` para crear/listar y
 `/v1/categories/{id}` para PATCH/reorder/archive. Sólo drafts son mutables y toda operación
 usa revisión del Menu/`If-Match`.
 

@@ -3,7 +3,7 @@
 ## 1. Protocolo y representación
 
 - HTTPS obligatorio fuera de local.
-- JSON UTF-8 para requests y responses, salvo descargas o webhooks con contrato propio.
+- JSON UTF-8 para requests y respuestas, salvo descargas o webhooks con contrato propio.
 - `Content-Type: application/json` en bodies JSON.
 - Fechas y timestamps en ISO 8601/RFC 3339; instantes en UTC con `Z`.
 - Moneda en minor units enteras y código ISO 4217; nunca `float`.
@@ -33,7 +33,7 @@ POST   /v1/resources/{resourceId}/actions/{action}
 - La versión mayor está en el path: `/v1`.
 - Cambios aditivos compatibles no crean una nueva versión.
 - Remover/renombrar campos, cambiar significado, tipo, requisito o status exitoso es breaking.
-- Clientes deben tolerar campos de response desconocidos y no depender del orden JSON.
+- Clientes deben tolerar campos de respuesta desconocidos y no depender del orden JSON.
 - Deprecaciones documentan alternativa, telemetría de uso y fecha mínima de retiro.
 - OpenAPI versionado y contract tests detectan breaking changes no aprobados.
 

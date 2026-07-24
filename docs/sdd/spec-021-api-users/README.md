@@ -11,14 +11,15 @@ CRUD + invite: POST, GET, PATCH, DELETE /users.
 | **Estado** | IN_PROGRESS |
 | **Readiness** | WALKING_SKELETON_I0 |
 | **Prioridad** | P0 |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
-| **Fase** | 1 |
-| **Estimación** | 8h |
+| **Review target** | READY_FOR_I0_REVIEW |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
+| **Blockers** | Acordar invitaciones, minimización de PII y reglas de revocación |
+| **Fase** | I0 |
 
 ## Documentos
 
 - [Contrato API](contract.md)
+- [Objetivo](objective.md)
 - [Especificación](specification.md)
 - [Reglas](rules.md)
 - [Verificación](verification.md)

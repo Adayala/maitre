@@ -2,8 +2,11 @@
 
 Middleware checks:
 1. Authenticated
-2. In tenant via X-Tenant-Id
-3. Has role in tenant
-4. Has permission for action+resource
+2. Resolver contexto Tenant y Membership ACTIVE server-side
+3. Resolver permission, scope y authorization version
+4. Separar tenant boundary de control-plane `platform.*`
+5. Aplicar rule/policy de Subscription/Entitlement/Quota
+6. Auditar decisión sensible
 
-Entrypoint: authorization middleware.
+Un selector/header no prueba pertenencia. Middleware orquesta; capability/policy vive en
+aplicación/dominio.

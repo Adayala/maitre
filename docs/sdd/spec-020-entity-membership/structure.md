@@ -1,5 +1,9 @@
 # Estructura — SPEC-020
 
+> **Estado:** antecedente no implementable. El baseline físico reconciliado está en
+> [SPEC-210 — diccionario I0](../spec-210-transversal-data-identity-platform/i0-physical-dictionary.md#maitrememberships--spec-020)
+> y su unicidad continúa pendiente de sign-off en OPEN-020.
+
 ## Persistencia lógica
 
 ```sql
@@ -39,12 +43,12 @@ create table membership_branch_scopes (
 
 El SQL es lógico. Migraciones finales agregan checks, FK/tenant consistency, grants, RLS e índices según SPEC-210/219.
 
-## Constraints que requieren transacción
+## Restricciones que requieren transacción
 
 - ACTIVE tiene al menos un role assignment.
-- SELECTED_BRANCHES tiene al menos un scope.
-- Cada scoped branch pertenece al mismo tenant.
-- ALL_BRANCHES no conserva scope rows.
+- SELECTED_BRANCHES tiene al menos un alcance.
+- Cada sucursal con alcance pertenece al mismo tenant.
+- ALL_BRANCHES no conserva filas de alcance.
 - El tenant mantiene al menos un OWNER activo salvo cierre controlado.
 
-Estas invariantes no se resuelven con un `UNIQUE` aislado; el caso de uso usa transaction/locking y tests de concurrencia.
+Estas invariantes no se resuelven con un `UNIQUE` aislado; el caso de uso usa transacción/locking y tests de concurrencia.

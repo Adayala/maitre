@@ -1,7 +1,6 @@
 # Plan — SPEC-067
 
-- Guest entity
-- guests table
-- Visit linking
-
-**Est: ~6h**
+- Aprobar identidad, ContactPoint, consent y retention.
+- Aprobar merge/unmerge, aliases y resolución por campo.
+- Aprobar export/anonymize, redacción y proyecciones históricas.
+- Materializar posteriormente almacenamiento protegido, workflows y pruebas.

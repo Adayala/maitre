@@ -2,20 +2,43 @@
 
 ## Endpoints
 
-### GET /subscriptions/:tenantId
-Subscription actual del tenant.
+### `GET /v1/subscription`
 
-### POST /subscriptions/upgrade
+Devuelve la Subscription vigente del contexto autenticado, sus items visibles, revisión y estado de
+recomputación. El Tenant se resuelve server-side.
+
+### `POST /v1/subscriptions`
+
+Provisioning de plataforma, no endpoint tenant común:
+
+```json
+{
+  "tenantId": "uuid",
+  "catalogVersion": 1,
+  "period": { "startsAt": "ISO8601", "endsAt": null },
+  "items": [
+    {
+      "serviceCode": "floor",
+      "quantity": 1,
+      "branchScopes": [],
+      "config": {}
+    }
+  ]
+}
 ```
-Request:
-{ "planId": "uuid", "billingCycle": "MONTHLY" }
 
-Response (200):
-{ data: { subscription } }
-```
+Requiere capability de plataforma, Idempotency-Key y auditoría. `tenantId` sólo se acepta en este
+workflow privilegiado.
 
-### POST /subscriptions/:id/services
-Agregar servicio.
+### `PATCH /v1/subscriptions/{subscriptionId}`
 
-### DELETE /subscriptions/:id/services/:serviceId
-Remover servicio.
+Requiere `If-Match`. Puede proponer status/período/items conforme a catálogo. Desactivar un item
+preserva su identidad/historia; no existe DELETE. Una reducción incompatible responde `422` con
+estado/remediation aplicable.
+
+## Fuera de alcance
+
+- `/upgrade`, billing cycle, precio, charge, refund y proration;
+- hard delete;
+- writes de Entitlement/Quota;
+- tenantId arbitrario en endpoints de usuario tenant.

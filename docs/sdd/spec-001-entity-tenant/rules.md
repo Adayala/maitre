@@ -1,9 +1,9 @@
-# Rules — SPEC-001
+# Reglas — SPEC-001
 
 - **TEN-001:** Tenant es la raíz de aislamiento, no una suscripción.
 - **TEN-002:** `id` es global, inmutable y generado por servidor.
-- **TEN-003:** toda operación tenant-scoped recibe `tenantId` explícito.
-- **TEN-004:** un resource ID nunca autoriza acceso sin Membership y scope efectivos.
+- **TEN-003:** toda operación con alcance tenant recibe `tenantId` explícito.
+- **TEN-004:** un resource ID nunca autoriza acceso sin Membership y alcance efectivos.
 - **TEN-005:** `contactEmail` es contacto opcional; no identifica usuarios ni requiere unicidad global.
 - **TEN-006:** Tenant no almacena planes, cuotas, features ni estado de pago.
 - **TEN-007:** Tenant no almacena roles, passwords ni listas embebidas de usuarios.

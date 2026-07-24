@@ -1,7 +1,7 @@
-# Plan — SPEC-'"$num"'
+# Plan — SPEC-056
 
-- Handler + controller
-- Authorization
-- Repository layer
-
-**Est: ~8h**
+1. Fijar interval/lifecycle y constraint.
+2. Diseñar seat/move/release multi-table atómicos.
+3. Definir history cursor y projection events.
+4. Preparar carreras, rollback y capacity fixtures.
+5. Implementar tras aprobación.

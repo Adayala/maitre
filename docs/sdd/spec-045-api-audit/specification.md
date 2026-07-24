@@ -2,23 +2,39 @@
 
 ## Endpoints
 
-### GET /audit
-```
+### `GET /v1/audit-logs`
+
+```text
 Query params:
-?actor_id=uuid
-?resource_type=Branch
+?actorId=opaque-id
+?action=branch.update
+?resourceType=Branch
+?resourceId=uuid
 ?from=ISO8601
 ?to=ISO8601
 ?limit=100
+?cursor=opaque
+```
 
-Response (200):
-{ 
-  data: [
-    { id, action, resourceType, actorId, timestamp, ... }
+Response usa cursor opaco y no promete total exacto:
+
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "occurredAt": "ISO8601",
+      "actor": { "type": "USER", "id": "opaque-id" },
+      "action": "branch.update",
+      "resource": { "type": "Branch", "id": "uuid" },
+      "outcome": "SUCCEEDED",
+      "reasonCode": "UPDATED",
+      "diff": { "redactedFields": ["phone"] },
+      "correlationId": "uuid"
+    }
   ],
-  meta: { total, limit, offset }
+  "meta": { "nextCursor": "opaque-or-null", "retentionPolicyId": "ref" }
 }
 ```
 
-### GET /audit/export
-Descarga CSV.
+Detalle/export no pertenecen a v1. Un export futuro es job asíncrono con snapshot/hash/expiry.

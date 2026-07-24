@@ -1,1 +1,0 @@
-# NOTES — SPEC-193

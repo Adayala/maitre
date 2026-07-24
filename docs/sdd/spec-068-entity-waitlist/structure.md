@@ -1,16 +1,15 @@
 # Structure — SPEC-068
 
-```sql
-CREATE TABLE waitlist_entries (
-  id UUID PRIMARY KEY,
-  branch_id UUID NOT NULL,
-  guest_id UUID NOT NULL,
-  party_size INT NOT NULL,
-  status VARCHAR(20) DEFAULT 'WAITING',
-  arrived_at TIMESTAMP,
-  seated_at TIMESTAMP,
-  estimated_wait INT,
-  FOREIGN KEY(branch_id) REFERENCES branches(id),
-  FOREIGN KEY(guest_id) REFERENCES guests(id)
-);
-```
+Estructura lógica:
+
+- identidad/scope: `waitlistEntryId`, tenantId, branchId;
+- grupo: `partySize`, `guestId?`, `contactPointId?`;
+- orden: `arrivedAt`, `arrivalSequence`, `priorityBand`, `priorityReasonCode?`,
+  `orderingPolicyVersion`;
+- información: `quotedAt?`, `estimatedWaitRange?`, `estimatePolicyVersion?`;
+- ciclo: status, notified/seated/cancelled/expired timestamps y terminal reason;
+- vínculos: `allocationId?`, `visitId?`;
+- control: revision, override metadata, auditoría e idempotencia.
+
+El contacto no se copia en texto libre. ArrivalSequence es monotónica dentro de Branch y
+business context; la persistencia conserva el orden original.

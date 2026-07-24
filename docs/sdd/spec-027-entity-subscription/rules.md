@@ -2,14 +2,20 @@
 
 ## Invariantes
 
-### 1. One subscription per tenant
-UNIQUE(tenant_id).
+### 1. Subscription vigente única
+Como máximo una Subscription vigente por Tenant y contexto comercial; historia cancelada no se
+sobrescribe.
 
 ### 2. Status transitions
-TRIAL → ACTIVE → SUSPENDED → CANCELLED (irreversible)
+`TRIAL → ACTIVE → SUSPENDED → CANCELLED`. `CANCELLED` es terminal.
 
-### 3. Renewal logic
-If autoRenew && today >= renewalDate, auto-renew to next period.
+### 3. Período
+Inicio/fin y cambios de período son explícitos, versionados y auditados. No existe renovación/cobro
+automático hasta que un contrato comercial lo defina.
 
 ### 4. Cancellation
-Cancellation is immediate; can not resume same subscription.
+Cancelar registra motivo/actor, conserva datos y no reanuda la misma Subscription.
+
+### 5. Autoridad
+Items/catálogo describen servicios solicitados; Entitlement derivado decide capacidad efectiva.
+Subscription no es permiso, factura ni credencial.

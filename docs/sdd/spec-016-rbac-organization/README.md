@@ -11,8 +11,7 @@ Control de acceso en el dominio Organization (quién puede crear/editar tenant, 
 | **Estado** | IN_PROGRESS |
 | **Readiness** | WALKING_SKELETON_I0 |
 | **Prioridad** | P0 |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
 | **Fase** | 1 |
 | **Estimación** | 4h |
 

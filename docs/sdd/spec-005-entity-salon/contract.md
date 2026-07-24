@@ -2,7 +2,7 @@
 
 ## Definición
 
-Salon es un área física configurable dentro de una Branch. Agrupa mesas para navegación,
+Salon es un área física configurable dentro de una sucursal. Agrupa mesas para navegación,
 layout, capacidad administrativa y scopes operativos. No es una unidad de tenancy ni
 almacena ocupación, disponibilidad o reservas.
 
@@ -18,7 +18,7 @@ almacena ocupación, disponibilidad o reservas.
 
 ## Invariantes
 
-1. Tenant de Salon coincide con Tenant de Branch.
+1. Tenant de Salon coincide con el tenant de Branch.
 2. Nombre normalizado es único dentro de Branch, no globalmente.
 3. `maxCapacity` no es la suma automática de Table; expresa el límite operativo autorizado.
 4. Capacidad configurada de mesas y ocupación activa no superan `maxCapacity`.

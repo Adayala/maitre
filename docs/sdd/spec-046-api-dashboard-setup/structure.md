@@ -1,8 +1,10 @@
-# Structure — SPEC-046
+# Estructura — SPEC-046
 
 Rutas:
-- GET /dashboard/setup-status
+- `GET /v1/dashboard/setup-status`
 
 Headers:
-- Authorization: Bearer <token>
-- X-Tenant-Id: <tenant>
+- `Authorization: Bearer <token>`
+- `If-None-Match` opcional
+
+Tenant/alcance por sucursal se valida server-side. Respuesta: items derivados + revision/asOf/freshness.

@@ -13,8 +13,7 @@ Contrato transversal para mantener Floor, Kitchen, Cash y Dash actualizados sin 
 | **Review target** | PROPOSED_FOR_REVIEW |
 | **Prioridad** | P0 |
 | **Priority scope** | Floor/Kitchen |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
 | **Blockers** | Asignar owner y reviewer |
 | **Fase** | Antes de SPEC-222 I3 |
 | **Depende de** | SPEC-207–218, SPEC-222 |
@@ -30,6 +29,7 @@ Contrato transversal para mantener Floor, Kitchen, Cash y Dash actualizados sin 
 
 ## Documentos
 
+- [Contrato](contract.md)
 - [Objetivo](objective.md)
 - [Especificación](specification.md)
 - [Reglas](rules.md)

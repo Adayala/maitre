@@ -1,22 +1,26 @@
-# [SPEC-064] CheckGenerated Event
+# [SPEC-064] Check Lifecycle Events
 
 ## Metadata
 
 | Campo | Valor |
 | --- | --- |
 | **ID** | SPEC-064 |
-| **Título** | CheckGenerated Event |
+| **Título** | Check Lifecycle Events |
 | **Tipo** | Event |
-| **Dominio** | Floor |
+| **Dominio** | Billing & Payments |
 | **Estado** | IN_PROGRESS |
 | **Readiness** | WALKING_SKELETON_I0 |
 | **Prioridad** | P1 |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
 | **Fase** | 2 |
-| **Estimación** | 8h |
 
 ## Documentos normativos
 
 - [Especificación](specification.md)
 - [Contrato](contract.md)
+- [Objetivo](objective.md)
+- [Estructura](structure.md)
+- [Reglas](rules.md)
+- [Plan](plan.md)
+- [Tareas](tasks.md)
+- [Verificación](verification.md)

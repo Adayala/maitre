@@ -1,6 +1,8 @@
 # Rules — SPEC-039
 
-- Slug unique per category
-- Price: 0 to 99999.99
-- Allergens: predefined list (validation)
-- Status: AVAILABLE = can order, UNAVAILABLE = hidden, ARCHIVED = read-only
+- Product es tenant-scoped y reutilizable entre MenuItems.
+- Precio/currency/posición no viven en Product.
+- Editorial ACTIVE/ARCHIVED no decide stock/availability.
+- Tax/allergen/dietary codes pertenecen a catálogos versionados.
+- Declarations incluyen provenance y no son garantía médica.
+- ARCHIVED conserva snapshots/OrderItems y no puede incorporarse a nueva publicación.

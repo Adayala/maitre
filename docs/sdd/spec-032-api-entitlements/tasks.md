@@ -1,8 +1,8 @@
 # Tasks — SPEC-032
 
-- [ ] GET endpoint
-- [ ] Load entitlements
-- [ ] Load quotas
-- [ ] Tests
-
-**Est: ~6h**
+- [ ] Aprobar OpenAPI y typed value schemas.
+- [ ] Aprobar filtros/orden/ETag/revision.
+- [ ] Aprobar permissions/scopes/redacción.
+- [ ] Aprobar staleness/reconciliation semantics.
+- [ ] Materializar fixtures y contract tests.
+- [ ] Implementar sólo después de `READY_FOR_IMPLEMENTATION`.

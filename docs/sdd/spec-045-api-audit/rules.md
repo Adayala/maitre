@@ -1,6 +1,8 @@
 # Rules — SPEC-045
 
-- ADMIN+ permission required
-- Filtering by date range
-- Pagination required
-- Export limited to 10k records
+- Permission sensible y tenant scope requeridos; Role nominal no basta.
+- Rango/filtros/limit son allowlisted y acotados.
+- Cursor opaco, orden `occurredAt,id`; sin offset/total requerido.
+- Redacción depende de classification/permission.
+- Soporte cross-tenant usa capability temporal/plataforma y se audita.
+- Export no es endpoint síncrono v1.

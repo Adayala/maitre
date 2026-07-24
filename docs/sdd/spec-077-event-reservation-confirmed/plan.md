@@ -1,3 +1,7 @@
-# Plan — SPEC-ven
+# Plan — SPEC-077
 
-Event struct. Est: ~3h
+1. Congelar schema/trigger.
+2. Vincular allocation authority/outbox.
+3. Definir consumer convergence.
+4. Preparar confirm race/duplicate/reorder fixtures.
+5. Publicar tras review.

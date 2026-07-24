@@ -2,19 +2,37 @@
 
 ## Endpoints
 
-### GET /entitlements/:tenantId
-```
-Response (200):
+### `GET /v1/entitlements`
+
+```json
 {
   data: {
     entitlements: [
-      { resource: "branches", hardLimit: 3, softLimit: 2 },
-      { resource: "users", hardLimit: 50, softLimit: 40 }
+      {
+        "code": "branches.maximum",
+        "scope": { "type": "TENANT", "id": "uuid" },
+        "value": { "type": "LIMITED", "limit": 3 },
+        "validUntil": null
+      }
     ],
     quotas: [
-      { resource: "branches", used: 1 },
-      { resource: "users", used: 8 }
+      {
+        "code": "branches.active",
+        "scope": { "type": "TENANT", "id": "uuid" },
+        "used": 1,
+        "unit": "COUNT",
+        "entitlementCode": "branches.maximum",
+        "reconciliationStatus": "IN_SYNC"
+      }
     ]
+  },
+  meta: {
+    "calculationRevision": "entitlements-v1",
+    "computedAt": "ISO8601",
+    "authoritativeForMutation": false
   }
 }
 ```
+
+Soporta filtros `code` y alcance por sucursal permitido. La respuesta no contiene SubscriptionItem/pricing
+salvo un contrato explícito futuro.

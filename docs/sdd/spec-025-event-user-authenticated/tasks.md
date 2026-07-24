@@ -1,7 +1,7 @@
 # Tasks — SPEC-025
 
-- [ ] Define event struct
-- [ ] Emit on login
-- [ ] Tests
-
-**Est: ~3h**
+- [ ] Aprobar schema `identity.user.authenticated.v1`.
+- [ ] Aprobar trigger y clasificación de datos de seguridad.
+- [ ] Aprobar consumidores, retención y acceso.
+- [ ] Materializar fixtures y contract tests.
+- [ ] Implementar sólo después de `READY_FOR_IMPLEMENTATION`.

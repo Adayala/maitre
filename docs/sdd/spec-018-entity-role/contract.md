@@ -2,7 +2,7 @@
 
 ## Definición
 
-Role es un conjunto estable de permisos asignable a Membership dentro de un Tenant. No es
+Role es un conjunto estable de permisos asignable a Membership dentro de un tenant. No es
 una credencial, no vive en User y no se acepta como autoridad desde claims editables.
 
 ## Catálogo inicial
@@ -12,7 +12,7 @@ son inmutables y se almacenan en mayúsculas ASCII; etiquetas traducidas son pre
 
 `OWNER` es un rol privilegiado y no se concede por invitación común. `GUEST` no habilita
 operación interna. Roles funcionales pueden combinarse sólo si la política del dominio lo
-permite y siempre respetan branch scope.
+permite y siempre respetan alcance por sucursal.
 
 ## Campos
 
@@ -21,8 +21,8 @@ del catálogo. En I0 el catálogo es definido por código/migración versionada,
 
 ## Invariantes
 
-1. Un Role no contiene tenant, branch ni usuario.
-2. Permission codes desconocidos fallan cerrado.
+1. Un Role no contiene tenant, sucursal ni usuario.
+2. Códigos de permiso desconocidos fallan cerrado.
 3. Cambiar permisos de un rol es cambio de autorización y requiere review/auditoría.
 4. Un actor no delega roles/permisos superiores a los propios.
 5. Desactivar un rol no borra assignments históricos y exige migración de memberships.

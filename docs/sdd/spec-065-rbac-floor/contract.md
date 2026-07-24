@@ -1,9 +1,12 @@
 # Contrato RBAC — SPEC-065
 
-MAITRE administra seating/moves y ve Floor completo por branch scope; WAITER opera Visits y
-mesas asignadas/permitidas; MANAGER supervisa/corrige con permisos explícitos; CASHIER lee
-Check/Payment necesarios sin gestionar seating; COOK no accede a guest/check salvo contrato.
+MAITRE administra seating/moves y ve Floor dentro de su alcance por sucursal; WAITER opera sólo
+Visits/mesas asignadas o permitidas; MANAGER supervisa/corrige únicamente con permisos
+explícitas; CASHIER accede al mínimo de Check/Payment sin gestionar seating; COOK no recibe
+acceso Floor/Guest/Check por su rol nominal.
 
 Abrir/cerrar Visit, mover mesa, void Check y registrar Payment son acciones distintas.
-Toda mutación valida Membership/branch scope y reglas de dominio, con auditoría. Tests cubren
-matriz, assignment, cross-branch, self-escalation y no enumeración.
+OWNER/ADMIN tampoco implican wildcard ni bypass. Toda decisión valida Membership ACTIVE,
+permiso, alcance de Branch/assignment, revisión de autorización y reglas de dominio. Reopen,
+void, refund/approval y force-close agregan step-up, reason y segregación según política.
+Tests cubren matriz, assignment, límites, cross-Branch, self-escalation y no enumeración.

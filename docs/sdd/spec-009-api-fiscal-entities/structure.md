@@ -1,13 +1,15 @@
-# Structure — API
+# Estructura — API
 
-## Endpoint structure
+**Spec:** SPEC-009
 
-All endpoints require:
-- Authorization header (Bearer token)
-- X-Tenant-Id header
-- X-Branch-Id header (if branch-scoped)
+## Estructura del endpoint
 
-## Response format
+Todos los endpoints requieren:
+- header `Authorization` (Bearer token)
+- header `X-Tenant-Id`
+- header `X-Branch-Id` cuando el recurso tenga alcance por sucursal
+
+## Formato de respuesta
 
 ```json
 {
@@ -16,12 +18,12 @@ All endpoints require:
 }
 ```
 
-## Error codes
+## Códigos de error
 
-- 400: Bad Request (validation)
+- 400: Bad Request (validación)
 - 401: Unauthorized
-- 403: Forbidden (no entitlement)
+- 403: Forbidden (sin autorización suficiente)
 - 404: Not Found
-- 409: Conflict (unique constraint)
+- 409: Conflict (restricción única)
 - 429: Rate Limited
 - 500: Server Error

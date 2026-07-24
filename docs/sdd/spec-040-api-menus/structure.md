@@ -1,12 +1,15 @@
-# Structure — SPEC-040
+# Estructura — SPEC-040
 
 Rutas:
-- GET /brands/:brandId/menus
-- POST /brands/:brandId/menus
-- GET /menus/:id
-- PATCH /menus/:id
-- DELETE /menus/:id (soft delete)
+- `GET /v1/menus`
+- `POST /v1/menus`
+- `GET/PATCH /v1/menus/{menuId}/revisions/{revision}`
+- `POST /v1/menus/{menuId}/revisions/{revision}/publish`
+- `POST /v1/menus/{menuId}/archive`
 
 Headers:
-- Authorization: Bearer <token>
-- X-Tenant-Id: <tenant>
+- `Authorization: Bearer <token>`
+- `Idempotency-Key` en create/publish
+- `If-Match` en PATCH/publish
+
+Tenant/Brand/alcances por sucursal se validan server-side; no existe DELETE.

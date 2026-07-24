@@ -1,8 +1,7 @@
 # Tasks — SPEC-037
 
-- [ ] Schema + entity
-- [ ] Repository CRUD
-- [ ] Default menu logic
-- [ ] Tests
-
-**Est: ~8h**
+- [ ] Aprobar MenuRevision/Category/MenuItem schemas.
+- [ ] Aprobar lifecycle/publication/pointer/rollback.
+- [ ] Aprobar money/tax/modifier snapshots.
+- [ ] Materializar fixtures y contract tests.
+- [ ] Implementar sólo después de `READY_FOR_IMPLEMENTATION`.

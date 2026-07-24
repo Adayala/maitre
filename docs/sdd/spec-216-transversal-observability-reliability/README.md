@@ -12,8 +12,7 @@ Contrato para detectar, entender y recuperar fallos de Maitre con telemetría po
 | **Readiness** | BLOCKED |
 | **Review target** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
 | **Blockers** | Asignar owner y reviewer |
 | **Fase** | Antes del ambiente demo estable |
 | **Depende de** | SPEC-207–215 |
@@ -29,6 +28,7 @@ Contrato para detectar, entender y recuperar fallos de Maitre con telemetría po
 
 ## Documentos
 
+- [Contrato](contract.md)
 - [Objetivo](objective.md)
 - [Especificación](specification.md)
 - [Reglas](rules.md)

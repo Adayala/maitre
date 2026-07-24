@@ -1,7 +1,9 @@
 # Plan — SPEC-040
 
-- Handler + controller
-- Authorization checks
-- Repository layer
+1. Aprobar OpenAPI de list/create/get/PATCH/publish/archive.
+2. Aprobar idempotencia, ETag y Problem Details.
+3. Aprobar snapshot validation/pointer/rollback.
+4. Aprobar RBAC/scopes/audit/redaction.
+5. Materializar fixtures de double publish y concurrencia.
 
-**Est: ~8h**
+La estimación permanece pendiente hasta aprobar publication model.

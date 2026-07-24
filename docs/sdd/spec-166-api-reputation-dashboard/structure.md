@@ -1,1 +1,9 @@
-# STRUCTURE — SPEC-166
+# Estructura — SPEC-166
+
+```text
+/reputation-dashboard
+├── /overview
+├── /trends
+├── /distributions
+└── /themes
+```

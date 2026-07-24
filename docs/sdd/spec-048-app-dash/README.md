@@ -11,10 +11,10 @@ App web para admin: configurar tenant, ver estado, entitlements.
 | **Estado** | IN_PROGRESS |
 | **Readiness** | WALKING_SKELETON_I0 |
 | **Prioridad** | P0 |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
-| **Fase** | 1 |
-| **Estimación** | 16h |
+| **Review target** | READY_FOR_I0_REVIEW |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
+| **Blockers** | Acordar UX de stale/partial/error, accesibilidad crítica y límites de cache offline |
+| **Fase** | I0 |
 
 **Flows:**
 - Register tenant
@@ -26,6 +26,7 @@ App web para admin: configurar tenant, ver estado, entitlements.
 ## Documentos
 
 - [Contrato](contract.md)
+- [Objetivo](objective.md)
 - [Especificación](specification.md)
 - [Reglas](rules.md)
 - [Verificación](verification.md)

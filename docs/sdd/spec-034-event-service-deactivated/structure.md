@@ -1,5 +1,7 @@
 # Structure — SPEC-034
 
-Event structure: eventId, eventName, eventVersion, namespace, aggregateId, aggregateType, tenantId, timestamp, correlationId, payload.
+Envelope SPEC-217, aggregate `SubscriptionItem/itemId`, occurredAt, correlation/causation, actor
+sanitizado y payload mínimo.
 
-Serialization: JSON.
+Serialización JSON versionada. Consumidores convergen por source revision y no ejecutan cleanup
+destructivo implícito.

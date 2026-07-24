@@ -2,7 +2,7 @@
 
 `POST /v1/tenants` es provisioning privilegiado/idempotente; `GET /v1/tenants/{id}` y
 `PATCH` operan sólo contexto autorizado. No existe listado global para usuarios tenant ni
-hard delete. PATCH permite defaults/name/status compatibles con If-Match; tenantId y
+eliminación física. PATCH permite defaults/name/status compatibles con If-Match; tenantId y
 ownership no cambian aquí.
 
 Provisioning crea raíz mínima y outbox TenantCreated atómicamente, sin asumir Subscription

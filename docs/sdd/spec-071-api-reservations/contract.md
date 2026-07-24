@@ -4,4 +4,4 @@ Crear/listar/obtener y ejecutar confirm/cancel/seat/no-show sobre Reservation. C
 branch, horario, party size y contacto mínimo; tenant deriva del canal/contexto e
 Idempotency-Key evita duplicados. Commands usan If-Match y reason codes. Confirmación
 revalida capacidad atómicamente; seating enlaza Visit una vez. Tests cubren concurrencia,
-timezone/DST, reintento, PII, canales público/interno y cross-tenant.
+timezone/DST, reintento, PII, canales público/interno y aislamiento entre tenants.

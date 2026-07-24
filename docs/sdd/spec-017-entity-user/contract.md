@@ -4,7 +4,7 @@
 
 User es el perfil global de una persona conocida por Maitre. Autenticación vive en el
 Identity Provider y autorización vive en Membership; User no contiene password, tokens,
-tenant, roles ni branch scopes.
+tenant, roles ni alcances por sucursal.
 
 ## Campos
 
@@ -12,7 +12,7 @@ tenant, roles ni branch scopes.
 - `externalIdentityId`: referencia opaca única por provider, server-only cuando corresponde.
 - `email`: normalizado/verificado por provider; exposición minimizada.
 - `displayName`, `locale`, `timezone`: preferencias de perfil.
-- `status`: `ACTIVE | DISABLED | DELETED` lógico.
+- `status`: `ACTIVE | SUSPENDED | DEACTIVATED`.
 - `version`, timestamps y actores de auditoría.
 
 ## Invariantes

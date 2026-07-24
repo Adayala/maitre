@@ -12,8 +12,7 @@ Contrato de alcance y secuencia que transforma el catálogo completo de Maitre e
 | **Readiness** | BLOCKED |
 | **Review target** | PROPOSED_FOR_REVIEW |
 | **Prioridad** | P0 |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
 | **Blockers** | Asignar owner y reviewer |
 | **Fase** | Antes de comenzar implementación funcional |
 | **Depende de** | Foundations, SPEC-001–206 y SPEC-207–221 |
@@ -30,6 +29,7 @@ Contrato de alcance y secuencia que transforma el catálogo completo de Maitre e
 
 ## Documentos
 
+- [Contrato](contract.md)
 - [Objetivo](objective.md)
 - [Especificación](specification.md)
 - [Reglas](rules.md)

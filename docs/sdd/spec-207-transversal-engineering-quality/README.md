@@ -11,8 +11,7 @@ Contrato transversal de calidad para todo cambio de Maitre.
 | **Readiness** | BLOCKED |
 | **Review target** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
 | **Blockers** | Asignar owner y reviewer |
 | **Fase** | Todas, antes del primer código productivo |
 
@@ -22,6 +21,7 @@ Hacer verificable que cada implementación parte de una spec aprobada, conserva 
 
 ## Documentos
 
+- [Contrato](contract.md)
 - [Especificación](specification.md)
 - [Reglas](rules.md)
 - [Plan](plan.md)

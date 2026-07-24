@@ -4,7 +4,7 @@
 
 1. User es global y no contiene `tenantId`.
 2. User no contiene password, hash, token, MFA secret ni recovery code.
-3. User no contiene role, permission, entitlement o branch scope.
+3. User no contiene rol, permiso, entitlement ni alcance por sucursal.
 4. Provider + external identity es único e inmutable salvo proceso de linking/migración aprobado.
 5. Email no concede identidad ni autorización.
 6. User no ACTIVE no puede obtener un contexto autorizado.

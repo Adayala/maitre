@@ -1,5 +1,7 @@
-# Rules — SPEC-043
+# Reglas — SPEC-043
 
-- OWNER/ADMIN: create/edit/delete menus, categories, products
-- MANAGER/EMPLOYEE/MAÎTRE: read-only
-- WAITER: read products (for ordering)
+- La lectura publicada no concede lectura/escritura draft.
+- Price, tax, publish, archive y media requieren permisos separados.
+- No existe `EMPLOYEE` genérico ni jerarquía ordinal de roles.
+- GUEST accede mediante capability limitada y no elige tenant/alcance.
+- Cross-tenant/draft leakage y self-escalation fallan cerrado.

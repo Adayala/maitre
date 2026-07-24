@@ -1,2 +1,31 @@
 # Objetivo — SPEC-107
-CommandInProgress Event
+
+Definir el evento normativo de inicio efectivo de producción de un Command con separación clara
+respecto de claim y transfer.
+
+## Criterios de aceptación
+
+### CAD-107-01 — La frontera entre claim e `IN_PROGRESS` queda definida inequívocamente
+
+nombre canónico y frontera entre claim e in-progress quedan definidos inequívocamente.
+
+### CAD-107-02 — La transición efectiva a `IN_PROGRESS` emite un único hecho
+
+se emite una sola vez por transición lógica efectiva a `IN_PROGRESS`.
+
+### CAD-107-03 — El payload incluye owner, station y revisiones suficientes
+
+payload incluye owner operativo, station, timestamps y revisiones suficientes.
+
+### CAD-107-04 — Transferencias posteriores no reescriben el hecho original
+
+transferencias y reasignaciones posteriores no reescriben el hecho original.
+
+### CAD-107-05 — Retry, rollback y reorder convergen sin duplicar inicio efectivo
+
+retry, rollback y reorder convergen sin duplicar inicio efectivo.
+
+### CAD-107-06 — La aprobación exige evidencia de claims concurrentes, transfer y dedupe
+
+La aprobación exige fixtures de claims concurrentes, rollback, transfer, dedupe y
+aislamiento.

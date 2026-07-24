@@ -49,7 +49,7 @@ Reactivar un User `DEACTIVATED` requiere una decisión futura; no está permitid
 - El API verifica el token mediante `SessionVerificationPort`.
 - El adapter entrega provider key + subject validado.
 - El repositorio resuelve User por esa tupla.
-- Claims como role, tenant o branch no actualizan autorización del dominio.
+- Claims como rol, tenant o sucursal no actualizan autorización del dominio.
 - Cambiar email del proveedor no crea otro User si el subject permanece estable.
 
 ## Email
@@ -58,7 +58,7 @@ Email es PII y snapshot de conveniencia:
 
 - se normaliza para almacenamiento/display según política;
 - no es lookup autoritativo de sesión;
-- no se usa como tenant key o permission;
+- no se usa como tenant key o permiso;
 - su unicidad pertenece al proveedor/política de linking, no a cada tenant;
 - divergencia se sincroniza mediante flujo explícito, no durante cualquier request.
 

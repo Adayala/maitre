@@ -1,7 +1,8 @@
 # Rules — SPEC-029
 
-- One entitlement per resource per subscription
-- hardLimit: absolute cannot exceed
-- softLimit: warning/throttling threshold (optional)
-- Override: admin can increase for specific periods
-- Entitlements checked on creation (branches, users, etc)
+- Una proyección efectiva por tenant + code + scope + calculation revision.
+- Valores tipados distinguen LIMITED, UNLIMITED, DENIED y otros tipos de catálogo.
+- Ausencia, fuente inválida o cache stale no amplían capacidad.
+- Override es una fuente separada con autoridad, razón y expiry; no CRUD del Entitlement.
+- Recomputation es idempotente, auditable y reemplaza atómicamente.
+- Toda admisión usa Entitlement efectivo y, si es cuantitativo, Quota autoritativa.

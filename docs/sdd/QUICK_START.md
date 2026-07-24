@@ -5,7 +5,7 @@ Comienza aquí si es tu primera vez con el SDD de Maitre.
 ## 5 minutos para entender
 
 1. **Lee:** [`_guides/SPEC_FORMAT.md`](_guides/SPEC_FORMAT.md) — Estructura de una spec
-2. **Mira:** [`spec-entity-tenant/`](spec-entity-tenant/) — Ejemplo completo (SPEC-001)
+2. **Mira:** [`spec-001-entity-tenant/`](spec-001-entity-tenant/) — Ejemplo completo (SPEC-001)
 3. **Lista:** [`SPECS.md`](SPECS.md) — ~193 specs numeradas para el MVP
 
 ## Para escribir una spec
@@ -35,7 +35,7 @@ cd /docs/sdd/spec-002-entity-brand
 cat > README.md << 'DOC'
 # [SPEC-002] Brand Entity
 
-[Copiar estructura de spec-entity-tenant/README.md y adaptar]
+[Copiar estructura de spec-001-entity-tenant/README.md y adaptar]
 DOC
 
 # Crear otros documentos
@@ -143,9 +143,9 @@ spec-NNN-name/
 
 1. Este archivo (QUICK_START.md)
 2. [`_guides/SPEC_FORMAT.md`](_guides/SPEC_FORMAT.md)
-3. [`spec-entity-tenant/README.md`](spec-entity-tenant/README.md)
-4. [`spec-entity-tenant/objective.md`](spec-entity-tenant/objective.md)
-5. [`spec-entity-tenant/specification.md`](spec-entity-tenant/specification.md)
+3. [`spec-001-entity-tenant/README.md`](spec-001-entity-tenant/README.md)
+4. [`spec-001-entity-tenant/objective.md`](spec-001-entity-tenant/objective.md)
+5. [`spec-001-entity-tenant/specification.md`](spec-001-entity-tenant/specification.md)
 6. [`SPECS.md`](SPECS.md) — Elegir qué escribir
 
 ## Files importantes
@@ -156,7 +156,7 @@ spec-NNN-name/
 | [`SPECS.md`](SPECS.md) | Catálogo numerado de 193 specs |
 | [`_guides/SPEC_FORMAT.md`](_guides/SPEC_FORMAT.md) | Estructura completa de una spec |
 | [`_guides/SPEC_STRUCTURE.md`](_guides/SPEC_STRUCTURE.md) | Tipos de specs y sus documentos |
-| [`spec-entity-tenant/`](spec-entity-tenant/) | Ejemplo completo (SPEC-001) |
+| [`spec-001-entity-tenant/`](spec-001-entity-tenant/) | Ejemplo completo (SPEC-001) |
 | [`START_HERE.md`](START_HERE.md) | Overview de todo (más detallado) |
 
 ## FAQ

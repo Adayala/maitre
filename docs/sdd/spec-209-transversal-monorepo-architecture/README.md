@@ -12,14 +12,14 @@ Contrato estructural para implementar Maitre con React.js, Node.js y TypeScript 
 | **Readiness** | BLOCKED |
 | **Review target** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
 | **Blockers** | Asignar owner y reviewer |
 | **Fase** | Antes del scaffolding |
 | **Depende de** | SPEC-207, SPEC-208 |
 
 ## Documentos
 
+- [Contrato](contract.md)
 - [Objetivo](objective.md)
 - [Estructura y contratos](specification.md)
 - [Reglas de dependencias](rules.md)

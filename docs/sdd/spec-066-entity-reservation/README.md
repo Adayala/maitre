@@ -8,8 +8,7 @@
 | **Estado** | IN_PROGRESS |
 | **Readiness** | WALKING_SKELETON_I0 |
 | **Prioridad** | UNASSIGNED |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
 | **Fase** | 3 |
 | **Blockers** | Revisar contrato y asignar prioridad/ownership |
 

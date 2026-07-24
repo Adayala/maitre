@@ -5,19 +5,23 @@
 ```json
 {
   "eventId": "uuid",
-  "eventName": "ServiceActivated",
-  "eventVersion": "1.0",
-  "namespace": "maitre.subscription",
-  "aggregateId": "subscriptionId",
-  "aggregateType": "Subscription",
+  "eventName": "subscription.service.activated.v1",
+  "eventVersion": 1,
+  "aggregateId": "itemId",
+  "aggregateType": "SubscriptionItem",
   "tenantId": "uuid",
-  "timestamp": "ISO8601",
+  "occurredAt": "ISO8601",
   "correlationId": "uuid",
   "payload": {
     "subscriptionId": "uuid",
-    "serviceId": "uuid",
-    "serviceName": "string",
-    "activatedAt": "ISO8601"
+    "itemId": "uuid",
+    "serviceCode": "floor",
+    "scopes": [{ "type": "TENANT", "id": "uuid" }],
+    "effectiveAt": "ISO8601",
+    "sourceRevision": 7,
+    "calculationRevision": "entitlements-v1"
   }
 }
 ```
+
+El evento no incluye price/payment ni reemplaza el resultado de SPEC-035.

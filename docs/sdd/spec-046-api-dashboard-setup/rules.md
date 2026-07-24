@@ -1,5 +1,8 @@
 # Rules — SPEC-046
 
-- Authenticated users can see own setup
-- Admin sees full setup detail
-- Status cached 5 minutes
+- Autenticación no basta: permiso/alcance determinan items visibles.
+- Estado se deriva de fuentes autoritativas; no se marca manualmente.
+- Item usa code/status/reasons/action ref canónicos.
+- Unavailable/partial/stale son explícitos y no equivalen a cero/incompleto.
+- Cache sólo es válida con revision/freshness; TTL exacto requiere medición/policy.
+- Action refs están allowlisted y no amplían autorización.

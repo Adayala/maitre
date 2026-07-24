@@ -1,8 +1,7 @@
 # Tasks — SPEC-038
 
-- [ ] Schema + entity
-- [ ] Repository CRUD
-- [ ] Ordering logic
-- [ ] Tests
-
-**Est: ~8h**
+- [ ] Aprobar schema/unicidad/ordering.
+- [ ] Aprobar lifecycle/visibility dentro de revisión.
+- [ ] Aprobar relación con MenuItem.
+- [ ] Materializar fixtures y contract tests.
+- [ ] Implementar sólo después de `READY_FOR_IMPLEMENTATION`.

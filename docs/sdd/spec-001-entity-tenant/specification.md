@@ -59,10 +59,10 @@ El estado comercial `TRIALING`, expiraciones y cancelaciones pertenecen a Subscr
 
 ## 5. Aislamiento
 
-Toda entidad tenant-scoped contiene `tenantId`; repositories y casos de uso lo reciben explícitamente. Los identificadores de recurso no sustituyen el tenant context. La defensa combina:
+Toda entidad con alcance tenant contiene `tenantId`; repositories y casos de uso lo reciben explícitamente. Los identificadores de recurso no sustituyen el contexto tenant. La defensa combina:
 
-- autorización de aplicación basada en Membership y branch scope;
-- predicates tenant-scoped en repositories;
+- autorización de aplicación basada en Membership y alcance por sucursal;
+- predicates con alcance tenant en repositories;
 - RLS de PostgreSQL cuando el spike de SPEC-226 demuestre el patrón;
 - tests negativos entre Tenant A y Tenant B.
 

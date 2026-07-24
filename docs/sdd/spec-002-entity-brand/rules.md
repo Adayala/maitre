@@ -1,49 +1,14 @@
 # Rules — SPEC-002
 
-## Invariantes
-
-### 1. Slug único por tenant
-No pueden existir 2 brands con igual slug dentro del mismo tenant.
-
-### 2. Status transiciones válidas
-```
-ACTIVE ↔ INACTIVE (reversible)
-ACTIVE → ARCHIVED (irreversible)
-INACTIVE → ARCHIVED (irreversible)
-```
-
-### 3. Brand ARCHIVED es read-only
-Si status = ARCHIVED: no se pueden crear branches nuevas, no se pueden cambiar configs.
-
-### 4. Config heritable
-Branch hereda config de brand a menos que la sobrescriba.
-
-## Cambios permitidos
-
-### Crear brand
-Precondición: tenant_id existe
-
-Acción:
-1. Validar nombre (3-100 chars)
-2. Generar slug desde nombre
-3. Verificar slug único en tenant
-4. Crear brand con status ACTIVE
-5. Registrar en AuditLog
-
-Postcondición: brand creado, evento BrandCreated emitido
-
-### Cambiar nombre/slug
-Solo si status != ARCHIVED
-Validar nuevo slug único
-
-### Cambiar config
-Solo si status != ARCHIVED
-Herencia a branches que no la sobrescribieron
-
-### Cambiar status
-Validar transición según máquina de estados
-
-### Archivar brand
-Status → ARCHIVED
-Branches → READ_ONLY
-Preservar datos para auditoría
+- **BRA-001:** Brand siempre pertenece a exactamente un tenant.
+- **BRA-002:** `slug` es único por tenant, no global.
+- **BRA-003:** `slug` se normaliza antes de validar y no se resuelve por heurísticas ambiguas.
+- **BRA-004:** Brand no usa `config` JSON abierto para esconder decisiones de dominio.
+- **BRA-005:** Branch sólo hereda defaults declarados explícitamente por contrato.
+- **BRA-006:** Brand no persiste menú completo, certificados fiscales, límites ni entitlements.
+- **BRA-007:** `ACTIVE ↔ INACTIVE`; `ACTIVE|INACTIVE → ARCHIVED`; `ARCHIVED` es terminal.
+- **BRA-008:** `ARCHIVED` es sólo lectura para mutaciones operativas nuevas.
+- **BRA-009:** referencias same-tenant se validan en aplicación y DB cuando existan FKs compuestas.
+- **BRA-010:** API camelCase y DB snake_case se conectan mediante repository/mappers.
+- **BRA-011:** timestamps son server-side, `timestamptz` y UTC.
+- **BRA-012:** eventos y agregado se persisten atómicamente mediante outbox.

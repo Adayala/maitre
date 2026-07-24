@@ -6,13 +6,14 @@
 {
   "id": "uuid",
   "tenantId": "uuid",
-  "brandId": "uuid",
-  "menuId": "uuid",
-  "name": "string (100 max)",
-  "slug": "string",
-  "description": "string",
-  "displayOrder": "number",
-  "status": "ACTIVE | INACTIVE | ARCHIVED",
-  "createdAt": "ISO8601"
+  "menuRevisionId": "uuid",
+  "name": "string",
+  "description": "string | null",
+  "sortOrder": 10,
+  "visibility": "VISIBLE | HIDDEN",
+  "version": 2
 }
 ```
+
+La relación con Product ocurre por MenuItem (`categoryId + productId`). Category no duplica
+brand/menu lifecycle ni contiene una colección autoritativa de Product IDs separada.

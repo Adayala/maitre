@@ -2,20 +2,37 @@
 
 ## Endpoints
 
-### GET /brands/:brandId/menus
-Listar menús de marca.
+### `GET /v1/menus`
 
-### POST /brands/:brandId/menus
+Lista menús/revisiones visibles con filtros `brandId`, `status`, `branchId`, cursor y orden estable.
+
+### `POST /v1/menus`
+
+```json
+{
+  "brandId": "uuid",
+  "name": "Cena",
+  "currency": "ARS",
+  "branchScopes": ["branch-id"],
+  "validFrom": null,
+  "validUntil": null
+}
 ```
-Request:
-{ "name": "string", "slug": "string" }
 
-Response (201):
-{ "data": { id, name, slug, ... } }
-```
+Requiere `Idempotency-Key`. Devuelve `Menu` + revisión `DRAFT` y `ETag`.
 
-### GET /menus/:id
-Detalle menú + categorías.
+### `GET /v1/menus/{menuId}/revisions/{revision}`
 
-### PATCH /menus/:id
-Actualizar nombre, slug, status.
+Devuelve snapshot/draft completo según permisos, con `Categories`/`MenuItems` y `ETag`.
+
+### `PATCH /v1/menus/{menuId}/revisions/{revision}`
+
+Modifica metadata/alcances de `DRAFT` con `If-Match`; `Categories`/`MenuItems` usan sus contratos.
+
+### `POST /v1/menus/{menuId}/revisions/{revision}/publish`
+
+Comando idempotente con `If-Match`. Valida/congela snapshot y cambia el puntero activo.
+
+### `POST /v1/menus/{menuId}/archive`
+
+Archiva para nueva oferta sin borrar revisiones publicadas.

@@ -1,5 +1,7 @@
 # Structure — SPEC-024
 
-Event structure: eventId, eventName, eventVersion, namespace, aggregateId, aggregateType, tenantId, timestamp, correlationId, payload.
+Envelope SPEC-217: eventId, eventName/version, aggregateId/type, tenantId, occurredAt,
+correlation/causation, actor sanitizado y payload mínimo.
 
-Serialization: JSON.
+Aggregate: `MembershipInvitation/invitationId`. Serialización JSON versionada. Outbox e invitación
+son atómicos; token/link no forma parte del evento.

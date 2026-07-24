@@ -1,20 +1,13 @@
 # Structure — SPEC-066
 
-```sql
-CREATE TABLE reservations (
-  id UUID PRIMARY KEY,
-  tenant_id UUID NOT NULL,
-  branch_id UUID NOT NULL,
-  guest_id UUID NOT NULL,
-  reservation_time TIMESTAMP NOT NULL,
-  party_size INT NOT NULL,
-  status VARCHAR(20) DEFAULT 'PENDING',
-  preferences JSONB,
-  notes TEXT,
-  created_at TIMESTAMP DEFAULT NOW(),
-  INDEX(tenant_id, branch_id, reservation_time),
-  FOREIGN KEY(tenant_id) REFERENCES tenants(id),
-  FOREIGN KEY(branch_id) REFERENCES branches(id),
-  FOREIGN KEY(guest_id) REFERENCES guests(id)
-);
-```
+Estructura lógica:
+
+- Reservation: `reservationId`, tenant/Branch, `guestId?`, `[startAt,endAt)`, timezone,
+  partySize, source/channel, status, `allocationId?`, `visitId?`, policy versions,
+  terminal reason/timestamps, revision y auditoría.
+- CapacityHold/Allocation: identidad, tenant/Branch, Reservation, intervalo, partySize,
+  unidades o pool/policy referenciados, `HELD | CONFIRMED | RELEASED | EXPIRED`,
+  `expiresAt?` y revision.
+
+Preferencias se referencian o congelan como snapshot tipado; contacto y notas sensibles no
+se duplican. La persistencia debe imponer exclusión/capacidad y unicidad del vínculo Visit.

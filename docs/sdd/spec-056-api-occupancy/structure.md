@@ -1,8 +1,3 @@
-# Structure — SPEC-'"$num"'
+# Estructura — SPEC-056
 
-Rutas CRUD estándar.
-
-Headers:
-- Authorization: Bearer <token>
-- X-Tenant-Id: <tenant>
-- X-Branch-Id: <branch>
+API → Occupancy commands/query → transaction coordinator. Repository aplica constraint ACTIVE por Table y locks ordenados; history/query y TableStatus projection son consumidores separados.

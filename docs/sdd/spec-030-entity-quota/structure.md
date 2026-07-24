@@ -1,15 +1,14 @@
 # Structure — SPEC-030
 
-```sql
-CREATE TABLE quotas (
-  id UUID PRIMARY KEY,
-  subscription_id UUID NOT NULL,
-  resource VARCHAR(50),
-  used INT DEFAULT 0,
-  entitlement_id UUID,
-  last_updated_at TIMESTAMP,
-  UNIQUE(subscription_id, resource),
-  FOREIGN KEY(subscription_id) REFERENCES subscriptions(id),
-  FOREIGN KEY(entitlement_id) REFERENCES entitlements(id)
-);
+```text
+Quota
+├── id, tenantId, code, scope, period
+├── used, unit
+├── entitlementId
+├── sourceRevision
+├── reconciliationStatus
+└── computedAt/version
 ```
+
+La estructura física debe soportar admisión atómica y reconciliación; no se presupone un hook ni un
+contador eventual como única fuente.

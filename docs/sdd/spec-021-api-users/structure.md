@@ -1,13 +1,14 @@
 # Structure — SPEC-021
 
 Rutas:
-- POST /users
-- GET /users
-- GET /users/:id
-- PATCH /users/:id
+- `POST /v1/users/invitations`
+- `GET /v1/users`
+- `GET /v1/users/{userId}`
+- `PATCH /v1/users/{userId}`
 
 Headers:
-- Authorization: Bearer <token>
-- X-Tenant-Id: <tenant>
+- `Authorization: Bearer <token>`
+- selector de Tenant según SPEC-023/213, validado contra Membership
 
-Response format: { data, meta: { correlationId } }
+Un header o path puede solicitar contexto, pero no prueba pertenencia. Response envelope:
+`{ data, meta: { correlationId } }`.

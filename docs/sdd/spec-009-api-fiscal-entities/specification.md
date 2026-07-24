@@ -8,21 +8,21 @@ Request:
 {
   "name": "string",
   "cuit": "string (11 digits, ej: 20123456789)",
-  "legal_address": "string",
-  "fiscal_address": "string",
+  "legalAddress": "string",
+  "fiscalAddress": "string",
   "regime": "MONOTRIBUTO | RESPONSABLE_INSCRIPTO",
-  "activity_code": "string (AFIP)"
+  "activityCode": "string (AFIP)"
 }
 
 Response (201):
 {
   "data": {
     "id": "uuid",
-    "tenant_id": "uuid",
+    "tenantId": "uuid",
     "cuit": "...",
     "name": "...",
     "regime": "...",
-    "created_at": "ISO8601"
+    "createdAt": "ISO8601"
   }
 }
 ```
@@ -40,16 +40,16 @@ Response (200):
 Response (200): Entidad fiscal completa
 
 ### PATCH /fiscal-entities/:id (Actualizar)
-Campos: name, legal_address, fiscal_address, activity_code
+Campos: name, legalAddress, fiscalAddress, activityCode
 
 Response (200): Entidad actualizada
 
-## Authorization
+## Autorización
 
-- All endpoints → OWNER only (fiscal es crítico)
+- Todos los endpoints requieren permisos fiscales explícitos; la visibilidad o pertenencia nominal no reemplaza autorización.
 
 ## Validaciones
 
 - cuit: 11 dígitos, único en tenant
 - regime: debe ser válido en AFIP
-- activity_code: validar contra AFIP
+- activityCode: validar contra AFIP

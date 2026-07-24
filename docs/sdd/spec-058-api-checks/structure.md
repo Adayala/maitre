@@ -1,8 +1,3 @@
-# Structure — SPEC-'"$num"'
+# Estructura — SPEC-058
 
-Rutas CRUD estándar.
-
-Headers:
-- Authorization: Bearer <token>
-- X-Tenant-Id: <tenant>
-- X-Branch-Id: <branch>
+API → Check commands/query → calculation policy → repository/outbox. Inputs autoritativos: Order snapshots, DiscountApplications, Tax/MoneyPolicy y Payment ledger. Invoice permanece downstream separado.

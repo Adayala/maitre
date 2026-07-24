@@ -1,9 +1,12 @@
 # Structure — SPEC-035
 
-Calculation function: `calculateEntitlements(plan, services, overrides) -> entitlements`
+Función pura:
 
-Triggers:
-- On subscription create
-- On plan upgrade
-- On service add/remove
-- On override change
+```text
+calculateEntitlements(snapshot, asOf) -> EntitlementSet | CalculationFailure
+```
+
+Triggers candidatos solicitan recomputación al cambiar Subscription, items, catálogo u override.
+El trigger no forma parte del resultado y puede duplicarse; el cálculo/reemplazo es idempotente.
+
+Quota/consumo se mantiene fuera de este boundary.

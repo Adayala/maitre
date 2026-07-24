@@ -6,9 +6,9 @@
 ```
 Request:
 {
-  "branch_id": "uuid",
+  "branchId": "uuid",
   "name": "string (1-50)",
-  "max_capacity": "integer (max huéspedes en salón)",
+  "maxCapacity": "integer (máx huéspedes en salón)",
   "description": "string | null"
 }
 
@@ -16,16 +16,16 @@ Response (201):
 {
   "data": {
     "id": "uuid",
-    "branch_id": "uuid",
+    "branchId": "uuid",
     "name": "...",
-    "max_capacity": 50,
-    "created_at": "ISO8601"
+    "maxCapacity": 50,
+    "createdAt": "ISO8601"
   }
 }
 ```
 
 ### GET /salons (Listar)
-Filtrar por branch_id.
+Filtrar por branchId.
 
 Response (200):
 ```json
@@ -39,11 +39,11 @@ Response (200):
 Incluye mesas del salón.
 
 ### PATCH /salons/:id (Actualizar)
-Campos: name, max_capacity, description
+Campos: name, maxCapacity, description
 
 Response (200): Salón actualizado
 
-## Authorization
+## Autorización
 
 - POST /salons → OWNER, ADMIN
 - GET /salons → OWNER, ADMIN, MANAGER

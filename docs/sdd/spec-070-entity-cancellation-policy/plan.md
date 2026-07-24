@@ -1,6 +1,6 @@
 # Plan — SPEC-070
 
-- Policy entity
-- policies table
-
-**Est: ~4h**
+- Aprobar versionado, effective intervals y precedence.
+- Aprobar evaluación pura, classifications y consequences.
+- Aprobar override, approval y ausencia de efectos financieros.
+- Materializar posteriormente persistencia versionada, evaluador y pruebas.

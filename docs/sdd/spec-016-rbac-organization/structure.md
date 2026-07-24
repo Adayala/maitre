@@ -1,5 +1,7 @@
 # Structure — RBAC
 
+**Spec:** SPEC-016
+
 ## Role hierarchy
 
 OWNER > ADMIN > MANAGER > EMPLOYEE

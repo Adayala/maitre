@@ -1,3 +1,3 @@
-# Structure — SPEC-ven
+# Estructura — SPEC-078
 
-Event structure JSON versionado
+Producer cancel transaction que libera allocation y escribe outbox. Payload envelope + reservation/branch, cancelledAt, reason code, actor type, released allocation y revision.

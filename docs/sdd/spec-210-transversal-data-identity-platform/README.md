@@ -12,8 +12,7 @@ Decisión de PostgreSQL, identidad y almacenamiento inicial para el MVP de costo
 | **Readiness** | BLOCKED |
 | **Blockers** | Adopción pendiente de ADR-002 y SPK-02–06; asignar owner y reviewer |
 | **Prioridad** | P0 |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
 | **Fase** | Antes del walking skeleton con persistencia |
 | **Depende de** | ADR-002, SPEC-207–209, SPEC-214, SPEC-220, SPEC-226 |
 
@@ -23,8 +22,12 @@ Evaluar **Supabase Free** como proveedor inicial de PostgreSQL y Auth. Storage s
 
 ## Documentos
 
+- [Contrato](contract.md)
 - [Objetivo y comparación](objective.md)
 - [Diseño](specification.md)
+- [Contrato de estructura PostgreSQL I0](database-structure.md)
+- [Diccionario físico y reconciliación I0](i0-physical-dictionary.md)
+- [Propuestas de resolución del esquema I0](i0-decision-proposals.md)
 - [Reglas](rules.md)
 - [Plan](plan.md)
 - [Tareas](tasks.md)

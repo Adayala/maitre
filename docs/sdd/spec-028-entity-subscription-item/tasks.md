@@ -1,8 +1,7 @@
 # Tasks — SPEC-028
 
-- [ ] Schema + entity
-- [ ] Add service logic
-- [ ] Remove service logic
-- [ ] Tests
-
-**Est: ~8h**
+- [ ] Aprobar catálogo/schema/config y lifecycle.
+- [ ] Aprobar identidad/unicidad/branch scopes.
+- [ ] Aprobar remediation y recomputación de Entitlements.
+- [ ] Materializar fixtures y contract tests.
+- [ ] Implementar sólo después de `READY_FOR_IMPLEMENTATION`.

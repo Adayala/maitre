@@ -1,6 +1,6 @@
 # Especificación — SPEC-067 Guest Identity & Privacy
 
-Guest tenant-scoped tiene canonical ID y aliases; no equivale a User. Cada field sensible conserva
+Guest con alcance tenant tiene canonical ID y aliases; no equivale a User. Cada field sensible conserva
 purpose, treatment basis/consent version, capturedAt/source, visibility y retention.
 
 Merge bloquea ambos canonicals, crea alias/ledger y resuelve por campo sin inventar consentimiento:

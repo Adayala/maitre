@@ -1,21 +1,12 @@
 # Tasks — SPEC-003
 
-## Fase 1: Preparación (2h)
-- [ ] TASK-1: Schema design (fiscal_entities, fiscal_certificates tables)
-- [ ] TASK-2: FiscalEntity Go struct + validators
-
-## Fase 2: Implementación (8h)
-- [ ] TASK-3: Repository (CRUD)
-- [ ] TASK-4: API endpoints (POST, GET, PATCH /fiscal-entities)
-- [ ] TASK-5: Certificate upload endpoint (POST /fiscal-entities/:id/certificates)
-- [ ] TASK-6: KMS integration (encrypt/decrypt private keys)
-- [ ] TASK-7: CUIT validation + checksum
-
-## Fase 3: Testing (6h)
-- [ ] TASK-8: Unit tests (CUIT validation, certificate parsing)
-- [ ] TASK-9: Integration tests (API, KMS, isolation)
-
-## Fase 4: Review (2h)
-- [ ] TASK-10: Code review + fixes
-
-**Total: ~18h**
+- [ ] Aprobar campos obligatorios, catálogo fiscal y lifecycle.
+- [ ] Confirmar política de unicidad de CUIT por tenant y tratamiento cross-tenant.
+- [ ] Definir modelo de referencia segura para certificados y claves.
+- [ ] Reconciliar la relación con FiscalPoint y Branch.
+- [ ] Diseñar migración con unique `(tenant_id, cuit)` y rollback probado.
+- [ ] Definir FiscalEntity y validadores puros.
+- [ ] Definir `FiscalEntityRepository` tenant-safe.
+- [ ] Preparar controles de auditoría, concurrencia y outbox.
+- [ ] Añadir tests de checksum, vencimiento, same-tenant y Tenant A/B.
+- [ ] Adjuntar evidencia en `verification.md` antes de cambiar status.

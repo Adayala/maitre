@@ -5,5 +5,9 @@ cambia Reservation a `CANCELLED` y libera su CapacityHold/CapacityAllocation aut
 
 Payload: envelope SPEC-217, `reservationId`, `branchId`, `cancelledAt`, `reasonCode`, `actorType`,
 `releasedAllocationId` opcional y `aggregateRevision`. Omite texto libre y PII. Los consumidores
-actualizan proyecciones, notificaciones o penalidades; no son responsables de liberar capacidad.
-Duplicados y delivery tardío convergen por event ID + aggregate revision.
+actualizan proyecciones o solicitan notificaciones/consecuencias informativas; no liberan
+capacidad ni cobran penalidades en I0. Duplicados y delivery tardío convergen por event ID
+y aggregate revision.
+
+Partition key es `reservationId`. `actorType` usa `INTERNAL | PUBLIC | SYSTEM` y no
+identifica personas. Gap obliga refetch autorizado; el evento no autoriza acciones posteriores.

@@ -1,43 +1,35 @@
-# [SPEC-006] Table Entity
+# [SPEC-006] Table
 
-Mesa física con capacidad, número, ubicación.
+Table representa una mesa física u operacional dentro de un Salon y una Branch. Define identidad, capacidad y layout, mientras que su disponibilidad y uso se derivan desde dominios operativos como ocupaciones, reservas o bloqueos.
 
 ## Metadata
 
 | Campo | Valor |
 | --- | --- |
 | **ID** | SPEC-006 |
-| **Título** | Table Entity |
 | **Tipo** | Entity |
 | **Dominio** | Organization |
 | **Estado** | IN_PROGRESS |
 | **Readiness** | WALKING_SKELETON_I0 |
 | **Prioridad** | P1 |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
-| **Fase** | 1 |
-| **Estimación** | 4h |
+| **Review target** | READY_FOR_I0_REVIEW |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
+| **Blockers** | Acordar modelo de layout y precedencia de estados derivados |
+| **Fase** | I0 |
 
 ## Documentos
 
-- [Contrato de dominio](contract.md)
-- [Objetivo](objective.md)
-- [Especificación](specification.md)
-- [Reglas](rules.md)
-- [Verificación](verification.md)
+- [Contrato](./contract.md)
+- [Objetivo](./objective.md)
+- [Especificación](./specification.md)
+- [Estructura](./structure.md)
+- [Reglas](./rules.md)
+- [Plan](./plan.md)
+- [Tareas](./tasks.md)
+- [Verificación](./verification.md)
 
-## Overview
+## Relacionadas
 
-Una mesa es un recurso físico con:
-- Número (1, 2, 3, ... T1, T2, T3 para terraza)
-- Capacidad (cuántas personas caben)
-- Posición x,y (para plano del salón)
-- Salon que la contiene
-
-Su estado (AVAILABLE, OCCUPIED, PAYING, etc) se **deriva** de ocupaciones y reservas, no se almacena directamente.
-
-## Related Specs
-
-**Dependencias:** [SPEC-005] Salon ✅
-
-**Dependientes:** [SPEC-012] Tables API, [SPEC-058] TableOccupation Entity
+- [SPEC-005 — Salon](../spec-005-entity-salon/README.md)
+- [SPEC-012 — Tables API](../spec-012-api-tables/README.md)
+- [SPEC-058 — TableOccupation](../spec-058-entity-table-occupation/README.md)

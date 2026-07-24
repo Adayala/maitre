@@ -1,22 +1,21 @@
 # [SPEC-007] Tenants API
 
-HTTP endpoints para crear, obtener y actualizar tenants.
+API HTTP para provisioning y administración controlada de Tenant, sin permitir enumeración global ni romper la raíz de aislamiento organizacional.
 
 ## Metadata
 
 | Campo | Valor |
 | --- | --- |
 | **ID** | SPEC-007 |
-| **Título** | Tenants API |
 | **Tipo** | API |
 | **Dominio** | Organization |
 | **Estado** | IN_PROGRESS |
 | **Readiness** | WALKING_SKELETON_I0 |
 | **Prioridad** | P0 |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
-| **Fase** | 1 |
-| **Estimación** | 8h |
+| **Review target** | READY_FOR_I0_REVIEW |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
+| **Blockers** | Acordar provisioning autorizado, idempotencia y lifecycle de PATCH |
+| **Fase** | I0 |
 
 ## Endpoints
 
@@ -24,10 +23,16 @@ HTTP endpoints para crear, obtener y actualizar tenants.
 - GET /tenants/:id (obtener)
 - PATCH /tenants/:id (actualizar)
 
-## Related Specs
+## Documentos
 
-**Depends on:** [SPEC-001] Tenant Entity ✅
+- [Contrato](./contract.md)
+- [Objetivo](./objective.md)
+- [Especificación](./specification.md)
+- [Reglas](./rules.md)
+- [Verificación](./verification.md)
 
-## Documentos normativos
+## Relacionadas
 
-- [Contrato](contract.md)
+- [SPEC-001 — Tenant](../spec-001-entity-tenant/README.md)
+- [SPEC-013 — TenantCreated](../spec-013-event-tenant-created/README.md)
+- [SPEC-016 — Organization RBAC](../spec-016-rbac-organization/README.md)

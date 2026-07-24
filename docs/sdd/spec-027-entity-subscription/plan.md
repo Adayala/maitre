@@ -1,16 +1,16 @@
 # Plan — SPEC-027
 
-## Componentes
+## Etapas
 
-- Subscription entity
-- subscriptions table (FK tenant, plan)
-- Status transitions
-- Renewal scheduling
-- POST /subscriptions (subscribe to plan)
-- GET /subscriptions/:tenantId
+1. Aprobar lifecycle, período y unicidad vigente.
+2. Aprobar relación con service catalog/SubscriptionItem.
+3. Aprobar efectos de suspensión/cancelación sobre Entitlements.
+4. Definir concurrencia, auditoría y migrations.
+5. Materializar fixtures de transitions, períodos y tenant isolation.
 
 ## Dependencias
 
-**Must be:** SPEC-001 Tenant
+Depende de SPEC-001 Tenant y del catálogo de servicios. SPEC-028/029/031 consumen este contrato; la
+entidad no depende de su API.
 
-**Depends:** SPEC-031 Subscriptions API, SPEC-029 Entitlements
+La estimación permanece pendiente hasta aprobar catálogo y lifecycle.

@@ -6,16 +6,20 @@
 {
   "id": "uuid",
   "tenantId": "uuid",
-  "categoryId": "uuid",
-  "name": "string (100 max)",
-  "slug": "string",
+  "name": "string",
   "description": "string",
-  "price": "decimal (8,2)",
-  "imageUrl": "string | null",
-  "status": "AVAILABLE | UNAVAILABLE | ARCHIVED",
-  "allergens": ["array of strings"],
-  "nutritional": { "calories": number, "protein": number },
-  "displayOrder": "number",
-  "createdAt": "ISO8601"
+  "taxCategoryCode": "IVA_21",
+  "editorialStatus": "ACTIVE | ARCHIVED",
+  "allergenDeclarations": [
+    { "code": "GLUTEN", "provenanceRef": "document-id", "verifiedAt": "ISO8601" }
+  ],
+  "dietaryDeclarations": [],
+  "nutrition": null,
+  "modifierSetRefs": [],
+  "mediaRefs": ["asset-id"],
+  "version": 4
 }
 ```
+
+Category, price, currency, display order y operational availability quedan fuera. Esos datos viven
+en MenuItem/publication o en proyecciones operativas.

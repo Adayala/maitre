@@ -1,7 +1,9 @@
 # Plan — SPEC-036
 
-- Middleware: authorize(resource, action)
-- Permission checks in handlers
-- Role validation
+1. Aprobar action → permission matrix tenant/control-plane.
+2. Aprobar redacción de términos comerciales y scopes.
+3. Aprobar step-up/segregation para `platform.*`.
+4. Aprobar override workflow y audit requirements.
+5. Materializar matriz positiva/negativa y isolation fixtures.
 
-**Est: ~4h**
+La estimación permanece pendiente hasta aprobar authority/control-plane.

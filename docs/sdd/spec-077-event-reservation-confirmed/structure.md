@@ -1,3 +1,5 @@
-# Structure — SPEC-ven
+# Estructura — SPEC-077
 
-Event structure JSON versionado
+Producer: transacción confirm Reservation/Allocation/outbox. Aggregate/partition:
+Reservation/`reservationId`. Payload cerrado con envelope, scope, calendario, partySize,
+Allocation/revisiones, units opcionales y confirmedAt; sin PII.

@@ -11,14 +11,15 @@ Cómo se derivan entitlements desde subscription items.
 | **Estado** | IN_PROGRESS |
 | **Readiness** | WALKING_SKELETON_I0 |
 | **Prioridad** | P0 |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
-| **Fase** | 1 |
-| **Estimación** | 4h |
+| **Review target** | READY_FOR_I0_REVIEW |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
+| **Blockers** | Acordar reglas de agregación, precedence y output canónico |
+| **Fase** | I0 |
 
 ## Documentos
 
 - [Contrato](contract.md)
+- [Objetivo](objective.md)
 - [Especificación](specification.md)
 - [Reglas](rules.md)
 - [Verificación](verification.md)

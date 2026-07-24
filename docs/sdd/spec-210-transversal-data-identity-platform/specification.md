@@ -69,6 +69,10 @@ El token autentica una identidad. La autorización de tenant, sucursal, rol y en
 
 ## Migraciones
 
+El modelo relacional, las reglas de tenancy y los gates previos al DDL están definidos en
+[`database-structure.md`](database-structure.md). Ese contrato no autoriza implementar mientras
+ADR-002 y los spikes requeridos continúen pendientes.
+
 - SQL versionado en el repositorio es la fuente de verdad.
 - Migraciones forward-only durante el MVP, con procedimiento de rollback compensatorio.
 - Schema, grants, roles, RLS, índices y funciones se revisan como código.

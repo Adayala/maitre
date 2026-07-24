@@ -1,85 +1,42 @@
-# [SPEC-002] Brand Entity
+# [SPEC-002] Brand
 
-Identidad comercial de un restaurante. Permite agrupar sucursales bajo una marca, compartiendo configuración, menú y políticas.
+Brand representa la identidad comercial dentro de un Tenant. Agrupa sucursales bajo una misma marca y define defaults de presentación y operación comercial sin convertirse en un contenedor genérico de configuración.
 
 ## Metadata
 
 | Campo | Valor |
 | --- | --- |
 | **ID** | SPEC-002 |
-| **Título** | Brand Entity |
 | **Tipo** | Entity |
 | **Dominio** | Organization |
 | **Estado** | IN_PROGRESS |
 | **Readiness** | WALKING_SKELETON_I0 |
+| **Review target** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
-| **Fase** | 1 (Plataforma Fundacional) |
-| **Owner** | @faguero |
-| **Reviewer** | UNASSIGNED |
-| **Estimación** | 6h |
-| **Created** | 2026-07-20 |
-| **Last updated** | 2026-07-20 |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
+| **Blockers** | Aprobar separación entre defaults de marca y overrides de sucursal |
+| **Fase** | I0 |
 
-## Overview
+## Documentos
 
-Una marca es una identidad comercial gastronómica bajo un tenant. Un tenant puede tener múltiples marcas (ej: "La Parrilla", "Pizzería Bella", etc).
+- [Objetivo](./objective.md)
+- [Especificación](./specification.md)
+- [Estructura](./structure.md)
+- [Reglas](./rules.md)
+- [Plan](./plan.md)
+- [Tareas](./tasks.md)
+- [Verificación](./verification.md)
 
-Cada marca:
-- Comparte un catálogo base (heritable por sucursales)
-- Tiene configuración global (tono de voz, políticas de devolución, etc)
-- Agrupa sucursales relacionadas
-- Puede heredar a sus sucursales configuración que éstas pueden sobrescribir
+## Relacionadas
 
-## Related Specs
-
-**Dependencias (deben estar DONE primero):**
-- [SPEC-001] Tenant Entity ✅
-
-**Dependientes (dependen de ésta):**
-- [SPEC-003] FiscalEntity Entity
-- [SPEC-004] Branch Entity
-- [SPEC-037] Menu Entity
-- [SPEC-008] Brands API
-- [SPEC-014] BrandCreated Event
-
-## Documentos en esta spec
-
-| Documento | Status |
-| --- | --- |
-| README.md | ✅ |
-| objective.md | ✅ |
-| specification.md | ✅ |
-| structure.md | ✅ |
-| rules.md | ✅ |
-| plan.md | ✅ |
-| tasks.md | ✅ |
-| verification.md | ✅ |
-| notes.md | ✅ |
-
-## Status tracking
-
-- [x] objective.md completado
-- [x] specification.md completado
-- [x] structure.md completado
-- [x] rules.md completado
-- [x] plan.md completado
-- [x] tasks.md completado
-- [x] verification.md completado
-- [x] notes.md completado
-- [ ] Peer review completado
-- [ ] Status: READY_FOR_IMPLEMENTATION
-
-**Current status: DRAFT (100% docs complete, awaiting peer review)**
-
-## Quick Links
-
-- [Objetivo](objective.md)
-- [Especificación](specification.md)
-- [Plan](plan.md)
-- [Tasks](tasks.md)
-- [Verificación](verification.md)
-- [Notas](notes.md)
+- [SPEC-001 — Tenant](../spec-001-entity-tenant/README.md)
+- [SPEC-003 — FiscalEntity](../spec-003-entity-fiscal-entity/README.md)
+- [SPEC-004 — Branch](../spec-004-entity-branch/README.md)
+- [SPEC-008 — Brands API](../spec-008-api-brands/README.md)
+- [SPEC-014 — BrandCreated](../spec-014-event-brand-created/README.md)
+- [SPEC-037 — Menu](../spec-037-entity-menu/README.md)
 
 ## Contrato especializado
 
-- [Contrato](contract.md)
+- [Contrato](./contract.md)
+- [Jerarquía Tenant–Brand–Branch](../spec-001-entity-tenant/organization-hierarchy-contract.md)

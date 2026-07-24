@@ -10,8 +10,7 @@ Contrato para validar empíricamente Supabase y el toolchain React/Node antes de
 | **Dominio** | Platform / Engineering |
 | **Estado** | DRAFT |
 | **Readiness** | BLOCKED |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
 | **Blockers** | Disponer de proyectos development Vercel/Supabase; asignar owner y reviewer |
 | **Prioridad** | P0 |
 | **Fase** | Antes de I0 READY_FOR_IMPLEMENTATION |
@@ -30,6 +29,7 @@ Contrato para validar empíricamente Supabase y el toolchain React/Node antes de
 
 ## Documentos
 
+- [Contrato](contract.md)
 - [Objetivo](objective.md)
 - [Especificación](specification.md)
 - [Reglas](rules.md)

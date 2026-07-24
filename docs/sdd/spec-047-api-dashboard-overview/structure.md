@@ -1,8 +1,10 @@
-# Structure — SPEC-047
+# Estructura — SPEC-047
 
 Rutas:
-- GET /dashboard/overview
+- `GET /v1/dashboard/overview`
 
 Headers:
-- Authorization: Bearer <token>
-- X-Tenant-Id: <tenant>
+- `Authorization: Bearer <token>`
+- `If-None-Match` opcional
+
+Tenant/alcance por sucursal se valida server-side. Aggregator aplica budget/timeouts por fuente.

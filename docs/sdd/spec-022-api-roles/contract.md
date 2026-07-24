@@ -2,13 +2,13 @@
 
 ## Operación
 
-`GET /v1/roles` devuelve el catálogo activo visible para el actor y tenant. Es read-only;
+`GET /v1/roles` devuelve el catálogo activo visible para el actor y tenant. Es de sólo lectura;
 crear/modificar roles queda fuera de I0.
 
 ## Respuesta
 
-Cada item contiene `code`, `name`, `description`, permissions visibles, `assignable` y
-restricciones de scope. La API puede ocultar permisos internos sensibles; el servidor sigue
+Cada item contiene `code`, `name`, `description`, permisos visibles, `assignable` y
+restricciones de alcance. La API puede ocultar permisos internos sensibles; el servidor sigue
 siendo autoridad aunque el cliente cachee el catálogo.
 
 Filtros opcionales: `assignable=true`, `status`. Orden determinista por `code`; soporta

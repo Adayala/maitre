@@ -12,8 +12,7 @@ Contrato transversal para integrar, verificar, desplegar, promover y revertir ca
 | **Readiness** | BLOCKED |
 | **Blockers** | Configuración de plataforma no verificada; asignar owner y reviewer |
 | **Prioridad** | P0 |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
 | **Fase** | Antes de automatizar el primer deployment |
 | **Depende de** | SPEC-207–220 |
 
@@ -29,6 +28,7 @@ Contrato transversal para integrar, verificar, desplegar, promover y revertir ca
 
 ## Documentos
 
+- [Contrato](contract.md)
 - [Objetivo](objective.md)
 - [Especificación](specification.md)
 - [Reglas](rules.md)

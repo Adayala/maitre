@@ -1,5 +1,7 @@
 # Structure — SPEC-033
 
-Event structure: eventId, eventName, eventVersion, namespace, aggregateId, aggregateType, tenantId, timestamp, correlationId, payload.
+Envelope SPEC-217, aggregate `SubscriptionItem/itemId`, occurredAt, correlation/causation, actor
+sanitizado y payload mínimo.
 
-Serialization: JSON.
+Serialización JSON versionada. SubscriptionItem/outbox son atómicos; consumidores convergen por
+source revision.

@@ -1,9 +1,7 @@
 # Tasks — SPEC-027
 
-- [ ] Schema + entity
-- [ ] Status transition logic
-- [ ] Renewal scheduling
-- [ ] Repository CRUD
-- [ ] Tests
-
-**Est: ~10h**
+- [ ] Aprobar lifecycle/período/unicidad vigente.
+- [ ] Aprobar service catalog refs y efectos de status.
+- [ ] Aprobar concurrencia/auditoría/migration.
+- [ ] Materializar fixtures y contract tests.
+- [ ] Implementar sólo después de `READY_FOR_IMPLEMENTATION`.

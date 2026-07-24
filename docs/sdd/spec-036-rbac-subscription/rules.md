@@ -1,6 +1,7 @@
-# Rules — SPEC-036
+# Reglas — SPEC-036
 
-- OWNER: plan upgrades, cancel subscription
-- ADMIN: add/remove services
-- MANAGER: read-only (visibility)
-- EMPLOYEE: no subscription access
+- Lectura tenant y mutación de plataforma usan boundaries distintos.
+- Ningún rol tenant provisiona/suspende/cancela por etiqueta.
+- Entitlements/Quotas sólo se derivan mediante SPEC-035.
+- Overrides requieren permiso, motivo, vigencia y auditoría.
+- Deny-by-default ante permiso/catálogo/policy desconocida.

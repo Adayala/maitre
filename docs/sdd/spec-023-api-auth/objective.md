@@ -8,8 +8,8 @@ Establecer un contrato de autenticación seguro y desacoplado que permita usar S
 
 1. El cliente React usa los flujos soportados por el proveedor para iniciar, renovar y cerrar sesión, recuperar contraseña y verificar email.
 2. La API Node.js valida access tokens mediante un `SessionVerificationPort` y configuración confiable de issuer, audience, JWKS y algoritmos permitidos.
-3. Maitre vincula el subject externo con un `User` global y resuelve Membership, roles y branches desde su base de datos.
-4. Un token válido autentica identidad, pero nunca concede tenant, rol, branch ni entitlement por sí solo.
+3. Maitre vincula el subject externo con un `User` global y resuelve Membership, roles y sucursales desde su base de datos.
+4. Un token válido autentica identidad, pero nunca concede tenant, rol, sucursal ni entitlement por sí solo.
 5. Cambiar de proveedor no modifica las reglas del dominio ni los handlers de aplicación.
 
 ## Fuera de alcance I0
@@ -19,3 +19,35 @@ Establecer un contrato de autenticación seguro y desacoplado que permita usar S
 - emitir un segundo JWT de sesión;
 - MFA, SSO empresarial o federation personalizada;
 - autorización basada en metadata editable por el cliente.
+
+## Criterios de aceptación
+
+### CAD-023-01 — Access token válido se verifica por issuer, audience, firma, algoritmo y tiempos
+
+Access token válido se verifica mediante issuer, audience, firma/JWKS, algoritmo allowlisted, exp/nbf
+y clock skew antes de crear `AuthenticatedPrincipal`.
+
+### CAD-023-02 — El principal contiene identidad pero no tenant, roles ni scopes confiados
+
+El principal contiene identidad, no tenant/roles/scopes confiados; contexto se resuelve
+`subject/provider → User → Membership ACTIVE`.
+
+### CAD-023-03 — User o Membership suspendidos y una sucursal fuera de alcance se deniegan aunque el JWT siga vigente
+
+User/Membership suspendido o una sucursal fuera de alcance se deniega aunque el JWT continúe
+criptográficamente vigente.
+
+### CAD-023-04 — Login, refresh, logout, reset y verify pertenecen al provider o adaptador
+
+Login/refresh/logout/reset/verify pertenecen al provider/adaptador; Maitre no almacena passwords ni
+expone endpoints propios de login/refresh en I0.
+
+### CAD-023-05 — Tokens, reset codes, service-role keys y claims sensibles no aparecen en URLs ni logs
+
+Tokens, reset codes, service-role keys y claims sensibles no aparecen en URL, logs, traces, artifacts
+ni bundle del browser.
+
+### CAD-023-06 — Provider outage o JWKS rotation fallan cerrado y el adapter es reemplazable
+
+Provider outage/JWKS rotation falla cerrado y la suite contractual permite reemplazar el adapter sin
+cambiar dominio/casos de uso.

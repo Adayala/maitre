@@ -6,11 +6,17 @@
 {
   "id": "uuid",
   "subscriptionId": "uuid",
-  "serviceId": "uuid",
+  "serviceCode": "floor",
+  "catalogVersion": 1,
   "status": "ACTIVE | INACTIVE",
-  "quantity": "number (branches, users, etc)",
-  "unitPrice": "decimal",
-  "activatedAt": "ISO8601",
-  "deactivatedAt": "ISO8601 | null"
+  "quantity": 1,
+  "branchScopes": ["branch-id"],
+  "config": {},
+  "validFrom": "ISO8601",
+  "validUntil": "ISO8601 | null",
+  "version": 1
 }
 ```
+
+`config` se valida contra el schema versionado del service catalog. `unitPrice` no pertenece al
+contrato de autorización y no se incorpora hasta especificar billing/catalog snapshots.

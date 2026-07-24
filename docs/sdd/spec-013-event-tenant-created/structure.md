@@ -1,5 +1,7 @@
 # Structure — Event
 
+**Spec:** SPEC-013
+
 ## Base structure
 
 All events have:

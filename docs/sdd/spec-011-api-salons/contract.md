@@ -2,7 +2,7 @@
 
 ## Alcance
 
-Administrar salones de una Branch accesible mediante rutas
+Administrar salones de una sucursal accesible mediante rutas
 `/v1/branches/{branchId}/salons`. Un salón organiza mesas; no representa ocupación ni
 disponibilidad operativa.
 
@@ -11,15 +11,15 @@ disponibilidad operativa.
 | Operación | Resultado |
 | --- | --- |
 | `POST /v1/branches/{branchId}/salons` | crea salón activo |
-| `GET /v1/branches/{branchId}/salons` | lista salones de la branch |
+| `GET /v1/branches/{branchId}/salons` | lista salones de la sucursal |
 | `GET /v1/salons/{salonId}` | detalle del salón |
 | `PATCH /v1/salons/{salonId}` | modifica nombre, descripción, capacidad o status |
 
-No hay hard delete. `INACTIVE` impide nuevas asignaciones pero conserva referencias.
+No hay eliminación física. `INACTIVE` impide nuevas asignaciones pero conserva referencias.
 
 ## Contrato de datos
 
-Entrada de creación: `name` (normalizado, único case-insensitive dentro de branch),
+Entrada de creación: `name` (normalizado, único case-insensitive dentro de la sucursal),
 `maxCapacity` entero positivo y `description` opcional acotada. Tenant/branch se resuelven
 desde path/contexto autorizado.
 
@@ -34,7 +34,7 @@ y devuelve nuevo `ETag`.
 
 ## Errores y seguridad
 
-Usa Problem Details de SPEC-215. `404` cubre salón/branch inexistente o cross-tenant;
+Usa Problem Details de SPEC-215. `404` cubre salón/sucursal inexistente o cross-tenant;
 `409` nombre duplicado; `412` versión; `422` capacidad/status incompatible. Permisos según
 SPEC-016 y auditoría para create/update/status.
 

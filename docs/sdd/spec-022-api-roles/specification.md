@@ -2,11 +2,17 @@
 
 ## Endpoints
 
-### GET /roles
-Lista roles del sistema.
+### `GET /v1/roles`
 
-### GET /roles/:id
-Detalle rol con permisos.
+Lista la proyección visible del catálogo según `contract.md`. Soporta filtros `assignable` y
+`status`, orden estable por code y conditional GET mediante ETag.
 
-### GET /permissions
-Lista permisos disponibles.
+## Fuera de alcance I0
+
+- `POST`, `PATCH` o `DELETE` de roles/permisos;
+- detalle por ID separado;
+- listado global irrestricto de permisos;
+- asignación de Role a Membership.
+
+Agregar `GET /v1/roles/{code}` o un catálogo de permissions requiere especificar autorización,
+redacción, versionado y compatibilidad; no se infiere de este documento.

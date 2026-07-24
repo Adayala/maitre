@@ -1,42 +1,35 @@
-# [SPEC-005] Salon Entity
+# [SPEC-005] Salon
 
-Área física que contiene mesas dentro de una sucursal.
+Salon representa una zona operativa dentro de una Branch. Organiza mesas por área física o lógica y sirve como partición de layout, asignación y reporting local sin absorber estado dinámico de servicio.
 
 ## Metadata
 
 | Campo | Valor |
 | --- | --- |
 | **ID** | SPEC-005 |
-| **Título** | Salon Entity |
 | **Tipo** | Entity |
 | **Dominio** | Organization |
 | **Estado** | IN_PROGRESS |
 | **Readiness** | WALKING_SKELETON_I0 |
 | **Prioridad** | P1 |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
-| **Fase** | 1 |
-| **Estimación** | 4h |
+| **Review target** | READY_FOR_I0_REVIEW |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
+| **Blockers** | Acordar semántica de capacidad y layout por salón |
+| **Fase** | I0 |
 
 ## Documentos
 
-- [Contrato de dominio](contract.md)
-- [Objetivo](objective.md)
-- [Especificación](specification.md)
-- [Reglas](rules.md)
-- [Verificación](verification.md)
+- [Contrato](./contract.md)
+- [Objetivo](./objective.md)
+- [Especificación](./specification.md)
+- [Estructura](./structure.md)
+- [Reglas](./rules.md)
+- [Plan](./plan.md)
+- [Tareas](./tasks.md)
+- [Verificación](./verification.md)
 
-## Overview
+## Relacionadas
 
-Un salón es un área física dentro de una sucursal (ej: "Salón Principal", "Terraza", "VIP").
-
-Agrupa mesas, ayuda a:
-- Organizar físicamente el espacio
-- Asignar responsabilidades (ej: mozo A en Terraza, mozo B en Salón Principal)
-- Reportes por zona
-
-## Related Specs
-
-**Dependencias:** [SPEC-004] Branch ✅
-
-**Dependientes:** [SPEC-006] Table Entity, [SPEC-011] Salons API
+- [SPEC-004 — Branch](../spec-004-entity-branch/README.md)
+- [SPEC-006 — Table](../spec-006-entity-table/README.md)
+- [SPEC-011 — Salons API](../spec-011-api-salons/README.md)

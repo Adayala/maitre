@@ -8,7 +8,11 @@
 - [ ] Seleccionar herramienta de migraciones/queries mediante ADR.
 - [ ] Ejecutar SPK-02 antes de fijar adapter/modo de conexión.
 - [ ] Ejecutar SPK-03 antes de promover el adapter Auth.
-- [ ] Crear schema mínimo de identidad y tenancy.
+- [x] Especificar el contrato de estructura mínimo de identidad y tenancy, sin DDL.
+- [x] Reconciliar campos físicos de SPEC-001–006 y SPEC-017–020 contra el contrato transversal.
+- [ ] Resolver OPEN-001–020 del diccionario con los owners de las specs fuente.
+- [x] Preparar propuestas razonadas y criterios de aceptación para OPEN-001–020.
+- [ ] Crear schema mínimo de identidad y tenancy sólo después de superar los gates de DDL.
 - [ ] Crear grants y policies RLS versionadas.
 - [ ] Crear tests de aislamiento multi-tenant.
 - [ ] Automatizar dump cifrado e inventario de objetos.

@@ -11,12 +11,16 @@
 | **Estado** | IN_PROGRESS |
 | **Readiness** | WALKING_SKELETON_I0 |
 | **Prioridad** | P1 |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
 | **Fase** | 2 |
-| **Estimación** | 8h |
 
 ## Documentos normativos
 
 - [Especificación](specification.md)
 - [Contrato](contract.md)
+- [Objetivo](objective.md)
+- [Estructura](structure.md)
+- [Reglas](rules.md)
+- [Plan](plan.md)
+- [Tareas](tasks.md)
+- [Verificación](verification.md)

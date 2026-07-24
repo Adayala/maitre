@@ -1,10 +1,9 @@
 # Structure — SPEC-045
 
 Rutas:
-- GET /audit (list)
-- GET /audit/:id (detail)
-- GET /audit/export (CSV download)
+- `GET /v1/audit-logs`
 
 Headers:
-- Authorization: Bearer <token>
-- X-Tenant-Id: <tenant>
+- `Authorization: Bearer <token>`
+
+Tenant/alcance se resuelve server-side. No existen detail/export/mutation en v1.

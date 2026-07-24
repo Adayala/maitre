@@ -1,8 +1,9 @@
 # Plan — SPEC-032
 
-- GET /entitlements/:tenantId
-- Entitlements loader
-- Quotas loader
-- Unified response
+1. Aprobar OpenAPI, typed values y relation Entitlement↔Quota.
+2. Aprobar filtros, ETag/revision y staleness.
+3. Aprobar permission/scope y redacción comercial.
+4. Definir mismatch/reconciliation representation.
+5. Materializar fixtures de conditional GET, absent, stale y cross-tenant.
 
-**Est: ~6h**
+La estimación permanece pendiente hasta aprobar catálogo/calculation contract.

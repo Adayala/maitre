@@ -1,6 +1,7 @@
 # [SPEC-047] Dashboard Overview API
 
-GET /dashboard (resumen tenant, suscripción, sucursales).
+`GET /v1/dashboard/overview`: composición operacional por secciones con freshness y degradación
+explícitas.
 
 ## Metadata
 | Campo | Valor |
@@ -11,14 +12,15 @@ GET /dashboard (resumen tenant, suscripción, sucursales).
 | **Estado** | IN_PROGRESS |
 | **Readiness** | WALKING_SKELETON_I0 |
 | **Prioridad** | P1 |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
-| **Fase** | 1 |
-| **Estimación** | 4h |
+| **Review target** | READY_FOR_I0_REVIEW |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
+| **Blockers** | Acordar composición por secciones, freshness y budget/caching explícitos |
+| **Fase** | I0 |
 
 ## Documentos
 
 - [Contrato](contract.md)
+- [Objetivo](objective.md)
 - [Especificación](specification.md)
 - [Reglas](rules.md)
 - [Verificación](verification.md)

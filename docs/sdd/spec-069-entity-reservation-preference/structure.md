@@ -1,14 +1,14 @@
 # Structure — SPEC-069
 
-```sql
-CREATE TABLE reservation_preferences (
-  id UUID PRIMARY KEY,
-  guest_id UUID NOT NULL UNIQUE,
-  preferred_tables UUID[],
-  preferred_times TIME[],
-  allergies VARCHAR[],
-  dietary_restrictions VARCHAR[],
-  seating_preference VARCHAR(50),
-  FOREIGN KEY(guest_id) REFERENCES guests(id)
-);
-```
+Estructura lógica:
+
+- identidad/scope: `preferenceId`, tenantId;
+- subject exclusivo: `guestId` o `reservationId`;
+- semántica: `kind: PREFERENCE | REQUIREMENT`, code, typed value, priority;
+- tratamiento: source, purpose, basis/consent proof, visibility, sensitivity;
+- vigencia: `validFrom`, `validUntil?`, status y retention policy;
+- control: revision, actor y auditoría.
+
+No existe un único blob por Guest. El catálogo versionado define tipo, cardinalidad,
+sensibilidad y reglas de combinación por code. Los snapshots de Reservation son separados e
+inmutables.

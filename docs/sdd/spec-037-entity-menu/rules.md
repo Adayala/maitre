@@ -1,6 +1,8 @@
-# Rules — SPEC-037
+# Reglas — SPEC-037
 
-- Slug unique per brand
-- One default menu per brand
-- Archived menus read-only
-- Menu inherits brand tenant context
+- Tenant/Brand/alcances son coherentes y no reasignables entre revisiones.
+- DRAFT editable; PUBLISHED inmutable; ARCHIVED sólo histórico.
+- Publicación valida Categories/MenuItems/Product refs, moneda, impuestos y modifiers.
+- El puntero activo cambia atómicamente con el snapshot publicado.
+- Vigencias/alcances activos no son ambiguos.
+- Precio/posición/overrides viven en MenuItem, no en Product.

@@ -1,5 +1,7 @@
 # Structure — SPEC-025
 
-Event structure: eventId, eventName, eventVersion, namespace, aggregateId, aggregateType, tenantId, timestamp, correlationId, payload.
+Envelope SPEC-217 con aggregate `User/userId`, occurredAt, correlation/causation y payload de
+seguridad minimizado.
 
-Serialization: JSON.
+Serialización JSON versionada. Acceso/retención restringidos según SPEC-219/220. El evento no es
+fuente de autorización.

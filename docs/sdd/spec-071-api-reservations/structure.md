@@ -1,3 +1,3 @@
-# Structure — SPEC-pi-
+# Estructura — SPEC-071
 
-Rutas CRUD estándar.
+HTTP handlers → auth/idempotency → Reservation commands → Capacity ledger/Guest/Visit ports → transaction + outbox. Availability es query separada.

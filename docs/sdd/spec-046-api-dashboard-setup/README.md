@@ -1,6 +1,6 @@
 # [SPEC-046] Dashboard Setup Status API
 
-GET /dashboard/setup-status (qué falta configurar).
+`GET /v1/dashboard/setup-status`: checklist derivado, versionado y tenant-scoped de configuración.
 
 ## Metadata
 | Campo | Valor |
@@ -11,14 +11,15 @@ GET /dashboard/setup-status (qué falta configurar).
 | **Estado** | IN_PROGRESS |
 | **Readiness** | WALKING_SKELETON_I0 |
 | **Prioridad** | P1 |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
-| **Fase** | 1 |
-| **Estimación** | 4h |
+| **Review target** | READY_FOR_I0_REVIEW |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
+| **Blockers** | Acordar checklist derivado, freshness y representación de dependencias unavailable |
+| **Fase** | I0 |
 
 ## Documentos
 
 - [Contrato](contract.md)
+- [Objetivo](objective.md)
 - [Especificación](specification.md)
 - [Reglas](rules.md)
 - [Verificación](verification.md)
