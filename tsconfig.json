@@ -8,6 +8,7 @@
     { "path": "packages/modules/catalog" },
     { "path": "packages/modules/audit" },
     { "path": "packages/modules/floor" },
+    { "path": "packages/modules/reservations" },
     { "path": "adapters/persistence/memory" },
     { "path": "adapters/persistence/supabase" },
     { "path": "adapters/identity/supabase-auth" },

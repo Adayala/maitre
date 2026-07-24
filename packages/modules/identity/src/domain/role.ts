@@ -85,6 +85,24 @@ export const ROLE_REGISTRY: Readonly<Record<string, Role>> = Object.freeze({
       "payment:refund",
       "payment:reconcile",
       "service-period:manage",
+      // SPEC-080 §Reservations RBAC — ADMIN gets the full canonical set
+      // (branch-scoped in practice via requireTenantContext), including
+      // Guest PII/export/anonymize and policy override.
+      "reservation:read",
+      "reservation:create",
+      "reservation:confirm",
+      "reservation:cancel",
+      "reservation:seat",
+      "reservation:no_show",
+      "waitlist:read",
+      "waitlist:manage",
+      "waitlist:priority_override",
+      "guest:pii_read",
+      "guest:pii_write",
+      "guest:export",
+      "guest:anonymize",
+      "reservation:notification_send",
+      "reservation:policy_override",
     ],
   },
   role_manager: {
@@ -133,6 +151,23 @@ export const ROLE_REGISTRY: Readonly<Record<string, Role>> = Object.freeze({
       "payment:refund",
       "payment:reconcile",
       "service-period:manage",
+      // SPEC-080 §Reservations RBAC — MANAGER "gestiona reservas y
+      // waitlist dentro de branch scope", same full set as ADMIN.
+      "reservation:read",
+      "reservation:create",
+      "reservation:confirm",
+      "reservation:cancel",
+      "reservation:seat",
+      "reservation:no_show",
+      "waitlist:read",
+      "waitlist:manage",
+      "waitlist:priority_override",
+      "guest:pii_read",
+      "guest:pii_write",
+      "guest:export",
+      "guest:anonymize",
+      "reservation:notification_send",
+      "reservation:policy_override",
     ],
   },
   role_employee: {
@@ -170,6 +205,22 @@ export const ROLE_REGISTRY: Readonly<Record<string, Role>> = Object.freeze({
       "table-status:read",
       "check:read",
       "service-period:manage",
+      // SPEC-080 §Reservations RBAC — MAITRE gets the full branch-scoped
+      // operational set including waitlist priority overrides and Guest
+      // PII (front-of-house role coordinating seating/reservations
+      // day-to-day), but not policy override (manager-only correction).
+      "reservation:read",
+      "reservation:create",
+      "reservation:confirm",
+      "reservation:cancel",
+      "reservation:seat",
+      "reservation:no_show",
+      "waitlist:read",
+      "waitlist:manage",
+      "waitlist:priority_override",
+      "guest:pii_read",
+      "guest:pii_write",
+      "reservation:notification_send",
     ],
   },
   // SPEC-065 — "WAITER opera Visits y mesas asignadas/permitidas": takes
@@ -190,6 +241,15 @@ export const ROLE_REGISTRY: Readonly<Record<string, Role>> = Object.freeze({
       "table-status:read",
       "check:read",
       "check:adjust",
+      // SPEC-080 §Reservations RBAC — WAITER "sólo accede al contexto
+      // operativo necesario y no recibe PII/export por default": can read
+      // Reservations, seat them, and read/manage the Waitlist, but no
+      // create/confirm/cancel/no-show, no Guest PII, no priority override,
+      // no policy override, no notification send.
+      "reservation:read",
+      "reservation:seat",
+      "waitlist:read",
+      "waitlist:manage",
     ],
   },
   // SPEC-065 — "COOK sólo lectura mínima si requerida": no guest/check

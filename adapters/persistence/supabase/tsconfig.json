@@ -11,7 +11,8 @@
     { "path": "../../../packages/modules/subscription" },
     { "path": "../../../packages/modules/catalog" },
     { "path": "../../../packages/modules/audit" },
-    { "path": "../../../packages/modules/floor" }
+    { "path": "../../../packages/modules/floor" },
+    { "path": "../../../packages/modules/reservations" }
   ],
   "include": ["src"]
 }

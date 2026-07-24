@@ -14,7 +14,8 @@
     "@maitre/subscription": "*",
     "@maitre/catalog": "*",
     "@maitre/audit": "*",
-    "@maitre/floor": "*"
+    "@maitre/floor": "*",
+    "@maitre/reservations": "*"
   },
   "devDependencies": {
     "typescript": "^5.5.4"

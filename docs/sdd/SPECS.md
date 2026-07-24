@@ -115,11 +115,21 @@ Formato: **SPEC-NNN | Título | Tipo | Dominio | Fase | Prioridad | Estado | Rea
 
 ## Reservations
 
-- [ ] **SPEC-066** | Reservation Entity | Entity | Reservations | Fase 3 | UNASSIGNED | DRAFT | NOT_ASSESSED
-- [ ] **SPEC-067** | Guest Entity | Entity | Reservations | Fase 3 | UNASSIGNED | DRAFT | NOT_ASSESSED
-- [ ] **SPEC-068** | Waitlist Entity | Entity | Reservations | Fase 3 | UNASSIGNED | DRAFT | NOT_ASSESSED
-- [ ] **SPEC-069** | Reservation Preference Entity | Entity | Reservations | Fase 3 | UNASSIGNED | DRAFT | NOT_ASSESSED
-- [ ] **SPEC-070** | Cancellation Policy Entity | Entity | Reservations | Fase 3 | UNASSIGNED | DRAFT | NOT_ASSESSED
+- [ ] **SPEC-066** | Reservation Entity | Entity | Reservations | Fase 3 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-067** | Guest Entity | Entity | Reservations | Fase 3 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-068** | Waitlist Entity | Entity | Reservations | Fase 3 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-069** | Reservation Preference Entity | Entity | Reservations | Fase 3 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-070** | Cancellation Policy Entity | Entity | Reservations | Fase 3 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-071** | Reservations API | API | Reservations | Fase 3 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-072** | Guests API | API | Reservations | Fase 3 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-073** | Waitlist API | API | Reservations | Fase 3 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-074** | Availability API | API | Reservations | Fase 3 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-075** | Reservation Notifications API | API | Reservations | Fase 3 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-076** | ReservationCreated Event | Event | Reservations | Fase 3 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-077** | ReservationConfirmed Event | Event | Reservations | Fase 3 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-078** | ReservationCancelled Event | Event | Reservations | Fase 3 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-079** | Capacity Calculation | Calculation | Reservations | Fase 3 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-080** | Reservations RBAC | RBAC | Reservations | Fase 3 | P1 | IN_PROGRESS | WALKING_SKELETON_I0
 
 ---
 
@@ -238,16 +248,6 @@ Formato: **SPEC-NNN | Título | Tipo | Dominio | Fase | Prioridad | Estado | Rea
 
 Estas carpetas existen pero su `README.md` no fue completado (contenido tipo TBD / plantilla de peer review).
 
-- [ ] **SPEC-071** | spec-071-api-reservations | STUB
-- [ ] **SPEC-072** | spec-072-api-guests | STUB
-- [ ] **SPEC-073** | spec-073-api-waitlist | STUB
-- [ ] **SPEC-074** | spec-074-api-availability | STUB
-- [ ] **SPEC-075** | spec-075-api-reservation-notifications | STUB
-- [ ] **SPEC-076** | spec-076-event-reservation-created | STUB
-- [ ] **SPEC-077** | spec-077-event-reservation-confirmed | STUB
-- [ ] **SPEC-078** | spec-078-event-reservation-cancelled | STUB
-- [ ] **SPEC-079** | spec-079-calculation-capacity | STUB
-- [ ] **SPEC-080** | spec-080-rbac-reservations | STUB
 - [ ] **SPEC-087** | spec-087-api-orders | STUB
 - [ ] **SPEC-088** | spec-088-api-qr-menu | STUB
 - [ ] **SPEC-089** | spec-089-api-order-modifications | STUB

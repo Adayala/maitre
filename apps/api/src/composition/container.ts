@@ -21,6 +21,12 @@ import {
   InMemoryCheckRepository,
   InMemoryPaymentRepository,
   InMemoryServicePeriodRepository,
+  InMemoryReservationRepository,
+  InMemoryGuestRepository,
+  InMemoryWaitlistEntryRepository,
+  InMemoryReservationPreferenceRepository,
+  InMemoryCancellationPolicyRepository,
+  InMemoryNotificationIntentRepository,
   FixtureSessionVerificationPort,
 } from "@maitre/adapter-persistence-memory";
 import {
@@ -47,6 +53,12 @@ import {
   SupabaseCheckRepository,
   SupabasePaymentRepository,
   SupabaseServicePeriodRepository,
+  SupabaseReservationRepository,
+  SupabaseGuestRepository,
+  SupabaseWaitlistEntryRepository,
+  SupabaseReservationPreferenceRepository,
+  SupabaseCancellationPolicyRepository,
+  SupabaseNotificationIntentRepository,
 } from "@maitre/adapter-persistence-supabase";
 import {
   createTenant,
@@ -92,6 +104,14 @@ import type {
   PaymentRepositoryPort,
   ServicePeriodRepositoryPort,
 } from "@maitre/floor";
+import type {
+  ReservationRepositoryPort,
+  GuestRepositoryPort,
+  WaitlistEntryRepositoryPort,
+  ReservationPreferenceRepositoryPort,
+  CancellationPolicyRepositoryPort,
+  NotificationIntentRepositoryPort,
+} from "@maitre/reservations";
 
 export interface Container {
   tenants: TenantRepositoryPort;
@@ -116,6 +136,12 @@ export interface Container {
   checks: CheckRepositoryPort;
   payments: PaymentRepositoryPort;
   servicePeriods: ServicePeriodRepositoryPort;
+  reservations: ReservationRepositoryPort;
+  guests: GuestRepositoryPort;
+  waitlistEntries: WaitlistEntryRepositoryPort;
+  reservationPreferences: ReservationPreferenceRepositoryPort;
+  cancellationPolicies: CancellationPolicyRepositoryPort;
+  notificationIntents: NotificationIntentRepositoryPort;
   sessions: SessionVerificationPort;
   demoAccessToken: string;
 }
@@ -159,6 +185,12 @@ interface Repositories {
   checks: CheckRepositoryPort;
   payments: PaymentRepositoryPort;
   servicePeriods: ServicePeriodRepositoryPort;
+  reservations: ReservationRepositoryPort;
+  guests: GuestRepositoryPort;
+  waitlistEntries: WaitlistEntryRepositoryPort;
+  reservationPreferences: ReservationPreferenceRepositoryPort;
+  cancellationPolicies: CancellationPolicyRepositoryPort;
+  notificationIntents: NotificationIntentRepositoryPort;
 }
 
 /**
@@ -195,6 +227,12 @@ function buildRepositories(): Repositories {
       checks: new SupabaseCheckRepository(client),
       payments: new SupabasePaymentRepository(client),
       servicePeriods: new SupabaseServicePeriodRepository(client),
+      reservations: new SupabaseReservationRepository(client),
+      guests: new SupabaseGuestRepository(client),
+      waitlistEntries: new SupabaseWaitlistEntryRepository(client),
+      reservationPreferences: new SupabaseReservationPreferenceRepository(client),
+      cancellationPolicies: new SupabaseCancellationPolicyRepository(client),
+      notificationIntents: new SupabaseNotificationIntentRepository(client),
     };
   }
 
@@ -221,6 +259,12 @@ function buildRepositories(): Repositories {
     checks: new InMemoryCheckRepository(),
     payments: new InMemoryPaymentRepository(),
     servicePeriods: new InMemoryServicePeriodRepository(),
+    reservations: new InMemoryReservationRepository(),
+    guests: new InMemoryGuestRepository(),
+    waitlistEntries: new InMemoryWaitlistEntryRepository(),
+    reservationPreferences: new InMemoryReservationPreferenceRepository(),
+    cancellationPolicies: new InMemoryCancellationPolicyRepository(),
+    notificationIntents: new InMemoryNotificationIntentRepository(),
   };
 }
 

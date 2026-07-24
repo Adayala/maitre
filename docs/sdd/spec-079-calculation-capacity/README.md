@@ -1,21 +1,23 @@
-# [SPEC-070] Cancellation Policy Entity
+# [SPEC-079] Capacity Calculation
 
 | Campo | Valor |
 | --- | --- |
-| **ID** | SPEC-070 |
-| **Tipo** | Entity |
+| **ID** | SPEC-079 |
+| **Tipo** | Calculation |
 | **Dominio** | Reservations |
 | **Estado** | IN_PROGRESS |
 | **Readiness** | WALKING_SKELETON_I0 |
 | **Prioridad** | UNASSIGNED |
-| **Owner** | UNASSIGNED |
-| **Reviewer** | UNASSIGNED |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
 | **Fase** | 3 |
-| **Blockers** | Revisar contrato y asignar prioridad/ownership |
 
 ## Documentos
 
 - [Contrato](contract.md)
+- [Objetivo](objective.md)
 - [Especificación](specification.md)
+- [Estructura](structure.md)
 - [Reglas](rules.md)
+- [Plan](plan.md)
+- [Tareas](tasks.md)
 - [Verificación](verification.md)

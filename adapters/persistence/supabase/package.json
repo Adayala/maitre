@@ -17,7 +17,8 @@
     "@maitre/audit": "*",
     "@supabase/supabase-js": "^2.45.4",
     "ws": "^8.21.1",
-    "@maitre/floor": "*"
+    "@maitre/floor": "*",
+    "@maitre/reservations": "*"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
