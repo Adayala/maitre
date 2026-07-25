@@ -4,5 +4,5 @@
 - [ ] Resolver owner, reviewer, prioridad y blockers.
 - [ ] Congelar route, headers, cache y error contract.
 - [ ] Congelar payload público y reglas de redacción.
-- [ ] Definir fixtures de rotación, expiry, localización y cache.
-- [ ] Autorizar materialización sólo después del cierre de especificación.
+- [ ] Definir fixtures mínimos de payload redacted, cache básica y anti-enumeración.
+- [ ] Planificar endurecimientos posteriores: locale, revisionado editorial y rotación/expiry observable.

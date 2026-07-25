@@ -1,7 +1,8 @@
 # Contrato API — SPEC-089 Order Modifications
 
-Agregar, cancelar o cambiar cantidades y notas de ítems después del submit sólo mediante
-comandos versionados. Cada modificación registra actor, motivo, delta monetario y estado
-de envío a cocina; las transiciones irreversibles requieren una excepción autorizada y no
-se reescribe el historial. Tests cubren concurrencia, reintentos, compensaciones, ítems ya
-preparados, recálculo de impuestos, RBAC y trazabilidad completa.
+Agregar, cancelar o cambiar cantidades después del submit se hace mediante comandos dedicados.
+El I0 actual cubre `change-quantity` y cancelación simplificada por ítem completo; no expone
+`replace-modifiers` ni estados intermedios de saga. Cada modificación registra actor, motivo y
+delta monetario en `adjustments`; las cancelaciones sobre ítems ya en producción requieren permiso
+elevado. Tests cubren lifecycle básico, cancelación, `change-quantity`, RBAC de excepciones y
+trazabilidad simple. Tax recalc fino, compensaciones y retries complejos siguen diferidos.

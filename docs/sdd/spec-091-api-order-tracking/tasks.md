@@ -4,5 +4,5 @@
 - [ ] Resolver owner, reviewer, prioridad y blockers.
 - [ ] Congelar endpoints, payload y headers de freshness.
 - [ ] Congelar reglas de redacción, capability y consistencia eventual.
-- [ ] Definir fixtures de replay, lag, revocación y reconstrucción.
-- [ ] Autorizar materialización sólo después del cierre de especificación.
+- [ ] Definir fixtures mínimos de redacción, metadata temporal y cruces de alcance.
+- [ ] Planificar endurecimientos posteriores: revocación expuesta, rebuild y replay/reorder observables.

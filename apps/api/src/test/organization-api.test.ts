@@ -53,6 +53,40 @@ async function seedEmployee(container: Container, tenantId: string) {
   return token;
 }
 
+async function seedManager(container: Container, tenantId: string) {
+  const now = new Date();
+  const user = {
+    id: randomUUID(),
+    identityProvider: "fixture",
+    externalIdentityId: "demo-manager",
+    displayName: "Demo Manager",
+    status: "ACTIVE" as const,
+    createdAt: now,
+    updatedAt: now,
+  };
+  await container.users.save(user);
+  await container.memberships.save({
+    id: randomUUID(),
+    tenantId,
+    userId: user.id,
+    status: "ACTIVE",
+    branchScopeType: "ALL_BRANCHES",
+    roleIds: ["role_manager"],
+    branchIds: [],
+    activatedAt: now,
+    createdAt: now,
+    updatedAt: now,
+  });
+  const token = "manager-token";
+  sessionsOf(container).registerToken(token, {
+    provider: "fixture",
+    subject: "demo-manager",
+    issuedAt: now,
+    expiresAt: new Date(now.getTime() + 60 * 60 * 1000),
+  });
+  return token;
+}
+
 async function getTenantId(container: Container): Promise<string> {
   const owner = await container.users.findByExternalIdentity("fixture", "demo-owner");
   const memberships = await container.memberships.listActiveByUser(owner!.id);
@@ -192,7 +226,14 @@ test("POST /v1/fiscal-entities as EMPLOYEE returns 403 (OWNER only per SPEC-009)
     method: "POST",
     url: "/v1/fiscal-entities",
     headers: { authorization: `Bearer ${token}`, "x-tenant-id": tenantId },
-    payload: { name: "La Parrilla S.A.", cuit: "20-12345678-6", taxCondition: "RI" },
+    payload: {
+      name: "La Parrilla S.A.",
+      cuit: "20-12345678-6",
+      taxCondition: "RI",
+      legalAddress: "Calle 1",
+      fiscalAddress: "Calle 1",
+      activityCode: "561011",
+    },
   });
   assert.equal(response.statusCode, 403);
   await app.close();
@@ -209,10 +250,18 @@ test("POST /v1/fiscal-entities as OWNER succeeds", async () => {
       authorization: `Bearer ${container.demoAccessToken}`,
       "x-tenant-id": tenantId,
     },
-    payload: { name: "La Parrilla S.A.", cuit: "20-12345678-6", taxCondition: "RI" },
+    payload: {
+      name: "La Parrilla S.A.",
+      cuit: "20-12345678-6",
+      taxCondition: "RI",
+      legalAddress: "Calle 1",
+      fiscalAddress: "Calle 1",
+      activityCode: "561011",
+    },
   });
   assert.equal(response.statusCode, 201);
   assert.equal(response.json().data.cuit, "20123456786");
+  assert.equal(response.json().data.legalAddress, "Calle 1");
   await app.close();
 });
 
@@ -228,7 +277,14 @@ test("POST /v1/fiscal-entities with a duplicate CUIT returns 409 conflict", asyn
     method: "POST",
     url: "/v1/fiscal-entities",
     headers,
-    payload: { name: "La Parrilla S.A.", cuit: "20-12345678-6", taxCondition: "RI" },
+    payload: {
+      name: "La Parrilla S.A.",
+      cuit: "20-12345678-6",
+      taxCondition: "RI",
+      legalAddress: "Calle 1",
+      fiscalAddress: "Calle 1",
+      activityCode: "561011",
+    },
   });
   const response = await app.inject({
     method: "POST",
@@ -237,6 +293,337 @@ test("POST /v1/fiscal-entities with a duplicate CUIT returns 409 conflict", asyn
     payload: { name: "Otra Razón Social", cuit: "20-12345678-6", taxCondition: "RI" },
   });
   assert.equal(response.statusCode, 409);
+  await app.close();
+});
+
+test("POST /v1/fiscal-entities is idempotent with Idempotency-Key", async () => {
+  const container = await buildContainer();
+  const tenantId = await getTenantId(container);
+  const app = await buildApp(container);
+  const headers = {
+    authorization: `Bearer ${container.demoAccessToken}`,
+    "x-tenant-id": tenantId,
+    "idempotency-key": "fiscal-create-idem-1",
+  };
+
+  const first = await app.inject({
+    method: "POST",
+    url: "/v1/fiscal-entities",
+    headers,
+    payload: {
+      name: "Fiscal Replay",
+      cuit: "20-12345678-6",
+      taxCondition: "RI",
+      legalAddress: "Calle 1",
+    },
+  });
+  assert.equal(first.statusCode, 201);
+
+  const replay = await app.inject({
+    method: "POST",
+    url: "/v1/fiscal-entities",
+    headers,
+    payload: {
+      name: "Fiscal Replay Diferente",
+      cuit: "27-12345678-0",
+      taxCondition: "MONOTRIBUTISTA",
+      legalAddress: "Otra calle",
+    },
+  });
+  assert.equal(replay.statusCode, 201);
+  assert.equal(replay.json().data.id, first.json().data.id);
+  assert.equal(replay.json().data.cuit, first.json().data.cuit);
+});
+
+test("GET /v1/fiscal-entities lists tenant-owned entities and detail returns ETag", async () => {
+  const container = await buildContainer();
+  const tenantId = await getTenantId(container);
+  const app = await buildApp(container);
+  const headers = {
+    authorization: `Bearer ${container.demoAccessToken}`,
+    "x-tenant-id": tenantId,
+  };
+
+  const created = await app.inject({
+    method: "POST",
+    url: "/v1/fiscal-entities",
+    headers,
+    payload: { name: "Fiscal Uno", cuit: "20-12345678-6", taxCondition: "RI", activityCode: "561011" },
+  });
+  assert.equal(created.statusCode, 201);
+
+  const list = await app.inject({
+    method: "GET",
+    url: "/v1/fiscal-entities",
+    headers,
+  });
+  assert.equal(list.statusCode, 200);
+  assert.equal(list.json().meta.total >= 1, true);
+
+  const detail = await app.inject({
+    method: "GET",
+    url: `/v1/fiscal-entities/${created.json().data.id}`,
+    headers,
+  });
+  assert.equal(detail.statusCode, 200);
+  assert.equal(typeof detail.headers.etag, "string");
+
+  await app.close();
+});
+
+test("GET /v1/fiscal-entities as MANAGER returns redacted fiscal fields", async () => {
+  const container = await buildContainer();
+  const tenantId = await getTenantId(container);
+  const managerToken = await seedManager(container, tenantId);
+  const app = await buildApp(container);
+  const ownerHeaders = {
+    authorization: `Bearer ${container.demoAccessToken}`,
+    "x-tenant-id": tenantId,
+  };
+
+  const created = await app.inject({
+    method: "POST",
+    url: "/v1/fiscal-entities",
+    headers: ownerHeaders,
+    payload: {
+      name: "Fiscal Redacted",
+      cuit: "20-12345678-6",
+      taxCondition: "RI",
+      legalAddress: "Privada 123",
+      fiscalAddress: "Fiscal 456",
+      activityCode: "561011",
+    },
+  });
+  assert.equal(created.statusCode, 201);
+  const entityId = created.json().data.id;
+
+  const list = await app.inject({
+    method: "GET",
+    url: "/v1/fiscal-entities",
+    headers: { authorization: `Bearer ${managerToken}`, "x-tenant-id": tenantId },
+  });
+  assert.equal(list.statusCode, 200);
+  const listed = list.json().data.find((item: { id: string }) => item.id === entityId);
+  assert.ok(listed);
+  assert.equal("legalAddress" in listed, false);
+  assert.equal("fiscalAddress" in listed, false);
+  assert.equal("activityCode" in listed, false);
+
+  const detail = await app.inject({
+    method: "GET",
+    url: `/v1/fiscal-entities/${entityId}`,
+    headers: { authorization: `Bearer ${managerToken}`, "x-tenant-id": tenantId },
+  });
+  assert.equal(detail.statusCode, 200);
+  assert.equal(detail.json().data.name, "Fiscal Redacted");
+  assert.equal("legalAddress" in detail.json().data, false);
+  assert.equal("fiscalAddress" in detail.json().data, false);
+  assert.equal("activityCode" in detail.json().data, false);
+  assert.equal(typeof detail.headers.etag, "string");
+
+  await app.close();
+});
+
+test("PATCH /v1/fiscal-entities requires valid If-Match and rejects stale revisions", async () => {
+  const container = await buildContainer();
+  const tenantId = await getTenantId(container);
+  const app = await buildApp(container);
+  const headers = {
+    authorization: `Bearer ${container.demoAccessToken}`,
+    "x-tenant-id": tenantId,
+  };
+
+  const created = await app.inject({
+    method: "POST",
+    url: "/v1/fiscal-entities",
+    headers,
+    payload: {
+      name: "Fiscal Dos",
+      cuit: "27-12345678-0",
+      taxCondition: "RI",
+      legalAddress: "Dir vieja",
+      fiscalAddress: "Fiscal vieja",
+    },
+  });
+  assert.equal(created.statusCode, 201);
+  const entityId = created.json().data.id;
+
+  const missingIfMatch = await app.inject({
+    method: "PATCH",
+    url: `/v1/fiscal-entities/${entityId}`,
+    headers,
+    payload: { name: "Nope" },
+  });
+  assert.equal(missingIfMatch.statusCode, 400);
+
+  const detail = await app.inject({
+    method: "GET",
+    url: `/v1/fiscal-entities/${entityId}`,
+    headers,
+  });
+  const etag = detail.headers.etag as string;
+
+  const patched = await app.inject({
+    method: "PATCH",
+    url: `/v1/fiscal-entities/${entityId}`,
+    headers: { ...headers, "if-match": etag, "x-step-up-at": new Date().toISOString() },
+    payload: {
+      name: "Fiscal Dos Actualizada",
+      legalAddress: "Dir nueva",
+      fiscalAddress: "Fiscal nueva",
+      activityCode: "563001",
+      taxCondition: "MONOTRIBUTISTA",
+      reason: "Actualización fiscal autorizada",
+    },
+  });
+  assert.equal(patched.statusCode, 200);
+  assert.equal(patched.json().data.name, "Fiscal Dos Actualizada");
+  assert.equal(patched.json().data.legalAddress, "Dir nueva");
+  assert.equal(patched.json().data.taxCondition, "MONOTRIBUTISTA");
+
+  const stalePatch = await app.inject({
+    method: "PATCH",
+    url: `/v1/fiscal-entities/${entityId}`,
+    headers: { ...headers, "if-match": etag },
+    payload: { name: "Stale" },
+  });
+  assert.equal(stalePatch.statusCode, 409);
+
+  await app.close();
+});
+
+test("PATCH /v1/fiscal-entities sensitive changes require reason and recent step-up", async () => {
+  const container = await buildContainer();
+  const tenantId = await getTenantId(container);
+  const app = await buildApp(container);
+  const headers = {
+    authorization: `Bearer ${container.demoAccessToken}`,
+    "x-tenant-id": tenantId,
+  };
+  const created = await app.inject({
+    method: "POST",
+    url: "/v1/fiscal-entities",
+    headers,
+    payload: {
+      name: "Fiscal StepUp",
+      cuit: "30-12345678-1",
+      taxCondition: "RI",
+      legalAddress: "Antes 123",
+    },
+  });
+  const entityId = created.json().data.id;
+  const detail = await app.inject({
+    method: "GET",
+    url: `/v1/fiscal-entities/${entityId}`,
+    headers,
+  });
+  const etag = detail.headers.etag as string;
+
+  const missingReason = await app.inject({
+    method: "PATCH",
+    url: `/v1/fiscal-entities/${entityId}`,
+    headers: { ...headers, "if-match": etag, "x-step-up-at": new Date().toISOString() },
+    payload: { legalAddress: "Nueva 123" },
+  });
+  assert.equal(missingReason.statusCode, 400);
+
+  const missingStepUp = await app.inject({
+    method: "PATCH",
+    url: `/v1/fiscal-entities/${entityId}`,
+    headers: { ...headers, "if-match": etag },
+    payload: { legalAddress: "Nueva 123", reason: "Cambio de domicilio fiscal" },
+  });
+  assert.equal(missingStepUp.statusCode, 403);
+  assert.equal(missingStepUp.json().type, "step-up-required");
+
+  const nameOnly = await app.inject({
+    method: "PATCH",
+    url: `/v1/fiscal-entities/${entityId}`,
+    headers: { ...headers, "if-match": etag },
+    payload: { name: "Fiscal Solo Nombre" },
+  });
+  assert.equal(nameOnly.statusCode, 200);
+
+  await app.close();
+});
+
+test("GET and PATCH /v1/fiscal-entities hide cross-tenant resources as 404", async () => {
+  const ownerContainer = await buildContainer();
+  const tenantId = await getTenantId(ownerContainer);
+  const app = await buildApp(ownerContainer);
+  const ownerHeaders = {
+    authorization: `Bearer ${ownerContainer.demoAccessToken}`,
+    "x-tenant-id": tenantId,
+  };
+
+  const created = await app.inject({
+    method: "POST",
+    url: "/v1/fiscal-entities",
+    headers: ownerHeaders,
+    payload: { name: "Fiscal Tres", cuit: "30-12345678-1", taxCondition: "RI", legalAddress: "Calle 3" },
+  });
+  const entityId = created.json().data.id;
+  const now = new Date();
+  const otherTenantId = randomUUID();
+  await ownerContainer.tenants.save({
+    id: otherTenantId,
+    name: "Other Tenant",
+    status: "ACTIVE",
+    defaultLocale: "es-AR",
+    defaultCurrency: "ARS",
+    defaultTimezone: "America/Argentina/Buenos_Aires",
+    createdAt: now,
+    updatedAt: now,
+  });
+  const otherUser = {
+    id: randomUUID(),
+    identityProvider: "fixture",
+    externalIdentityId: "other-owner-fiscal",
+    displayName: "Other Owner Fiscal",
+    status: "ACTIVE" as const,
+    createdAt: now,
+    updatedAt: now,
+  };
+  await ownerContainer.users.save(otherUser);
+  await ownerContainer.memberships.save({
+    id: randomUUID(),
+    tenantId: otherTenantId,
+    userId: otherUser.id,
+    status: "ACTIVE",
+    branchScopeType: "ALL_BRANCHES",
+    roleIds: ["role_owner"],
+    branchIds: [],
+    activatedAt: now,
+    createdAt: now,
+    updatedAt: now,
+  });
+  const otherToken = "other-owner-fiscal-token";
+  sessionsOf(ownerContainer).registerToken(otherToken, {
+    provider: "fixture",
+    subject: otherUser.externalIdentityId,
+    issuedAt: now,
+    expiresAt: new Date(now.getTime() + 60 * 60 * 1000),
+  });
+
+  const hiddenGet = await app.inject({
+    method: "GET",
+    url: `/v1/fiscal-entities/${entityId}`,
+    headers: { authorization: `Bearer ${otherToken}`, "x-tenant-id": otherTenantId },
+  });
+  assert.equal(hiddenGet.statusCode, 404);
+
+  const hiddenPatch = await app.inject({
+    method: "PATCH",
+    url: `/v1/fiscal-entities/${entityId}`,
+    headers: {
+      authorization: `Bearer ${otherToken}`,
+      "x-tenant-id": otherTenantId,
+      "if-match": `"0"`,
+    },
+    payload: { name: "Hidden" },
+  });
+  assert.equal(hiddenPatch.statusCode, 404);
+
   await app.close();
 });
 
@@ -352,5 +739,94 @@ test("POST /v1/brands appends BrandCreated to the outbox", async () => {
   assert.equal(records.length, before + 1);
   assert.equal(records[records.length - 1]!.eventName, "BrandCreated");
   assert.equal(records[records.length - 1]!.aggregateId, response.json().data.id);
+  await app.close();
+});
+
+test("POST /v1/fiscal-entities appends FiscalEntityCreated to the outbox and writes sanitized audit", async () => {
+  const container = await buildContainer();
+  const tenantId = await getTenantId(container);
+  const app = await buildApp(container);
+  const beforeOutbox = outboxOf(container).all().length;
+  const response = await app.inject({
+    method: "POST",
+    url: "/v1/fiscal-entities",
+    headers: {
+      authorization: `Bearer ${container.demoAccessToken}`,
+      "x-tenant-id": tenantId,
+    },
+    payload: {
+      name: "Fiscal Audit",
+      cuit: "20-12345678-6",
+      taxCondition: "RI",
+      legalAddress: "Privada 123",
+      fiscalAddress: "Fiscal 456",
+      activityCode: "561011",
+    },
+  });
+  assert.equal(response.statusCode, 201);
+  const records = outboxOf(container).all();
+  assert.equal(records.length, beforeOutbox + 1);
+  assert.equal(records[records.length - 1]!.eventName, "FiscalEntityCreated");
+  assert.equal(records[records.length - 1]!.aggregateId, response.json().data.id);
+  const auditPage = await container.auditLogs.query({ tenantId, resourceType: "FISCAL_ENTITY" });
+  assert.equal(auditPage.items.length, 1);
+  assert.equal(auditPage.items[0]!.action, "CREATE");
+  const auditState = auditPage.items[0]!.newState as { cuitMasked?: string; hasLegalAddress?: boolean };
+  assert.equal(auditState.cuitMasked, "***6786");
+  assert.equal(auditState.hasLegalAddress, true);
+  assert.equal("legalAddress" in (auditPage.items[0]!.newState as object), false);
+  await app.close();
+});
+
+test("PATCH /v1/fiscal-entities writes sanitized audit diff", async () => {
+  const container = await buildContainer();
+  const tenantId = await getTenantId(container);
+  const app = await buildApp(container);
+  const headers = {
+    authorization: `Bearer ${container.demoAccessToken}`,
+    "x-tenant-id": tenantId,
+  };
+  const created = await app.inject({
+    method: "POST",
+    url: "/v1/fiscal-entities",
+    headers,
+    payload: {
+      name: "Fiscal Audit Patch",
+      cuit: "27-12345678-0",
+      taxCondition: "RI",
+      legalAddress: "Antes 1",
+    },
+  });
+  const entityId = created.json().data.id;
+  const detail = await app.inject({
+    method: "GET",
+    url: `/v1/fiscal-entities/${entityId}`,
+    headers,
+  });
+  const patch = await app.inject({
+    method: "PATCH",
+    url: `/v1/fiscal-entities/${entityId}`,
+    headers: {
+      ...headers,
+      "if-match": detail.headers.etag as string,
+      "x-step-up-at": new Date().toISOString(),
+    },
+    payload: {
+      name: "Fiscal Audit Patch 2",
+      activityCode: "561099",
+      reason: "Alta de código de actividad",
+    },
+  });
+  assert.equal(patch.statusCode, 200);
+  const auditPage = await container.auditLogs.query({ tenantId, resourceType: "FISCAL_ENTITY" });
+  assert.equal(auditPage.items.length >= 2, true);
+  const updateEntry = auditPage.items.find((item) => item.action === "UPDATE" && item.resourceId === entityId);
+  assert.ok(updateEntry);
+  const previousState = updateEntry!.previousState as { cuitMasked?: string; hasActivityCode?: boolean };
+  const newState = updateEntry!.newState as { cuitMasked?: string; hasActivityCode?: boolean };
+  assert.equal(previousState.cuitMasked, "***6780");
+  assert.equal(previousState.hasActivityCode, false);
+  assert.equal(newState.hasActivityCode, true);
+  assert.equal("activityCode" in (newState as object), false);
   await app.close();
 });

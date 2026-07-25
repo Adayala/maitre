@@ -1,7 +1,8 @@
 # Contrato API — SPEC-074
 
-`GET /v1/branches/{id}/availability` consulta partySize, date/window y preferences, devolviendo
-slots con `asOf`, timezone, duration y capacidad estimada. Es una query, no reserva ni
-garantía; confirmar vuelve a validar. Algoritmo recibe clock y reglas versionadas, aplica
-salons/tables/occupancies/reservations/blocks sin exponer PII. Tests cubren DST, boundaries,
-resultado desactualizado, concurrency, party size y determinismo.
+`GET /v1/branches/{id}/availability` consulta `partySize`, `startAt` y `durationMinutes`,
+devolviendo `asOf`, `timezone`, `freshness`, `available` y `freeTableIds`. Es una query, no
+reserva ni garantía; confirmar vuelve a validar. El I0 actual calcula live sobre
+salons/tables/occupancies/reservations sin versión de policy, sin capability pública y sin
+slots/range elaborados. Tests cubren respuesta básica y permisos; DST, boundaries,
+desactualización, concurrency y determinismo fino siguen diferidos.

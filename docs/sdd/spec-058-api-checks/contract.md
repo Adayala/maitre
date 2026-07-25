@@ -3,7 +3,8 @@
 Crear/obtener Check y ejecutar add-adjustment, request-payment, settle o void. Creación por
 Visit/revisión es idempotente y captura snapshots; la recomputación ocurre dentro de esos
 workflows y no es un endpoint público arbitrario. El cliente no aporta totales
-autoritativos. Mutaciones usan `Idempotency-Key`, `If-Match` y permisos. `409` cubre Check
-duplicado/conflictos, `412` versión y `422` fuentes o transición inconsistentes. La respuesta
-separa total/saldo y nunca incluye datos de tarjeta. Tests cubren redondeo, retry,
-concurrencia, Visit cerrada y auditoría.
+autoritativos. En I0 la superficie materializada usa create/get, `add-line`, `add-adjustment`,
+`request-payment`, `settle` y `void`, con permisos explícitos y totales recalculados por servidor.
+La respuesta separa total/saldo y expone sólo un `paymentsSummary` redactado, nunca datos de
+tarjeta. `If-Match`/`Idempotency-Key` completos quedan como endurecimiento posterior si aún no
+están materializados en todos los handlers.

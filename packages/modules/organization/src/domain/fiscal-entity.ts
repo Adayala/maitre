@@ -21,6 +21,10 @@ export interface FiscalEntity {
   tenantId: string;
   cuit: string;
   name: string;
+  legalAddress?: string;
+  fiscalAddress?: string;
+  activityCode?: string;
+  createIdempotencyKey?: string;
   status: FiscalEntityStatus;
   taxCondition: TaxCondition;
   certificate?: FiscalCertificate;

@@ -4,5 +4,5 @@
 - [ ] Resolver owner, reviewer, prioridad y blockers.
 - [ ] Congelar route, payload, headers y error contract.
 - [ ] Congelar privacy redactions, cache y freshness policy.
-- [ ] Definir fixtures de expiry, settled, pagos concurrentes y aislamiento.
-- [ ] Autorizar materialización sólo después del cierre de especificación.
+- [ ] Definir fixtures mínimos de metadata temporal, payload y aislamiento por tenant/branch.
+- [ ] Planificar endurecimientos posteriores: revocación expuesta, expiry observable y concurrencia avanzada de pagos.

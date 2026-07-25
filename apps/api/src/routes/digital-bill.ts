@@ -21,6 +21,15 @@ const issueBodySchema = z.object({
   ttlSeconds: z.number().int().positive().optional(),
 });
 
+function requireCheckBranchAccess(
+  ctx: Awaited<ReturnType<typeof requireTenantContext>>,
+  branchId: string,
+): void {
+  if (ctx.branchScopeType !== "ALL_BRANCHES" && !ctx.branchIds.includes(branchId)) {
+    throw notFound("Check");
+  }
+}
+
 export async function registerDigitalBillRoutes(app: FastifyInstance, container: Container): Promise<void> {
   // POST /v1/bill-tokens — authenticated issue.
   app.post("/v1/bill-tokens", async (req, reply) => {
@@ -31,6 +40,7 @@ export async function registerDigitalBillRoutes(app: FastifyInstance, container:
       const body = issueBodySchema.parse(req.body);
       const check = await container.checks.findById(ctx.tenantId, body.checkId);
       if (!check) return sendProblem(reply, correlationId, notFound("Check"));
+      requireCheckBranchAccess(ctx, check.branchId);
       const { token, record } = await issueCapabilityToken(
         { capabilityTokens: container.capabilityTokens },
         {
@@ -68,9 +78,24 @@ export async function registerDigitalBillRoutes(app: FastifyInstance, container:
         data: {
           checkRevision: check.revision,
           asOf: new Date().toISOString(),
+          lastConfirmedAt: check.updatedAt.toISOString(),
+          freshness: {
+            mode: "LIVE_SNAPSHOT",
+            consistency: "EVENTUAL",
+            degraded: false,
+          },
           currency: check.currency,
           status: check.status,
           lines: check.lines.map((l) => ({ description: l.description, amountMinorUnits: l.amountMinorUnits })),
+          adjustments: check.adjustments.map((a) => ({
+            description: a.description,
+            amountMinorUnits: a.amountMinorUnits,
+          })),
+          paymentsSummary: {
+            count: payments.length,
+            paidMinorUnits: totals.paid,
+            balanceMinorUnits: totals.balance,
+          },
           totals,
         },
       };

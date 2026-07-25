@@ -4,7 +4,8 @@
 
 ### CAD-088-01 — La API pública de QRMenu expone sólo capability y payload permitidos
 
-- [ ] endpoint y payload público excluyen IDs y datos internos.
+- [ ] endpoint y payload público excluyen IDs y datos internos;
+- [ ] payload público conserva sólo `name`/`slug`/`asOf` y catálogo visible.
 
 ### CAD-088-02 — Los errores de token usan contrato uniforme y anti-enumeración
 
@@ -12,7 +13,8 @@
 
 ### CAD-088-03 — ETag, cache-control, locale y revision tienen semántica consistente
 
-- [ ] ETag, locale y cache convergen con revisión/rotación aprobadas.
+- [ ] ETag y cache-control tienen semántica estable en I0;
+- [ ] locale/revision editorial más ricas quedan explícitamente diferidas si el modelo aún no las soporta.
 
 ### CAD-088-04 — La autorización deriva sólo del token opaco
 
@@ -24,4 +26,5 @@
 
 ### CAD-088-06 — La aprobación exige evidencia de cache, rotación y localización
 
-- [ ] fixtures cubren replay, expiry, cache y aislamiento entre sucursales.
+- [ ] fixtures cubren payload redacted, cache básica y anti-enumeración;
+- [ ] rotación/expiry/localización fuerte quedan como endurecimiento posterior si no están materializados.

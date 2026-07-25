@@ -11,13 +11,15 @@ Superficie I0:
 - `POST /v1/waitlist-entries/{entryId}/expire`;
 - `POST /v1/waitlist-entries/{entryId}/priority-overrides`.
 
-Add es idempotente por canal/request y crea arrivalSequence server-side. Comandos requieren
-`Idempotency-Key` e `If-Match`. List usa cursor, status y partySize allowlisted sobre el orden
-calculado por OrderingPolicyVersion; no acepta sort arbitrario.
+Add hoy no es idempotente por canal/request y crea `arrivedAt` server-side como base del orden.
+Comandos todavía no requieren `Idempotency-Key` ni `If-Match`. List hoy devuelve el set completo
+del Branch, ordenado por `priorityOverride DESC`, `arrivedAt ASC`, `id ASC`; no usa cursor ni
+filtros allowlisted.
 
-`notify` crea NotificationIntent/outbox y transición NOTIFIED: no reserva capacidad ni espera
-al provider. `seat` adquiere/confirma CapacityAllocation, revalida compatibilidad y crea/vincula
-Visit en la misma transacción; reintentos
-devuelven la Visit ya vinculada. Overrides de prioridad requieren permiso, reason code y audit.
+`notify` sólo hace la transición a `NOTIFIED`: no reserva capacidad ni espera al provider.
+`seat` abre una `Visit` y luego la vincula al entry; el I0 actual no modela `CapacityAllocation`
+ni garantiza una única transacción entre ambos pasos. Overrides de prioridad requieren el permiso
+dedicado `waitlist:priority_override` de SPEC-080 y `reason` en body.
 
-Los estados terminales no vuelven a `WAITING`. Contacto y notas se minimizan y redactan en listas.
+Los estados terminales no vuelven a `WAITING`. El I0 actual no minimiza/redacta campos en listas:
+si existe `notes`, hoy viaja en la respuesta.

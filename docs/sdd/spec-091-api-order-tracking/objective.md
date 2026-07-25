@@ -8,11 +8,11 @@ freshness y privacidad operativa.
 ### CAD-091-01 — El tracking define endpoints, payload y semántica temporal estables
 
 endpoints, payload de tracking y semántica de `asOf`, revisión y projection cursor quedan
-definidos.
+definidos, junto con `lastConfirmedAt` y metadata de freshness.
 
 ### CAD-091-02 — El acceso público y el interno quedan separados por capability y permiso
 
-acceso público usa capability separada y acceso interno valida permiso + alcance.
+acceso público usa capability separada y acceso interno valida permiso + alcance por sucursal.
 
 ### CAD-091-03 — La proyección converge sin retroceder estados terminales
 
@@ -29,4 +29,5 @@ la API declara consistencia eventual y no sirve como precondición de comandos.
 
 ### CAD-091-06 — La aprobación exige evidencia de reorder, lag y reconstrucción
 
-La aprobación exige fixtures de reorder, lag, revocación, reconstrucción y aislamiento.
+La aprobación exige fixtures de redacción, metadata temporal, aislamiento y, cuando exista
+proyección reconstruida, reorder/lag/reconstrucción.

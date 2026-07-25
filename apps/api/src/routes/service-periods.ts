@@ -30,6 +30,10 @@ const closeBodySchema = z.object({
   reason: z.string().optional(),
 });
 
+const forceCloseBodySchema = z.object({
+  reason: z.string().min(1),
+});
+
 export async function registerServicePeriodRoutes(app: FastifyInstance, container: Container): Promise<void> {
   const deps = () => ({ servicePeriods: container.servicePeriods });
 
@@ -129,8 +133,28 @@ export async function registerServicePeriodRoutes(app: FastifyInstance, containe
     }
   });
 
-  // POST /v1/service-periods/:id/close with force:true + reason acts as
-  // force-close per this simplified model (see service-period-commands.ts).
+  app.post<{ Params: { id: string } }>("/v1/service-periods/:id/force-close", async (req, reply) => {
+    const correlationId = randomUUID();
+    try {
+      const ctx = await requireTenantContext(container, req);
+      requirePermission(ctx, "service-period:manage");
+      const body = forceCloseBodySchema.parse(req.body ?? {});
+      const period = await closeServicePeriod(deps(), {
+        tenantId: ctx.tenantId,
+        servicePeriodId: req.params.id,
+        force: true,
+        reason: body.reason,
+      });
+      return { data: period };
+    } catch (err) {
+      if (err instanceof ServicePeriodCloseBlockedError) return sendProblem(reply, correlationId, badRequest(err.message));
+      if (err instanceof InvalidServicePeriodTransitionError) return sendProblem(reply, correlationId, conflict(err.message));
+      if (err instanceof z.ZodError) return sendProblem(reply, correlationId, badRequest(err.message));
+      if (err instanceof Error && err.message.includes("not found")) return sendProblem(reply, correlationId, notFound("ServicePeriod"));
+      return sendProblem(reply, correlationId, err);
+    }
+  });
+
   app.post<{ Params: { id: string } }>("/v1/service-periods/:id/cancel-planned", async (req, reply) => {
     const correlationId = randomUUID();
     try {

@@ -24,8 +24,8 @@ logs ni auditoría.
 
 ### CAD-009-04 — Create es idempotente y PATCH exige `If-Match`
 
-Create es idempotente y PATCH exige `If-Match`; cambios sensibles registran actor, motivo y diff
-sanitizado.
+Create admite reintento idempotente y PATCH exige `If-Match`; cambios sensibles registran actor,
+reason, step-up reciente y diff sanitizado.
 
 ### CAD-009-05 — No existe hard delete ni mutación retroactiva de snapshots usados por invoices
 
@@ -36,3 +36,10 @@ bloquean cambios incompatibles.
 
 OpenAPI, Problem Details y pruebas contractuales cubren validación fiscal, redacción, RBAC, uso por sucursal,
 usage, concurrencia y aislamiento.
+
+### CAD-009-07 — El vocabulario HTTP queda alineado con el dominio fiscal autoritativo
+
+La API expone `taxCondition` como catálogo fiscal autoritativo, trata `name` como razón social del
+agregado mientras no exista un split formal con `legalName`, y deja `legalAddress`, `fiscalAddress`
+y `activityCode` como atributos opcionales del I0 con validación oficial diferida a integración
+AFIP/ARCA.

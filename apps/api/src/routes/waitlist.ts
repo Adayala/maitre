@@ -203,9 +203,10 @@ export async function registerWaitlistRoutes(app: FastifyInstance, container: Co
     },
   );
 
-  // POST /v1/waitlist-entries/:entryId/priority-overrides — requires the
-  // dedicated waitlist:priority_override permission (SPEC-080), distinct
-  // from waitlist:manage.
+  // POST /v1/waitlist-entries/:entryId/priority-overrides — part of the
+  // SPEC-073 Waitlist surface, but guarded by the dedicated
+  // waitlist:priority_override permission from SPEC-080 RBAC, distinct from
+  // waitlist:manage.
   app.post<{ Params: { entryId: string } }>(
     "/v1/waitlist-entries/:entryId/priority-overrides",
     async (req, reply) => {

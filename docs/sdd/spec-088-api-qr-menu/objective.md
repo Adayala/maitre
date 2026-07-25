@@ -7,7 +7,8 @@ anti-enumeración.
 
 ### CAD-088-01 — La API pública de QRMenu expone sólo capability y payload permitidos
 
-endpoint, capability `MENU_READ` y payload permitido quedan definidos sin IDs internos.
+endpoint, capability `MENU_READ` y payload permitido quedan definidos sin IDs internos, con
+`name`, `slug` y `asOf` como metadata pública mínima del menú.
 
 ### CAD-088-02 — Los errores de token usan contrato uniforme y anti-enumeración
 
@@ -16,7 +17,8 @@ enumeración.
 
 ### CAD-088-03 — ETag, cache-control, locale y revision tienen semántica consistente
 
-ETag, cache-control, locale y menu revision tienen semántica consistente.
+ETag y cache-control tienen semántica consistente en I0; locale y revision editorial más rica
+se endurecen después cuando exista soporte autoritativo.
 
 ### CAD-088-04 — La autorización deriva sólo del token opaco
 
@@ -28,5 +30,5 @@ la surface pública no concede acciones de ordering, bill ni payment.
 
 ### CAD-088-06 — La aprobación exige evidencia de cache, rotación y localización
 
-La aprobación exige fixtures de cache, rotación, expiry, replay, localización y
-aislamiento.
+La aprobación exige fixtures de cache básica, anti-enumeración y aislamiento; rotación,
+expiry observable y localización fuerte pueden endurecerse después.

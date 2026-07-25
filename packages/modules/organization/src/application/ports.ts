@@ -28,6 +28,7 @@ export interface BrandRepositoryPort {
 export interface FiscalEntityRepositoryPort {
   findById(tenantId: string, id: string): Promise<FiscalEntity | null>;
   findByCuit(tenantId: string, cuit: string): Promise<FiscalEntity | null>;
+  findByCreateIdempotencyKey(tenantId: string, idempotencyKey: string): Promise<FiscalEntity | null>;
   listByTenant(tenantId: string): Promise<FiscalEntity[]>;
   save(entity: FiscalEntity): Promise<void>;
 }

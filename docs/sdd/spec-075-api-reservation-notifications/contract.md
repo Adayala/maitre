@@ -4,4 +4,8 @@ Commands para solicitar confirmación, recordatorio o cancelación comunicaciona
 Reservation. No envían directamente: crean intención/outbox idempotente con template,
 locale, channel permitido y consent. Respuesta no incluye provider token ni contacto
 completo. Rate limit/dedupe evitan spam; delivery status es proyección separada. Tests cubren
-opt-out, retries, duplicate command, template missing, redacción y provider outage.
+autorización, Reservation inexistente, creación de intents y lectura por id.
+
+El I0 actual no es idempotente todavía y no resuelve template, locale, channel, consent ni
+provider. Sólo crea un `NotificationIntent` simple (`reservationId`, `purpose`, `status`,
+`createdAt`) y un registro de outbox asociado.

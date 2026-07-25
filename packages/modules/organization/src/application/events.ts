@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { Tenant } from "../domain/tenant.js";
 import type { Brand } from "../domain/brand.js";
 import type { Branch } from "../domain/branch.js";
+import type { FiscalEntity } from "../domain/fiscal-entity.js";
 import type { OutboxRecord } from "./outbox.js";
 
 export interface TenantCreatedPayload {
@@ -109,6 +110,45 @@ export function branchCreatedEvent(
       ...(branch.fiscalEntityId !== undefined
         ? { fiscalEntityId: branch.fiscalEntityId }
         : {}),
+    },
+    status: "PENDING",
+    attempts: 0,
+  };
+}
+
+export interface FiscalEntityCreatedPayload {
+  fiscalEntityId: string;
+  tenantId: string;
+  name: string;
+  status: string;
+  taxCondition: string;
+  createdAt: Date;
+}
+
+// SPEC-009/217 — minimal payload: no CUIT, addresses, activity, certificate
+// refs or idempotency keys. Consumers must perform an authorized read if they
+// need current details.
+export function fiscalEntityCreatedEvent(
+  entity: FiscalEntity,
+  correlationId: string,
+): OutboxRecord<FiscalEntityCreatedPayload> {
+  return {
+    eventId: randomUUID(),
+    eventName: "FiscalEntityCreated",
+    eventVersion: 1,
+    occurredAt: entity.createdAt,
+    producer: "organization",
+    tenantId: entity.tenantId,
+    aggregateType: "FiscalEntity",
+    aggregateId: entity.id,
+    correlationId,
+    payload: {
+      fiscalEntityId: entity.id,
+      tenantId: entity.tenantId,
+      name: entity.name,
+      status: entity.status,
+      taxCondition: entity.taxCondition,
+      createdAt: entity.createdAt,
     },
     status: "PENDING",
     attempts: 0,

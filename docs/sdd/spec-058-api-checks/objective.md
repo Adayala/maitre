@@ -7,18 +7,18 @@ correcciones trazables y frontera fiscal explícita.
 
 ### CAD-058-01 — La API de Check delimita rutas, comandos y precondiciones inequívocas
 
-create/get y los cuatro comandos aprobados tienen rutas, schemas, permisos y
+create/get y los comandos materializados tienen rutas, schemas, permisos y
 precondiciones inequívocos.
 
 ### CAD-058-02 — Las mutaciones de Check son idempotentes y revisadas por servidor
 
-create y comandos son idempotentes, usan revisión y nunca aceptan totales calculados por
-el cliente.
+la API nunca acepta totales calculados por el cliente; idempotencia y revisión fuerte se
+endurecen progresivamente donde todavía no estén materializadas.
 
 ### CAD-058-03 — La respuesta expone el desglose monetario con política explícita
 
 La respuesta reproduce MoneyPolicy y separa gross, descuentos, impuesto estimado, cargos,
-tip, paid y balance.
+paid y balance, junto con un `paymentsSummary` redactado.
 
 ### CAD-058-04 — Settlement y void validan dependencias sin efectos parciales
 
@@ -32,5 +32,5 @@ redactada.
 
 ### CAD-058-06 — La aprobación exige evidencia monetaria, de RBAC y aislamiento
 
-La aprobación exige fixtures monetarios, concurrencia, retry, RBAC, auditoría, outbox y
-aislamiento.
+La aprobación exige fixtures monetarios, RBAC, aislamiento y evolución explícita de retry/
+concurrencia/auditoría según el estado materializado.

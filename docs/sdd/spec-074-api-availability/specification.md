@@ -1,15 +1,15 @@
 # Especificación — SPEC-074
 
-`GET /v1/branches/{branchId}/availability` recibe `partySize`, intervalo local/fecha de negocio,
-`durationMinutes` y códigos de preferencia no sensibles allowlisted. Accesibilidad, allergy,
-texto libre y Guest data nunca viajan en query. Devuelve slots con `startAt`, timezone,
-duración, `asOf`, policy/input revisions, expiry, confidence/freshness y reason codes.
+`GET /v1/branches/{branchId}/availability` recibe hoy `partySize`, `startAt` UTC y
+`durationMinutes`. El I0 actual no recibe fecha de negocio, ventana local ni preferencias
+allowlisted. Devuelve una respuesta resumida con `startAt`, `timezone`, `durationMinutes`,
+`asOf`, `freshness`, `available` y `freeTableIds`.
 
-La misma ruta admite Membership interno o capability pública limitada a una sucursal. La
-capability no cambia detalle, horizonte, límites ni granularidad de la respuesta. Inputs se
-normalizan con límites de horizonte, duración, partySize, cantidad de slots y rate policy.
+La misma ruta hoy sólo admite Membership interno autorizado; la capability pública limitada a
+sucursal queda diferida. Tampoco aplica aún normalización avanzada de horizonte, duración,
+partySize, cantidad de slots ni rate policy.
 
-Es una consulta determinista sobre inputs versionados; no crea hold, reserva ni garantía. La
-respuesta declara expiración/frescura y confirm siempre revalida contra el ledger de capacidad.
-No expone Reservation, Guest ni causa identificable de indisponibilidad. Intervalos inválidos,
-DST inexistente/ambiguo y party size fuera de política devuelven `422`.
+Es una consulta live sobre reservas y ocupación vigentes; no crea hold, reserva ni garantía.
+La respuesta expone frescura básica (`LIVE`) y confirm siempre revalida contra capacidad actual.
+No expone Reservation ni Guest, pero el I0 sí devuelve `freeTableIds` internos y no informa
+reason codes, expiry ni confidence. Inputs inválidos hoy devuelven `400`.

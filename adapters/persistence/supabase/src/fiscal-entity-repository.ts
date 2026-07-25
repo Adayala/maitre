@@ -8,6 +8,10 @@ interface FiscalEntityRow {
   tenant_id: string;
   cuit: string;
   name: string;
+  legal_address: string | null;
+  fiscal_address: string | null;
+  activity_code: string | null;
+  create_idempotency_key: string | null;
   status: string;
   tax_condition: string;
   certificate_serial: string | null;
@@ -37,6 +41,12 @@ function fromRow(row: FiscalEntityRow): FiscalEntity {
     tenantId: row.tenant_id,
     cuit: row.cuit,
     name: row.name,
+    ...(row.legal_address !== null ? { legalAddress: row.legal_address } : {}),
+    ...(row.fiscal_address !== null ? { fiscalAddress: row.fiscal_address } : {}),
+    ...(row.activity_code !== null ? { activityCode: row.activity_code } : {}),
+    ...(row.create_idempotency_key !== null
+      ? { createIdempotencyKey: row.create_idempotency_key }
+      : {}),
     status: row.status as FiscalEntity["status"],
     taxCondition: row.tax_condition as FiscalEntity["taxCondition"],
     createdAt: new Date(row.created_at),
@@ -67,6 +77,10 @@ function toRow(entity: FiscalEntity): FiscalEntityRow {
     tenant_id: entity.tenantId,
     cuit: entity.cuit,
     name: entity.name,
+    legal_address: entity.legalAddress ?? null,
+    fiscal_address: entity.fiscalAddress ?? null,
+    activity_code: entity.activityCode ?? null,
+    create_idempotency_key: entity.createIdempotencyKey ?? null,
     status: entity.status,
     tax_condition: entity.taxCondition,
     certificate_serial: entity.certificate?.serial ?? null,
@@ -103,6 +117,20 @@ export class SupabaseFiscalEntityRepository implements FiscalEntityRepositoryPor
       .select("*")
       .eq("tenant_id", tenantId)
       .eq("cuit", cuit)
+      .maybeSingle();
+    if (error) throw error;
+    return data ? fromRow(data as FiscalEntityRow) : null;
+  }
+
+  async findByCreateIdempotencyKey(
+    tenantId: string,
+    idempotencyKey: string,
+  ): Promise<FiscalEntity | null> {
+    const { data, error } = await this.client
+      .from(TABLE)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("create_idempotency_key", idempotencyKey)
       .maybeSingle();
     if (error) throw error;
     return data ? fromRow(data as FiscalEntityRow) : null;

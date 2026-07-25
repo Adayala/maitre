@@ -15,6 +15,18 @@ export class InMemoryFiscalEntityRepository implements FiscalEntityRepositoryPor
     return null;
   }
 
+  async findByCreateIdempotencyKey(
+    tenantId: string,
+    idempotencyKey: string,
+  ): Promise<FiscalEntity | null> {
+    for (const entity of this.byId.values()) {
+      if (entity.tenantId === tenantId && entity.createIdempotencyKey === idempotencyKey) {
+        return entity;
+      }
+    }
+    return null;
+  }
+
   async listByTenant(tenantId: string): Promise<FiscalEntity[]> {
     return [...this.byId.values()].filter((e) => e.tenantId === tenantId);
   }

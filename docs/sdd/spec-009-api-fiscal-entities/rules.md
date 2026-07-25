@@ -13,9 +13,17 @@ Todo endpoint verifica:
 ## Validación
 
 - input validado antes de DB
-- errores devueltos con campo + motivo
-- `Idempotency-Key` para `POST`/`PATCH` cuando corresponda
+- CUIT se normaliza a 11 dígitos y permanece único por tenant
+- `taxCondition` usa el catálogo fiscal autoritativo del dominio
+- `legalAddress`, `fiscalAddress` y `activityCode` son opcionales en I0
+- errores devueltos como Problem Details con motivo auditable
+- `Idempotency-Key` aplica a `POST` create; `PATCH` se protege con `If-Match`
 
 ## Aislamiento
 
 Toda query se filtra por `tenant_id`.
+
+## Exposición de datos
+
+- certificados, claves, referencias cifradas y secretos no aparecen en responses
+- la lectura puede redactar campos legales si el permiso fiscal no lo habilita

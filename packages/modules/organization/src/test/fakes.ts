@@ -86,6 +86,13 @@ export class FakeFiscalEntityRepository implements FiscalEntityRepositoryPort {
       this.entities.find((e) => e.tenantId === tenantId && e.cuit === cuit) ?? null
     );
   }
+  async findByCreateIdempotencyKey(tenantId: string, idempotencyKey: string) {
+    return (
+      this.entities.find(
+        (e) => e.tenantId === tenantId && e.createIdempotencyKey === idempotencyKey,
+      ) ?? null
+    );
+  }
   async listByTenant(tenantId: string) {
     return this.entities.filter((e) => e.tenantId === tenantId);
   }

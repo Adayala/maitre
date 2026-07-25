@@ -186,6 +186,71 @@ test("Waitlist: add, notify, seat, cancel", async () => {
   await app.close();
 });
 
+test("Waitlist priority override requires dedicated permission", async () => {
+  const container = await buildContainer();
+  const { tenantId, branchId } = await getContext(container);
+  const app = await buildApp(container);
+  const now = new Date();
+
+  const waiter = {
+    id: randomUUID(),
+    identityProvider: "fixture",
+    externalIdentityId: "demo-waiter-waitlist",
+    displayName: "Demo Waiter",
+    status: "ACTIVE" as const,
+    createdAt: now,
+    updatedAt: now,
+  };
+  await container.users.save(waiter);
+  await container.memberships.save({
+    id: randomUUID(),
+    tenantId,
+    userId: waiter.id,
+    status: "ACTIVE",
+    branchScopeType: "ALL_BRANCHES",
+    roleIds: ["role_waiter"],
+    branchIds: [],
+    activatedAt: now,
+    createdAt: now,
+    updatedAt: now,
+  });
+  const waiterToken = "waiter-token-waitlist";
+  sessionsOf(container).registerToken(waiterToken, {
+    provider: "fixture",
+    subject: "demo-waiter-waitlist",
+    issuedAt: now,
+    expiresAt: new Date(now.getTime() + 60 * 60 * 1000),
+  });
+
+  const add = await app.inject({
+    method: "POST",
+    url: `/v1/branches/${branchId}/waitlist-entries`,
+    headers: ownerHeaders(container, tenantId),
+    payload: { partySize: 2 },
+  });
+  assert.equal(add.statusCode, 201);
+  const entry = add.json().data;
+
+  const deniedOverride = await app.inject({
+    method: "POST",
+    url: `/v1/waitlist-entries/${entry.id}/priority-overrides`,
+    headers: { authorization: `Bearer ${waiterToken}`, "x-tenant-id": tenantId },
+    payload: { priorityOverride: 10, reason: "vip" },
+  });
+  assert.equal(deniedOverride.statusCode, 403);
+
+  const allowedOverride = await app.inject({
+    method: "POST",
+    url: `/v1/waitlist-entries/${entry.id}/priority-overrides`,
+    headers: ownerHeaders(container, tenantId),
+    payload: { priorityOverride: 10, reason: "vip" },
+  });
+  assert.equal(allowedOverride.statusCode, 200);
+  assert.equal(allowedOverride.json().data.priorityOverride, 10);
+  assert.equal(allowedOverride.json().data.overrideReason, "vip");
+  await app.close();
+});
+
 test("Guest: create and anonymize", async () => {
   const container = await buildContainer();
   const { tenantId } = await getContext(container);
@@ -211,10 +276,83 @@ test("Guest: create and anonymize", async () => {
   await app.close();
 });
 
+test("Guest lookup is exact, requires pii_read, and rejects empty input", async () => {
+  const container = await buildContainer();
+  const { tenantId } = await getContext(container);
+  const app = await buildApp(container);
+  const now = new Date();
+
+  const create = await app.inject({
+    method: "POST",
+    url: "/v1/guests",
+    headers: ownerHeaders(container, tenantId),
+    payload: { displayName: "Jane Lookup", email: "lookup@example.com", phone: "+541100000001" },
+  });
+  assert.equal(create.statusCode, 201);
+  const guest = create.json().data;
+
+  const lookupByEmail = await app.inject({
+    method: "POST",
+    url: "/v1/guests/lookup",
+    headers: ownerHeaders(container, tenantId),
+    payload: { email: "lookup@example.com" },
+  });
+  assert.equal(lookupByEmail.statusCode, 200);
+  assert.equal(lookupByEmail.json().data.id, guest.id);
+
+  const lookupMissingInput = await app.inject({
+    method: "POST",
+    url: "/v1/guests/lookup",
+    headers: ownerHeaders(container, tenantId),
+    payload: {},
+  });
+  assert.equal(lookupMissingInput.statusCode, 400);
+
+  const waiter = {
+    id: randomUUID(),
+    identityProvider: "fixture",
+    externalIdentityId: "demo-waiter-guest-lookup",
+    displayName: "Demo Waiter Guest Lookup",
+    status: "ACTIVE" as const,
+    createdAt: now,
+    updatedAt: now,
+  };
+  await container.users.save(waiter);
+  await container.memberships.save({
+    id: randomUUID(),
+    tenantId,
+    userId: waiter.id,
+    status: "ACTIVE",
+    branchScopeType: "ALL_BRANCHES",
+    roleIds: ["role_waiter"],
+    branchIds: [],
+    activatedAt: now,
+    createdAt: now,
+    updatedAt: now,
+  });
+  const waiterToken = "waiter-token-guest-lookup";
+  sessionsOf(container).registerToken(waiterToken, {
+    provider: "fixture",
+    subject: "demo-waiter-guest-lookup",
+    issuedAt: now,
+    expiresAt: new Date(now.getTime() + 60 * 60 * 1000),
+  });
+
+  const lookupDenied = await app.inject({
+    method: "POST",
+    url: "/v1/guests/lookup",
+    headers: { authorization: `Bearer ${waiterToken}`, "x-tenant-id": tenantId },
+    payload: { email: "lookup@example.com" },
+  });
+  assert.equal(lookupDenied.statusCode, 403);
+  await app.close();
+});
+
 test("Availability GET returns free tables", async () => {
   const container = await buildContainer();
   const { tenantId, branchId } = await getContext(container);
   const app = await buildApp(container);
+  const branch = await container.branches.findById(tenantId, branchId);
 
   const availability = await app.inject({
     method: "GET",
@@ -225,5 +363,96 @@ test("Availability GET returns free tables", async () => {
   const data = availability.json().data;
   assert.equal(data.available, true);
   assert.ok(data.freeTableIds.length > 0);
+  assert.equal(data.timezone, branch!.timezone);
+  assert.equal(data.freshness, "LIVE");
+  assert.ok(data.asOf);
+  await app.close();
+});
+
+test("Reservation notifications create and fetch notification intents", async () => {
+  const container = await buildContainer();
+  const { tenantId, branchId } = await getContext(container);
+  const app = await buildApp(container);
+
+  const createReservation = await app.inject({
+    method: "POST",
+    url: `/v1/branches/${branchId}/reservations`,
+    headers: ownerHeaders(container, tenantId),
+    payload: { partySize: 2, startAt: "2026-08-03T20:00:00Z", durationMinutes: 60 },
+  });
+  assert.equal(createReservation.statusCode, 201);
+  const reservation = createReservation.json().data;
+
+  const createIntent = await app.inject({
+    method: "POST",
+    url: `/v1/reservations/${reservation.id}/notification-intents/request-confirmation`,
+    headers: ownerHeaders(container, tenantId),
+  });
+  assert.equal(createIntent.statusCode, 201);
+  const intent = createIntent.json().data;
+  assert.equal(intent.reservationId, reservation.id);
+  assert.equal(intent.purpose, "REQUEST_CONFIRMATION");
+  assert.equal(intent.status, "CREATED");
+
+  const getIntent = await app.inject({
+    method: "GET",
+    url: `/v1/notification-intents/${intent.id}`,
+    headers: ownerHeaders(container, tenantId),
+  });
+  assert.equal(getIntent.statusCode, 200);
+  assert.equal(getIntent.json().data.id, intent.id);
+  assert.equal(getIntent.json().data.purpose, "REQUEST_CONFIRMATION");
+  await app.close();
+});
+
+test("Reservation notifications require notification permission and reservation existence", async () => {
+  const container = await buildContainer();
+  const { tenantId } = await getContext(container);
+  const app = await buildApp(container);
+  const now = new Date();
+
+  const waiter = {
+    id: randomUUID(),
+    identityProvider: "fixture",
+    externalIdentityId: "demo-waiter-notification",
+    displayName: "Demo Waiter Notification",
+    status: "ACTIVE" as const,
+    createdAt: now,
+    updatedAt: now,
+  };
+  await container.users.save(waiter);
+  await container.memberships.save({
+    id: randomUUID(),
+    tenantId,
+    userId: waiter.id,
+    status: "ACTIVE",
+    branchScopeType: "ALL_BRANCHES",
+    roleIds: ["role_waiter"],
+    branchIds: [],
+    activatedAt: now,
+    createdAt: now,
+    updatedAt: now,
+  });
+  const waiterToken = "waiter-token-notification";
+  sessionsOf(container).registerToken(waiterToken, {
+    provider: "fixture",
+    subject: "demo-waiter-notification",
+    issuedAt: now,
+    expiresAt: new Date(now.getTime() + 60 * 60 * 1000),
+  });
+
+  const forbidden = await app.inject({
+    method: "POST",
+    url: `/v1/reservations/${randomUUID()}/notification-intents/request-confirmation`,
+    headers: { authorization: `Bearer ${waiterToken}`, "x-tenant-id": tenantId },
+  });
+  assert.equal(forbidden.statusCode, 403);
+
+  const notFound = await app.inject({
+    method: "POST",
+    url: `/v1/reservations/${randomUUID()}/notification-intents/request-confirmation`,
+    headers: ownerHeaders(container, tenantId),
+  });
+  assert.equal(notFound.statusCode, 404);
   await app.close();
 });

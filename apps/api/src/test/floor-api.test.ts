@@ -80,6 +80,7 @@ test("Check + Payment: add line, capture payment, settle", async () => {
   });
   assert.equal(createCheck.statusCode, 201);
   const check = createCheck.json().data;
+  assert.equal(check.paymentsSummary.count, 0);
 
   const addLine = await app.inject({
     method: "POST",
@@ -107,6 +108,17 @@ test("Check + Payment: add line, capture payment, settle", async () => {
   assert.equal(capture.statusCode, 200);
   assert.equal(capture.json().data.status, "CAPTURED");
 
+  const byVisit = await app.inject({
+    method: "GET",
+    url: `/v1/visits/${visit.id}/check`,
+    headers: ownerHeaders(container, tenantId),
+  });
+  assert.equal(byVisit.statusCode, 200);
+  assert.equal(byVisit.json().data.id, check.id);
+  assert.equal(byVisit.json().data.paymentsSummary.count, 1);
+  assert.equal(byVisit.json().data.paymentsSummary.capturedCount, 1);
+  assert.equal(byVisit.json().data.paymentsSummary.paidMinorUnits, 1000);
+
   const requestPayment = await app.inject({
     method: "POST",
     url: `/v1/checks/${check.id}/request-payment`,
@@ -122,6 +134,7 @@ test("Check + Payment: add line, capture payment, settle", async () => {
   assert.equal(settle.statusCode, 200);
   assert.equal(settle.json().data.status, "SETTLED");
   assert.equal(settle.json().data.totals.balance, 0);
+  assert.equal(settle.json().data.paymentsSummary.paidMinorUnits, 1000);
   await app.close();
 });
 
@@ -175,5 +188,53 @@ test("403 without permission, 404 for unknown ids", async () => {
     headers: ownerHeaders(container, tenantId),
   });
   assert.equal(notFound.statusCode, 404);
+  await app.close();
+});
+
+test("ServicePeriod force-close endpoint closes a closing period and requires reason", async () => {
+  const container = await buildContainer();
+  const { tenantId, branchId } = await getContext(container);
+  const app = await buildApp(container);
+
+  const create = await app.inject({
+    method: "POST",
+    url: `/v1/branches/${branchId}/service-periods`,
+    headers: ownerHeaders(container, tenantId),
+    payload: { businessDate: "2026-07-25", name: "Dinner", type: "DINNER" },
+  });
+  assert.equal(create.statusCode, 201);
+  const period = create.json().data;
+
+  const open = await app.inject({
+    method: "POST",
+    url: `/v1/service-periods/${period.id}/open`,
+    headers: ownerHeaders(container, tenantId),
+  });
+  assert.equal(open.statusCode, 200);
+
+  const beginClose = await app.inject({
+    method: "POST",
+    url: `/v1/service-periods/${period.id}/begin-close`,
+    headers: ownerHeaders(container, tenantId),
+  });
+  assert.equal(beginClose.statusCode, 200);
+
+  const missingReason = await app.inject({
+    method: "POST",
+    url: `/v1/service-periods/${period.id}/force-close`,
+    headers: ownerHeaders(container, tenantId),
+    payload: {},
+  });
+  assert.equal(missingReason.statusCode, 400);
+
+  const forceClose = await app.inject({
+    method: "POST",
+    url: `/v1/service-periods/${period.id}/force-close`,
+    headers: ownerHeaders(container, tenantId),
+    payload: { reason: "manual override" },
+  });
+  assert.equal(forceClose.statusCode, 200);
+  assert.equal(forceClose.json().data.status, "CLOSED");
+  assert.ok(forceClose.json().data.actualClose);
   await app.close();
 });

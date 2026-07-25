@@ -20,10 +20,11 @@
 - [ ] secretos, claves y certificados no aparecen en response ni logs;
 - [ ] auditoría conserva diff sanitizado.
 
-### CAD-009-04 — Create es idempotente y PATCH exige `If-Match`; cambios sensibles registran actor, motivo y diff sanitizado
+### CAD-009-04 — Create es idempotente y PATCH exige `If-Match`; cambios sensibles registran actor, motivo, step-up y diff sanitizado
 
-- [ ] create usa idempotencia consistente;
+- [ ] create soporta reintento idempotente con `Idempotency-Key` o estrategia equivalente aprobada;
 - [ ] `PATCH` exige `If-Match`;
+- [ ] cambios sensibles exigen `reason` y step-up reciente;
 - [ ] cambios sensibles registran actor, motivo y diff sin datos secretos.
 
 ### CAD-009-05 — No existe hard delete ni mutación retroactiva de snapshots usados por invoices; relaciones activas bloquean cambios incompatibles
@@ -37,3 +38,16 @@
 - [ ] OpenAPI refleja redacción y bodies aprobados;
 - [ ] Problem Details cubre validación fiscal, conflicto y concurrencia;
 - [ ] existen pruebas contractuales enlazadas para RBAC, uso por sucursal y aislamiento.
+
+### CAD-009-08 — Create emite outbox mínimo y create/update escriben audit logs sanitizados
+
+- [ ] `FiscalEntityCreated` omite CUIT, direcciones, activityCode y secret refs;
+- [ ] create/update escriben audit log tenant-scoped;
+- [ ] auditoría usa snapshots sanitizados (por ejemplo CUIT enmascarado y flags de presencia).
+
+### CAD-009-07 — El contrato HTTP queda reconciliado con SPEC-003 y usa el vocabulario fiscal autoritativo del dominio
+
+- [ ] la API usa `taxCondition` como campo autoritativo y no mezcla `regime` divergente;
+- [ ] `name` se documenta como razón social/alias de `legalName` mientras no exista split de campos;
+- [ ] `legalAddress`, `fiscalAddress` y `activityCode` quedan definidos como opcionales en I0;
+- [ ] la validación AFIP/ARCA de catálogos o actividad queda marcada como integración diferida.

@@ -31,12 +31,10 @@ async function buildMenuPayload(container: Container, tenantId: string, menuId: 
     categories.map(async (category) => {
       const products = await container.products.listByCategory(tenantId, category.id);
       return {
-        id: category.id,
         name: category.name,
         products: products
           .filter((p) => p.status === "AVAILABLE")
           .map((p) => ({
-            id: p.id,
             name: p.name,
             priceMinorUnits: p.priceMinorUnits,
             currency: p.currency,
@@ -45,7 +43,14 @@ async function buildMenuPayload(container: Container, tenantId: string, menuId: 
       };
     }),
   );
-  return { menu: { id: menu.id, name: menu.name }, categories: categoryPayloads };
+  return {
+    menu: {
+      name: menu.name,
+      slug: menu.slug,
+      asOf: menu.updatedAt.toISOString(),
+    },
+    categories: categoryPayloads,
+  };
 }
 
 export async function registerQrMenuRoutes(app: FastifyInstance, container: Container): Promise<void> {
@@ -86,8 +91,11 @@ export async function registerQrMenuRoutes(app: FastifyInstance, container: Cont
         req.params.token,
         "MENU_READ",
       );
+      const menu = await container.menus.findById(token.tenantId, token.resourceId);
+      if (!menu) return sendProblem(reply, correlationId, notFound("Menu"));
       const payload = await buildMenuPayload(container, token.tenantId, token.resourceId);
       if (!payload) return sendProblem(reply, correlationId, notFound("Menu"));
+      reply.header("etag", `"${menu.updatedAt.getTime()}"`);
       reply.header("cache-control", "private, max-age=30");
       return { data: payload };
     } catch (err) {

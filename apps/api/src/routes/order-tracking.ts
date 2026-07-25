@@ -19,13 +19,40 @@ const issueBodySchema = z.object({
   ttlSeconds: z.number().int().positive().optional(),
 });
 
-// Public/redacted view: item statuses only, no prices, names, notes or PII.
-function publicTracking(order: Order) {
+function requireOrderBranchAccess(
+  ctx: Awaited<ReturnType<typeof requireTenantContext>>,
+  branchId: string,
+): void {
+  if (ctx.branchScopeType !== "ALL_BRANCHES" && !ctx.branchIds.includes(branchId)) {
+    throw notFound("Order");
+  }
+}
+
+function trackingEnvelope(order: Order) {
   return {
     status: order.status,
     aggregateRevision: order.revision,
+    projectionCursor: `${order.id}:${order.revision}`,
     asOf: new Date().toISOString(),
-    items: order.items.map((i) => ({ id: i.id, status: i.status })),
+    lastConfirmedAt: order.updatedAt.toISOString(),
+    freshness: {
+      mode: "LIVE_SNAPSHOT",
+      consistency: "EVENTUAL",
+      degraded: false,
+    },
+  };
+}
+
+// Public/redacted view: item statuses only, no prices, names, notes or PII.
+function publicTracking(order: Order) {
+  return {
+    ...trackingEnvelope(order),
+    items: order.items.map((i) => ({
+      id: i.id,
+      status: i.status,
+      confirmedAt: (i.cancelledAt ?? order.updatedAt).toISOString(),
+      ...(i.cancelReason ? { reasonCode: i.cancelReason } : {}),
+    })),
   };
 }
 
@@ -34,10 +61,15 @@ function publicTracking(order: Order) {
 function internalTracking(order: Order) {
   return {
     orderId: order.id,
-    status: order.status,
-    aggregateRevision: order.revision,
-    asOf: new Date().toISOString(),
-    items: order.items.map((i) => ({ id: i.id, name: i.name, quantity: i.quantity, status: i.status })),
+    ...trackingEnvelope(order),
+    items: order.items.map((i) => ({
+      id: i.id,
+      name: i.name,
+      quantity: i.quantity,
+      status: i.status,
+      confirmedAt: (i.cancelledAt ?? order.updatedAt).toISOString(),
+      ...(i.cancelReason ? { reasonCode: i.cancelReason } : {}),
+    })),
   };
 }
 
@@ -51,6 +83,7 @@ export async function registerOrderTrackingRoutes(app: FastifyInstance, containe
       const body = issueBodySchema.parse(req.body ?? {});
       const order = await container.orders.findById(ctx.tenantId, req.params.id);
       if (!order) return sendProblem(reply, correlationId, notFound("Order"));
+      requireOrderBranchAccess(ctx, order.branchId);
       const { token, record } = await issueCapabilityToken(
         { capabilityTokens: container.capabilityTokens },
         {
@@ -77,6 +110,7 @@ export async function registerOrderTrackingRoutes(app: FastifyInstance, containe
       requirePermission(ctx, "order:read");
       const order = await container.orders.findById(ctx.tenantId, req.params.id);
       if (!order) return sendProblem(reply, correlationId, notFound("Order"));
+      requireOrderBranchAccess(ctx, order.branchId);
       return { data: internalTracking(order) };
     } catch (err) {
       return sendProblem(reply, correlationId, err);

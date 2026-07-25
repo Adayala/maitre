@@ -4,7 +4,8 @@
 
 ### CAD-090-01 — La API pública de bill fija capability, revision y `asOf`
 
-- [ ] endpoint y payload público exponen `checkRevision`/`asOf` de forma estable.
+- [ ] endpoint y payload público exponen `checkRevision`, `asOf` y `lastConfirmedAt` de forma estable;
+- [ ] la respuesta declara metadata de `freshness`.
 
 ### CAD-090-02 — Los errores de token siguen contrato uniforme y anti-enumeración
 
@@ -16,7 +17,8 @@
 
 ### CAD-090-04 — Freshness, cache-control y reemplazo por revisión son inequívocos
 
-- [ ] cache/freshness y revisiones no mezclan estados de Check.
+- [ ] cache/freshness y revisiones no mezclan estados de Check;
+- [ ] `LIVE_SNAPSHOT` del I0 queda documentado explícitamente.
 
 ### CAD-090-05 — La API no concede mutaciones ni sustituye otras autoridades
 
@@ -24,4 +26,5 @@
 
 ### CAD-090-06 — La aprobación exige evidencia de expiry, pagos concurrentes y cache
 
-- [ ] fixtures cubren pagos concurrentes, expiry, revocación y aislamiento entre tenants.
+- [ ] fixtures cubren token inválido, metadata temporal y aislamiento entre tenants/branches;
+- [ ] expiry/revocación expuesta por API y concurrencia de pagos quedan como endurecimiento posterior si no están materializados.

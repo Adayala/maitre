@@ -28,6 +28,10 @@ export async function registerAvailabilityRoutes(app: FastifyInstance, container
       const ctx = await requireTenantContext(container, req);
       requirePermission(ctx, "reservation:read");
       const query = querySchema.parse(req.query);
+      const branch = await container.branches.findById(ctx.tenantId, req.params.branchId);
+      if (!branch) {
+        throw new Error("Branch not found");
+      }
 
       const salons = await container.salons.listByBranch(ctx.tenantId, req.params.branchId);
       const tables = (
@@ -68,6 +72,8 @@ export async function registerAvailabilityRoutes(app: FastifyInstance, container
       return {
         data: {
           asOf: new Date().toISOString(),
+          timezone: branch.timezone,
+          freshness: "LIVE" as const,
           startAt: query.startAt.toISOString(),
           durationMinutes: query.durationMinutes,
           available: result.available,

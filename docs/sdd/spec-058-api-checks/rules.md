@@ -7,5 +7,5 @@
 - Tenant, sucursal y actor derivan del contexto; Visit/Check fuera de alcance responde `404`.
 - Ajustes aceptan type/reason y entrada monetaria permitida, pero no reemplazan líneas ni
   totales.
-- `409` expresa unicidad/conflicto, `412` revisión y `422` ciclo de vida o fuentes incoherentes.
-- Settle/void y outbox comparten la transacción autoritativa.
+- `409` expresa unicidad/conflicto; endurecimientos `412`/`422` dependen del handler materializado.
+- La respuesta pública del Check hacia clientes autenticados expone `paymentsSummary`, no el detalle sensible de Payment.

@@ -42,7 +42,18 @@ const voidBodySchema = z.object({
 async function withTotals(container: Container, tenantId: string, check: Awaited<ReturnType<typeof createCheck>>) {
   const payments = await container.payments.listByCheck(tenantId, check.id);
   const paid = payments.reduce((sum, p) => sum + netCaptured(p), 0);
-  return { ...check, totals: computeCheckTotals(check, paid) };
+  const capturedCount = payments.filter((p) => p.status === "CAPTURED").length;
+  const refundCount = payments.filter((p) => p.refund?.status === "SUCCEEDED").length;
+  return {
+    ...check,
+    totals: computeCheckTotals(check, paid),
+    paymentsSummary: {
+      count: payments.length,
+      capturedCount,
+      refundCount,
+      paidMinorUnits: paid,
+    },
+  };
 }
 
 export async function registerCheckRoutes(app: FastifyInstance, container: Container): Promise<void> {
@@ -71,6 +82,19 @@ export async function registerCheckRoutes(app: FastifyInstance, container: Conta
       const ctx = await requireTenantContext(container, req);
       requirePermission(ctx, "check:read");
       const check = await container.checks.findById(ctx.tenantId, req.params.id);
+      if (!check) return sendProblem(reply, correlationId, notFound("Check"));
+      return { data: await withTotals(container, ctx.tenantId, check) };
+    } catch (err) {
+      return sendProblem(reply, correlationId, err);
+    }
+  });
+
+  app.get<{ Params: { id: string } }>("/v1/visits/:id/check", async (req, reply) => {
+    const correlationId = randomUUID();
+    try {
+      const ctx = await requireTenantContext(container, req);
+      requirePermission(ctx, "check:read");
+      const check = await container.checks.findByVisit(ctx.tenantId, req.params.id);
       if (!check) return sendProblem(reply, correlationId, notFound("Check"));
       return { data: await withTotals(container, ctx.tenantId, check) };
     } catch (err) {

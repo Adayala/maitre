@@ -108,6 +108,23 @@ test("fiscalEntitySchema rejects a CUIT that is not 11 digits", () => {
   assert.equal(result.success, false);
 });
 
+test("fiscalEntitySchema accepts optional legal/fiscal address and activity code", () => {
+  const result = fiscalEntitySchema.safeParse({
+    id: "55555555-5555-5555-5555-555555555555",
+    tenantId: "11111111-1111-1111-1111-111111111111",
+    cuit: "20123456786",
+    name: "La Parrilla S.A.",
+    legalAddress: "Av. Siempre Viva 123",
+    fiscalAddress: "Av. Siempre Viva 123, Piso 2",
+    activityCode: "561011",
+    status: "ACTIVE",
+    taxCondition: "RI",
+    createdAt: now,
+    updatedAt: now,
+  });
+  assert.equal(result.success, true);
+});
+
 test("membershipSchema rejects ACTIVE status with no roles", () => {
   const result = membershipSchema.safeParse({
     id: "88888888-8888-8888-8888-888888888888",
