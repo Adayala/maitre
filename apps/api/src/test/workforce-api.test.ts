@@ -7715,7 +7715,25 @@ test("Workforce time export requires recent step-up and writes audit evidence", 
   assert.equal(exportResponse.statusCode, 202);
   assert.equal(exportResponse.json().data.status, "REQUESTED");
   assert.equal(exportResponse.json().data.branchId, branchId);
-  assert.equal(exportResponse.json().data.entryCountEstimate, 1);
+  assert.equal(exportResponse.json().data.manifest.entryCountEstimate, 1);
+  assert.equal(exportResponse.json().data.manifest.timeEntryIds.length, 1);
+
+  const listResponse = await app.inject({
+    method: "GET",
+    url: `/v1/branches/${branchId}/time-exports`,
+    headers,
+  });
+  assert.equal(listResponse.statusCode, 200);
+  assert.equal(listResponse.json().data.length, 1);
+  assert.equal(listResponse.json().data[0].id, exportResponse.json().data.id);
+
+  const detailResponse = await app.inject({
+    method: "GET",
+    url: `/v1/time-exports/${exportResponse.json().data.id}`,
+    headers,
+  });
+  assert.equal(detailResponse.statusCode, 200);
+  assert.equal(detailResponse.json().data.manifest.entryCountEstimate, 1);
 
   const auditPage = await container.auditLogs.query({ tenantId, resourceType: "TIME_EXPORT" });
   assert.equal(auditPage.items.length, 1);
@@ -7793,6 +7811,122 @@ test("Workforce time export fails for expired sessions", async () => {
   });
   assert.equal(exportResponse.statusCode, 401);
   assert.equal(exportResponse.json().type, "session-expired");
+
+  await app.close();
+});
+
+test("Workforce time export list and detail deny resources outside branch scope", async () => {
+  const { container, app } = await buildWorkforceTestApp();
+  const { tenantId, branchId } = await getContext(container);
+  const now = new Date();
+  const exportOwnerToken = "time-export-scope-owner-token";
+  sessionsOf(container).registerToken(exportOwnerToken, {
+    provider: "fixture",
+    subject: "demo-owner",
+    issuedAt: new Date("2026-07-25T00:00:00Z"),
+    expiresAt: new Date("2026-07-25T23:59:59Z"),
+  });
+  const headers = { authorization: `Bearer ${exportOwnerToken}`, "x-tenant-id": tenantId };
+
+  const otherBranch = {
+    id: randomUUID(),
+    tenantId,
+    brandId: (await container.brands.listByTenant(tenantId))[0]!.id,
+    name: "Sucursal export out",
+    code: "EOUT",
+    timezone: "America/Argentina/Buenos_Aires",
+    status: "ACTIVE" as const,
+    createdAt: now,
+    updatedAt: now,
+  };
+  await container.branches.save(otherBranch);
+
+  const employment = (
+    await app.inject({
+      method: "POST",
+      url: "/v1/employments",
+      headers,
+      payload: {
+        personRef: "person-export-scope",
+        employeeCode: "EMP-EXPORT-SCOPE",
+        relationshipType: "EMPLOYEE",
+        eligibleBranchIds: [otherBranch.id],
+        validFrom: "2026-01-01T00:00:00Z",
+      },
+    })
+  ).json().data;
+
+  await app.inject({
+    method: "POST",
+    url: "/v1/time-entries/clock-in",
+    headers,
+    payload: {
+      branchId: otherBranch.id,
+      employmentId: employment.id,
+      capturedAt: "2026-07-25T11:00:00Z",
+      timezone: "America/Argentina/Buenos_Aires",
+      source: "DEVICE",
+      deviceId: "device-export-scope",
+      deviceSequence: 1,
+    },
+  });
+
+  const exportResponse = await app.inject({
+    method: "POST",
+    url: `/v1/branches/${otherBranch.id}/time-exports`,
+    headers: { ...headers, "x-step-up-at": "2026-07-25T11:55:00Z" },
+    payload: {
+      from: "2026-07-25T00:00:00Z",
+      to: "2026-07-25T23:59:59Z",
+      reason: "Scoped export",
+    },
+  });
+  assert.equal(exportResponse.statusCode, 202);
+
+  const scopedAdmin = {
+    id: randomUUID(),
+    identityProvider: "fixture",
+    externalIdentityId: "admin-export-scope-deny",
+    displayName: "Admin Export Scope Deny",
+    status: "ACTIVE" as const,
+    createdAt: now,
+    updatedAt: now,
+  };
+  await container.users.save(scopedAdmin);
+  await container.memberships.save({
+    id: randomUUID(),
+    tenantId,
+    userId: scopedAdmin.id,
+    status: "ACTIVE",
+    branchScopeType: "SELECTED_BRANCHES",
+    roleIds: ["role_admin"],
+    branchIds: [branchId],
+    activatedAt: now,
+    createdAt: now,
+    updatedAt: now,
+  });
+  const scopedToken = "admin-export-scope-deny-token";
+  sessionsOf(container).registerToken(scopedToken, {
+    provider: "fixture",
+    subject: scopedAdmin.externalIdentityId,
+    issuedAt: new Date("2026-07-25T00:00:00Z"),
+    expiresAt: new Date("2026-07-25T23:59:59Z"),
+  });
+  const scopedHeaders = { authorization: `Bearer ${scopedToken}`, "x-tenant-id": tenantId };
+
+  const deniedList = await app.inject({
+    method: "GET",
+    url: `/v1/branches/${otherBranch.id}/time-exports`,
+    headers: scopedHeaders,
+  });
+  assert.equal(deniedList.statusCode, 404);
+
+  const deniedDetail = await app.inject({
+    method: "GET",
+    url: `/v1/time-exports/${exportResponse.json().data.id}`,
+    headers: scopedHeaders,
+  });
+  assert.equal(deniedDetail.statusCode, 404);
 
   await app.close();
 });
@@ -8017,6 +8151,380 @@ test("Workforce labor policy manage is separate from review", async () => {
   });
   assert.equal(deniedCreate.statusCode, 403);
   assert.equal(deniedCreate.json().type, "insufficient-scope");
+
+  await app.close();
+});
+
+test("Workforce labor policy resolves effective version by date and supersession", async () => {
+  const { container, app } = await buildWorkforceTestApp();
+  const { tenantId, branchId } = await getContext(container);
+  const headers = ownerHeaders(container, tenantId);
+
+  const createV1 = await app.inject({
+    method: "POST",
+    url: `/v1/branches/${branchId}/labor-policy-versions`,
+    headers,
+    payload: {
+      id: "11111111-1111-4111-8111-111111111111",
+      jurisdictionCode: "AR-C",
+      sourceType: "INTERNAL_APPROVED_REFERENCE",
+      sourceRef: "policy-doc-v1",
+      consultedAt: "2026-06-20T12:00:00Z",
+      effectiveFrom: "2026-07-01T00:00:00Z",
+      contentHash: "hash-labor-v1",
+      reviewerRef: "legal-reviewer-1",
+      approvedAt: "2026-06-21T12:00:00Z",
+      policyCapabilities: {
+        breaks: { clockOutOpenBreak: { mode: "REJECT" } },
+      },
+      disclaimer: "Version 1",
+    },
+  });
+  assert.equal(createV1.statusCode, 201);
+
+  const createV2 = await app.inject({
+    method: "POST",
+    url: `/v1/branches/${branchId}/labor-policy-versions`,
+    headers,
+    payload: {
+      id: "22222222-2222-4222-8222-222222222222",
+      jurisdictionCode: "AR-C",
+      sourceType: "INTERNAL_APPROVED_REFERENCE",
+      sourceRef: "policy-doc-v2",
+      consultedAt: "2026-07-10T12:00:00Z",
+      effectiveFrom: "2026-07-15T00:00:00Z",
+      contentHash: "hash-labor-v2",
+      reviewerRef: "legal-reviewer-2",
+      approvedAt: "2026-07-11T12:00:00Z",
+      supersedesPolicyVersionId: "11111111-1111-4111-8111-111111111111",
+      policyCapabilities: {
+        breaks: { clockOutOpenBreak: { mode: "AUTO_CLOSE" } },
+      },
+      disclaimer: "Version 2",
+    },
+  });
+  assert.equal(createV2.statusCode, 201);
+
+  const effectiveBeforeSupersession = await app.inject({
+    method: "GET",
+    url: `/v1/branches/${branchId}/labor-policy?effectiveAt=2026-07-10T10:00:00Z`,
+    headers,
+  });
+  assert.equal(effectiveBeforeSupersession.statusCode, 200);
+  assert.equal(effectiveBeforeSupersession.json().data.id, "11111111-1111-4111-8111-111111111111");
+
+  const effectiveAfterSupersession = await app.inject({
+    method: "GET",
+    url: `/v1/branches/${branchId}/labor-policy?effectiveAt=2026-07-20T10:00:00Z`,
+    headers,
+  });
+  assert.equal(effectiveAfterSupersession.statusCode, 200);
+  assert.equal(effectiveAfterSupersession.json().data.id, "22222222-2222-4222-8222-222222222222");
+  assert.equal(
+    effectiveAfterSupersession.json().data.policyCapabilities.breaks.clockOutOpenBreak.mode,
+    "AUTO_CLOSE",
+  );
+
+  await app.close();
+});
+
+test("Workforce labor policy activation closes superseded version window", async () => {
+  const { container, app } = await buildWorkforceTestApp();
+  const { tenantId, branchId } = await getContext(container);
+  const headers = ownerHeaders(container, tenantId);
+
+  await app.inject({
+    method: "POST",
+    url: `/v1/branches/${branchId}/labor-policy-versions`,
+    headers,
+    payload: {
+      id: "33333333-3333-4333-8333-333333333333",
+      jurisdictionCode: "AR-C",
+      sourceType: "INTERNAL_APPROVED_REFERENCE",
+      sourceRef: "policy-doc-a",
+      consultedAt: "2026-07-01T12:00:00Z",
+      effectiveFrom: "2026-07-01T00:00:00Z",
+      contentHash: "hash-a",
+      reviewerRef: "reviewer-a",
+      approvedAt: "2026-07-01T12:00:00Z",
+      policyCapabilities: {
+        breaks: { clockOutOpenBreak: { mode: "REJECT" } },
+      },
+      disclaimer: "A",
+    },
+  });
+
+  await app.inject({
+    method: "POST",
+    url: `/v1/branches/${branchId}/labor-policy-versions`,
+    headers,
+    payload: {
+      id: "44444444-4444-4444-8444-444444444444",
+      jurisdictionCode: "AR-C",
+      sourceType: "INTERNAL_APPROVED_REFERENCE",
+      sourceRef: "policy-doc-b",
+      consultedAt: "2026-07-10T12:00:00Z",
+      effectiveFrom: "2026-07-15T00:00:00Z",
+      contentHash: "hash-b",
+      reviewerRef: "reviewer-b",
+      approvedAt: "2026-07-10T12:00:00Z",
+      policyCapabilities: {
+        breaks: { clockOutOpenBreak: { mode: "AUTO_CLOSE" } },
+      },
+      disclaimer: "B",
+    },
+  });
+
+  const activateResponse = await app.inject({
+    method: "POST",
+    url: "/v1/labor-policy-versions/44444444-4444-4444-8444-444444444444/activate",
+    headers,
+    payload: {
+      supersedesPolicyVersionId: "33333333-3333-4333-8333-333333333333",
+    },
+  });
+  assert.equal(activateResponse.statusCode, 200);
+  assert.equal(activateResponse.json().data.supersedesPolicyVersionId, "33333333-3333-4333-8333-333333333333");
+
+  const listResponse = await app.inject({
+    method: "GET",
+    url: `/v1/branches/${branchId}/labor-policy-versions`,
+    headers,
+  });
+  assert.equal(listResponse.statusCode, 200);
+  const superseded = listResponse
+    .json()
+    .data.find((item: { id: string }) => item.id === "33333333-3333-4333-8333-333333333333");
+  assert.equal(superseded.effectiveUntil, "2026-07-14T23:59:59.999Z");
+
+  await app.close();
+});
+
+test("Workforce labor policy activation requires manage permission", async () => {
+  const { container, app } = await buildWorkforceTestApp();
+  const { tenantId, branchId } = await getContext(container);
+  const headers = ownerHeaders(container, tenantId);
+  const now = new Date();
+
+  await app.inject({
+    method: "POST",
+    url: `/v1/branches/${branchId}/labor-policy-versions`,
+    headers,
+    payload: {
+      id: "55555555-5555-4555-8555-555555555555",
+      jurisdictionCode: "AR-C",
+      sourceType: "INTERNAL_APPROVED_REFERENCE",
+      sourceRef: "policy-doc-c",
+      consultedAt: "2026-07-01T12:00:00Z",
+      effectiveFrom: "2026-07-01T00:00:00Z",
+      contentHash: "hash-c",
+      reviewerRef: "reviewer-c",
+      approvedAt: "2026-07-01T12:00:00Z",
+      policyCapabilities: {},
+      disclaimer: "C",
+    },
+  });
+
+  await app.inject({
+    method: "POST",
+    url: `/v1/branches/${branchId}/labor-policy-versions`,
+    headers,
+    payload: {
+      id: "66666666-6666-4666-8666-666666666666",
+      jurisdictionCode: "AR-C",
+      sourceType: "INTERNAL_APPROVED_REFERENCE",
+      sourceRef: "policy-doc-d",
+      consultedAt: "2026-07-10T12:00:00Z",
+      effectiveFrom: "2026-07-15T00:00:00Z",
+      contentHash: "hash-d",
+      reviewerRef: "reviewer-d",
+      approvedAt: "2026-07-10T12:00:00Z",
+      policyCapabilities: {},
+      disclaimer: "D",
+    },
+  });
+
+  const manager = {
+    id: randomUUID(),
+    identityProvider: "fixture",
+    externalIdentityId: "manager-labor-policy-activate-deny",
+    displayName: "Manager Labor Policy Activate Deny",
+    status: "ACTIVE" as const,
+    createdAt: now,
+    updatedAt: now,
+  };
+  await container.users.save(manager);
+  await container.memberships.save({
+    id: randomUUID(),
+    tenantId,
+    userId: manager.id,
+    status: "ACTIVE",
+    branchScopeType: "SELECTED_BRANCHES",
+    roleIds: ["role_manager"],
+    branchIds: [branchId],
+    activatedAt: now,
+    createdAt: now,
+    updatedAt: now,
+  });
+  const token = "manager-labor-policy-activate-deny-token";
+  sessionsOf(container).registerToken(token, {
+    provider: "fixture",
+    subject: manager.externalIdentityId,
+    issuedAt: now,
+    expiresAt: new Date(now.getTime() + 60 * 60 * 1000),
+  });
+
+  const denied = await app.inject({
+    method: "POST",
+    url: "/v1/labor-policy-versions/66666666-6666-4666-8666-666666666666/activate",
+    headers: { authorization: `Bearer ${token}`, "x-tenant-id": tenantId },
+    payload: {
+      supersedesPolicyVersionId: "55555555-5555-4555-8555-555555555555",
+    },
+  });
+  assert.equal(denied.statusCode, 403);
+  assert.equal(denied.json().type, "insufficient-scope");
+
+  await app.close();
+});
+
+test("Workforce labor policy activation denies self supersession", async () => {
+  const { container, app } = await buildWorkforceTestApp();
+  const { tenantId, branchId } = await getContext(container);
+  const headers = ownerHeaders(container, tenantId);
+
+  await app.inject({
+    method: "POST",
+    url: `/v1/branches/${branchId}/labor-policy-versions`,
+    headers,
+    payload: {
+      id: "77777777-7777-4777-8777-777777777777",
+      jurisdictionCode: "AR-C",
+      sourceType: "INTERNAL_APPROVED_REFERENCE",
+      sourceRef: "policy-doc-self",
+      consultedAt: "2026-07-01T12:00:00Z",
+      effectiveFrom: "2026-07-01T00:00:00Z",
+      contentHash: "hash-self",
+      reviewerRef: "reviewer-self",
+      approvedAt: "2026-07-01T12:00:00Z",
+      policyCapabilities: {},
+      disclaimer: "self",
+    },
+  });
+
+  const denied = await app.inject({
+    method: "POST",
+    url: "/v1/labor-policy-versions/77777777-7777-4777-8777-777777777777/activate",
+    headers,
+    payload: {
+      supersedesPolicyVersionId: "77777777-7777-4777-8777-777777777777",
+    },
+  });
+  assert.equal(denied.statusCode, 400);
+  assert.match(denied.json().title, /cannot supersede itself/i);
+
+  await app.close();
+});
+
+test("Workforce labor policy create denies invalid superseded policy references", async () => {
+  const { container, app } = await buildWorkforceTestApp();
+  const { tenantId, branchId } = await getContext(container);
+  const headers = ownerHeaders(container, tenantId);
+  const now = new Date();
+
+  const otherBranch = {
+    id: randomUUID(),
+    tenantId,
+    brandId: (await container.brands.listByTenant(tenantId))[0]!.id,
+    name: "Sucursal policy out",
+    code: "POUT",
+    timezone: "America/Argentina/Buenos_Aires",
+    status: "ACTIVE" as const,
+    createdAt: now,
+    updatedAt: now,
+  };
+  await container.branches.save(otherBranch);
+
+  await app.inject({
+    method: "POST",
+    url: `/v1/branches/${otherBranch.id}/labor-policy-versions`,
+    headers,
+    payload: {
+      id: "88888888-8888-4888-8888-888888888888",
+      jurisdictionCode: "AR-C",
+      sourceType: "INTERNAL_APPROVED_REFERENCE",
+      sourceRef: "policy-doc-other",
+      consultedAt: "2026-07-01T12:00:00Z",
+      effectiveFrom: "2026-07-10T00:00:00Z",
+      contentHash: "hash-other",
+      reviewerRef: "reviewer-other",
+      approvedAt: "2026-07-01T12:00:00Z",
+      policyCapabilities: {},
+      disclaimer: "other",
+    },
+  });
+
+  const wrongBranchSupersede = await app.inject({
+    method: "POST",
+    url: `/v1/branches/${branchId}/labor-policy-versions`,
+    headers,
+    payload: {
+      id: "99999999-9999-4999-8999-999999999999",
+      jurisdictionCode: "AR-C",
+      sourceType: "INTERNAL_APPROVED_REFERENCE",
+      sourceRef: "policy-doc-invalid",
+      consultedAt: "2026-07-20T12:00:00Z",
+      effectiveFrom: "2026-07-20T00:00:00Z",
+      contentHash: "hash-invalid",
+      reviewerRef: "reviewer-invalid",
+      approvedAt: "2026-07-20T12:00:00Z",
+      supersedesPolicyVersionId: "88888888-8888-4888-8888-888888888888",
+      policyCapabilities: {},
+      disclaimer: "invalid",
+    },
+  });
+  assert.equal(wrongBranchSupersede.statusCode, 404);
+
+  await app.inject({
+    method: "POST",
+    url: `/v1/branches/${branchId}/labor-policy-versions`,
+    headers,
+    payload: {
+      id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      jurisdictionCode: "AR-C",
+      sourceType: "INTERNAL_APPROVED_REFERENCE",
+      sourceRef: "policy-doc-base",
+      consultedAt: "2026-07-20T12:00:00Z",
+      effectiveFrom: "2026-07-20T00:00:00Z",
+      contentHash: "hash-base",
+      reviewerRef: "reviewer-base",
+      approvedAt: "2026-07-20T12:00:00Z",
+      policyCapabilities: {},
+      disclaimer: "base",
+    },
+  });
+
+  const invalidDateSupersede = await app.inject({
+    method: "POST",
+    url: `/v1/branches/${branchId}/labor-policy-versions`,
+    headers,
+    payload: {
+      id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      jurisdictionCode: "AR-C",
+      sourceType: "INTERNAL_APPROVED_REFERENCE",
+      sourceRef: "policy-doc-earlier",
+      consultedAt: "2026-07-10T12:00:00Z",
+      effectiveFrom: "2026-07-10T00:00:00Z",
+      contentHash: "hash-earlier",
+      reviewerRef: "reviewer-earlier",
+      approvedAt: "2026-07-10T12:00:00Z",
+      supersedesPolicyVersionId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      policyCapabilities: {},
+      disclaimer: "earlier",
+    },
+  });
+  assert.equal(invalidDateSupersede.statusCode, 400);
+  assert.match(invalidDateSupersede.json().title, /effectivefrom must be later than or equal/i);
 
   await app.close();
 });

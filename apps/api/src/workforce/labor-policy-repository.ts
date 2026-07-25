@@ -36,6 +36,30 @@ export interface LaborPolicyVersionRepositoryPort {
   save(policy: LaborPolicyVersionRecord): Promise<void>;
 }
 
+export function resolveEffectiveLaborPolicyVersion(
+  policies: LaborPolicyVersionRecord[],
+  effectiveAt: Date,
+): LaborPolicyVersionRecord | null {
+  const activeOrPastPolicies = policies.filter(
+    (policy) =>
+      policy.effectiveFrom.getTime() <= effectiveAt.getTime() &&
+      (policy.effectiveUntil == null || policy.effectiveUntil.getTime() >= effectiveAt.getTime()),
+  );
+  const supersededIds = new Set(
+    activeOrPastPolicies
+      .map((policy) => policy.supersedesPolicyVersionId)
+      .filter((value): value is string => typeof value === "string" && value.length > 0),
+  );
+  const candidates = activeOrPastPolicies
+    .filter((policy) => !supersededIds.has(policy.id))
+    .sort((a, b) => {
+      const byEffectiveFrom = b.effectiveFrom.getTime() - a.effectiveFrom.getTime();
+      if (byEffectiveFrom !== 0) return byEffectiveFrom;
+      return b.createdAt.getTime() - a.createdAt.getTime();
+    });
+  return candidates[0] ?? null;
+}
+
 export class InMemoryLaborPolicyVersionRepository implements LaborPolicyVersionRepositoryPort {
   constructor(private readonly items: LaborPolicyVersionRecord[] = []) {}
 

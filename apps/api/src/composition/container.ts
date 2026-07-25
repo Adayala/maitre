@@ -153,6 +153,11 @@ import type {
   BreakAdjustmentRepositoryPort,
 } from "@maitre/workforce";
 import type { LaborPolicyVersionRepositoryPort } from "../workforce/labor-policy-repository.js";
+import { InMemoryLaborPolicyVersionRepository } from "../workforce/labor-policy-repository.js";
+import { SupabaseLaborPolicyVersionRepository } from "../workforce/supabase-labor-policy-repository.js";
+import type { TimeExportJobRepositoryPort } from "../workforce/time-export-repository.js";
+import { InMemoryTimeExportJobRepository } from "../workforce/time-export-repository.js";
+import { SupabaseTimeExportJobRepository } from "../workforce/supabase-time-export-repository.js";
 
 export interface Container {
   tenants: TenantRepositoryPort;
@@ -197,6 +202,7 @@ export interface Container {
   breakLogs?: BreakLogRepositoryPort;
   breakAdjustments?: BreakAdjustmentRepositoryPort;
   laborPolicyVersions?: LaborPolicyVersionRepositoryPort;
+  timeExportJobs?: TimeExportJobRepositoryPort;
   now?: () => Date;
   sessions: SessionVerificationPort;
   demoAccessToken: string;
@@ -270,6 +276,8 @@ interface Repositories {
   timeAdjustments?: TimeAdjustmentRepositoryPort;
   breakLogs?: BreakLogRepositoryPort;
   breakAdjustments?: BreakAdjustmentRepositoryPort;
+  laborPolicyVersions?: LaborPolicyVersionRepositoryPort;
+  timeExportJobs?: TimeExportJobRepositoryPort;
 }
 
 /**
@@ -325,6 +333,8 @@ function buildRepositories(): Repositories {
       timeAdjustments: new SupabaseTimeAdjustmentRepository(client),
       breakLogs: new SupabaseBreakLogRepository(client),
       breakAdjustments: new SupabaseBreakAdjustmentRepository(client),
+      laborPolicyVersions: new SupabaseLaborPolicyVersionRepository(client),
+      timeExportJobs: new SupabaseTimeExportJobRepository(client),
     };
   }
 
@@ -363,6 +373,8 @@ function buildRepositories(): Repositories {
     stations: new InMemoryStationRepository(),
     commands: new InMemoryCommandRepository(),
     kitchenAlerts: new InMemoryKitchenAlertRepository(),
+    laborPolicyVersions: new InMemoryLaborPolicyVersionRepository(),
+    timeExportJobs: new InMemoryTimeExportJobRepository(),
   };
 }
 

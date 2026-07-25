@@ -45,6 +45,8 @@ import {
   stepUpRequired,
 } from "../http/problem-details.js";
 import { omitUndefined } from "../http/omit-undefined.js";
+import { resolveEffectiveLaborPolicyVersion } from "../workforce/labor-policy-repository.js";
+import type { TimeExportJobRecord } from "../workforce/time-export-repository.js";
 
 const createEmploymentBodySchema = z.object({
   personRef: z.string().min(1),
@@ -177,7 +179,8 @@ const requestTimeExportBodySchema = z.object({
 });
 
 const laborPolicyMetadataQuerySchema = z.object({
-  version: z.string().min(1),
+  version: z.string().min(1).optional(),
+  effectiveAt: z.coerce.date().optional(),
 });
 
 const createLaborPolicyVersionBodySchema = z.object({
@@ -208,6 +211,10 @@ const createLaborPolicyVersionBodySchema = z.object({
     tenantOverlays: z.enum(["SUPPORTED", "NOT_CONFIGURED"]).optional(),
   }),
   disclaimer: z.string().min(1),
+});
+
+const activateLaborPolicyVersionBodySchema = z.object({
+  supersedesPolicyVersionId: z.string().uuid(),
 });
 
 const STEP_UP_MAX_AGE_MS = 15 * 60 * 1000;
@@ -325,6 +332,25 @@ function requireLaborPolicyManagePermission(
   if (!hasContextPermission(ctx, "labor_policy:manage")) {
     throw insufficientScope();
   }
+}
+
+async function requireLaborPolicyBranchAccess(
+  container: Container,
+  ctx: Awaited<ReturnType<typeof requireTenantContext>>,
+  branchId: string,
+  correlationId: string,
+  reply: Parameters<typeof sendProblem>[0],
+): Promise<boolean> {
+  if (ctx.branchScopeType !== "ALL_BRANCHES" && !ctx.branchIds.includes(branchId)) {
+    sendProblem(reply, correlationId, notFound("Branch"));
+    return false;
+  }
+  const branch = await container.branches.findById(ctx.tenantId, branchId);
+  if (!branch) {
+    sendProblem(reply, correlationId, notFound("Branch"));
+    return false;
+  }
+  return true;
 }
 
 function requireTimeSensitiveReadPermission(
@@ -1447,26 +1473,35 @@ export async function registerWorkforceRoutes(
     Params: { branchId: string };
     Querystring: { version: string };
   }>("/v1/branches/:branchId/labor-policy", async (req, reply) => {
-    const correlationId = randomUUID();
-    try {
-      const ctx = await requireTenantContext(container, req);
-      requireLaborPolicyReviewPermission(ctx);
-      if (ctx.branchScopeType !== "ALL_BRANCHES" && !ctx.branchIds.includes(req.params.branchId)) {
-        return sendProblem(reply, correlationId, notFound("Branch"));
-      }
-      const branch = await container.branches.findById(ctx.tenantId, req.params.branchId);
-      if (!branch) {
-        return sendProblem(reply, correlationId, notFound("Branch"));
-      }
+      const correlationId = randomUUID();
+      try {
+        const ctx = await requireTenantContext(container, req);
+        requireLaborPolicyReviewPermission(ctx);
+        if (!(await requireLaborPolicyBranchAccess(container, ctx, req.params.branchId, correlationId, reply))) {
+          return;
+        }
       const query = laborPolicyMetadataQuerySchema.parse(req.query);
-      const storedPolicy = await container.laborPolicyVersions?.findById(ctx.tenantId, query.version);
-      if (storedPolicy && storedPolicy.branchId === req.params.branchId) {
-        return { data: storedPolicy };
+      if (query.version) {
+        const storedPolicy = await container.laborPolicyVersions?.findById(ctx.tenantId, query.version);
+        if (storedPolicy && storedPolicy.branchId === req.params.branchId) {
+          return { data: storedPolicy };
+        }
+      } else {
+        const policies =
+          (await container.laborPolicyVersions?.listByBranch(ctx.tenantId, req.params.branchId)) ?? [];
+        const effectivePolicy = resolveEffectiveLaborPolicyVersion(
+          policies,
+          query.effectiveAt ?? (container.now?.() ?? new Date()),
+        );
+        if (effectivePolicy) {
+          return { data: effectivePolicy };
+        }
       }
-      const breakClockOutPolicy = resolveBreakClockOutPolicy(query.version);
+      const fallbackVersion = query.version ?? "fallback-labor-policy";
+      const breakClockOutPolicy = resolveBreakClockOutPolicy(fallbackVersion);
       return {
         data: {
-          versionId: query.version,
+          versionId: fallbackVersion,
           branchId: req.params.branchId,
           jurisdictionCode: "NOT_CONFIGURED",
           sourceType: "INTERNAL_APPROVED_REFERENCE",
@@ -1503,12 +1538,8 @@ export async function registerWorkforceRoutes(
       try {
         const ctx = await requireTenantContext(container, req);
         requireLaborPolicyManagePermission(ctx);
-        if (ctx.branchScopeType !== "ALL_BRANCHES" && !ctx.branchIds.includes(req.params.branchId)) {
-          return sendProblem(reply, correlationId, notFound("Branch"));
-        }
-        const branch = await container.branches.findById(ctx.tenantId, req.params.branchId);
-        if (!branch) {
-          return sendProblem(reply, correlationId, notFound("Branch"));
+        if (!(await requireLaborPolicyBranchAccess(container, ctx, req.params.branchId, correlationId, reply))) {
+          return;
         }
         if (!container.laborPolicyVersions) {
           throw new Error("LaborPolicyVersion repository not configured");
@@ -1519,6 +1550,22 @@ export async function registerWorkforceRoutes(
         const existing = await container.laborPolicyVersions.findById(ctx.tenantId, policyId);
         if (existing) {
           return sendProblem(reply, correlationId, conflict(`LaborPolicyVersion ${policyId} already exists`));
+        }
+        if (body.supersedesPolicyVersionId) {
+          const superseded = await container.laborPolicyVersions.findById(
+            ctx.tenantId,
+            body.supersedesPolicyVersionId,
+          );
+          if (!superseded || superseded.branchId !== req.params.branchId) {
+            return sendProblem(reply, correlationId, notFound("LaborPolicyVersion"));
+          }
+          if (body.effectiveFrom.getTime() < superseded.effectiveFrom.getTime()) {
+            return sendProblem(
+              reply,
+              correlationId,
+              badRequest("effectiveFrom must be later than or equal to superseded policy effectiveFrom"),
+            );
+          }
         }
         const policy = {
           id: policyId,
@@ -1599,16 +1646,84 @@ export async function registerWorkforceRoutes(
       try {
         const ctx = await requireTenantContext(container, req);
         requireLaborPolicyReviewPermission(ctx);
-        if (ctx.branchScopeType !== "ALL_BRANCHES" && !ctx.branchIds.includes(req.params.branchId)) {
-          return sendProblem(reply, correlationId, notFound("Branch"));
-        }
-        const branch = await container.branches.findById(ctx.tenantId, req.params.branchId);
-        if (!branch) {
-          return sendProblem(reply, correlationId, notFound("Branch"));
+        if (!(await requireLaborPolicyBranchAccess(container, ctx, req.params.branchId, correlationId, reply))) {
+          return;
         }
         const items = (await container.laborPolicyVersions?.listByBranch(ctx.tenantId, req.params.branchId)) ?? [];
         return { data: items };
       } catch (err) {
+        return sendProblem(reply, correlationId, err);
+      }
+    },
+  );
+
+  app.post<{ Params: { id: string } }>(
+    "/v1/labor-policy-versions/:id/activate",
+    async (req, reply) => {
+      const correlationId = randomUUID();
+      try {
+        const ctx = await requireTenantContext(container, req);
+        requireLaborPolicyManagePermission(ctx);
+        if (!container.laborPolicyVersions) {
+          throw new Error("LaborPolicyVersion repository not configured");
+        }
+        const target = await container.laborPolicyVersions.findById(ctx.tenantId, req.params.id);
+        if (!target) {
+          return sendProblem(reply, correlationId, notFound("LaborPolicyVersion"));
+        }
+        if (!(await requireLaborPolicyBranchAccess(container, ctx, target.branchId, correlationId, reply))) {
+          return;
+        }
+        const body = activateLaborPolicyVersionBodySchema.parse(req.body);
+        const superseded = await container.laborPolicyVersions.findById(
+          ctx.tenantId,
+          body.supersedesPolicyVersionId,
+        );
+        if (!superseded || superseded.branchId !== target.branchId) {
+          return sendProblem(reply, correlationId, notFound("LaborPolicyVersion"));
+        }
+        if (superseded.id === target.id) {
+          return sendProblem(reply, correlationId, badRequest("A policy version cannot supersede itself"));
+        }
+        if (target.effectiveFrom.getTime() < superseded.effectiveFrom.getTime()) {
+          return sendProblem(
+            reply,
+            correlationId,
+            badRequest("Target policy effectiveFrom must be later than or equal to superseded policy effectiveFrom"),
+          );
+        }
+        const now = container.now?.() ?? new Date();
+        const updatedTarget = {
+          ...target,
+          supersedesPolicyVersionId: superseded.id,
+          updatedAt: now,
+        };
+        const updatedSuperseded = {
+          ...superseded,
+          effectiveUntil: new Date(updatedTarget.effectiveFrom.getTime() - 1),
+          updatedAt: now,
+        };
+        await container.laborPolicyVersions.save(updatedSuperseded);
+        await container.laborPolicyVersions.save(updatedTarget);
+        await recordAuditLog(
+          { auditLogs: container.auditLogs, now: () => now },
+          {
+            tenantId: ctx.tenantId,
+            actorType: "USER",
+            actorId: ctx.userId,
+            action: "UPDATE",
+            resourceType: "LABOR_POLICY_VERSION",
+            resourceId: updatedTarget.id,
+            previousState: { target, superseded },
+            newState: { target: updatedTarget, superseded: updatedSuperseded, mutationType: "ACTIVATE" },
+            correlationId,
+          },
+        );
+        return { data: updatedTarget };
+      } catch (err) {
+        if (err instanceof z.ZodError) {
+          return sendProblem(reply, correlationId, badRequest(err.message));
+        }
         return sendProblem(reply, correlationId, err);
       }
     },
@@ -1687,6 +1802,9 @@ export async function registerWorkforceRoutes(
       try {
         const ctx = await requireTenantContext(container, req);
         requireTimeExportPermission(ctx);
+        if (!container.timeExportJobs) {
+          throw new Error("TimeExportJob repository not configured");
+        }
         if (ctx.branchScopeType !== "ALL_BRANCHES" && !ctx.branchIds.includes(req.params.branchId)) {
           return sendProblem(reply, correlationId, notFound("Branch"));
         }
@@ -1706,19 +1824,24 @@ export async function registerWorkforceRoutes(
           return capturedAt.getTime() >= body.from.getTime() && capturedAt.getTime() <= body.to.getTime();
         });
         const exportId = randomUUID();
-        const exportRequest = {
+        const exportRequest: TimeExportJobRecord = {
           id: exportId,
           tenantId: ctx.tenantId,
           branchId: req.params.branchId,
-          status: "REQUESTED" as const,
+          status: "REQUESTED",
           format: body.format ?? "CSV",
           from: body.from,
           to: body.to,
           reason: body.reason,
           requestedAt: now,
           stepUpAt,
-          entryCountEstimate: scopedEntries.length,
+          requestedByUserId: ctx.userId,
+          manifest: {
+            entryCountEstimate: scopedEntries.length,
+            timeEntryIds: scopedEntries.map((entry) => entry.id),
+          },
         };
+        await container.timeExportJobs.save(exportRequest);
         await recordAuditLog(
           { auditLogs: container.auditLogs, now: () => now },
           {
@@ -1738,6 +1861,51 @@ export async function registerWorkforceRoutes(
         if (err instanceof z.ZodError) {
           return sendProblem(reply, correlationId, badRequest(err.message));
         }
+        return sendProblem(reply, correlationId, err);
+      }
+    },
+  );
+
+  app.get<{ Params: { branchId: string } }>(
+    "/v1/branches/:branchId/time-exports",
+    async (req, reply) => {
+      const correlationId = randomUUID();
+      try {
+        const ctx = await requireTenantContext(container, req);
+        requireTimeExportPermission(ctx);
+        if (!container.timeExportJobs) {
+          throw new Error("TimeExportJob repository not configured");
+        }
+        if (!(await requireLaborPolicyBranchAccess(container, ctx, req.params.branchId, correlationId, reply))) {
+          return;
+        }
+        const jobs = await container.timeExportJobs.listByBranch(ctx.tenantId, req.params.branchId);
+        return { data: jobs };
+      } catch (err) {
+        return sendProblem(reply, correlationId, err);
+      }
+    },
+  );
+
+  app.get<{ Params: { id: string } }>(
+    "/v1/time-exports/:id",
+    async (req, reply) => {
+      const correlationId = randomUUID();
+      try {
+        const ctx = await requireTenantContext(container, req);
+        requireTimeExportPermission(ctx);
+        if (!container.timeExportJobs) {
+          throw new Error("TimeExportJob repository not configured");
+        }
+        const job = await container.timeExportJobs.findById(ctx.tenantId, req.params.id);
+        if (!job) {
+          return sendProblem(reply, correlationId, notFound("TimeExport"));
+        }
+        if (!(await requireLaborPolicyBranchAccess(container, ctx, job.branchId, correlationId, reply))) {
+          return;
+        }
+        return { data: job };
+      } catch (err) {
         return sendProblem(reply, correlationId, err);
       }
     },
