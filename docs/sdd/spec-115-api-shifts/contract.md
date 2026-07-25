@@ -5,3 +5,7 @@ sucursal y rango temporal. Idempotency-Key protege create y los comandos, mientr
 protege edición; publicar valida cobertura y conflictos configurados. La API usa instantes UTC
 y zona IANA explícita. Tests cubren paginación, DST, solapamientos, transiciones inválidas,
 concurrencia, RBAC, auditoría y aislamiento entre tenants.
+
+En I0 el surface material mínimo queda acotado a create/list/detail y commands `publish`, `start`,
+`complete`, `cancel`; update DRAFT con `If-Match` permanece como contrato deseado pero puede quedar
+pendiente de materialización explícita.

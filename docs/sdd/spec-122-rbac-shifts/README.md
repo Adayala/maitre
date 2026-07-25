@@ -5,8 +5,8 @@
 | **ID** | SPEC-122 |
 | **Tipo** | RBAC |
 | **Dominio** | Workforce |
-| **Estado** | DRAFT |
-| **Readiness** | NOT_ASSESSED |
+| **Estado** | IN_PROGRESS |
+| **Readiness** | PARTIALLY_ASSESSED |
 | **Prioridad** | UNASSIGNED |
 | **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
 | **Fase** | 3 |

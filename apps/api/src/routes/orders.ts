@@ -9,18 +9,14 @@ import {
   cancelOrderItem,
   changeOrderItemQuantity,
   transitionOrderItem,
-  startKitchenTicket,
-  markKitchenTicketReady,
-  completeKitchenTicket,
-  cancelKitchenTicket,
   CurrencyMismatchError,
   EmptyOrderError,
   InvalidOrderStateError,
   InvalidOrderItemTransitionError,
-  InvalidKitchenTicketTransitionError,
   type OrderItemStatus,
 } from "@maitre/ordering";
 import { addCheckLine } from "@maitre/floor";
+import { createCommand, type CommandPayload } from "@maitre/kitchen";
 import type { Container } from "../composition/container.js";
 import { requireTenantContext, requirePermission } from "../http/request-context.js";
 import { sendProblem, notFound, conflict, badRequest } from "../http/problem-details.js";
@@ -67,7 +63,26 @@ const transitionBodySchema = z.object({
 });
 
 function orderDeps(container: Container) {
-  return { orders: container.orders, kitchenTickets: container.kitchenTickets, outbox: container.outbox };
+  return { orders: container.orders, outbox: container.outbox };
+}
+
+// Builds a Kitchen Command payload snapshot from a submitted OrderItem (typed,
+// allowlisted fields only — no prices/PII).
+function toCommandPayload(item: {
+  name: string;
+  quantity: number;
+  modifiers: { label: string }[];
+  notes?: string;
+  allergens: string[];
+}): CommandPayload {
+  const modifierSummary = item.modifiers.map((m) => m.label).join(", ");
+  return {
+    displayName: item.name,
+    quantity: item.quantity,
+    allergenFlags: item.allergens,
+    ...(modifierSummary ? { modifierSummary } : {}),
+    ...(item.notes ? { notes: item.notes } : {}),
+  };
 }
 
 export async function registerOrderRoutes(app: FastifyInstance, container: Container): Promise<void> {
@@ -183,13 +198,14 @@ export async function registerOrderRoutes(app: FastifyInstance, container: Conta
       if (!existing) return sendProblem(reply, correlationId, notFound("Order"));
       const wasDraft = existing.status === "DRAFT";
 
-      const { order, ticket } = await submitOrder(orderDeps(container), {
+      const { order } = await submitOrder(orderDeps(container), {
         tenantId: ctx.tenantId,
         orderId: req.params.id,
         correlationId,
         ...omitUndefined(body),
       });
 
+      const commands = [];
       if (wasDraft) {
         const check = await container.checks.findByVisit(ctx.tenantId, order.visitId);
         if (check?.status === "OPEN") {
@@ -203,8 +219,36 @@ export async function registerOrderRoutes(app: FastifyInstance, container: Conta
             },
           );
         }
+
+        // KITCHEN RETIREMENT: dispatch production by creating one Kitchen Command
+        // per OrderItem (replacing the old single KitchenTicket). Simplified
+        // routing (SPEC-099): route to the branch's first ACTIVE Station. The
+        // brandId Order omits is resolved from the Branch here. If the branch has
+        // no active Station, we skip dispatch (documented walking-skeleton gap) —
+        // the seeded demo Station guarantees one in practice.
+        const branch = await container.branches.findById(ctx.tenantId, order.branchId);
+        const station = await container.stations.firstActiveByBranch(ctx.tenantId, order.branchId);
+        if (branch && station) {
+          for (const item of order.items) {
+            const command = await createCommand(
+              { commands: container.commands, outbox: container.outbox },
+              {
+                tenantId: ctx.tenantId,
+                brandId: branch.brandId,
+                branchId: order.branchId,
+                visitId: order.visitId,
+                orderId: order.id,
+                orderItemId: item.id,
+                stationId: station.id,
+                payload: toCommandPayload(item),
+                correlationId,
+              },
+            );
+            commands.push(command);
+          }
+        }
       }
-      return { data: { order, ticket } };
+      return { data: { order, commands } };
     } catch (err) {
       if (err instanceof z.ZodError) return sendProblem(reply, correlationId, badRequest(err.message));
       if (err instanceof EmptyOrderError) return sendProblem(reply, correlationId, conflict(err.message));
@@ -331,58 +375,6 @@ export async function registerOrderRoutes(app: FastifyInstance, container: Conta
     },
   );
 
-  // KitchenTicket command endpoints (SPEC-086, BASIC placeholder to be
-  // superseded by the real Kitchen domain SPEC-098..110). These drive both the
-  // ticket and the underlying Order's item statuses.
-  const kitchenDeps = () => ({
-    kitchenTickets: container.kitchenTickets,
-    orders: container.orders,
-    outbox: container.outbox,
-  });
-
-  app.get<{ Params: { id: string } }>("/v1/kitchen-tickets/:id", async (req, reply) => {
-    const correlationId = randomUUID();
-    try {
-      const ctx = await requireTenantContext(container, req);
-      requirePermission(ctx, "order:read");
-      const ticket = await container.kitchenTickets.findById(ctx.tenantId, req.params.id);
-      if (!ticket) return sendProblem(reply, correlationId, notFound("KitchenTicket"));
-      return { data: ticket };
-    } catch (err) {
-      return sendProblem(reply, correlationId, err);
-    }
-  });
-
-  const kitchenCommand = (
-    path: string,
-    permission: string,
-    run: (tenantId: string, ticketId: string, correlationId: string) => Promise<unknown>,
-  ) => {
-    app.post<{ Params: { id: string } }>(path, async (req, reply) => {
-      const correlationId = randomUUID();
-      try {
-        const ctx = await requireTenantContext(container, req);
-        requirePermission(ctx, permission);
-        const ticket = await run(ctx.tenantId, req.params.id, correlationId);
-        return { data: ticket };
-      } catch (err) {
-        if (err instanceof InvalidKitchenTicketTransitionError) return sendProblem(reply, correlationId, conflict(err.message));
-        if (err instanceof Error && err.message.includes("not found")) return sendProblem(reply, correlationId, notFound("KitchenTicket"));
-        return sendProblem(reply, correlationId, err);
-      }
-    });
-  };
-
-  kitchenCommand("/v1/kitchen-tickets/:id/start", "kitchen:line_start", (tenantId, ticketId, correlationId) =>
-    startKitchenTicket(kitchenDeps(), { tenantId, ticketId, correlationId }),
-  );
-  kitchenCommand("/v1/kitchen-tickets/:id/mark-ready", "kitchen:line_ready", (tenantId, ticketId, correlationId) =>
-    markKitchenTicketReady(kitchenDeps(), { tenantId, ticketId, correlationId }),
-  );
-  kitchenCommand("/v1/kitchen-tickets/:id/complete", "order:deliver", (tenantId, ticketId, correlationId) =>
-    completeKitchenTicket(kitchenDeps(), { tenantId, ticketId, correlationId }),
-  );
-  kitchenCommand("/v1/kitchen-tickets/:id/cancel", "order:cancel_prepared", (tenantId, ticketId) =>
-    cancelKitchenTicket(kitchenDeps(), { tenantId, ticketId }),
-  );
+  // KitchenTicket command endpoints removed — production is now the Kitchen
+  // domain's job (apps/api/src/routes/kitchen-commands.ts, SPEC-098..110).
 }

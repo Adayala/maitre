@@ -4,5 +4,6 @@
 - [ ] Resolver owner, reviewer, prioridad y blockers.
 - [ ] Congelar permission matrix y assignments.
 - [ ] Congelar segregation, sensitive-read y export controls.
-- [ ] Definir fixtures allow/deny, self-approval y stale auth.
+- [ ] Congelar frontera entre labor policy, payroll y export.
+- [ ] Definir fixtures allow/deny, self-approval, revocación y stale auth.
 - [ ] Autorizar materialización sólo después del cierre de especificación.

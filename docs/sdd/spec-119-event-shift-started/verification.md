@@ -1,5 +1,8 @@
 # Verificación — SPEC-119
 
+Estado actual: assessment inicial de especificación. El payload mínimo I0 queda alineado con la
+forma actual del evento en código; agregados/privacy-threshold quedan diferidos u opcionales.
+
 ## Criterios
 
 ### CAD-119-01 — ShiftStarted fija nombre, timing y separación frente al primer clock-in

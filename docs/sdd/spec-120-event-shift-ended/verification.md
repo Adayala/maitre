@@ -1,5 +1,9 @@
 # Verificación — SPEC-120
 
+Estado actual: assessment inicial de especificación. El payload mínimo I0 queda alineado con la
+forma actual del evento en código; forced-close/agregados/privacy-threshold quedan diferidos u
+opcionales.
+
 ## Criterios
 
 ### CAD-120-01 — ShiftEnded fija nombre, timing y separación frente al clock-out individual

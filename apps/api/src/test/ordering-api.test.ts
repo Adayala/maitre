@@ -39,7 +39,7 @@ async function openVisit(app: Awaited<ReturnType<typeof buildApp>>, headers: Rec
   return res.json().data.id as string;
 }
 
-test("Order lifecycle: create DRAFT, add item, submit creates KitchenTicket", async () => {
+test("Order lifecycle: create DRAFT, add item, submit dispatches Kitchen Commands", async () => {
   const container = await buildContainer();
   const { tenantId, branchId } = await getContext(container);
   const app = await buildApp(container);
@@ -63,13 +63,14 @@ test("Order lifecycle: create DRAFT, add item, submit creates KitchenTicket", as
   const submit = await app.inject({ method: "POST", url: `/v1/orders/${order.id}/submit`, headers, payload: {} });
   assert.equal(submit.statusCode, 200);
   assert.equal(submit.json().data.order.status, "SUBMITTED");
-  const ticket = submit.json().data.ticket;
-  assert.equal(ticket.status, "QUEUED");
-  assert.equal(ticket.lines.length, 1);
+  // Submit now creates one Kitchen Command per OrderItem (KitchenTicket retired).
+  const commands = submit.json().data.commands;
+  assert.equal(commands.length, 1);
+  assert.equal(commands[0].status, "RECEIVED");
   await app.close();
 });
 
-test("KitchenTicket start/mark-ready/complete drives Order to DELIVERED", async () => {
+test("Kitchen Command claim/start/mark-ready/complete-handoff drives Order to DELIVERED", async () => {
   const container = await buildContainer();
   const { tenantId, branchId } = await getContext(container);
   const app = await buildApp(container);
@@ -78,16 +79,16 @@ test("KitchenTicket start/mark-ready/complete drives Order to DELIVERED", async 
 
   const order = (await app.inject({ method: "POST", url: `/v1/visits/${visitId}/orders`, headers, payload: {} })).json().data;
   await app.inject({ method: "POST", url: `/v1/orders/${order.id}/items`, headers, payload: { productId: DEMO_PRODUCT_ID, quantity: 1 } });
-  const ticket = (await app.inject({ method: "POST", url: `/v1/orders/${order.id}/submit`, headers, payload: {} })).json().data.ticket;
+  const command = (await app.inject({ method: "POST", url: `/v1/orders/${order.id}/submit`, headers, payload: {} })).json().data.commands[0];
 
-  const start = await app.inject({ method: "POST", url: `/v1/kitchen-tickets/${ticket.id}/start`, headers });
-  assert.equal(start.statusCode, 200);
-  assert.equal(start.json().data.status, "IN_PREP");
+  await app.inject({ method: "POST", url: `/v1/kitchen/commands/${command.id}/claim`, headers, payload: {} });
+  const start = await app.inject({ method: "POST", url: `/v1/kitchen/commands/${command.id}/start`, headers, payload: {} });
+  assert.equal(start.json().data.status, "IN_PROGRESS");
 
-  const ready = await app.inject({ method: "POST", url: `/v1/kitchen-tickets/${ticket.id}/mark-ready`, headers });
+  const ready = await app.inject({ method: "POST", url: `/v1/kitchen/commands/${command.id}/mark-ready`, headers, payload: {} });
   assert.equal(ready.json().data.status, "READY");
 
-  const complete = await app.inject({ method: "POST", url: `/v1/kitchen-tickets/${ticket.id}/complete`, headers });
+  const complete = await app.inject({ method: "POST", url: `/v1/kitchen/commands/${command.id}/complete-handoff`, headers, payload: {} });
   assert.equal(complete.json().data.status, "COMPLETED");
 
   const orderAfter = (await app.inject({ method: "GET", url: `/v1/orders/${order.id}`, headers })).json().data;

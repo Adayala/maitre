@@ -4,24 +4,33 @@
 
 ### CAD-116-01 — La API de ShiftAssignments define endpoints y ciclo de vida con claridad
 
-- [ ] la superficie create/list/confirm/decline/reassign/cancel es inequívoca.
+- [x] la superficie create/list/detail/confirm/decline/reassign/cancel es inequívoca y está
+  respaldada por fixtures de ciclo de vida, filtros y errores.
 
 ### CAD-116-02 — Toda mutación usa idempotencia, revisión y revalidación transaccional
 
-- [ ] idempotencia, `If-Match` y revalidación transaccional cubren conflictos.
+- [x] `confirm`/`decline`/`cancel`/`reassign` exigen `If-Match` válido y fallan con revisión
+  stale sin mutar la asignación previa.
+- [x] `create`/`confirm`/`decline`/`cancel`/`reassign` soportan replay por `Idempotency-Key`
+  sin duplicar ni volver a mutar assignments.
 
 ### CAD-116-03 — Reassign conserva atomicidad entre cancelación previa y nueva asignación
 
-- [ ] `reassign` evita estados intermedios visibles.
+- [x] `reassign` valida target antes de cancelar la asignación previa y evita estados intermedios
+  visibles cuando la nueva asignación falla.
 
 ### CAD-116-04 — Self-service y management aplican permisos y minimización de datos distintos
 
-- [ ] self-service y management aplican alcances y redacciones distintas.
+- [x] self-service puede leer únicamente assignments propios (`GET /work-shifts/:id/assignments`
+  filtrado y `GET /shift-assignments/:id` propio), mientras management conserva lectura completa
+  por sucursal/turno con permisos sensibles.
 
 ### CAD-116-05 — Notificaciones son side effects por outbox y no gobiernan la transacción
 
-- [ ] notificaciones son side effects de outbox y no cambian el resultado transaccional.
+- [x] `create`/`confirm`/`cancel` emiten eventos por outbox; `reassign` emite cancelación +
+  creación sin condicionar el resultado transaccional del comando.
 
 ### CAD-116-06 — La aprobación exige evidencia de conflictos, empleado inactivo y RBAC
 
-- [ ] fixtures cubren shift cancelado, empleado inactivo, rol y cross-scope.
+- [x] fixtures cubren shift cancelado, empleado inactivo/ineligible, rol/reassign y RBAC
+  cross-scope.

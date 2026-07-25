@@ -11,11 +11,16 @@ import {
 
 export interface AuthenticatedContext {
   userId: string;
+  sessionIssuedAt: Date;
+  sessionExpiresAt: Date;
 }
 
 export interface TenantContext extends AuthenticatedContext {
   tenantId: string;
   roleIds: string[];
+  branchScopeType: "ALL_BRANCHES" | "SELECTED_BRANCHES";
+  branchIds: string[];
+  externalIdentityId: string;
 }
 
 function extractBearerToken(header: string | undefined): string | null {
@@ -47,7 +52,11 @@ export async function requireAuthenticatedContext(
   );
   if (!user || !isUserEligibleForSession(user)) throw identityNotEnabled();
 
-  return { userId: user.id };
+  return {
+    userId: user.id,
+    sessionIssuedAt: principal.issuedAt,
+    sessionExpiresAt: principal.expiresAt,
+  };
 }
 
 // SPEC-215 §4 — X-Tenant-Id expresses a requested selection; the server
@@ -70,9 +79,25 @@ export async function requireTenantContext(
   );
   if (!membership) throw insufficientScope();
 
-  return { userId: auth.userId, tenantId, roleIds: membership.roleIds };
+  const user = await container.users.findById(auth.userId);
+  if (!user || !isUserEligibleForSession(user)) throw identityNotEnabled();
+
+  return {
+    userId: auth.userId,
+    sessionIssuedAt: auth.sessionIssuedAt,
+    sessionExpiresAt: auth.sessionExpiresAt,
+    tenantId,
+    roleIds: membership.roleIds,
+    branchScopeType: membership.branchScopeType,
+    branchIds: membership.branchIds,
+    externalIdentityId: user.externalIdentityId,
+  };
 }
 
 export function requirePermission(context: TenantContext, permissionId: string): void {
   if (!hasPermission(context.roleIds, permissionId)) throw insufficientScope();
+}
+
+export function hasContextPermission(context: TenantContext, permissionId: string): boolean {
+  return hasPermission(context.roleIds, permissionId);
 }

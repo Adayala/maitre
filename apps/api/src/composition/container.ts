@@ -29,8 +29,10 @@ import {
   InMemoryNotificationIntentRepository,
   InMemoryOrderRepository,
   InMemoryCapabilityTokenRepository,
-  InMemoryKitchenTicketRepository,
   InMemorySpecialRequestRepository,
+  InMemoryStationRepository,
+  InMemoryCommandRepository,
+  InMemoryKitchenAlertRepository,
   FixtureSessionVerificationPort,
 } from "@maitre/adapter-persistence-memory";
 import {
@@ -65,8 +67,17 @@ import {
   SupabaseNotificationIntentRepository,
   SupabaseOrderRepository,
   SupabaseCapabilityTokenRepository,
-  SupabaseKitchenTicketRepository,
   SupabaseSpecialRequestRepository,
+  SupabaseStationRepository,
+  SupabaseCommandRepository,
+  SupabaseKitchenAlertRepository,
+  SupabaseEmploymentRepository,
+  SupabaseWorkShiftRepository,
+  SupabaseShiftAssignmentRepository,
+  SupabaseTimeEntryRepository,
+  SupabaseTimeAdjustmentRepository,
+  SupabaseBreakLogRepository,
+  SupabaseBreakAdjustmentRepository,
 } from "@maitre/adapter-persistence-supabase";
 import {
   createTenant,
@@ -124,9 +135,24 @@ import {
   hashToken,
   type OrderRepositoryPort,
   type CapabilityTokenRepositoryPort,
-  type KitchenTicketRepositoryPort,
   type SpecialRequestRepositoryPort,
 } from "@maitre/ordering";
+import {
+  createStation,
+  type StationRepositoryPort,
+  type CommandRepositoryPort,
+  type KitchenAlertRepositoryPort,
+} from "@maitre/kitchen";
+import type {
+  EmploymentRepositoryPort,
+  WorkShiftRepositoryPort,
+  ShiftAssignmentRepositoryPort,
+  TimeEntryRepositoryPort,
+  TimeAdjustmentRepositoryPort,
+  BreakLogRepositoryPort,
+  BreakAdjustmentRepositoryPort,
+} from "@maitre/workforce";
+import type { LaborPolicyVersionRepositoryPort } from "../workforce/labor-policy-repository.js";
 
 export interface Container {
   tenants: TenantRepositoryPort;
@@ -159,8 +185,19 @@ export interface Container {
   notificationIntents: NotificationIntentRepositoryPort;
   orders: OrderRepositoryPort;
   capabilityTokens: CapabilityTokenRepositoryPort;
-  kitchenTickets: KitchenTicketRepositoryPort;
   specialRequests: SpecialRequestRepositoryPort;
+  stations: StationRepositoryPort;
+  commands: CommandRepositoryPort;
+  kitchenAlerts: KitchenAlertRepositoryPort;
+  employments?: EmploymentRepositoryPort;
+  workShifts?: WorkShiftRepositoryPort;
+  shiftAssignments?: ShiftAssignmentRepositoryPort;
+  timeEntries?: TimeEntryRepositoryPort;
+  timeAdjustments?: TimeAdjustmentRepositoryPort;
+  breakLogs?: BreakLogRepositoryPort;
+  breakAdjustments?: BreakAdjustmentRepositoryPort;
+  laborPolicyVersions?: LaborPolicyVersionRepositoryPort;
+  now?: () => Date;
   sessions: SessionVerificationPort;
   demoAccessToken: string;
   demoQrMenuToken: string;
@@ -187,6 +224,9 @@ const DEMO_ACCESS_TOKEN = "demo-token";
 // id keeps the seed idempotent across boots. Synthetic testing data only.
 const DEMO_QR_MENU_TOKEN = "demo-qr-menu-token";
 const DEMO_QR_TOKEN_ID = "00000000-0000-0000-0000-00000000000c";
+// Kitchen (SPEC-099/110): one default demo Station so Ordering's submit-order has
+// somewhere to route the Commands it creates. Fixed id keeps the seed idempotent.
+const DEMO_STATION_ID = "00000000-0000-0000-0000-00000000000d";
 
 interface Repositories {
   tenants: TenantRepositoryPort;
@@ -219,8 +259,17 @@ interface Repositories {
   notificationIntents: NotificationIntentRepositoryPort;
   orders: OrderRepositoryPort;
   capabilityTokens: CapabilityTokenRepositoryPort;
-  kitchenTickets: KitchenTicketRepositoryPort;
   specialRequests: SpecialRequestRepositoryPort;
+  stations: StationRepositoryPort;
+  commands: CommandRepositoryPort;
+  kitchenAlerts: KitchenAlertRepositoryPort;
+  employments?: EmploymentRepositoryPort;
+  workShifts?: WorkShiftRepositoryPort;
+  shiftAssignments?: ShiftAssignmentRepositoryPort;
+  timeEntries?: TimeEntryRepositoryPort;
+  timeAdjustments?: TimeAdjustmentRepositoryPort;
+  breakLogs?: BreakLogRepositoryPort;
+  breakAdjustments?: BreakAdjustmentRepositoryPort;
 }
 
 /**
@@ -265,8 +314,17 @@ function buildRepositories(): Repositories {
       notificationIntents: new SupabaseNotificationIntentRepository(client),
       orders: new SupabaseOrderRepository(client),
       capabilityTokens: new SupabaseCapabilityTokenRepository(client),
-      kitchenTickets: new SupabaseKitchenTicketRepository(client),
       specialRequests: new SupabaseSpecialRequestRepository(client),
+      stations: new SupabaseStationRepository(client),
+      commands: new SupabaseCommandRepository(client),
+      kitchenAlerts: new SupabaseKitchenAlertRepository(client),
+      employments: new SupabaseEmploymentRepository(client),
+      workShifts: new SupabaseWorkShiftRepository(client),
+      shiftAssignments: new SupabaseShiftAssignmentRepository(client),
+      timeEntries: new SupabaseTimeEntryRepository(client),
+      timeAdjustments: new SupabaseTimeAdjustmentRepository(client),
+      breakLogs: new SupabaseBreakLogRepository(client),
+      breakAdjustments: new SupabaseBreakAdjustmentRepository(client),
     };
   }
 
@@ -301,8 +359,10 @@ function buildRepositories(): Repositories {
     notificationIntents: new InMemoryNotificationIntentRepository(),
     orders: new InMemoryOrderRepository(),
     capabilityTokens: new InMemoryCapabilityTokenRepository(),
-    kitchenTickets: new InMemoryKitchenTicketRepository(),
     specialRequests: new InMemorySpecialRequestRepository(),
+    stations: new InMemoryStationRepository(),
+    commands: new InMemoryCommandRepository(),
+    kitchenAlerts: new InMemoryKitchenAlertRepository(),
   };
 }
 
@@ -483,6 +543,26 @@ async function ensureSeed(repos: Repositories): Promise<void> {
       createdAt: now,
       updatedAt: now,
     });
+  }
+
+  // Kitchen (SPEC-099): one default ACTIVE demo Station for the demo Branch, so
+  // Ordering's submit-order can route the Commands it creates to it. Idempotent
+  // via the fixed id. Commands/Alerts are transactional, not seeded.
+  const station = await repos.stations.findById(tenant.id, DEMO_STATION_ID);
+  if (!station) {
+    await createStation(
+      { stations: repos.stations, now: () => now },
+      {
+        id: DEMO_STATION_ID,
+        tenantId: tenant.id,
+        brandId: brand.id,
+        branchId: branch.id,
+        code: "MAIN",
+        displayName: "Cocina Principal",
+        capabilities: ["HOT", "COLD"],
+        displayOrder: 0,
+      },
+    );
   }
 }
 

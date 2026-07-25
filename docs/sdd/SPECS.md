@@ -157,10 +157,10 @@ Formato: **SPEC-NNN | Título | Tipo | Dominio | Fase | Prioridad | Estado | Rea
 ## Kitchen
 
 - [ ] **SPEC-086** | Kitchen Ticket Entity | Entity | Kitchen | Fase 2 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
-- [ ] **SPEC-098** | Command Entity | Entity | Kitchen | Fase 2 | UNASSIGNED | DRAFT | NOT_ASSESSED
-- [ ] **SPEC-099** | Station Entity | Entity | Kitchen | Fase 2 | UNASSIGNED | DRAFT | NOT_ASSESSED
-- [ ] **SPEC-100** | Production Queue Entity | Entity | Kitchen | Fase 2 | UNASSIGNED | DRAFT | NOT_ASSESSED
-- [ ] **SPEC-101** | Kitchen Alert Entity | Entity | Kitchen | Fase 2 | UNASSIGNED | DRAFT | NOT_ASSESSED
+- [ ] **SPEC-098** | Command Entity | Entity | Kitchen | Fase 2 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-099** | Station Entity | Entity | Kitchen | Fase 2 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-100** | Production Queue Entity | Entity | Kitchen | Fase 2 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-101** | Kitchen Alert Entity | Entity | Kitchen | Fase 2 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
 
 ---
 
@@ -259,28 +259,28 @@ Formato: **SPEC-NNN | Título | Tipo | Dominio | Fase | Prioridad | Estado | Rea
 
 Estas carpetas existen pero su `README.md` no fue completado (contenido tipo TBD / plantilla de peer review).
 
-- [ ] **SPEC-102** | spec-102-api-commands | STUB
-- [ ] **SPEC-103** | spec-103-api-stations | STUB
-- [ ] **SPEC-104** | spec-104-api-production | STUB
-- [ ] **SPEC-105** | spec-105-api-kitchen-alerts | STUB
-- [ ] **SPEC-106** | spec-106-event-command-received | STUB
-- [ ] **SPEC-107** | spec-107-event-command-in-progress | STUB
-- [ ] **SPEC-108** | spec-108-event-command-completed | STUB
-- [ ] **SPEC-109** | spec-109-rbac-kitchen | STUB
-- [ ] **SPEC-110** | spec-110-workflow-kitchen-state-machine | STUB
+- [ ] **SPEC-102** | Commands API | API | Kitchen | Fase 2 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-103** | Stations API | API | Kitchen | Fase 2 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-104** | Production API | API | Kitchen | Fase 2 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-105** | Kitchen Alerts API | API | Kitchen | Fase 2 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-106** | CommandReceived Event | Event | Kitchen | Fase 2 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-107** | CommandInProgress Event | Event | Kitchen | Fase 2 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-108** | CommandCompleted Event | Event | Kitchen | Fase 2 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-109** | Kitchen RBAC | RBAC | Kitchen | Fase 2 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-110** | Kitchen State Machine | Workflow | Kitchen | Fase 2 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
 - [ ] **SPEC-111** | spec-111-entity-shift | STUB
 - [ ] **SPEC-112** | spec-112-entity-shift-assignment | STUB
 - [ ] **SPEC-113** | spec-113-entity-time-entry | STUB
 - [ ] **SPEC-114** | spec-114-entity-break-log | STUB
-- [ ] **SPEC-115** | spec-115-api-shifts | STUB
-- [ ] **SPEC-116** | spec-116-api-shift-assignments | STUB
-- [ ] **SPEC-117** | spec-117-api-time-tracking | STUB
-- [ ] **SPEC-118** | spec-118-api-break-management | STUB
-- [ ] **SPEC-119** | spec-119-event-shift-started | STUB
-- [ ] **SPEC-120** | spec-120-event-shift-ended | STUB
-- [ ] **SPEC-121** | spec-121-calculation-payroll | STUB
-- [ ] **SPEC-122** | spec-122-rbac-shifts | STUB
-- [ ] **SPEC-123** | spec-123-rules-labor-compliance | STUB
+- [ ] **SPEC-115** | WorkShifts API | API | Workforce | Fase 3 | UNASSIGNED | IN_PROGRESS | PARTIALLY_ASSESSED
+- [ ] **SPEC-116** | ShiftAssignments API | API | Workforce | Fase 3 | UNASSIGNED | IN_PROGRESS | PARTIALLY_ASSESSED
+- [ ] **SPEC-117** | Time Tracking API | API | Workforce | Fase 3 | UNASSIGNED | IN_PROGRESS | PARTIALLY_ASSESSED
+- [ ] **SPEC-118** | Break Management API | API | Workforce | Fase 3 | UNASSIGNED | IN_PROGRESS | PARTIALLY_ASSESSED
+- [ ] **SPEC-119** | WorkShift Started Event | Event | Workforce | Fase 3 | UNASSIGNED | IN_PROGRESS | PARTIALLY_ASSESSED
+- [ ] **SPEC-120** | WorkShift Completed Event | Event | Workforce | Fase 3 | UNASSIGNED | IN_PROGRESS | PARTIALLY_ASSESSED
+- [ ] **SPEC-121** | Payroll Projection Calculation | Calculation | Workforce | Fase 3 | UNASSIGNED | IN_PROGRESS | PARTIALLY_ASSESSED
+- [ ] **SPEC-122** | Workforce RBAC | RBAC | Workforce | Fase 3 | UNASSIGNED | IN_PROGRESS | PARTIALLY_ASSESSED
+- [ ] **SPEC-123** | Labor Compliance Rules | Rules | Workforce | Fase 3 | UNASSIGNED | IN_PROGRESS | PARTIALLY_ASSESSED
 - [ ] **SPEC-124** | spec-124-entity-cash-register | STUB
 - [ ] **SPEC-125** | spec-125-entity-cash-movement | STUB
 - [ ] **SPEC-126** | spec-126-entity-cash-reconciliation | STUB

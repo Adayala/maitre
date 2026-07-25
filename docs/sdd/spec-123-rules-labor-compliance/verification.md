@@ -1,5 +1,9 @@
 # Verificación — SPEC-123
 
+Estado actual: assessment inicial de especificación. La spec ya define metadata de policy,
+overlays tenant, taxonomy de findings y `NOT_CONFIGURED`; falta materialización y cierre de
+fixtures.
+
 ## Criterios
 
 ### CAD-123-01 — LaborPolicyVersion conserva jurisdicción, fuente, vigencia y aprobación competente

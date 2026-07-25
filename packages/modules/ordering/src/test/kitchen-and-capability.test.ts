@@ -2,18 +2,11 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   FakeOrderRepository,
-  FakeKitchenTicketRepository,
   FakeCapabilityTokenRepository,
   FakeSpecialRequestRepository,
   FakeOutboxRepository,
 } from "./fakes.js";
-import { createOrder, addOrderItem, submitOrder } from "../application/order-commands.js";
-import {
-  startKitchenTicket,
-  markKitchenTicketReady,
-  completeKitchenTicket,
-  cancelKitchenTicket,
-} from "../application/kitchen-ticket-commands.js";
+import { createOrder, addOrderItem, submitOrder, applyKitchenItemStatus } from "../application/order-commands.js";
 import {
   issueCapabilityToken,
   resolveCapabilityToken,
@@ -27,14 +20,9 @@ import {
   rejectSpecialRequest,
 } from "../application/special-request-commands.js";
 import { InvalidSpecialRequestTransitionError } from "../domain/special-request.js";
-import { InvalidKitchenTicketTransitionError } from "../domain/kitchen-ticket.js";
 
 function orderDeps() {
-  return {
-    orders: new FakeOrderRepository(),
-    kitchenTickets: new FakeKitchenTicketRepository(),
-    outbox: new FakeOutboxRepository(),
-  };
+  return { orders: new FakeOrderRepository(), outbox: new FakeOutboxRepository() };
 }
 
 async function submittedOrder(d: ReturnType<typeof orderDeps>) {
@@ -51,46 +39,48 @@ async function submittedOrder(d: ReturnType<typeof orderDeps>) {
   return submitOrder(d, { tenantId: "t1", orderId: order.id });
 }
 
-test("kitchen ticket start/mark-ready/complete transitions the order to DELIVERED", async () => {
+test("submit freezes the order and emits submitted (no in-module KitchenTicket)", async () => {
   const d = orderDeps();
-  const { ticket } = await submittedOrder(d);
+  const { order } = await submittedOrder(d);
+  assert.equal(order.status, "SUBMITTED");
+  assert.equal(d.outbox.records.at(-1)?.eventName, "ordering.order.submitted.v1");
+  // Idempotent second submit, no second event.
+  const again = await submitOrder(d, { tenantId: "t1", orderId: order.id });
+  assert.equal(again.order.status, "SUBMITTED");
+  assert.equal(d.outbox.records.filter((r) => r.eventName === "ordering.order.submitted.v1").length, 1);
+});
 
-  const started = await startKitchenTicket(d, { tenantId: "t1", ticketId: ticket.id });
-  assert.equal(started.status, "IN_PREP");
-  let order = await d.orders.findById("t1", ticket.orderId);
-  assert.equal(order!.status, "IN_PREP");
+test("applyKitchenItemStatus advances the item and re-derives the Order to DELIVERED", async () => {
+  const d = orderDeps();
+  const { order } = await submittedOrder(d);
+  const itemId = order.items[0]!.id;
 
-  const ready = await markKitchenTicketReady(d, { tenantId: "t1", ticketId: ticket.id });
-  assert.equal(ready.status, "READY");
-  order = await d.orders.findById("t1", ticket.orderId);
-  assert.equal(order!.status, "READY");
+  // Kitchen Command IN_PROGRESS -> item IN_PREP -> Order IN_PREP.
+  let updated = await applyKitchenItemStatus(d, { tenantId: "t1", orderId: order.id, orderItemId: itemId, to: "IN_PREP" });
+  assert.equal(updated!.status, "IN_PREP");
 
-  const done = await completeKitchenTicket(d, { tenantId: "t1", ticketId: ticket.id });
-  assert.equal(done.status, "COMPLETED");
-  order = await d.orders.findById("t1", ticket.orderId);
-  assert.equal(order!.status, "DELIVERED");
+  // READY -> Order READY (emits ready event).
+  updated = await applyKitchenItemStatus(d, { tenantId: "t1", orderId: order.id, orderItemId: itemId, to: "READY" });
+  assert.equal(updated!.status, "READY");
+
+  // DELIVERED (handoff) -> Order DELIVERED (emits delivered event).
+  updated = await applyKitchenItemStatus(d, { tenantId: "t1", orderId: order.id, orderItemId: itemId, to: "DELIVERED" });
+  assert.equal(updated!.status, "DELIVERED");
 
   const names = d.outbox.records.map((r) => r.eventName);
   assert.ok(names.includes("ordering.order.ready.v1"));
   assert.ok(names.includes("ordering.order.delivered.v1"));
 });
 
-test("kitchen ticket cannot skip states", async () => {
+test("applyKitchenItemStatus is idempotent and tolerant of illegal transitions", async () => {
   const d = orderDeps();
-  const { ticket } = await submittedOrder(d);
-  await assert.rejects(
-    () => markKitchenTicketReady(d, { tenantId: "t1", ticketId: ticket.id }),
-    InvalidKitchenTicketTransitionError,
-  );
-});
-
-test("cancel ticket compensates production only, leaves order untouched", async () => {
-  const d = orderDeps();
-  const { ticket, order } = await submittedOrder(d);
-  const cancelled = await cancelKitchenTicket(d, { tenantId: "t1", ticketId: ticket.id });
-  assert.equal(cancelled.status, "CANCELLED");
-  const reread = await d.orders.findById("t1", order.id);
-  assert.equal(reread!.status, "SUBMITTED");
+  const { order } = await submittedOrder(d);
+  const itemId = order.items[0]!.id;
+  // Unknown order -> null, no throw.
+  assert.equal(await applyKitchenItemStatus(d, { tenantId: "t1", orderId: "nope", orderItemId: itemId, to: "READY" }), null);
+  // Illegal jump QUEUED -> DELIVERED is skipped (no error), Order unchanged.
+  const same = await applyKitchenItemStatus(d, { tenantId: "t1", orderId: order.id, orderItemId: itemId, to: "DELIVERED" });
+  assert.equal(same!.status, "SUBMITTED");
 });
 
 test("capability token resolves only when ACTIVE and not expired", async () => {
@@ -104,9 +94,7 @@ test("capability token resolves only when ACTIVE and not expired", async () => {
   const resolved = await resolveCapabilityToken(caps, token, "MENU_READ");
   assert.equal(resolved.resourceId, "menu1");
 
-  // wrong purpose -> not resolvable (anti-enumeration)
   await assert.rejects(() => resolveCapabilityToken(caps, token, "BILL_READ"), CapabilityNotResolvableError);
-  // unknown token -> not resolvable
   await assert.rejects(() => resolveCapabilityToken(caps, "garbage", "MENU_READ"), CapabilityNotResolvableError);
 });
 

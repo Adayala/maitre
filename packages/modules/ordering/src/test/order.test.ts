@@ -1,10 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import {
-  FakeOrderRepository,
-  FakeKitchenTicketRepository,
-  FakeOutboxRepository,
-} from "./fakes.js";
+import { FakeOrderRepository, FakeOutboxRepository } from "./fakes.js";
 import {
   createOrder,
   addOrderItem,
@@ -20,7 +16,6 @@ import { assertOrderItemTransition, InvalidOrderItemTransitionError } from "../d
 function deps() {
   return {
     orders: new FakeOrderRepository(),
-    kitchenTickets: new FakeKitchenTicketRepository(),
     outbox: new FakeOutboxRepository(),
   };
 }
@@ -52,15 +47,12 @@ test("addOrderItem computes exact line totals from minor units", async () => {
   assert.equal(order.status, "DRAFT");
 });
 
-test("submit freezes snapshot, creates one KitchenTicket, emits submitted event", async () => {
+test("submit freezes snapshot and emits submitted event (Kitchen dispatch is the route's job)", async () => {
   const d = deps();
   const draft = await seedDraftWithItem(d);
-  const { order, ticket } = await submitOrder(d, { tenantId: "t1", orderId: draft.id });
+  const { order } = await submitOrder(d, { tenantId: "t1", orderId: draft.id });
   assert.equal(order.status, "SUBMITTED");
   assert.ok(order.submittedAt);
-  assert.equal(ticket.orderId, order.id);
-  assert.equal(ticket.status, "QUEUED");
-  assert.equal(ticket.lines.length, 1);
   const events = d.outbox.records.map((r) => r.eventName);
   assert.deepEqual(events, ["ordering.order.submitted.v1"]);
 });
@@ -71,7 +63,6 @@ test("submit is idempotent — second submit emits no second event", async () =>
   const first = await submitOrder(d, { tenantId: "t1", orderId: draft.id });
   const second = await submitOrder(d, { tenantId: "t1", orderId: draft.id });
   assert.equal(second.order.revision, first.order.revision);
-  assert.equal(second.ticket.id, first.ticket.id);
   assert.equal(d.outbox.records.length, 1);
 });
 

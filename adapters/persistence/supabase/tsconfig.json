@@ -13,7 +13,9 @@
     { "path": "../../../packages/modules/audit" },
     { "path": "../../../packages/modules/floor" },
     { "path": "../../../packages/modules/reservations" },
-    { "path": "../../../packages/modules/ordering" }
+    { "path": "../../../packages/modules/ordering" },
+    { "path": "../../../packages/modules/workforce" },
+    { "path": "../../../packages/modules/kitchen" }
   ],
   "include": ["src"]
 }

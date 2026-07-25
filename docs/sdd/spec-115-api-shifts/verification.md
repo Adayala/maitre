@@ -1,5 +1,8 @@
 # Verificación — SPEC-115
 
+Estado actual: assessment inicial de especificación. La spec ya define surface I0, lifecycle,
+error taxonomy y frontera con time tracking; falta completar materialización/evidencia integral.
+
 ## Criterios
 
 ### CAD-115-01 — La API de WorkShifts define endpoints y ciclo de vida con alcance temporal y sucursal claros

@@ -29,13 +29,10 @@ import {
   assertValidQuantity,
   orderItemLineTotal,
   isOrderItemTerminal,
+  canTransitionOrderItem,
 } from "../domain/order-item.js";
 import type { OrderModifier } from "../domain/order-modifier.js";
-import { type KitchenTicket, type KitchenTicketLine } from "../domain/kitchen-ticket.js";
-import type {
-  OrderRepositoryPort,
-  KitchenTicketRepositoryPort,
-} from "./ports.js";
+import type { OrderRepositoryPort } from "./ports.js";
 import type { OutboxPort } from "./outbox.js";
 import {
   orderSubmittedEvent,
@@ -49,7 +46,6 @@ export interface OrderDeps {
 }
 
 export interface SubmitOrderDeps extends OrderDeps {
-  kitchenTickets: KitchenTicketRepositoryPort;
   outbox: OutboxPort;
 }
 
@@ -155,20 +151,17 @@ export async function addOrderItem(deps: OrderDeps, input: AddOrderItemInput): P
   return updated;
 }
 
-function toTicketLine(item: OrderItem): KitchenTicketLine {
-  const summary = item.modifiers.map((m) => m.label).join(", ");
-  return {
-    orderItemId: item.id,
-    name: item.name,
-    quantity: item.quantity,
-    ...(summary ? { modifiersSummary: summary } : {}),
-    ...(item.notes ? { notes: item.notes } : {}),
-  };
-}
-
 // POST /v1/orders/:id/submit — DRAFT -> SUBMITTED, idempotent. Freezes the
-// snapshot, creates one KitchenTicket, emits ordering.order.submitted.v1. A
-// repeated submit returns the existing order + ticket without a second event.
+// snapshot and emits ordering.order.submitted.v1. A repeated submit returns the
+// existing order without a second event.
+//
+// KITCHEN RETIREMENT NOTE: submit no longer creates the old in-module
+// KitchenTicket. Production dispatch is now the Kitchen domain's job — the API
+// route layer (apps/api/src/routes/orders.ts), after submitOrder returns,
+// creates one @maitre/kitchen Command per OrderItem routed to a Station. This
+// module stays decoupled from @maitre/kitchen, mirroring how it already stays
+// decoupled from @maitre/floor/@maitre/catalog (cross-module calls live in the
+// route). See applyKitchenItemStatus below for the reverse sync path.
 export interface SubmitOrderInput {
   tenantId: string;
   orderId: string;
@@ -178,7 +171,6 @@ export interface SubmitOrderInput {
 
 export interface SubmitOrderResult {
   order: Order;
-  ticket: KitchenTicket;
 }
 
 export class EmptyOrderError extends Error {
@@ -191,11 +183,9 @@ export class EmptyOrderError extends Error {
 export async function submitOrder(deps: SubmitOrderDeps, input: SubmitOrderInput): Promise<SubmitOrderResult> {
   const order = await loadOrder(deps, input.tenantId, input.orderId);
 
-  // Idempotent: already submitted -> return as-is with its existing ticket.
+  // Idempotent: already submitted -> return as-is.
   if (order.status !== "DRAFT") {
-    const existing = await deps.kitchenTickets.findByOrder(input.tenantId, order.id);
-    if (!existing) throw new InvalidOrderStateError(`Order ${order.id} is ${order.status} but has no KitchenTicket`);
-    return { order, ticket: existing };
+    return { order };
   }
 
   if (order.items.length === 0) throw new EmptyOrderError(order.id);
@@ -213,24 +203,9 @@ export async function submitOrder(deps: SubmitOrderDeps, input: SubmitOrderInput
   );
   await deps.orders.save(submitted);
 
-  const ticket: KitchenTicket = {
-    id: randomUUID(),
-    tenantId: submitted.tenantId,
-    branchId: submitted.branchId,
-    visitId: submitted.visitId,
-    orderId: submitted.id,
-    orderRevision: submitted.revision,
-    status: "QUEUED",
-    lines: submitted.items.map(toTicketLine),
-    revision: 1,
-    createdAt: now,
-    updatedAt: now,
-  };
-  await deps.kitchenTickets.save(ticket);
-
   const correlationId = input.correlationId ?? randomUUID();
   await deps.outbox.append(orderSubmittedEvent(submitted, correlationId));
-  return { order: submitted, ticket };
+  return { order: submitted };
 }
 
 // Emits the aggregate ready/delivered events when a mutation moves the derived
@@ -427,6 +402,37 @@ export async function changeOrderItemQuantity(
   );
   await deps.orders.save(updated);
   return updated;
+}
+
+// KITCHEN RETIREMENT — reverse cross-module sync. When a Kitchen Command reaches
+// IN_PROGRESS / READY / COMPLETED, the API route calls this to advance the
+// corresponding OrderItem (IN_PREP / READY / DELIVERED) and re-derive the Order
+// status (emitting ordering.order.ready.v1 / .delivered.v1 across the threshold).
+// This replaces the old KitchenTicket -> Order advancement that
+// kitchen-ticket-commands.ts performed. It is intentionally IDEMPOTENT and
+// tolerant: an unknown order/item, or an illegal (non-monotonic) item transition
+// — e.g. a Command rolled back READY -> IN_PROGRESS, which cannot un-ready the
+// already-READY item — is a no-op rather than an error, so Kitchen transitions
+// never fail because of Order state. Order stays the authoritative store of its
+// own item statuses (denormalized), so deriveOrderStatus keeps reflecting Kitchen
+// progress without Order depending on @maitre/kitchen.
+export interface ApplyKitchenItemStatusDeps extends OrderDeps {
+  outbox: OutboxPort;
+}
+
+export async function applyKitchenItemStatus(
+  deps: ApplyKitchenItemStatusDeps,
+  input: { tenantId: string; orderId: string; orderItemId: string; to: OrderItemStatus; correlationId?: string },
+): Promise<Order | null> {
+  const order = await deps.orders.findById(input.tenantId, input.orderId);
+  if (!order) return null;
+  const item = order.items.find((i) => i.id === input.orderItemId);
+  if (!item) return order;
+  if (item.status === input.to || !canTransitionOrderItem(item.status, input.to)) return order;
+
+  const now = nowFrom(deps);
+  const items = order.items.map((i) => (i.id === item.id ? { ...i, status: input.to } : i));
+  return applyDerivedStatus(deps, { ...order, items }, now, input.correlationId ?? randomUUID());
 }
 
 export type { OrderStatus };

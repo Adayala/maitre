@@ -1,6 +1,5 @@
 import type { Order } from "../domain/order.js";
 import type { CapabilityToken } from "../domain/capability-token.js";
-import type { KitchenTicket } from "../domain/kitchen-ticket.js";
 import type { SpecialRequest } from "../domain/special-request.js";
 
 // Order embeds its OrderItems (and their modifiers/adjustments) as JSONB, so
@@ -21,13 +20,6 @@ export interface CapabilityTokenRepositoryPort {
   findById(tenantId: string, id: string): Promise<CapabilityToken | null>;
   findByHash(tokenHash: string): Promise<CapabilityToken | null>;
   save(token: CapabilityToken): Promise<void>;
-}
-
-export interface KitchenTicketRepositoryPort {
-  findById(tenantId: string, id: string): Promise<KitchenTicket | null>;
-  findByOrder(tenantId: string, orderId: string): Promise<KitchenTicket | null>;
-  listByBranch(tenantId: string, branchId: string): Promise<KitchenTicket[]>;
-  save(ticket: KitchenTicket): Promise<void>;
 }
 
 export interface SpecialRequestRepositoryPort {

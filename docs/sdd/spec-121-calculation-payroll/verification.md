@@ -1,5 +1,8 @@
 # Verificación — SPEC-121
 
+Estado actual: assessment inicial de especificación. La spec ya define snapshot de input, trace
+model, retroactivos y `NOT_CONFIGURED`; falta materialización y cierre de fixtures.
+
 ## Criterios
 
 ### CAD-121-01 — Inputs aprobados, policy version y adjustment chain quedan definidos sin ambigüedad

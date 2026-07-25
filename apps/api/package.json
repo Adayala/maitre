@@ -21,11 +21,13 @@
     "@maitre/identity": "*",
     "@maitre/organization": "*",
     "@maitre/subscription": "*",
+    "@maitre/workforce": "*",
     "fastify": "^4.28.1",
     "zod": "^3.23.8",
     "@maitre/floor": "*",
     "@maitre/reservations": "*",
-    "@maitre/ordering": "*"
+    "@maitre/ordering": "*",
+    "@maitre/kitchen": "*"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",

@@ -1,11 +1,9 @@
 import type { Order } from "../domain/order.js";
 import type { CapabilityToken } from "../domain/capability-token.js";
-import type { KitchenTicket } from "../domain/kitchen-ticket.js";
 import type { SpecialRequest } from "../domain/special-request.js";
 import type {
   OrderRepositoryPort,
   CapabilityTokenRepositoryPort,
-  KitchenTicketRepositoryPort,
   SpecialRequestRepositoryPort,
 } from "../application/ports.js";
 import type { OutboxPort, OutboxRecord } from "../application/outbox.js";
@@ -37,24 +35,6 @@ export class FakeCapabilityTokenRepository implements CapabilityTokenRepositoryP
     const i = this.items.findIndex((t) => t.id === token.id);
     if (i >= 0) this.items[i] = token;
     else this.items.push(token);
-  }
-}
-
-export class FakeKitchenTicketRepository implements KitchenTicketRepositoryPort {
-  private readonly items: KitchenTicket[] = [];
-  async findById(tenantId: string, id: string) {
-    return this.items.find((t) => t.tenantId === tenantId && t.id === id) ?? null;
-  }
-  async findByOrder(tenantId: string, orderId: string) {
-    return this.items.find((t) => t.tenantId === tenantId && t.orderId === orderId) ?? null;
-  }
-  async listByBranch(tenantId: string, branchId: string) {
-    return this.items.filter((t) => t.tenantId === tenantId && t.branchId === branchId);
-  }
-  async save(ticket: KitchenTicket) {
-    const i = this.items.findIndex((t) => t.id === ticket.id);
-    if (i >= 0) this.items[i] = ticket;
-    else this.items.push(ticket);
   }
 }
 

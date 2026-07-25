@@ -13,3 +13,4 @@ export * from "./auth.js";
 export * from "./subscription.js";
 export * from "./catalog.js";
 export * from "./audit.js";
+export * from "./workforce.js";

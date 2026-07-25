@@ -19,7 +19,9 @@
     "ws": "^8.21.1",
     "@maitre/floor": "*",
     "@maitre/reservations": "*",
-    "@maitre/ordering": "*"
+    "@maitre/ordering": "*",
+    "@maitre/workforce": "*",
+    "@maitre/kitchen": "*"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",

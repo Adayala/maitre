@@ -23,6 +23,8 @@ export const accessSuspended = () =>
   new HttpProblemError(403, "access-suspended", "Access suspended");
 export const insufficientScope = () =>
   new HttpProblemError(403, "insufficient-scope", "Insufficient scope");
+export const stepUpRequired = () =>
+  new HttpProblemError(403, "step-up-required", "Step-up required");
 export const notFound = (resource: string) =>
   new HttpProblemError(404, "not-found", `${resource} not found`);
 export const conflict = (detail: string) =>

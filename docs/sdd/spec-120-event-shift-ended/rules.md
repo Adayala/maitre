@@ -4,4 +4,4 @@
 - No representa clock-out individual.
 - Open entries bloquean cierre salvo override auditado por policy.
 - Payload excluye Employment IDs, time entries e importes.
-- Conteos pequeños se suprimen según privacy threshold.
+- Agregados/privacy-threshold son opcionales en I0; si existen, se suprimen bajo umbral.

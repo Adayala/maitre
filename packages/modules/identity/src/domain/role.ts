@@ -119,6 +119,35 @@ export const ROLE_REGISTRY: Readonly<Record<string, Role>> = Object.freeze({
       "order:deliver",
       "special_request:review",
       "order:audit_read",
+      // SPEC-109 §Kitchen RBAC — ADMIN gets the full canonical Kitchen set. The
+      // spec's dotted names (kitchen.queue.read, kitchen.command.claim, ...) are
+      // mapped to the codebase's resource:action convention (kitchen:queue_read,
+      // kitchen:command_claim), exactly as SPEC-097's kitchen.line.start became
+      // kitchen:line_start.
+      "kitchen:queue_read",
+      "kitchen:command_claim",
+      "kitchen:command_start",
+      "kitchen:command_hold",
+      "kitchen:command_ready",
+      "kitchen:command_handoff",
+      "kitchen:command_cancel",
+      "kitchen:command_transfer",
+      "kitchen:command_reprioritize",
+      "kitchen:station_manage",
+      "kitchen:alert_acknowledge",
+      "kitchen:alert_resolve",
+      "kitchen:alert_escalate",
+      "workshift:read_own",
+      "workshift:plan",
+      "workshift:assign",
+      "time:clock",
+      "time:read_own",
+      "time:adjust_request",
+      "time:adjust_approve",
+      "time:read_sensitive",
+      "time:export",
+      "labor_policy:manage",
+      "labor_policy:review",
     ],
   },
   role_manager: {
@@ -197,6 +226,31 @@ export const ROLE_REGISTRY: Readonly<Record<string, Role>> = Object.freeze({
       "order:deliver",
       "special_request:review",
       "order:audit_read",
+      // SPEC-109 §Kitchen RBAC — MANAGER administers stations/routing and holds
+      // the override authority (cancel/transfer/reprioritize, station manage,
+      // alert escalate), so it gets the full canonical set.
+      "kitchen:queue_read",
+      "kitchen:command_claim",
+      "kitchen:command_start",
+      "kitchen:command_hold",
+      "kitchen:command_ready",
+      "kitchen:command_handoff",
+      "kitchen:command_cancel",
+      "kitchen:command_transfer",
+      "kitchen:command_reprioritize",
+      "kitchen:station_manage",
+      "kitchen:alert_acknowledge",
+      "kitchen:alert_resolve",
+      "kitchen:alert_escalate",
+      "workshift:read_own",
+      "workshift:plan",
+      "workshift:assign",
+      "time:clock",
+      "time:read_own",
+      "time:adjust_request",
+      "time:adjust_approve",
+      "time:read_sensitive",
+      "labor_policy:review",
     ],
   },
   role_employee: {
@@ -210,6 +264,8 @@ export const ROLE_REGISTRY: Readonly<Record<string, Role>> = Object.freeze({
       "user:read",
       "role:read",
       "permission:read",
+      "workshift:read_own",
+      "time:read_own",
       "table:read",
       "menu:read",
       "category:read",
@@ -250,6 +306,22 @@ export const ROLE_REGISTRY: Readonly<Record<string, Role>> = Object.freeze({
       "guest:pii_read",
       "guest:pii_write",
       "reservation:notification_send",
+      // SPEC-109 §Kitchen RBAC — "MAITRE administra routing y excepciones":
+      // full Kitchen authority (stations, exceptions, alerts) as the
+      // front-of-house coordinator, matching MANAGER's kitchen surface.
+      "kitchen:queue_read",
+      "kitchen:command_claim",
+      "kitchen:command_start",
+      "kitchen:command_hold",
+      "kitchen:command_ready",
+      "kitchen:command_handoff",
+      "kitchen:command_cancel",
+      "kitchen:command_transfer",
+      "kitchen:command_reprioritize",
+      "kitchen:station_manage",
+      "kitchen:alert_acknowledge",
+      "kitchen:alert_resolve",
+      "kitchen:alert_escalate",
     ],
   },
   // SPEC-065 — "WAITER opera Visits y mesas asignadas/permitidas": takes
@@ -296,11 +368,29 @@ export const ROLE_REGISTRY: Readonly<Record<string, Role>> = Object.freeze({
   // This is the role's first real content (was empty pre-Ordering). Station
   // ownership scoping itself is a documented deferred gap (no ShiftAssignment
   // entity yet).
+  // SPEC-109 §Kitchen RBAC — "COOK opera comandos y colas dentro de sus stations
+  // asignadas": production operations only (claim/start/hold/resume/ready/handoff)
+  // plus reading its queue and the orders it works. NOT cancel/transfer/
+  // reprioritize/station.manage/alert.escalate — those are MANAGER/MAITRE. Station
+  // ownership scoping itself is a documented deferred gap (no ShiftAssignment
+  // enforcement yet). kitchen:line_start/line_ready remain for the Ordering
+  // per-item transition endpoint (SPEC-097).
   role_cook: {
     id: "role_cook",
     name: "Cook",
-    description: "Kitchen operations — drives kitchen lines, reads worked orders",
-    permissions: ["table-status:read", "kitchen:line_start", "kitchen:line_ready", "order:read"],
+    description: "Kitchen operations — claims and drives production commands, reads worked orders",
+    permissions: [
+      "table-status:read",
+      "order:read",
+      "kitchen:line_start",
+      "kitchen:line_ready",
+      "kitchen:queue_read",
+      "kitchen:command_claim",
+      "kitchen:command_start",
+      "kitchen:command_hold",
+      "kitchen:command_ready",
+      "kitchen:command_handoff",
+    ],
   },
   // SPEC-065 — "CASHIER cobra/refund dentro de LimitsPolicy": handles
   // payment capture/refund and reads Check/Payment, without managing

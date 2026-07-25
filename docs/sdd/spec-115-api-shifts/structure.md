@@ -12,5 +12,6 @@ Shared controls
 ├── Idempotency-Key
 ├── If-Match / expected revision
 ├── UTC + timezone IANA
-└── labor policy validation
+├── labor policy validation
+└── transition/conflict taxonomy
 ```

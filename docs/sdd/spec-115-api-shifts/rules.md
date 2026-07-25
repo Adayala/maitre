@@ -5,3 +5,5 @@
 - `publish` revalida cobertura, conflictos y assignments/elegibilidad.
 - `complete` no cierra ni ajusta TimeEntry/BreakLog implícitamente.
 - Detail fuera de scope usa `404`; collections filtran antes de paginar.
+- `cancel` sólo aplica a `DRAFT`/`PUBLISHED`; `COMPLETED` y `CANCELLED` son terminales.
+- Conflictos o transiciones inválidas responden explícitamente; no se degradan a warning silencioso.

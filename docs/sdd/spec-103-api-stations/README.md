@@ -5,8 +5,8 @@
 | **ID** | SPEC-103 |
 | **Tipo** | API |
 | **Dominio** | Kitchen |
-| **Estado** | DRAFT |
-| **Readiness** | NOT_ASSESSED |
+| **Estado** | IN_PROGRESS |
+| **Readiness** | WALKING_SKELETON_I0 |
 | **Prioridad** | UNASSIGNED |
 | **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
 | **Fase** | 3 |
