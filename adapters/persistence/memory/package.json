@@ -17,7 +17,8 @@
     "@maitre/floor": "*",
     "@maitre/reservations": "*",
     "@maitre/ordering": "*",
-    "@maitre/kitchen": "*"
+    "@maitre/kitchen": "*",
+    "@maitre/cash": "*"
   },
   "devDependencies": {
     "typescript": "^5.5.4"

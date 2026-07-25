@@ -33,6 +33,12 @@ import {
   InMemoryStationRepository,
   InMemoryCommandRepository,
   InMemoryKitchenAlertRepository,
+  InMemoryCashRegisterRepository,
+  InMemoryCashSessionRepository,
+  InMemoryCashMovementRepository,
+  InMemoryCashReconciliationRepository,
+  InMemoryDiscountRepository,
+  InMemoryDiscountApplicationRepository,
   FixtureSessionVerificationPort,
 } from "@maitre/adapter-persistence-memory";
 import {
@@ -78,6 +84,12 @@ import {
   SupabaseTimeAdjustmentRepository,
   SupabaseBreakLogRepository,
   SupabaseBreakAdjustmentRepository,
+  SupabaseCashRegisterRepository,
+  SupabaseCashSessionRepository,
+  SupabaseCashMovementRepository,
+  SupabaseCashReconciliationRepository,
+  SupabaseDiscountRepository,
+  SupabaseDiscountApplicationRepository,
 } from "@maitre/adapter-persistence-supabase";
 import {
   createTenant,
@@ -143,6 +155,15 @@ import {
   type CommandRepositoryPort,
   type KitchenAlertRepositoryPort,
 } from "@maitre/kitchen";
+import {
+  createCashRegister,
+  type CashRegisterRepositoryPort,
+  type CashSessionRepositoryPort,
+  type CashMovementRepositoryPort,
+  type CashReconciliationRepositoryPort,
+  type DiscountRepositoryPort,
+  type DiscountApplicationRepositoryPort,
+} from "@maitre/cash";
 import type {
   EmploymentRepositoryPort,
   WorkShiftRepositoryPort,
@@ -194,6 +215,12 @@ export interface Container {
   stations: StationRepositoryPort;
   commands: CommandRepositoryPort;
   kitchenAlerts: KitchenAlertRepositoryPort;
+  cashRegisters: CashRegisterRepositoryPort;
+  cashSessions: CashSessionRepositoryPort;
+  cashMovements: CashMovementRepositoryPort;
+  cashReconciliations: CashReconciliationRepositoryPort;
+  discounts: DiscountRepositoryPort;
+  discountApplications: DiscountApplicationRepositoryPort;
   employments?: EmploymentRepositoryPort;
   workShifts?: WorkShiftRepositoryPort;
   shiftAssignments?: ShiftAssignmentRepositoryPort;
@@ -233,6 +260,10 @@ const DEMO_QR_TOKEN_ID = "00000000-0000-0000-0000-00000000000c";
 // Kitchen (SPEC-099/110): one default demo Station so Ordering's submit-order has
 // somewhere to route the Commands it creates. Fixed id keeps the seed idempotent.
 const DEMO_STATION_ID = "00000000-0000-0000-0000-00000000000d";
+// Cash (SPEC-124/128): one demo CashRegister for the demo Branch, so a session
+// can be opened for manual testing. Fixed id keeps the seed idempotent. Sessions
+// / movements / reconciliations are transactional (operational data), not seeded.
+const DEMO_CASH_REGISTER_ID = "00000000-0000-0000-0000-00000000000e";
 
 interface Repositories {
   tenants: TenantRepositoryPort;
@@ -269,6 +300,12 @@ interface Repositories {
   stations: StationRepositoryPort;
   commands: CommandRepositoryPort;
   kitchenAlerts: KitchenAlertRepositoryPort;
+  cashRegisters: CashRegisterRepositoryPort;
+  cashSessions: CashSessionRepositoryPort;
+  cashMovements: CashMovementRepositoryPort;
+  cashReconciliations: CashReconciliationRepositoryPort;
+  discounts: DiscountRepositoryPort;
+  discountApplications: DiscountApplicationRepositoryPort;
   employments?: EmploymentRepositoryPort;
   workShifts?: WorkShiftRepositoryPort;
   shiftAssignments?: ShiftAssignmentRepositoryPort;
@@ -326,6 +363,12 @@ function buildRepositories(): Repositories {
       stations: new SupabaseStationRepository(client),
       commands: new SupabaseCommandRepository(client),
       kitchenAlerts: new SupabaseKitchenAlertRepository(client),
+      cashRegisters: new SupabaseCashRegisterRepository(client),
+      cashSessions: new SupabaseCashSessionRepository(client),
+      cashMovements: new SupabaseCashMovementRepository(client),
+      cashReconciliations: new SupabaseCashReconciliationRepository(client),
+      discounts: new SupabaseDiscountRepository(client),
+      discountApplications: new SupabaseDiscountApplicationRepository(client),
       employments: new SupabaseEmploymentRepository(client),
       workShifts: new SupabaseWorkShiftRepository(client),
       shiftAssignments: new SupabaseShiftAssignmentRepository(client),
@@ -373,6 +416,12 @@ function buildRepositories(): Repositories {
     stations: new InMemoryStationRepository(),
     commands: new InMemoryCommandRepository(),
     kitchenAlerts: new InMemoryKitchenAlertRepository(),
+    cashRegisters: new InMemoryCashRegisterRepository(),
+    cashSessions: new InMemoryCashSessionRepository(),
+    cashMovements: new InMemoryCashMovementRepository(),
+    cashReconciliations: new InMemoryCashReconciliationRepository(),
+    discounts: new InMemoryDiscountRepository(),
+    discountApplications: new InMemoryDiscountApplicationRepository(),
     laborPolicyVersions: new InMemoryLaborPolicyVersionRepository(),
     timeExportJobs: new InMemoryTimeExportJobRepository(),
   };
@@ -573,6 +622,24 @@ async function ensureSeed(repos: Repositories): Promise<void> {
         displayName: "Cocina Principal",
         capabilities: ["HOT", "COLD"],
         displayOrder: 0,
+      },
+    );
+  }
+
+  // Cash (SPEC-124): one demo CashRegister for the demo Branch, accepting the
+  // tenant's default currency, so a CashSession can be opened by hand. Idempotent
+  // via the fixed id.
+  const cashRegister = await repos.cashRegisters.findById(tenant.id, DEMO_CASH_REGISTER_ID);
+  if (!cashRegister) {
+    await createCashRegister(
+      { registers: repos.cashRegisters, now: () => now },
+      {
+        id: DEMO_CASH_REGISTER_ID,
+        tenantId: tenant.id,
+        branchId: branch.id,
+        code: "CAJA-1",
+        displayName: "Caja Principal",
+        allowedCurrencies: [tenant.defaultCurrency],
       },
     );
   }

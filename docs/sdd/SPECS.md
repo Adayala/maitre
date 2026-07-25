@@ -281,19 +281,19 @@ Estas carpetas existen pero su `README.md` no fue completado (contenido tipo TBD
 - [ ] **SPEC-121** | Payroll Projection Calculation | Calculation | Workforce | Fase 3 | UNASSIGNED | IN_PROGRESS | PARTIALLY_ASSESSED
 - [ ] **SPEC-122** | Workforce RBAC | RBAC | Workforce | Fase 3 | UNASSIGNED | IN_PROGRESS | PARTIALLY_ASSESSED
 - [ ] **SPEC-123** | Labor Compliance Rules | Rules | Workforce | Fase 3 | UNASSIGNED | IN_PROGRESS | PARTIALLY_ASSESSED
-- [ ] **SPEC-124** | spec-124-entity-cash-register | STUB
-- [ ] **SPEC-125** | spec-125-entity-cash-movement | STUB
-- [ ] **SPEC-126** | spec-126-entity-cash-reconciliation | STUB
-- [ ] **SPEC-127** | spec-127-entity-discount | STUB
-- [ ] **SPEC-128** | spec-128-api-cash-register | STUB
-- [ ] **SPEC-129** | spec-129-api-cash-movement | STUB
-- [ ] **SPEC-130** | spec-130-api-reconciliation | STUB
-- [ ] **SPEC-131** | spec-131-api-discounts | STUB
-- [ ] **SPEC-132** | spec-132-event-cash-registered | STUB
-- [ ] **SPEC-133** | spec-133-event-cash-reconciled | STUB
-- [ ] **SPEC-134** | spec-134-calculation-daily-settlement | STUB
-- [ ] **SPEC-135** | spec-135-rbac-cash | STUB
-- [ ] **SPEC-136** | spec-136-rules-cash-compliance | STUB
+- [ ] **SPEC-124** | CashRegister / CashSession Entity | Entity | Cash | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-125** | CashMovement Entity | Entity | Cash | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-126** | CashReconciliation Entity | Entity | Cash | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-127** | Discount / DiscountApplication Entity | Entity | Cash | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-128** | Cash Sessions API | API | Cash | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-129** | Cash Movements API | API | Cash | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-130** | Reconciliation API | API | Cash | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-131** | Discounts API | API | Cash | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-132** | Cash Movement Recorded Event | Event | Cash | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-133** | Cash Session Reconciled Event | Event | Cash | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-134** | Daily Settlement Calculation | Calculation | Cash | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-135** | Cash RBAC | RBAC | Cash | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-136** | Cash Compliance Rules | Rules | Cash | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0 (placeholder — ver README)
 - [ ] **SPEC-137** | spec-137-entity-invoice | STUB
 - [ ] **SPEC-138** | spec-138-entity-invoice-line-item | STUB
 - [ ] **SPEC-139** | spec-139-entity-fiscal-printer | STUB

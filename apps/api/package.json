@@ -27,7 +27,8 @@
     "@maitre/floor": "*",
     "@maitre/reservations": "*",
     "@maitre/ordering": "*",
-    "@maitre/kitchen": "*"
+    "@maitre/kitchen": "*",
+    "@maitre/cash": "*"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",

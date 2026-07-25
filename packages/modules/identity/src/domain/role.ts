@@ -149,6 +149,25 @@ export const ROLE_REGISTRY: Readonly<Record<string, Role>> = Object.freeze({
       "time:export",
       "labor_policy:manage",
       "labor_policy:review",
+      // SPEC-135 §Cash RBAC — ADMIN gets the full canonical Cash set. The spec's
+      // dotted names (cash.session.open, cash.reconciliation.approve, ...) are
+      // mapped to the codebase's resource:action convention (cash:session_open,
+      // cash:reconciliation_approve), exactly as SPEC-109's kitchen.command.claim
+      // became kitchen:command_claim. Register configuration reuses cash:report_read
+      // as its manager-tier gate (SPEC-135 defines no dedicated register-admin
+      // permission).
+      "cash:session_open",
+      "cash:session_close",
+      "cash:movement_record",
+      "cash:movement_compensate",
+      "cash:count",
+      "cash:reconciliation_submit",
+      "cash:reconciliation_approve",
+      "discount:apply",
+      "discount:override",
+      "discount:manage",
+      "cash:report_read",
+      "cash:report_export",
     ],
   },
   role_manager: {
@@ -253,6 +272,21 @@ export const ROLE_REGISTRY: Readonly<Record<string, Role>> = Object.freeze({
       "time:adjust_approve",
       "time:read_sensitive",
       "labor_policy:review",
+      // SPEC-135 §Cash RBAC — MANAGER approves within LimitsPolicy and holds the
+      // elevated cash authority (compensations, reconciliation approval, discount
+      // management/override, report export), so it gets the full canonical set.
+      "cash:session_open",
+      "cash:session_close",
+      "cash:movement_record",
+      "cash:movement_compensate",
+      "cash:count",
+      "cash:reconciliation_submit",
+      "cash:reconciliation_approve",
+      "discount:apply",
+      "discount:override",
+      "discount:manage",
+      "cash:report_read",
+      "cash:report_export",
     ],
   },
   role_employee: {
@@ -412,6 +446,15 @@ export const ROLE_REGISTRY: Readonly<Record<string, Role>> = Object.freeze({
       // SPEC-097 §Ordering RBAC — "CASHIER lee el mínimo necesario para
       // coordinación con Check": order read only.
       "order:read",
+      // SPEC-135 §Cash RBAC — "CASHIER opera su sesión dentro de límites
+      // aprobados": open/close its own session, record ordinary movements and
+      // perform the physical count. NOT compensation, reconciliation
+      // submit/approve, discount management/override or report export — those are
+      // MANAGER-tier per the approved scope.
+      "cash:session_open",
+      "cash:session_close",
+      "cash:movement_record",
+      "cash:count",
     ],
   },
 });

@@ -15,7 +15,8 @@
     { "path": "../../../packages/modules/reservations" },
     { "path": "../../../packages/modules/ordering" },
     { "path": "../../../packages/modules/workforce" },
-    { "path": "../../../packages/modules/kitchen" }
+    { "path": "../../../packages/modules/kitchen" },
+    { "path": "../../../packages/modules/cash" }
   ],
   "include": ["src"]
 }

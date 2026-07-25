@@ -41,6 +41,7 @@ import { registerProductionQueueRoutes } from "./routes/production-queue.js";
 import { registerKitchenAlertRoutes } from "./routes/kitchen-alerts.js";
 import { registerWorkforceRoutes } from "./routes/workforce.js";
 import { registerBreakRoutes } from "./routes/breaks.js";
+import { registerCashRegisterRoutes } from "./routes/cash-registers.js";
 
 // SPEC-211 — app.ts instantiates and wires plugins/routes without listen().
 // server.ts (local/process) and api/serverless.ts (Vercel) both consume this.
@@ -98,6 +99,7 @@ export async function buildApp(container?: Container): Promise<FastifyInstance> 
   await registerKitchenAlertRoutes(app, resolvedContainer);
   await registerWorkforceRoutes(app, resolvedContainer);
   await registerBreakRoutes(app, resolvedContainer);
+  await registerCashRegisterRoutes(app, resolvedContainer);
 
   return app;
 }

@@ -21,7 +21,8 @@
     "@maitre/reservations": "*",
     "@maitre/ordering": "*",
     "@maitre/workforce": "*",
-    "@maitre/kitchen": "*"
+    "@maitre/kitchen": "*",
+    "@maitre/cash": "*"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
