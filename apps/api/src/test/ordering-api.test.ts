@@ -53,7 +53,31 @@ serialTest("Order lifecycle: create DRAFT, add item, submit dispatches Kitchen C
   const create = await app.inject({ method: "POST", url: `/v1/visits/${visitId}/orders`, headers, payload: {} });
   assert.equal(create.statusCode, 201);
   const order = create.json().data;
+  assert.deepEqual(
+    new Set(Object.keys(order as Record<string, unknown>)),
+    new Set([
+      "id",
+      "tenantId",
+      "branchId",
+      "visitId",
+      "currency",
+      "items",
+      "adjustments",
+      "status",
+      "subtotalMinorUnits",
+      "taxTotalMinorUnits",
+      "grandTotalMinorUnits",
+      "revision",
+      "createdAt",
+      "updatedAt",
+    ]),
+  );
   assert.equal(order.status, "DRAFT");
+  assert.equal(order.revision, 1);
+  assert.deepEqual(order.items, []);
+  assert.deepEqual(order.adjustments, []);
+  assert.ok(!Number.isNaN(Date.parse(order.createdAt as string)));
+  assert.ok(!Number.isNaN(Date.parse(order.updatedAt as string)));
 
   const addItem = await app.inject({
     method: "POST",
@@ -62,11 +86,63 @@ serialTest("Order lifecycle: create DRAFT, add item, submit dispatches Kitchen C
     payload: { productId: DEMO_PRODUCT_ID, quantity: 2 },
   });
   assert.equal(addItem.statusCode, 201);
+  assert.deepEqual(
+    new Set(Object.keys(addItem.json().data as Record<string, unknown>)),
+    new Set([
+      "id",
+      "tenantId",
+      "branchId",
+      "visitId",
+      "currency",
+      "items",
+      "adjustments",
+      "status",
+      "subtotalMinorUnits",
+      "taxTotalMinorUnits",
+      "grandTotalMinorUnits",
+      "revision",
+      "createdAt",
+      "updatedAt",
+    ]),
+  );
+  assert.equal(addItem.json().data.revision, 2);
+  assert.equal(addItem.json().data.items.length, 1);
+  assert.deepEqual(
+    new Set(Object.keys(addItem.json().data.items[0] as Record<string, unknown>)),
+    new Set(["id", "productId", "name", "quantity", "unitPriceMinorUnits", "currency", "modifiers", "allergens", "status"]),
+  );
   assert.equal(addItem.json().data.subtotalMinorUnits, 700000);
 
   const submit = await app.inject({ method: "POST", url: `/v1/orders/${order.id}/submit`, headers, payload: {} });
   assert.equal(submit.statusCode, 200);
+  assert.deepEqual(
+    new Set(Object.keys(submit.json().data as Record<string, unknown>)),
+    new Set(["order", "commands"]),
+  );
+  assert.deepEqual(
+    new Set(Object.keys(submit.json().data.order as Record<string, unknown>)),
+    new Set([
+      "id",
+      "tenantId",
+      "branchId",
+      "visitId",
+      "currency",
+      "items",
+      "adjustments",
+      "status",
+      "subtotalMinorUnits",
+      "taxTotalMinorUnits",
+      "grandTotalMinorUnits",
+      "revision",
+      "createdAt",
+      "updatedAt",
+      "submittedAt",
+    ]),
+  );
   assert.equal(submit.json().data.order.status, "SUBMITTED");
+  assert.equal(submit.json().data.order.revision, 3);
+  assert.ok(!Number.isNaN(Date.parse(submit.json().data.order.submittedAt as string)));
+  assert.equal(submit.json().data.order.updatedAt, submit.json().data.order.submittedAt);
   // Submit now creates one Kitchen Command per OrderItem (KitchenTicket retired).
   const commands = submit.json().data.commands;
   assert.equal(commands.length, 1);
@@ -367,6 +443,10 @@ serialTest("Order submit is idempotent and does not redispatch commands on re-su
     payload: { catalogRevisionId: "catalog-rev-1" },
   });
   assert.equal(first.statusCode, 200);
+  assert.deepEqual(
+    new Set(Object.keys(first.json().data as Record<string, unknown>)),
+    new Set(["order", "commands"]),
+  );
   assert.equal(first.json().data.order.status, "SUBMITTED");
   assert.equal(first.json().data.order.catalogRevisionId, "catalog-rev-1");
   assert.equal(first.json().data.commands.length, 1);
@@ -380,6 +460,10 @@ serialTest("Order submit is idempotent and does not redispatch commands on re-su
     payload: { catalogRevisionId: "catalog-rev-2" },
   });
   assert.equal(second.statusCode, 200);
+  assert.deepEqual(
+    new Set(Object.keys(second.json().data as Record<string, unknown>)),
+    new Set(["order", "commands"]),
+  );
   assert.equal(second.json().data.order.status, "SUBMITTED");
   assert.equal(second.json().data.order.catalogRevisionId, "catalog-rev-1");
   assert.equal(second.json().data.order.revision, firstRevision);

@@ -336,6 +336,72 @@ test("invalid transition (mark-ready before start) returns 409; unknown id 404",
   await app.close();
 });
 
+test("kitchen commands enforce RBAC for cashier and hide unknown command ids as 404", async () => {
+  const container = await buildContainer();
+  const { tenantId, branchId } = await getContext(container);
+  const app = await buildApp(container);
+  const owner = ownerHeaders(container, tenantId);
+  const { commands } = await submitOrderWithItems(app, owner, branchId);
+  const commandId = commands[0]!.id;
+  const now = new Date();
+
+  const cashier = {
+    id: randomUUID(),
+    identityProvider: "fixture",
+    externalIdentityId: "demo-cashier-kitchen-commands",
+    displayName: "Demo Cashier Kitchen Commands",
+    status: "ACTIVE" as const,
+    createdAt: now,
+    updatedAt: now,
+  };
+  await container.users.save(cashier);
+  await container.memberships.save({
+    id: randomUUID(),
+    tenantId,
+    userId: cashier.id,
+    status: "ACTIVE",
+    branchScopeType: "ALL_BRANCHES",
+    roleIds: ["role_cashier"],
+    branchIds: [],
+    activatedAt: now,
+    createdAt: now,
+    updatedAt: now,
+  });
+  const cashierToken = "cashier-token-kitchen-commands";
+  sessionsOf(container).registerToken(cashierToken, {
+    provider: "fixture",
+    subject: "demo-cashier-kitchen-commands",
+    issuedAt: now,
+    expiresAt: new Date(now.getTime() + 60 * 60 * 1000),
+  });
+  const cashierHeaders = { authorization: `Bearer ${cashierToken}`, "x-tenant-id": tenantId };
+
+  const forbiddenRead = await app.inject({
+    method: "GET",
+    url: `/v1/kitchen/commands/${commandId}`,
+    headers: cashierHeaders,
+  });
+  assert.equal(forbiddenRead.statusCode, 403);
+
+  const forbiddenClaim = await app.inject({
+    method: "POST",
+    url: `/v1/kitchen/commands/${commandId}/claim`,
+    headers: cashierHeaders,
+    payload: {},
+  });
+  assert.equal(forbiddenClaim.statusCode, 403);
+
+  const missingClaim = await app.inject({
+    method: "POST",
+    url: `/v1/kitchen/commands/${randomUUID()}/claim`,
+    headers: owner,
+    payload: {},
+  });
+  assert.equal(missingClaim.statusCode, 404);
+
+  await app.close();
+});
+
 test("cancel a command leaves the Order untouched (production compensation only)", async () => {
   const container = await buildContainer();
   const { tenantId, branchId } = await getContext(container);
