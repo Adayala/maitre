@@ -189,8 +189,33 @@ serialTest("Cancel order records an adjustment", async () => {
 
   const cancel = await app.inject({ method: "POST", url: `/v1/orders/${order.id}/cancel`, headers, payload: { reasonCode: "GUEST_REQUEST" } });
   assert.equal(cancel.statusCode, 200);
+  assert.deepEqual(
+    new Set(Object.keys(cancel.json().data as Record<string, unknown>)),
+    new Set([
+      "id",
+      "tenantId",
+      "branchId",
+      "visitId",
+      "currency",
+      "items",
+      "adjustments",
+      "status",
+      "subtotalMinorUnits",
+      "taxTotalMinorUnits",
+      "grandTotalMinorUnits",
+      "revision",
+      "createdAt",
+      "updatedAt",
+      "submittedAt",
+      "cancelledAt",
+      "catalogRevisionId",
+    ]),
+  );
   assert.equal(cancel.json().data.status, "CANCELLED");
   assert.equal(cancel.json().data.adjustments.length, 1);
+  assert.equal(cancel.json().data.revision, 4);
+  assert.ok(!Number.isNaN(Date.parse(cancel.json().data.cancelledAt as string)));
+  assert.equal(cancel.json().data.updatedAt, cancel.json().data.cancelledAt);
   await app.close();
 });
 
@@ -220,9 +245,40 @@ serialTest("Change quantity applies synchronously and records an adjustment", as
     payload: { newQuantity: 3, reasonCode: "GUEST_REQUEST" },
   });
   assert.equal(changed.statusCode, 200);
+  assert.deepEqual(
+    new Set(Object.keys(changed.json().data as Record<string, unknown>)),
+    new Set([
+      "id",
+      "tenantId",
+      "branchId",
+      "visitId",
+      "currency",
+      "items",
+      "adjustments",
+      "status",
+      "subtotalMinorUnits",
+      "taxTotalMinorUnits",
+      "grandTotalMinorUnits",
+      "revision",
+      "createdAt",
+      "updatedAt",
+      "submittedAt",
+    ]),
+  );
   assert.equal(changed.json().data.items[0].quantity, 3);
+  assert.deepEqual(
+    new Set(Object.keys(changed.json().data.items[0] as Record<string, unknown>)),
+    new Set(["id", "productId", "name", "quantity", "unitPriceMinorUnits", "currency", "modifiers", "allergens", "status"]),
+  );
   assert.equal(changed.json().data.adjustments.length, 1);
+  assert.deepEqual(
+    new Set(Object.keys(changed.json().data.adjustments[0] as Record<string, unknown>)),
+    new Set(["id", "reasonCode", "actorType", "deltaAmountMinorUnits", "orderItemId", "createdAt"]),
+  );
   assert.equal(changed.json().data.adjustments[0].reasonCode, "GUEST_REQUEST");
+  assert.equal(changed.json().data.adjustments[0].orderItemId, itemId);
+  assert.ok(!Number.isNaN(Date.parse(changed.json().data.adjustments[0].createdAt as string)));
+  assert.equal(changed.json().data.revision, 4);
   assert.equal(changed.json().data.subtotalMinorUnits, 1050000);
   await app.close();
 });
@@ -301,7 +357,29 @@ serialTest("Order item cancel and transition endpoints enforce lifecycle and per
     payload: { to: "IN_PREP" },
   });
   assert.equal(inPrep.statusCode, 200);
+  assert.deepEqual(
+    new Set(Object.keys(inPrep.json().data as Record<string, unknown>)),
+    new Set([
+      "id",
+      "tenantId",
+      "branchId",
+      "visitId",
+      "currency",
+      "items",
+      "adjustments",
+      "status",
+      "subtotalMinorUnits",
+      "taxTotalMinorUnits",
+      "grandTotalMinorUnits",
+      "revision",
+      "createdAt",
+      "updatedAt",
+      "submittedAt",
+    ]),
+  );
   assert.equal(inPrep.json().data.items[0].status, "IN_PREP");
+  assert.equal(inPrep.json().data.status, "IN_PREP");
+  assert.equal(inPrep.json().data.revision, 4);
 
   const forbiddenPreparedCancel = await app.inject({
     method: "POST",
@@ -318,7 +396,29 @@ serialTest("Order item cancel and transition endpoints enforce lifecycle and per
     payload: { to: "READY" },
   });
   assert.equal(ready.statusCode, 200);
+  assert.deepEqual(
+    new Set(Object.keys(ready.json().data as Record<string, unknown>)),
+    new Set([
+      "id",
+      "tenantId",
+      "branchId",
+      "visitId",
+      "currency",
+      "items",
+      "adjustments",
+      "status",
+      "subtotalMinorUnits",
+      "taxTotalMinorUnits",
+      "grandTotalMinorUnits",
+      "revision",
+      "createdAt",
+      "updatedAt",
+      "submittedAt",
+    ]),
+  );
   assert.equal(ready.json().data.items[0].status, "READY");
+  assert.equal(ready.json().data.status, "READY");
+  assert.equal(ready.json().data.revision, 5);
 
   const cancelPrepared = await app.inject({
     method: "POST",
@@ -327,8 +427,56 @@ serialTest("Order item cancel and transition endpoints enforce lifecycle and per
     payload: { reasonCode: "GUEST_REQUEST" },
   });
   assert.equal(cancelPrepared.statusCode, 200);
+  assert.deepEqual(
+    new Set(Object.keys(cancelPrepared.json().data as Record<string, unknown>)),
+    new Set([
+      "id",
+      "tenantId",
+      "branchId",
+      "visitId",
+      "currency",
+      "items",
+      "adjustments",
+      "status",
+      "subtotalMinorUnits",
+      "taxTotalMinorUnits",
+      "grandTotalMinorUnits",
+      "revision",
+      "createdAt",
+      "updatedAt",
+      "submittedAt",
+      "cancelledAt",
+    ]),
+  );
+  assert.deepEqual(
+    new Set(Object.keys(cancelPrepared.json().data.items[0] as Record<string, unknown>)),
+    new Set([
+      "id",
+      "productId",
+      "name",
+      "quantity",
+      "unitPriceMinorUnits",
+      "currency",
+      "modifiers",
+      "allergens",
+      "status",
+      "cancelReason",
+      "cancelledAt",
+    ]),
+  );
   assert.equal(cancelPrepared.json().data.items[0].status, "CANCELLED");
+  assert.equal(cancelPrepared.json().data.items[0].cancelReason, "GUEST_REQUEST");
+  assert.ok(!Number.isNaN(Date.parse(cancelPrepared.json().data.items[0].cancelledAt as string)));
   assert.equal(cancelPrepared.json().data.adjustments.length, 1);
+  assert.deepEqual(
+    new Set(Object.keys(cancelPrepared.json().data.adjustments[0] as Record<string, unknown>)),
+    new Set(["id", "reasonCode", "actorType", "deltaAmountMinorUnits", "orderItemId", "createdAt"]),
+  );
+  assert.equal(cancelPrepared.json().data.adjustments[0].orderItemId, itemId);
+  assert.equal(cancelPrepared.json().data.status, "CANCELLED");
+  assert.equal(cancelPrepared.json().data.revision, 6);
+  assert.ok(!Number.isNaN(Date.parse(cancelPrepared.json().data.cancelledAt as string)));
+  assert.equal(cancelPrepared.json().data.updatedAt, cancelPrepared.json().data.cancelledAt);
 
   const cancelAgain = await app.inject({
     method: "POST",
@@ -367,6 +515,7 @@ serialTest("Order item cancel and transition hide unknown and cross-tenant targe
     payload: { to: "IN_PREP" },
   });
   assert.equal(unknownTransition.statusCode, 404);
+  assert.equal(unknownTransition.json().title, "OrderItem not found");
 
   const unknownCancel = await app.inject({
     method: "POST",
@@ -375,6 +524,7 @@ serialTest("Order item cancel and transition hide unknown and cross-tenant targe
     payload: { reasonCode: "GUEST_REQUEST" },
   });
   assert.equal(unknownCancel.statusCode, 404);
+  assert.equal(unknownCancel.json().title, "OrderItem not found");
 
   const otherTenantId = randomUUID();
   const now = new Date();
@@ -409,6 +559,7 @@ serialTest("Order item cancel and transition hide unknown and cross-tenant targe
     payload: { to: "IN_PREP" },
   });
   assert.equal(crossTenantTransition.statusCode, 404);
+  assert.equal(crossTenantTransition.json().title, "OrderItem not found");
 
   const crossTenantCancel = await app.inject({
     method: "POST",
@@ -417,6 +568,7 @@ serialTest("Order item cancel and transition hide unknown and cross-tenant targe
     payload: { reasonCode: "GUEST_REQUEST" },
   });
   assert.equal(crossTenantCancel.statusCode, 404);
+  assert.equal(crossTenantCancel.json().title, "Order not found");
 
   await app.close();
 });
