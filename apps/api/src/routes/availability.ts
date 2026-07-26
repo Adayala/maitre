@@ -5,7 +5,7 @@ import { calculateAvailability, blocksCapacity } from "@maitre/reservations";
 import type { AvailabilityWindow } from "@maitre/reservations";
 import type { Container } from "../composition/container.js";
 import { requireTenantContext, requirePermission } from "../http/request-context.js";
-import { sendProblem, badRequest } from "../http/problem-details.js";
+import { sendProblem, badRequest, notFound } from "../http/problem-details.js";
 
 // SPEC-074 — Availability API. GET-only, computed live via
 // calculateAvailability (simplified single-table model, see
@@ -30,7 +30,7 @@ export async function registerAvailabilityRoutes(app: FastifyInstance, container
       const query = querySchema.parse(req.query);
       const branch = await container.branches.findById(ctx.tenantId, req.params.branchId);
       if (!branch) {
-        throw new Error("Branch not found");
+        throw notFound("Branch");
       }
 
       const salons = await container.salons.listByBranch(ctx.tenantId, req.params.branchId);

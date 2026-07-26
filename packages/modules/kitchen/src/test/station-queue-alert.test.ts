@@ -104,6 +104,7 @@ test("production queue orders by priority DESC, receivedAt ASC, id ASC", async (
   await reprioritizeCommand({ commands, outbox }, { tenantId: "t1", commandId: "ccc", priority: 10, reason: "VIP" });
 
   const queue = await getProductionQueue({ commands }, { tenantId: "t1", stationId: "s1" });
+  assert.equal(queue.stationId, "s1");
   assert.deepEqual(queue.commands.map((c) => c.id), ["ccc", "bbb", "aaa"]);
   assert.ok(queue.asOf instanceof Date);
 });

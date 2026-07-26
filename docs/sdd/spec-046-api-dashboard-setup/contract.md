@@ -1,9 +1,10 @@
 # Contrato API — SPEC-046
 
-`GET /v1/dashboard/setup-status` devuelve checklist derivado de configuración autoritativa:
-tenant, fiscal entity, branch, salon/table, menu y memberships mínimas. Cada item contiene
-code estable, `COMPLETE | INCOMPLETE | BLOCKED`, action link permitido y reason codes.
+`GET /v1/dashboard/setup-status` devuelve checklist derivado de configuración autoritativa. En el
+I0 real cubre sólo `tenant`, `brands`, `branches`, `users`, `menus` y `products`. Cada entrada se
+expone dentro del mapa `setup` con `COMPLETE | INCOMPLETE | BLOCKED`, `count`, `required` y
+`actionLink` opcional.
 
 No persiste un porcentaje mutable ni marca pasos por clicks. Resultado depende de tenant y
-scope, usa ETag/revisión y no revela recursos inaccesibles. Tests cubren estado vacío,
-parcial, completo, regresión al desconfigurar y cross-tenant.
+scope y no revela recursos inaccesibles. I0 no implementa `ETag`, revisión ni freshness. Tests
+cubren tenant sembrado completo, tenant vacío e inexistencia de contexto de tenant.

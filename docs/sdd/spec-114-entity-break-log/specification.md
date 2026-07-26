@@ -1,18 +1,23 @@
 # Especificación — SPEC-114 BreakLog
 
-BreakLog pertenece a TimeEntry y congela type, paid classification y policy version. Lifecycle
-`OPEN -> CLOSED`; no permite dos pausas abiertas ni intervalos fuera de la jornada efectiva.
+BreakLog pertenece a una `TimeEntry` y conserva `breakType`, `paidClassification`,
+`laborPolicyVersion`, `openedAt`, `closedAt?`, `timezone`, `source`, `deviceId` y
+`deviceSequence`.
 
-Clock-out con pausa abierta se rechaza o auto-cierra sólo si la policy version lo dispone, dejando
-finding y reason explícitos. Correcciones usan BreakAdjustment append-only y recomputan
-proyecciones; nunca editan timestamps originales.
+Lifecycle implementado: `OPEN -> CLOSED`.
 
-BreakLog referencia una única `timeEntryId` y conserva `breakType`, `paidClassification`,
-`laborPolicyVersion`, `openedAt`, `closedAt?`, source y metadata de auditoría. No admite dos pausas
-abiertas simultáneas dentro de la misma TimeEntry ni intervalos que excedan la jornada efectiva
-salvo policy explícita de excepción.
+Reglas implementadas:
 
-El comportamiento ante `clock-out` con pausa abierta depende de la `laborPolicyVersion`: puede
-rechazar el cierre o autocerrar la pausa con finding y `reasonCode` explícitos. En ambos casos la
-decisión debe ser auditable y reproducible. BreakAdjustment agrega correcciones append-only con
-before/after, actor, motivo y evidencia sin mutar los timestamps fuente.
+- la `TimeEntry` debe existir y estar `OPEN` para iniciar una pausa;
+- `openedAt` no puede ser anterior al inicio efectivo de la jornada;
+- no puede existir más de una pausa `OPEN` para la misma `TimeEntry`;
+- `closedAt` no puede ser anterior a `openedAt`;
+- `endBreak` exige `expectedRevision` y falla por conflicto si la revisión cambió;
+- `clock-out` con pausa abierta se rechaza o autocierra según `laborPolicyVersion`.
+
+Cuando una pausa se autocierra por clock-out, se persiste `findingReasonCode`. Las correcciones usan
+`BreakAdjustment` append-only y actualizan `effectiveOpenedAt`/`effectiveClosedAt` sin mutar los
+timestamps fuente.
+
+No está implementado en I0 un validador general que asegure que toda pausa cerrada quede dentro del
+fin efectivo de la jornada, ni un workflow de findings más rico que `findingReasonCode`.

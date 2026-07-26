@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 import { buildApp } from "../app.js";
 import { buildContainer, type Container } from "../composition/container.js";
 import type {
@@ -97,6 +98,29 @@ test("GET /v1/me/context appends UserAuthenticated to the outbox with no tenantI
   await app.close();
 });
 
+test("GET /v1/me/context propagates x-correlation-id to response and outbox event", async () => {
+  const container = await buildContainer();
+  const app = await buildApp(container);
+  const correlationId = "corr-me-context-1";
+
+  const response = await app.inject({
+    method: "GET",
+    url: "/v1/me/context",
+    headers: {
+      authorization: `Bearer ${container.demoAccessToken}`,
+      "x-correlation-id": correlationId,
+    },
+  });
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.headers["x-correlation-id"], correlationId);
+
+  const records = outboxOf(container).all();
+  const event = records[records.length - 1]!;
+  assert.equal(event.eventName, "UserAuthenticated");
+  assert.equal(event.correlationId, correlationId);
+  await app.close();
+});
+
 test("GET /v1/me/context does not require X-Tenant-Id/X-Branch-Id headers", async () => {
   const container = await buildContainer();
   const app = await buildApp(container);
@@ -148,5 +172,70 @@ test("GET /v1/me/context rejects a principal with no matching User (identity-not
   });
   assert.equal(response.statusCode, 403);
   assert.equal(response.json().type, "identity-not-enabled");
+  await app.close();
+});
+
+test("GET /v1/me/context respects SELECTED_BRANCHES scope in memberships", async () => {
+  const container = await buildContainer();
+  const now = new Date();
+  const owner = await container.users.findByExternalIdentity("fixture", "demo-owner");
+  const seededMemberships = await container.memberships.listActiveByUser(owner!.id);
+  const tenantId = seededMemberships[0]!.tenantId;
+
+  const secondBranchId = randomUUID();
+  const firstBranch = (await container.branches.listByTenant(tenantId))[0]!;
+  await container.branches.save({
+    id: secondBranchId,
+    tenantId,
+    brandId: firstBranch.brandId,
+    code: "ANNEX",
+    name: "Annex Branch",
+    timezone: firstBranch.timezone,
+    status: "ACTIVE",
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  const scopedUser = {
+    id: randomUUID(),
+    identityProvider: "fixture",
+    externalIdentityId: "demo-scoped-me-context",
+    displayName: "Scoped Me Context",
+    status: "ACTIVE" as const,
+    createdAt: now,
+    updatedAt: now,
+  };
+  await container.users.save(scopedUser);
+  await container.memberships.save({
+    id: randomUUID(),
+    tenantId,
+    userId: scopedUser.id,
+    status: "ACTIVE",
+    branchScopeType: "SELECTED_BRANCHES",
+    roleIds: ["role_waiter"],
+    branchIds: [secondBranchId],
+    activatedAt: now,
+    createdAt: now,
+    updatedAt: now,
+  });
+  const token = "scoped-me-context-token";
+  sessionsOf(container).registerToken(token, {
+    provider: "fixture",
+    subject: "demo-scoped-me-context",
+    issuedAt: now,
+    expiresAt: new Date(now.getTime() + 60 * 60 * 1000),
+  });
+
+  const app = await buildApp(container);
+  const response = await app.inject({
+    method: "GET",
+    url: "/v1/me/context",
+    headers: { authorization: `Bearer ${token}` },
+  });
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.json().tenants.length, 1);
+  assert.equal(response.json().tenants[0].branches.length, 1);
+  assert.equal(response.json().tenants[0].branches[0].id, secondBranchId);
+  assert.equal(response.json().tenants[0].branches[0].code, "ANNEX");
   await app.close();
 });

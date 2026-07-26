@@ -1,31 +1,27 @@
 # Especificación — SPEC-044
 
-## Schema JSON
+## Schema I0
 
 ```json
 {
   "id": "uuid",
   "tenantId": "uuid",
-  "partitionKey": "tenant-id:period",
-  "sequence": 123,
   "occurredAt": "ISO8601",
-  "recordedAt": "ISO8601",
-  "actor": { "type": "USER | SERVICE | PLATFORM", "id": "opaque-id" },
-  "action": "resource.action",
+  "actorType": "USER | SYSTEM",
+  "actorId": "opaque-id-or-null",
+  "action": "CREATE | UPDATE | DELETE",
   "resourceType": "string",
   "resourceId": "uuid",
-  "outcome": "SUCCEEDED | DENIED | FAILED",
-  "reasonCode": "canonical-code",
-  "correlationId": "uuid",
-  "requestId": "uuid",
-  "causationId": "uuid | null",
-  "diff": { "before": {}, "after": {}, "redactedFields": [] },
-  "technicalSignals": { "networkClass": "PUBLIC | PRIVATE | UNKNOWN" },
-  "previousHash": "sha256:hex",
-  "recordHash": "sha256:hex",
-  "retentionPolicyId": "AUDIT-RETENTION-001"
+  "previousState": {},
+  "newState": {},
+  "correlationId": "uuid-or-null"
 }
 ```
 
-`recordHash` cubre la serialización canónica y `previousHash` de su partición. El primer record usa
-un genesis marker normativo. Hash chain detecta tampering, pero no reemplaza backup/retención.
+El I0 actual implementa un registro append-only simple. No existen `partitionKey`, `sequence`,
+`recordedAt`, actor `SERVICE|PLATFORM`, `outcome`, `reasonCode`, `requestId`, `causationId`,
+`technicalSignals`, `previousHash`, `recordHash` ni `retentionPolicyId` materializados en la
+entidad.
+
+`previousState` y `newState` son snapshots opcionales y el caller decide qué redacción aplicar
+antes de escribirlos. El módulo de auditoría no sanitiza ni genera diffs por sí mismo.

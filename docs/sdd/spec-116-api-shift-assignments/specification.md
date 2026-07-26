@@ -1,19 +1,36 @@
 # Especificación — SPEC-116 ShiftAssignments API
 
-Create/list y comandos `confirm`, `decline`, `reassign`, `cancel`. Cada mutación usa idempotency key
-y `If-Match`, y revalida Employment vigente, branch eligibility, función y conflictos en la misma
-transacción.
+La API I0 de `ShiftAssignment` expone create, list, detail y comandos explícitos `confirm`,
+`decline`, `cancel` y `reassign`. No existe edición arbitraria fuera de esos comandos.
 
-Reassign cancela la asignación previa y crea la nueva de forma atómica, con motivo. Las respuestas
-minimizan datos personales; self-service y management usan permisos distintos. Una notificación
-es efecto outbox y no condiciona el resultado.
+Surface materializado:
 
-La API expone create/list/detail cuando corresponda y comandos explícitos `confirm`, `decline`,
-`reassign` y `cancel`. No existe edición arbitraria de una asignación confirmada sin pasar por uno
-de esos comandos de negocio. Fuera de alcance, detail usa `404`; las colecciones filtran antes de
-paginar y aplicar redacción.
+- `POST /v1/work-shifts/:workShiftId/assignments`
+- `GET /v1/work-shifts/:workShiftId/assignments`
+- `GET /v1/branches/:branchId/shift-assignments`
+- `GET /v1/shift-assignments/:id`
+- `POST /v1/shift-assignments/:id/confirm`
+- `POST /v1/shift-assignments/:id/decline`
+- `POST /v1/shift-assignments/:id/cancel`
+- `POST /v1/shift-assignments/:id/reassign`
 
-Cada mutación revalida en la misma transacción la vigencia de Employment, la elegibilidad por
-sucursal, el rol/estación requeridos y los conflictos de labor policy. `reassign` garantiza que la
-asignación previa quede cancelada y la nueva creada o confirmada como una sola operación lógica,
-sin ventanas observables de doble cobertura o pérdida silenciosa.
+Reglas implementadas:
+
+- create admite `Idempotency-Key`;
+- `confirm`, `decline`, `cancel` y `reassign` exigen `If-Match`;
+- los commands mutadores también aceptan `Idempotency-Key`;
+- create/reassign validan employment existente, activo y elegible para la sucursal;
+- create/reassign fallan si el shift no es asignable;
+- `reassign` cancela la asignación previa y crea una nueva; opcionalmente puede confirmarla en la
+  misma operación;
+- `decline`, `cancel` y `reassign` exigen `reason` en payload y registran auditoría;
+- las colecciones filtran antes de paginar.
+
+Lectura:
+
+- usuarios con permisos de management pueden leer por branch/shift y detail completo;
+- existe self-read acotado para asignaciones propias;
+- fuera de scope o inexistente, detail responde `404`.
+
+No está implementado en I0 un modelo formal de redacción de PII dentro del payload de assignment,
+ni validaciones profundas de labor policy más allá de la elegibilidad y asignabilidad hoy materializadas.

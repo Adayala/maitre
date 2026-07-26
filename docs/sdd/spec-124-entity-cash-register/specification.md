@@ -5,8 +5,8 @@ CashRegister configura una caja física/lógica por Branch: code, currencies per
 
 CashSession es el agregado autoritativo por register + currency: ID, business date/timezone,
 openedAt/by, opening amount, cutoffAt, closedAt/by, ledger revision y status
-`OPEN -> CLOSING -> CLOSED -> RECONCILED`; `SUSPENDED` es flag operativo. Sólo una OPEN/CLOSING por
-register/currency. CLOSED es inmutable; diferencias posteriores crean LateAdjustment enlazado.
+`OPEN -> CLOSING -> CLOSED -> RECONCILED`; `suspended` es un flag operativo. Sólo una `OPEN` o
+`CLOSING` por `registerId + currency`.
 
 CashRegister pertenece a una única `branchId` y conserva `cashRegisterId`, `code`, `displayName`,
 `allowedCurrencies`, `status` y metadata de configuración. Puede representar una caja física o
@@ -14,11 +14,14 @@ lógica, pero nunca una apertura concreta ni un saldo mutable. Su responsabilida
 configuración y disponibilidad del register.
 
 CashSession referencia `cashRegisterId`, `currency`, `businessDate`, `timezone`, `openedAt`,
-`openedBy`, `openingAmount`, `cutoffAt?`, `closedAt?`, `closedBy?`, `ledgerRevision` y `status`.
-`SUSPENDED` funciona como flag operativo adicional y no reemplaza el lifecycle principal. Sólo puede
+`openedBy`, `openingAmountMinorUnits`, `cutoffAt?`, `closedAt?`, `closedBy?`, `ledgerRevision` y
+`status`. `suspended` funciona como flag operativo adicional y no reemplaza el lifecycle principal. Sólo puede
 existir una sesión `OPEN` o `CLOSING` por `registerId + currency` al mismo tiempo.
 
-`CLOSED` congela el ledger observado por esa sesión y es inmutable. Si después aparecen movimientos
-legítimos tardíos o correcciones aprobadas, no se reabre la sesión: se crea un `LateAdjustment`
-enlazado y auditable. `RECONCILED` expresa cierre validado contra reconciliación aprobada, no mera
-finalización operativa.
+`CLOSED` congela el ledger observado por esa sesión y es inmutable. Al cerrar, el sistema crea una
+`CashReconciliation` inicial `DRAFT` con `expectedMinorUnits` calculado del lado servidor desde el
+opening y los movimientos congelados. `RECONCILED` expresa cierre validado contra reconciliación
+aprobada, no mera finalización operativa.
+
+No está implementado en I0 un mecanismo especial de `LateAdjustment` o reapertura lógica de una
+sesión cerrada: un movimiento legítimo tardío cae en la sesión siguiente.

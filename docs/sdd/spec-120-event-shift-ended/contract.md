@@ -1,12 +1,23 @@
 # Contrato de evento — SPEC-120 WorkShiftCompleted
 
-Publicar `workforce.work-shift.completed.v1` al completar administrativamente WorkShift; no
-representa clock-out individual. El sobre
-versionado incluye eventId, occurredAt, tenantId, branchId, shiftId, outcome y agregados no
-personales; no incluye fichadas individuales ni datos salariales. Tests cubren jornadas aún
-abiertas, cierre forzado, reintento, duplicados, reordenamiento, compatibilidad, correlación y
-aislamiento entre tenants.
+Publicar `workforce.work-shift.completed.v1` al completar administrativamente `WorkShift`; no
+representa `clock-out` individual.
 
-En I0, `branchId`, `completedAt`, `laborPolicyVersion`, `aggregateRevision`, `outcome` y
-`actorType` constituyen el payload mínimo obligatorio; agregados de finalización/flags de privacy
-quedan diferidos u opcionales.
+El contrato implementado hoy usa el outbox común con:
+
+- `eventId`, `eventName`, `eventVersion`, `occurredAt`, `producer`, `tenantId`,
+  `aggregateType`, `aggregateId`, `correlationId`;
+- `producer = workforce`, `eventVersion = 1`, `aggregateType = WorkShift`.
+
+Payload implementado:
+
+- `workShiftId`
+- `branchId`
+- `completedAt`
+- `laborPolicyVersion`
+- `aggregateRevision`
+- `outcome = COMPLETED`
+- `actorType = INTERNAL`
+
+No forman parte del contrato I0 agregados de finalización, staffing/privacy flags, `EmploymentId`,
+time entries, payroll ni importes.

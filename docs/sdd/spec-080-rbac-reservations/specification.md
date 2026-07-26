@@ -3,46 +3,34 @@
 ## Permissions canónicas
 
 ```text
-reservation.read
-reservation.create
-reservation.confirm
-reservation.cancel
-reservation.seat
-reservation.no_show
-waitlist.read
-waitlist.create
-waitlist.notify
-waitlist.seat
-waitlist.cancel
-waitlist.expire
-waitlist.priority_override
-availability.read
-guest.read
-guest.write
-guest_contact.write
-guest_consent.write
-guest_pii.read
-guest_pii.write
-guest.merge
-guest.unmerge
-guest.export
-guest.anonymize
-reservation_notification.request_confirmation
-reservation_notification.send_reminder
-reservation_notification.communicate_cancellation
-cancellation_policy.override
+reservation:read
+reservation:create
+reservation:confirm
+reservation:cancel
+reservation:seat
+reservation:no_show
+waitlist:read
+waitlist:manage
+waitlist:priority_override
+guest:pii_read
+guest:pii_write
+guest:export
+guest:anonymize
+reservation:notification_send
+reservation:policy_override
 ```
 
-MAITRE/MANAGER reciben assignments versionados según alcance por sucursal. Otros roles reciben
-permisos explícitos; no se
-introduce un string local `host`. WAITER sólo accede al contexto operativo necesario y no recibe
-PII/export por default.
+`waitlist:manage` cubre create/notify/seat/cancel/expire del waitlist I0. Availability interna
+usa hoy `reservation:read`; no existe un permiso materializado separado para availability. Guest
+surface I0 expone sólo permisos PII/anonymize/export; no existen `guest.read/write/merge/unmerge`
+como permisos independientes dentro de este bloque de reservas.
 
-El canal público no es un rol ni Membership: usa capabilities opacas separadas por acción y
-recurso, con hash at rest, expiración, revocación, single-use cuando corresponda, rate limit y
-respuesta anti-enumeración. Overrides, export, anonymization y lectura masiva requieren auditoría;
-nadie puede otorgarse a sí mismo permisos.
+MAITRE/MANAGER reciben este set operativo dentro del alcance por sucursal. WAITER sólo accede al
+contexto operativo mínimo: `reservation:read`, `reservation:seat`, `waitlist:read` y
+`waitlist:manage`; no recibe PII/export por default. `waitlist:priority_override`,
+`reservation:notification_send`, `guest:export`, `guest:anonymize` y
+`reservation:policy_override` quedan reservados a roles elevados según el catálogo actual.
 
-Guest read no implica Guest PII. Merge/unmerge, export/anonymize y priority/policy override
-requieren reason; export, anonymize y PII/bulk sensible agregan step-up/approval según policy.
-RBAC no reemplaza consent, retention, capacity, lifecycle, idempotencia ni revisión.
+El canal público con capability tokens no está implementado en I0: todas las rutas actuales usan
+Membership autenticada normal. Priority override requiere permiso dedicado y reason en payload.
+RBAC no reemplaza lifecycle, capacity, retención, idempotencia ni revisión.

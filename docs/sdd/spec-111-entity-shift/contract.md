@@ -1,8 +1,19 @@
 # Contrato de entidad — SPEC-111 WorkShift
 
-WorkShift representa una ventana laboral planificada de una sucursal con inicio, fin, timezone,
-rol requerido, capacidad y estado DRAFT/PUBLISHED/IN_PROGRESS/COMPLETED/CANCELLED. Sus
-intervalos usan instantes UTC y conservan la zona de negocio; publicar congela la versión
-operativa y cambios posteriores quedan auditados. Invariantes cubren rango positivo,
-solapamientos permitidos por política, concurrencia y aislamiento tenant/branch. Es distinta de
-ServicePeriod y sólo se vincula mediante ID explícito.
+`WorkShift` representa una ventana laboral planificada de una sucursal. El contrato implementado
+incluye:
+
+- identidad y aislamiento: `id`, `tenantId`, `branchId`;
+- calendario: `timezone`, `businessDate`, `startsAtUtc`, `endsAtUtc`;
+- control operativo: `laborPolicyVersion`, `servicePeriodId?`, `status`, `revision`;
+- auditoría básica: `createdAt`, `updatedAt`, `publishedAt?`, `startedAt?`, `completedAt?`,
+  `cancelledAt?`.
+
+Estados válidos: `DRAFT`, `PUBLISHED`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`.
+
+Transiciones válidas: `DRAFT -> PUBLISHED|CANCELLED`, `PUBLISHED -> IN_PROGRESS|CANCELLED`,
+`IN_PROGRESS -> COMPLETED`.
+
+El contrato actual no define capacidad, rol requerido, capabilities, edición parcial de una
+versión publicada ni múltiples shifts activos simultáneos en una misma sucursal cuando uno de ellos
+está `PUBLISHED` o `IN_PROGRESS`.

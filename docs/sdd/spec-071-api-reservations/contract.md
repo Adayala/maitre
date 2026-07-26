@@ -1,7 +1,7 @@
 # Contrato API — SPEC-071 Reservations
 
 Crear/listar/obtener y ejecutar confirm/cancel/seat/no-show sobre Reservation. Create recibe
-branch, horario, party size y contacto mínimo; tenant deriva del canal/contexto e
-Idempotency-Key evita duplicados. Commands usan If-Match y reason codes. Confirmación
-revalida capacidad atómicamente; seating enlaza Visit una vez. Tests cubren concurrencia,
-timezone/DST, reintento, PII, canales público/interno y aislamiento entre tenants.
+branch, horario y party size; tenant deriva del contexto autenticado. Confirmación revalida
+capacidad y asigna una mesa simple; seating abre/vincula una Visit una sola vez. I0 no expone
+surface pública, no exige `If-Match` ni `Idempotency-Key`, y list sólo filtra por `status`.
+Tests cubren lifecycle interno, permisos, 404, waitlist relacionado y notification intents.

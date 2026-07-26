@@ -1,7 +1,7 @@
 # Contrato API — SPEC-103 Stations
 
 Crear, listar, actualizar, activar y desactivar estaciones de producción dentro de una
-sucursal. Nombre y código son únicos por branch; desactivar exige no dejar trabajo activo
-sin destino y toda reasignación es explícita y auditada. If-Match protege actualizaciones.
-Tests cubren unicidad, concurrencia, estación con cola, reasignación atómica, autorización,
-orden de presentación y aislamiento entre tenants.
+sucursal. `code` es único por branch; `displayOrder` ordena la selección/visualización operativa.
+Desactivar exige no tener Commands no terminales asignados. I0 no implementa `publish-routing`,
+reasignación atómica ni `If-Match`. Tests cubren unicidad, estación con cola activa, activate /
+deactivate, orden de presentación y aislamiento entre tenants.

@@ -7,6 +7,9 @@ import {
   cancelReservation,
   seatReservation,
   markNoShow,
+  createReservationPreference,
+  upsertCancellationPolicy,
+  evaluateCancellation,
   InvalidReservationTransitionError,
   CapacityUnavailableError,
 } from "@maitre/reservations";
@@ -40,6 +43,39 @@ const noShowBodySchema = z.object({
   reason: z.string().min(1),
 });
 
+const createPreferenceBodySchema = z.object({
+  subjectType: z.enum(["GUEST", "RESERVATION"]),
+  subjectId: z.string().min(1),
+  code: z.string().min(1),
+  value: z.string().min(1).optional(),
+  kind: z.enum(["PREFERENCE", "REQUIREMENT"]),
+  notes: z.string().min(1).optional(),
+});
+
+const createCancellationPolicyBodySchema = z.object({
+  name: z.string().min(1),
+  hoursBeforeStartCutoff: z.number().int().nonnegative(),
+  feeDescription: z.string().min(1).optional(),
+});
+
+const evaluateCancellationQuerySchema = z.object({
+  startAt: z.coerce.date(),
+  asOf: z.coerce.date().optional(),
+});
+
+const reservationListQuerySchema = z.object({
+  status: z
+    .enum(["PENDING", "CONFIRMED", "EXPIRED", "SEATED", "CANCELLED", "NO_SHOW", "COMPLETED"])
+    .optional(),
+});
+
+function toReservationListItemResponse(
+  reservation: Awaited<ReturnType<Container["reservations"]["findById"]>> extends infer T ? Exclude<T, null> : never,
+) {
+  const { source: _source, ...rest } = reservation;
+  return rest;
+}
+
 // Gathers all Tables for a Branch (Salon -> Table) for capacity checks.
 // See calculate-availability.ts scope note: no multi-table combination
 // logic, single-table capacity only.
@@ -62,6 +98,8 @@ export async function registerReservationRoutes(app: FastifyInstance, container:
         const ctx = await requireTenantContext(container, req);
         requirePermission(ctx, "reservation:create");
         const body = createReservationBodySchema.parse(req.body);
+        const branch = await container.branches.findById(ctx.tenantId, req.params.branchId);
+        if (!branch) return sendProblem(reply, correlationId, notFound("Branch"));
 
         const reservation = await createReservation(deps(), {
           tenantId: ctx.tenantId,
@@ -85,13 +123,15 @@ export async function registerReservationRoutes(app: FastifyInstance, container:
       try {
         const ctx = await requireTenantContext(container, req);
         requirePermission(ctx, "reservation:read");
+        const query = reservationListQuerySchema.parse(req.query);
         const reservations = await container.reservations.listByBranch(
           ctx.tenantId,
           req.params.branchId,
-          omitUndefined({ status: req.query.status }),
+          omitUndefined({ status: query.status }),
         );
-        return { data: reservations };
+        return { data: reservations.map(toReservationListItemResponse) };
       } catch (err) {
+        if (err instanceof z.ZodError) return sendProblem(reply, correlationId, badRequest(err.message));
         return sendProblem(reply, correlationId, err);
       }
     },
@@ -237,6 +277,100 @@ export async function registerReservationRoutes(app: FastifyInstance, container:
       if (err instanceof Error && err.message.includes("not found")) {
         return sendProblem(reply, correlationId, notFound("Reservation"));
       }
+      return sendProblem(reply, correlationId, err);
+    }
+  });
+
+  app.post("/v1/reservation-preferences", async (req, reply) => {
+    const correlationId = randomUUID();
+    try {
+      const ctx = await requireTenantContext(container, req);
+      requirePermission(ctx, "reservation:create");
+      const body = createPreferenceBodySchema.parse(req.body);
+      const preference = await createReservationPreference(
+        { preferences: container.reservationPreferences },
+        {
+          tenantId: ctx.tenantId,
+          subjectType: body.subjectType,
+          subjectId: body.subjectId,
+          code: body.code,
+          kind: body.kind,
+          ...omitUndefined({ value: body.value, notes: body.notes }),
+        },
+      );
+      reply.code(201);
+      return { data: preference };
+    } catch (err) {
+      if (err instanceof z.ZodError) return sendProblem(reply, correlationId, badRequest(err.message));
+      return sendProblem(reply, correlationId, err);
+    }
+  });
+
+  app.get<{ Querystring: { subjectType: "GUEST" | "RESERVATION"; subjectId: string } }>(
+    "/v1/reservation-preferences",
+    async (req, reply) => {
+      const correlationId = randomUUID();
+      try {
+        const ctx = await requireTenantContext(container, req);
+        requirePermission(ctx, "reservation:read");
+        const query = z.object({
+          subjectType: z.enum(["GUEST", "RESERVATION"]),
+          subjectId: z.string().min(1),
+        }).parse(req.query);
+        const preferences = await container.reservationPreferences.listBySubject(
+          ctx.tenantId,
+          query.subjectType,
+          query.subjectId,
+        );
+        return { data: preferences };
+      } catch (err) {
+        if (err instanceof z.ZodError) return sendProblem(reply, correlationId, badRequest(err.message));
+        return sendProblem(reply, correlationId, err);
+      }
+    },
+  );
+
+  app.post("/v1/cancellation-policies", async (req, reply) => {
+    const correlationId = randomUUID();
+    try {
+      const ctx = await requireTenantContext(container, req);
+      requirePermission(ctx, "reservation:create");
+      const body = createCancellationPolicyBodySchema.parse(req.body);
+      const policy = await upsertCancellationPolicy(
+        { cancellationPolicies: container.cancellationPolicies },
+        { tenantId: ctx.tenantId, name: body.name, hoursBeforeStartCutoff: body.hoursBeforeStartCutoff, ...omitUndefined({ feeDescription: body.feeDescription }) },
+      );
+      return { data: policy };
+    } catch (err) {
+      if (err instanceof z.ZodError) return sendProblem(reply, correlationId, badRequest(err.message));
+      return sendProblem(reply, correlationId, err);
+    }
+  });
+
+  app.get("/v1/cancellation-policies/current", async (req, reply) => {
+    const correlationId = randomUUID();
+    try {
+      const ctx = await requireTenantContext(container, req);
+      requirePermission(ctx, "reservation:read");
+      const policy = await container.cancellationPolicies.findByTenant(ctx.tenantId);
+      if (!policy) return { data: null };
+      return { data: policy };
+    } catch (err) {
+      return sendProblem(reply, correlationId, err);
+    }
+  });
+
+  app.get<{ Querystring: { startAt: string; asOf?: string } }>("/v1/cancellation-policies/evaluate", async (req, reply) => {
+    const correlationId = randomUUID();
+    try {
+      const ctx = await requireTenantContext(container, req);
+      requirePermission(ctx, "reservation:read");
+      const query = evaluateCancellationQuerySchema.parse(req.query);
+      const policy = await container.cancellationPolicies.findByTenant(ctx.tenantId);
+      const evaluation = evaluateCancellation(policy, query.startAt, query.asOf ?? new Date());
+      return { data: evaluation };
+    } catch (err) {
+      if (err instanceof z.ZodError) return sendProblem(reply, correlationId, badRequest(err.message));
       return sendProblem(reply, correlationId, err);
     }
   });

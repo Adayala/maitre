@@ -1,11 +1,7 @@
 # Especificación — SPEC-120 WorkShiftCompleted
 
 Nombre normativo `workforce.work-shift.completed.v1`. Se emite al command administrativo que
-cambia WorkShift a COMPLETED, no por clock-out individual.
-
-Envelope SPEC-217 + workShift ID, branch, completedAt, outcome, policy/revision y flags agregados.
-Entradas abiertas impiden completar salvo override auditado; el evento nunca contiene fichadas,
-Employment IDs o importes. Conteos pequeños se suprimen según privacy threshold.
+cambia `WorkShift` a `COMPLETED`, no por `clock-out` individual.
 
 ## Trigger exacto
 
@@ -45,22 +41,19 @@ Envelope esperado:
 
 Regla aprobada para I0:
 
-- flags/agregados de completion son opcionales en I0
-- el payload mínimo no incluye `EmploymentId`, time entries, payroll ni importes
+- `producer = workforce`
+- `eventVersion = 1`
+- `aggregateType = WorkShift`
+- `actorType = INTERNAL`
+- el payload mínimo no incluye `EmploymentId`, time entries, payroll, importes ni flags agregados
 - `outcome` mínimo I0 es `COMPLETED`; variantes como forced-close requieren contrato futuro explícito
 
 ## Open entries y override
 
-La spec separa dos planos:
+En I0 el evento sólo describe el hecho ya persistido de que el shift quedó `COMPLETED`.
 
-- regla de negocio que decide si el shift puede completarse
-- hecho publicado una vez que el shift efectivamente quedó `COMPLETED`
-
-En I0:
-
-- si open entries bloquean el cierre, no se publica evento
-- si en el futuro existe override auditado que permita completar, el hecho publicado sigue siendo
-  `workforce.work-shift.completed.v1`, con extensión de payload/versionado explícita si hiciera falta
+No está implementado en I0 un bloqueo explícito por open entries dentro del command de complete, ni
+un contrato de override auditado para forced-close.
 
 ## Dedupe, reorder y retries
 
@@ -71,10 +64,4 @@ En I0:
 
 ## Privacidad y agregados diferidos
 
-En I0 no se exige publicar agregados de finalización.
-
-Si en el futuro se agregan:
-
-- deben ser privacy-safe
-- deben suprimirse bajo umbral configurado
-- no pueden exponer fichadas individuales ni importes
+En I0 no se publican agregados de finalización ni conteos operativos en este evento.

@@ -1,11 +1,8 @@
-# Especificación — SPEC-119
+# Especificación — SPEC-119 WorkShiftStarted
 
-Nombre normativo `workforce.work-shift.started.v1`. Se emite sólo por command que cambia `WorkShift`
-de PUBLISHED a IN_PROGRESS; no representa primer clock-in ni hora planificada.
-
-Envelope SPEC-217 + `workShiftId`, sucursal, intervalo planificado, `startedAt`, policy/revisión y tipo de actor.
-No incluye fichadas, Employee IDs ni remuneración. Agregados de dotación sólo se publican si
-alcanzan el umbral de privacidad configurado.
+Nombre normativo `workforce.work-shift.started.v1`. Se emite sólo cuando un command cambia
+`WorkShift` de `PUBLISHED` a `IN_PROGRESS`; no representa primer `clock-in` ni la hora planificada
+por calendario.
 
 ## Trigger exacto
 
@@ -46,9 +43,11 @@ Envelope esperado:
 
 Regla aprobada para I0:
 
-- `brandId` puede derivarse aguas abajo si el contrato de envelope base no lo provee todavía
-- agregados operativos/privacy-threshold son opcionales en I0; no son requisito del payload mínimo
-- el contrato no exige PII ni identificadores de empleos/asignaciones
+- `producer = workforce`
+- `eventVersion = 1`
+- `aggregateType = WorkShift`
+- `actorType = INTERNAL`
+- el contrato no exige PII, identificadores de employments/asignaciones ni conteos operativos
 
 ## Dedupe, reorder y retries
 
@@ -60,10 +59,4 @@ Regla aprobada para I0:
 
 ## Privacidad y agregados diferidos
 
-En I0 no se exige publicar conteos de dotación en este evento.
-
-Si en una versión futura se agregan:
-
-- deben ser privacy-safe
-- deben suprimirse bajo umbral configurado
-- no pueden permitir reidentificación razonable en branches pequeñas
+En I0 no se publican conteos de dotación ni agregados de staffing en este evento.

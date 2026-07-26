@@ -53,8 +53,19 @@ test("submit freezes snapshot and emits submitted event (Kitchen dispatch is the
   const { order } = await submitOrder(d, { tenantId: "t1", orderId: draft.id });
   assert.equal(order.status, "SUBMITTED");
   assert.ok(order.submittedAt);
-  const events = d.outbox.records.map((r) => r.eventName);
-  assert.deepEqual(events, ["ordering.order.submitted.v1"]);
+  const event = d.outbox.records[0]!;
+  assert.equal(event.eventName, "ordering.order.submitted.v1");
+  assert.deepEqual(event.payload, {
+    orderId: order.id,
+    visitId: "v1",
+    branchId: "b1",
+    aggregateRevision: order.revision,
+    submittedAt: order.submittedAt,
+    currency: "ARS",
+    subtotal: 700000,
+    taxTotal: 0,
+    grandTotal: 700000,
+  });
 });
 
 test("submit is idempotent — second submit emits no second event", async () => {
@@ -121,9 +132,25 @@ test("transitionOrderItem drives derived order status and delivered event", asyn
   const { order } = await submitOrder(d, { tenantId: "t1", orderId: draft.id });
   const itemId = order.items[0]!.id;
   await transitionOrderItem(d, { tenantId: "t1", orderId: order.id, orderItemId: itemId, to: "IN_PREP" });
-  await transitionOrderItem(d, { tenantId: "t1", orderId: order.id, orderItemId: itemId, to: "READY" });
+  const ready = await transitionOrderItem(d, { tenantId: "t1", orderId: order.id, orderItemId: itemId, to: "READY" });
+  const readyEvent = d.outbox.records.find((r) => r.eventName === "ordering.order.ready.v1");
+  assert.deepEqual(readyEvent?.payload, {
+    orderId: order.id,
+    visitId: "v1",
+    branchId: "b1",
+    aggregateRevision: ready.revision,
+    readyAt: ready.updatedAt,
+  });
   const delivered = await transitionOrderItem(d, { tenantId: "t1", orderId: order.id, orderItemId: itemId, to: "DELIVERED" });
   assert.equal(delivered.status, "DELIVERED");
+  const deliveredEvent = d.outbox.records.find((r) => r.eventName === "ordering.order.delivered.v1");
+  assert.deepEqual(deliveredEvent?.payload, {
+    orderId: order.id,
+    visitId: "v1",
+    branchId: "b1",
+    aggregateRevision: delivered.revision,
+    deliveredAt: delivered.updatedAt,
+  });
   const names = d.outbox.records.map((r) => r.eventName);
   assert.ok(names.includes("ordering.order.ready.v1"));
   assert.ok(names.includes("ordering.order.delivered.v1"));

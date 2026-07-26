@@ -1,7 +1,9 @@
 # Contrato — SPEC-101 KitchenAlert
 
 KitchenAlert es señal operativa derivada de SLA/reglas: type, severity, station/command refs,
-detectedAt, status `OPEN | ACKNOWLEDGED | RESOLVED`, dedupe key y auditoría. No contiene PII
-ni se usa como fuente del Command. Detección repetida deduplica/actualiza evidencia;
-acknowledge no resuelve causa. Resolución automática/humana registra reason. Tests cubren
-threshold, clock, dedupe, escalation, ack race y rebuild.
+detectedAt/openedAt, status `OPEN | ACKNOWLEDGED | ESCALATED | RESOLVED`, refs operativas y
+auditoría mínima. I0 no materializa rule versions, fingerprint/evidence window ni un motor de
+reglas configurable: sólo dos thresholds hardcodeados evaluados on-demand. La detección repetida
+deduplica mientras exista una `OPEN` para el mismo `commandId + ruleCode`; una alerta resuelta no
+se reabre. `acknowledge` no resuelve causa; `resolve` exige `reasonCode`; `escalate` incrementa
+`escalationLevel`. Tests cubren threshold, dedupe, lifecycle y terminalidad.

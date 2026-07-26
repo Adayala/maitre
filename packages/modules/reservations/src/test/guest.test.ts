@@ -41,5 +41,7 @@ test("anonymizeGuest clears PII fields and marks ANONYMIZED", async () => {
   assert.equal(anonymized.email, undefined);
   assert.equal(anonymized.phone, undefined);
   assert.equal(anonymized.notes, undefined);
+  assert.equal(anonymized.locale, undefined);
+  assert.equal(anonymized.displayName, "Anonymized Guest");
   assert.equal(anonymized.consentGiven, false);
 });

@@ -1,26 +1,49 @@
 # Especificación — SPEC-118 Break Management API
 
-Commands `start`, `end`, `request-adjustment`, `approve-adjustment`, con el mismo protocolo offline
-de SPEC-117. Start exige TimeEntry OPEN y ausencia de pausa abierta; end refiere break ID/revision.
+La superficie I0 de breaks expone:
 
-La policy clasifica y genera findings, pero no inventa timestamps. Correcciones son append-only y
-segregan requester/approver. Acceso propio omite datos de terceros; management requiere permiso
-sensible y alcance de sucursal/Employment.
+- `POST /v1/breaks/start`
+- `POST /v1/breaks/:id/end`
+- `GET /v1/breaks/:id`
+- `GET /v1/time-entries/:timeEntryId/breaks`
+- `GET /v1/branches/:branchId/breaks`
+- `POST /v1/breaks/:breakLogId/adjustments`
+- `GET /v1/breaks/:breakLogId/adjustments`
+- `GET /v1/break-adjustments/:id`
+- `POST /v1/break-adjustments/:id/approve`
+- `POST /v1/break-adjustments/:id/reject`
 
-El surface incluye comandos explícitos `start`, `end`, `request-adjustment` y
-`approve-adjustment`/`reject-adjustment` cuando aplique. `start` exige TimeEntry `OPEN`, ausencia de
-otra pausa abierta y policy laboral vigente. `end` refiere `breakId` y revisión esperada para evitar
-cierres perdidos o sobrepuestos.
+Reglas implementadas:
 
-El protocolo offline reutiliza los principios de SPEC-117: command ID, device pseudonymous ID,
-capturedAt, timezone, secuencia y evidencia. La policy puede clasificar o generar findings, pero no
-inventar timestamps no capturados ni ocultar incumplimientos. Las correcciones posteriores se
-expresan como ajustes append-only auditados.
+- `start` exige `TimeEntry` existente y `OPEN`;
+- `start` falla si ya existe otra pausa `OPEN` para la misma jornada;
+- `start` recibe `commandId?`, `deviceId`, `deviceSequence`, `openedAt`, `timezone`, `source`,
+  `breakType`, `paidClassification` y `laborPolicyVersion`;
+- `end` exige `expectedRevision` y `closedAt`;
+- `end` falla por conflicto si la revisión cambió o si el cierre es inválido;
+- `clock-out` sobre una jornada con break abierto se resuelve fuera de esta API según
+  `laborPolicyVersion`: rechazo o autocierre auditado.
 
-CAD-118-05 queda congelado así: el acceso propio sólo puede consultar el `TimeEntry` propio y sus
-`BreakLog`/`BreakAdjustment` asociados; no puede usar listados supervisorios por sucursal ni leer
-pausas/correcciones de otros empleos aunque comparta sucursal. En acceso propio, la representación de
-`BreakAdjustment` omite `requesterId`, `approverId` y `evidence`, y no expone metadatos que revelen
-autoridad de terceros. Supervisor access requiere permiso sensible más scope válido de sucursal y/o
-Employment; dentro de ese scope puede usar los listados por sucursal, por `TimeEntry` y por
-`BreakLog`, y recibe la representación completa necesaria para auditoría.
+Reglas implementadas para ajustes:
+
+- create/list/detail/approve/reject de `BreakAdjustment`;
+- requester y approver deben ser distintos;
+- el ajuste no puede ser no-op ni dejar una ventana inválida;
+- approval falla si la base efectiva quedó stale;
+- los ajustes actualizan tiempos efectivos, no timestamps fuente.
+
+Lecturas implementadas:
+
+- list por `TimeEntry` con `status`, `order`, `limit`, `offset`;
+- list supervisorio por `Branch` con `status`, `from`, `to`, `order`, `limit`, `offset`;
+- list por `BreakLog` de sus ajustes con `status`, `order`, `limit`, `offset`.
+
+Acceso:
+
+- supervisor access requiere permiso sensible y scope válido de sucursal;
+- self-access sólo puede consultar pausas y ajustes asociados a su propia jornada;
+- en self-access, `BreakAdjustment` redacta `requesterId`, `approverId` y `evidence`;
+- self-access no puede usar el listado supervisorio por branch.
+
+No está implementado en I0 un engine amplio de findings dentro de esta API, ni una política que
+“invente” timestamps: la corrección sigue siendo append-only vía ajustes.

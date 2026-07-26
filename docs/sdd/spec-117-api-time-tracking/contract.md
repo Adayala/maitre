@@ -1,11 +1,26 @@
 # Contrato API — SPEC-117 Time Tracking
 
-Ejecutar clock-in/clock-out y solicitar o aprobar ajustes de jornadas mediante comandos
-idempotentes. El servidor fija timestamps confiables, conserva la marca informada por el
-dispositivo y registra fuente y desfase; no permite editar registros históricos directamente.
-Tests cubren conexión intermitente, reintentos, reloj del cliente alterado, doble marcación,
-DST, aprobación segregada, RBAC, auditoría y aislamiento entre tenants.
+La API materializada de time tracking incluye:
 
-La separación de acceso implica que self-access puede consultar únicamente sus propios `TimeEntry`
-y `TimeAdjustment`, mientras supervisor access requiere permiso sensible y scope válido para vistas
-completas. En self-access, `TimeAdjustment` redacta `requesterId`, `approverId` y `evidence`.
+- `clock-in` y `clock-out`;
+- reads singulares y listados de `TimeEntry`;
+- create/list/detail/approve/reject de `TimeAdjustment`;
+- `workforce-summary` por branch.
+
+El contrato actual garantiza:
+
+- `clock-in` y `clock-out` con replay por `commandId`;
+- `receivedAt` fijado por el servidor;
+- validación de employment, branch scope y asignación confirmada cuando aplica;
+- una sola `TimeEntry` abierta por employment;
+- marcado de `pendingReview` ante skew excesivo o secuencia de dispositivo no monotónica;
+- request/approve/reject de ajustes con segregación requester/approver y protección contra stale base;
+- listados con filtros y paginación en time entries y adjustments;
+- mapeo de errores `400` para input inválido, `404` para recursos inexistentes/fuera de scope y
+  `409` para conflictos de estado o validación.
+
+El contrato I0 incluye self-access acotado para entries y adjustments propios. En self-access,
+`TimeAdjustment` se entrega redactado en `requesterId`, `approverId` y `evidence`.
+
+No forman parte del contrato actual la firma del dispositivo, un workflow de revisión más rico que
+`pendingReview`/`reviewReason`, ni edición directa de registros históricos.

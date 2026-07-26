@@ -1,7 +1,9 @@
 # Contrato — SPEC-069 ReservationPreference
 
-Preference es una señal declarada, no garantía: accessibility, seating zone, dietary note
-u horario. Incluye guest/tenant, code tipado, value validado, priority, source, consent,
-vigencia y auditoría. Texto libre se limita/sanitiza y datos sensibles se minimizan. El
-motor explica preferencias no satisfechas sin bloquear salvo requirement explícito.
+Preference es una señal declarada, no garantía. I0 materializa un record mínimo con tenant,
+subject (`GUEST` o `RESERVATION`), `code`, `value` opcional, `kind` (`PREFERENCE` o
+`REQUIREMENT`) y `notes` opcional. `PREFERENCE` no bloquea; `REQUIREMENT` conserva semántica
+operativa para validaciones de callers posteriores. I0 no introduce priority, consent,
+vigencia, redacción automática ni snapshot en Reservation. Tests cubren creación básica y la
+distinción `PREFERENCE`/`REQUIREMENT`.
 Tests cubren validación, precedence, expiración, redacción y eliminación/export del guest.

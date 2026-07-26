@@ -12,6 +12,10 @@ const DEMO_MENU_ID = "00000000-0000-0000-0000-000000000009";
 const DEMO_PRODUCT_ID = "00000000-0000-0000-0000-00000000000b";
 const DEMO_QR_TOKEN = "demo-qr-menu-token";
 
+function serialTest(name: string, fn: () => Promise<void> | void) {
+  return test(name, { concurrency: false }, fn);
+}
+
 function sessionsOf(container: Container): FixtureSessionVerificationPort {
   return container.sessions as FixtureSessionVerificationPort;
 }
@@ -39,7 +43,7 @@ async function openVisit(app: Awaited<ReturnType<typeof buildApp>>, headers: Rec
   return res.json().data.id as string;
 }
 
-test("Order lifecycle: create DRAFT, add item, submit dispatches Kitchen Commands", async () => {
+serialTest("Order lifecycle: create DRAFT, add item, submit dispatches Kitchen Commands", async () => {
   const container = await buildContainer();
   const { tenantId, branchId } = await getContext(container);
   const app = await buildApp(container);
@@ -70,7 +74,7 @@ test("Order lifecycle: create DRAFT, add item, submit dispatches Kitchen Command
   await app.close();
 });
 
-test("Kitchen Command claim/start/mark-ready/complete-handoff drives Order to DELIVERED", async () => {
+serialTest("Kitchen Command claim/start/mark-ready/complete-handoff drives Order to DELIVERED", async () => {
   const container = await buildContainer();
   const { tenantId, branchId } = await getContext(container);
   const app = await buildApp(container);
@@ -96,7 +100,7 @@ test("Kitchen Command claim/start/mark-ready/complete-handoff drives Order to DE
   await app.close();
 });
 
-test("Cancel order records an adjustment", async () => {
+serialTest("Cancel order records an adjustment", async () => {
   const container = await buildContainer();
   const { tenantId, branchId } = await getContext(container);
   const app = await buildApp(container);
@@ -114,7 +118,7 @@ test("Cancel order records an adjustment", async () => {
   await app.close();
 });
 
-test("Change quantity applies synchronously and records an adjustment", async () => {
+serialTest("Change quantity applies synchronously and records an adjustment", async () => {
   const container = await buildContainer();
   const { tenantId, branchId } = await getContext(container);
   const app = await buildApp(container);
@@ -147,7 +151,434 @@ test("Change quantity applies synchronously and records an adjustment", async ()
   await app.close();
 });
 
-test("QR menu token: seeded public resolve + issue/resolve + 404 anti-enumeration", async () => {
+serialTest("Order item cancel and transition endpoints enforce lifecycle and permission contracts", async () => {
+  const container = await buildContainer();
+  const { tenantId, branchId } = await getContext(container);
+  const app = await buildApp(container);
+  const owner = ownerHeaders(container, tenantId);
+  const visitId = await openVisit(app, owner, branchId);
+
+  const order = (await app.inject({ method: "POST", url: `/v1/visits/${visitId}/orders`, headers: owner, payload: {} })).json().data;
+  const withItem = (
+    await app.inject({
+      method: "POST",
+      url: `/v1/orders/${order.id}/items`,
+      headers: owner,
+      payload: { productId: DEMO_PRODUCT_ID, quantity: 1 },
+    })
+  ).json().data;
+  const itemId = withItem.items[0].id as string;
+  await app.inject({ method: "POST", url: `/v1/orders/${order.id}/submit`, headers: owner, payload: {} });
+
+  const invalidDelivered = await app.inject({
+    method: "POST",
+    url: `/v1/orders/${order.id}/items/${itemId}/transition`,
+    headers: owner,
+    payload: { to: "DELIVERED" },
+  });
+  assert.equal(invalidDelivered.statusCode, 409);
+
+  const now = new Date();
+  const cashier = {
+    id: randomUUID(),
+    identityProvider: "fixture",
+    externalIdentityId: "demo-cashier-order-item-contract",
+    displayName: "Demo Cashier Order Item Contract",
+    status: "ACTIVE" as const,
+    createdAt: now,
+    updatedAt: now,
+  };
+  await container.users.save(cashier);
+  await container.memberships.save({
+    id: randomUUID(),
+    tenantId,
+    userId: cashier.id,
+    status: "ACTIVE",
+    branchScopeType: "ALL_BRANCHES",
+    roleIds: ["role_cashier"],
+    branchIds: [],
+    activatedAt: now,
+    createdAt: now,
+    updatedAt: now,
+  });
+  const cashierToken = "cashier-token-order-item-contract";
+  sessionsOf(container).registerToken(cashierToken, {
+    provider: "fixture",
+    subject: "demo-cashier-order-item-contract",
+    issuedAt: now,
+    expiresAt: new Date(now.getTime() + 60 * 60 * 1000),
+  });
+  const cashierHeaders = { authorization: `Bearer ${cashierToken}`, "x-tenant-id": tenantId };
+
+  const forbiddenPrep = await app.inject({
+    method: "POST",
+    url: `/v1/orders/${order.id}/items/${itemId}/transition`,
+    headers: cashierHeaders,
+    payload: { to: "IN_PREP" },
+  });
+  assert.equal(forbiddenPrep.statusCode, 403);
+
+  const inPrep = await app.inject({
+    method: "POST",
+    url: `/v1/orders/${order.id}/items/${itemId}/transition`,
+    headers: owner,
+    payload: { to: "IN_PREP" },
+  });
+  assert.equal(inPrep.statusCode, 200);
+  assert.equal(inPrep.json().data.items[0].status, "IN_PREP");
+
+  const forbiddenPreparedCancel = await app.inject({
+    method: "POST",
+    url: `/v1/orders/${order.id}/items/${itemId}/cancel`,
+    headers: cashierHeaders,
+    payload: { reasonCode: "GUEST_REQUEST" },
+  });
+  assert.equal(forbiddenPreparedCancel.statusCode, 403);
+
+  const ready = await app.inject({
+    method: "POST",
+    url: `/v1/orders/${order.id}/items/${itemId}/transition`,
+    headers: owner,
+    payload: { to: "READY" },
+  });
+  assert.equal(ready.statusCode, 200);
+  assert.equal(ready.json().data.items[0].status, "READY");
+
+  const cancelPrepared = await app.inject({
+    method: "POST",
+    url: `/v1/orders/${order.id}/items/${itemId}/cancel`,
+    headers: owner,
+    payload: { reasonCode: "GUEST_REQUEST" },
+  });
+  assert.equal(cancelPrepared.statusCode, 200);
+  assert.equal(cancelPrepared.json().data.items[0].status, "CANCELLED");
+  assert.equal(cancelPrepared.json().data.adjustments.length, 1);
+
+  const cancelAgain = await app.inject({
+    method: "POST",
+    url: `/v1/orders/${order.id}/items/${itemId}/cancel`,
+    headers: owner,
+    payload: { reasonCode: "GUEST_REQUEST" },
+  });
+  assert.equal(cancelAgain.statusCode, 409);
+
+  await app.close();
+});
+
+serialTest("Order item cancel and transition hide unknown and cross-tenant targets as 404", async () => {
+  const container = await buildContainer();
+  const { tenantId, branchId } = await getContext(container);
+  const app = await buildApp(container);
+  const headers = ownerHeaders(container, tenantId);
+  const visitId = await openVisit(app, headers, branchId);
+
+  const order = (await app.inject({ method: "POST", url: `/v1/visits/${visitId}/orders`, headers, payload: {} })).json().data;
+  const withItem = (
+    await app.inject({
+      method: "POST",
+      url: `/v1/orders/${order.id}/items`,
+      headers,
+      payload: { productId: DEMO_PRODUCT_ID, quantity: 1 },
+    })
+  ).json().data;
+  const itemId = withItem.items[0].id as string;
+  await app.inject({ method: "POST", url: `/v1/orders/${order.id}/submit`, headers, payload: {} });
+
+  const unknownTransition = await app.inject({
+    method: "POST",
+    url: `/v1/orders/${order.id}/items/${randomUUID()}/transition`,
+    headers,
+    payload: { to: "IN_PREP" },
+  });
+  assert.equal(unknownTransition.statusCode, 404);
+
+  const unknownCancel = await app.inject({
+    method: "POST",
+    url: `/v1/orders/${order.id}/items/${randomUUID()}/cancel`,
+    headers,
+    payload: { reasonCode: "GUEST_REQUEST" },
+  });
+  assert.equal(unknownCancel.statusCode, 404);
+
+  const otherTenantId = randomUUID();
+  const now = new Date();
+  await container.tenants.save({
+    id: otherTenantId,
+    name: "Other Tenant Ordering Items",
+    status: "ACTIVE",
+    defaultLocale: "es-AR",
+    defaultCurrency: "ARS",
+    defaultTimezone: "America/Argentina/Buenos_Aires",
+    createdAt: now,
+    updatedAt: now,
+  });
+  const owner = await container.users.findByExternalIdentity("fixture", "demo-owner");
+  await container.memberships.save({
+    id: randomUUID(),
+    tenantId: otherTenantId,
+    userId: owner!.id,
+    status: "ACTIVE",
+    branchScopeType: "ALL_BRANCHES",
+    roleIds: ["role_owner"],
+    branchIds: [],
+    activatedAt: now,
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  const crossTenantTransition = await app.inject({
+    method: "POST",
+    url: `/v1/orders/${order.id}/items/${itemId}/transition`,
+    headers: { authorization: `Bearer ${container.demoAccessToken}`, "x-tenant-id": otherTenantId },
+    payload: { to: "IN_PREP" },
+  });
+  assert.equal(crossTenantTransition.statusCode, 404);
+
+  const crossTenantCancel = await app.inject({
+    method: "POST",
+    url: `/v1/orders/${order.id}/items/${itemId}/cancel`,
+    headers: { authorization: `Bearer ${container.demoAccessToken}`, "x-tenant-id": otherTenantId },
+    payload: { reasonCode: "GUEST_REQUEST" },
+  });
+  assert.equal(crossTenantCancel.statusCode, 404);
+
+  await app.close();
+});
+
+serialTest("Order submit is idempotent and does not redispatch commands on re-submit", async () => {
+  const container = await buildContainer();
+  const { tenantId, branchId } = await getContext(container);
+  const app = await buildApp(container);
+  const headers = ownerHeaders(container, tenantId);
+  const visitId = await openVisit(app, headers, branchId);
+
+  const order = (await app.inject({ method: "POST", url: `/v1/visits/${visitId}/orders`, headers, payload: {} })).json().data;
+  await app.inject({
+    method: "POST",
+    url: `/v1/orders/${order.id}/items`,
+    headers,
+    payload: { productId: DEMO_PRODUCT_ID, quantity: 1 },
+  });
+
+  const first = await app.inject({
+    method: "POST",
+    url: `/v1/orders/${order.id}/submit`,
+    headers,
+    payload: { catalogRevisionId: "catalog-rev-1" },
+  });
+  assert.equal(first.statusCode, 200);
+  assert.equal(first.json().data.order.status, "SUBMITTED");
+  assert.equal(first.json().data.order.catalogRevisionId, "catalog-rev-1");
+  assert.equal(first.json().data.commands.length, 1);
+  const firstRevision = first.json().data.order.revision as number;
+  const firstSubmittedAt = first.json().data.order.submittedAt as string;
+
+  const second = await app.inject({
+    method: "POST",
+    url: `/v1/orders/${order.id}/submit`,
+    headers,
+    payload: { catalogRevisionId: "catalog-rev-2" },
+  });
+  assert.equal(second.statusCode, 200);
+  assert.equal(second.json().data.order.status, "SUBMITTED");
+  assert.equal(second.json().data.order.catalogRevisionId, "catalog-rev-1");
+  assert.equal(second.json().data.order.revision, firstRevision);
+  assert.equal(second.json().data.order.submittedAt, firstSubmittedAt);
+  assert.equal(second.json().data.commands.length, 0);
+
+  const kitchenCommands = await app.inject({
+    method: "GET",
+    url: `/v1/orders/${order.id}/kitchen/commands`,
+    headers,
+  });
+  assert.equal(kitchenCommands.statusCode, 200);
+  assert.equal(kitchenCommands.json().data.length, 1);
+
+  await app.close();
+});
+
+serialTest("Order submit rejects an empty draft with 409 conflict", async () => {
+  const container = await buildContainer();
+  const { tenantId, branchId } = await getContext(container);
+  const app = await buildApp(container);
+  const headers = ownerHeaders(container, tenantId);
+  const visitId = await openVisit(app, headers, branchId);
+
+  const order = (await app.inject({ method: "POST", url: `/v1/visits/${visitId}/orders`, headers, payload: {} })).json().data;
+
+  const submit = await app.inject({
+    method: "POST",
+    url: `/v1/orders/${order.id}/submit`,
+    headers,
+    payload: {},
+  });
+  assert.equal(submit.statusCode, 409);
+
+  const orderAfter = await app.inject({
+    method: "GET",
+    url: `/v1/orders/${order.id}`,
+    headers,
+  });
+  assert.equal(orderAfter.statusCode, 200);
+  assert.equal(orderAfter.json().data.status, "DRAFT");
+  assert.equal(orderAfter.json().data.items.length, 0);
+
+  await app.close();
+});
+
+serialTest("Order kitchen commands list requires kitchen queue permission and returns empty for unknown or cross-tenant orders", async () => {
+  const container = await buildContainer();
+  const { tenantId, branchId } = await getContext(container);
+  const app = await buildApp(container);
+  const headers = ownerHeaders(container, tenantId);
+  const visitId = await openVisit(app, headers, branchId);
+
+  const order = (await app.inject({ method: "POST", url: `/v1/visits/${visitId}/orders`, headers, payload: {} })).json().data;
+  await app.inject({
+    method: "POST",
+    url: `/v1/orders/${order.id}/items`,
+    headers,
+    payload: { productId: DEMO_PRODUCT_ID, quantity: 1 },
+  });
+  await app.inject({ method: "POST", url: `/v1/orders/${order.id}/submit`, headers, payload: {} });
+
+  const now = new Date();
+  const cashier = {
+    id: randomUUID(),
+    identityProvider: "fixture",
+    externalIdentityId: "demo-cashier-order-command-list",
+    displayName: "Demo Cashier Order Command List",
+    status: "ACTIVE" as const,
+    createdAt: now,
+    updatedAt: now,
+  };
+  await container.users.save(cashier);
+  await container.memberships.save({
+    id: randomUUID(),
+    tenantId,
+    userId: cashier.id,
+    status: "ACTIVE",
+    branchScopeType: "ALL_BRANCHES",
+    roleIds: ["role_cashier"],
+    branchIds: [],
+    activatedAt: now,
+    createdAt: now,
+    updatedAt: now,
+  });
+  const cashierToken = "cashier-token-order-command-list";
+  sessionsOf(container).registerToken(cashierToken, {
+    provider: "fixture",
+    subject: "demo-cashier-order-command-list",
+    issuedAt: now,
+    expiresAt: new Date(now.getTime() + 60 * 60 * 1000),
+  });
+
+  const forbidden = await app.inject({
+    method: "GET",
+    url: `/v1/orders/${order.id}/kitchen/commands`,
+    headers: { authorization: `Bearer ${cashierToken}`, "x-tenant-id": tenantId },
+  });
+  assert.equal(forbidden.statusCode, 403);
+
+  const unknownOrder = await app.inject({
+    method: "GET",
+    url: `/v1/orders/${randomUUID()}/kitchen/commands`,
+    headers,
+  });
+  assert.equal(unknownOrder.statusCode, 200);
+  assert.deepEqual(unknownOrder.json().data, []);
+
+  const otherTenantId = randomUUID();
+  await container.tenants.save({
+    id: otherTenantId,
+    name: "Other Tenant Order Commands",
+    status: "ACTIVE",
+    defaultLocale: "es-AR",
+    defaultCurrency: "ARS",
+    defaultTimezone: "America/Argentina/Buenos_Aires",
+    createdAt: now,
+    updatedAt: now,
+  });
+  const owner = await container.users.findByExternalIdentity("fixture", "demo-owner");
+  await container.memberships.save({
+    id: randomUUID(),
+    tenantId: otherTenantId,
+    userId: owner!.id,
+    status: "ACTIVE",
+    branchScopeType: "ALL_BRANCHES",
+    roleIds: ["role_owner"],
+    branchIds: [],
+    activatedAt: now,
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  const crossTenant = await app.inject({
+    method: "GET",
+    url: `/v1/orders/${order.id}/kitchen/commands`,
+    headers: { authorization: `Bearer ${container.demoAccessToken}`, "x-tenant-id": otherTenantId },
+  });
+  assert.equal(crossTenant.statusCode, 200);
+  assert.deepEqual(crossTenant.json().data, []);
+
+  await app.close();
+});
+
+serialTest("Order item routes expose current 404 contract for unknown order vs unknown item", async () => {
+  const container = await buildContainer();
+  const { tenantId, branchId } = await getContext(container);
+  const app = await buildApp(container);
+  const headers = ownerHeaders(container, tenantId);
+  const visitId = await openVisit(app, headers, branchId);
+
+  const order = (await app.inject({ method: "POST", url: `/v1/visits/${visitId}/orders`, headers, payload: {} })).json().data;
+  const withItem = (
+    await app.inject({
+      method: "POST",
+      url: `/v1/orders/${order.id}/items`,
+      headers,
+      payload: { productId: DEMO_PRODUCT_ID, quantity: 1 },
+    })
+  ).json().data;
+  const itemId = withItem.items[0].id as string;
+  await app.inject({ method: "POST", url: `/v1/orders/${order.id}/submit`, headers, payload: {} });
+
+  const missingOrderCancel = await app.inject({
+    method: "POST",
+    url: `/v1/orders/${randomUUID()}/items/${itemId}/cancel`,
+    headers,
+    payload: { reasonCode: "GUEST_REQUEST" },
+  });
+  assert.equal(missingOrderCancel.statusCode, 404);
+
+  const missingOrderTransition = await app.inject({
+    method: "POST",
+    url: `/v1/orders/${randomUUID()}/items/${itemId}/transition`,
+    headers,
+    payload: { to: "IN_PREP" },
+  });
+  assert.equal(missingOrderTransition.statusCode, 404);
+
+  const missingItemCancel = await app.inject({
+    method: "POST",
+    url: `/v1/orders/${order.id}/items/${randomUUID()}/cancel`,
+    headers,
+    payload: { reasonCode: "GUEST_REQUEST" },
+  });
+  assert.equal(missingItemCancel.statusCode, 404);
+
+  const missingItemTransition = await app.inject({
+    method: "POST",
+    url: `/v1/orders/${order.id}/items/${randomUUID()}/transition`,
+    headers,
+    payload: { to: "IN_PREP" },
+  });
+  assert.equal(missingItemTransition.statusCode, 404);
+
+  await app.close();
+});
+
+serialTest("QR menu token: seeded public resolve + issue/resolve + 404 anti-enumeration", async () => {
   const container = await buildContainer();
   const { tenantId } = await getContext(container);
   const app = await buildApp(container);
@@ -176,7 +607,7 @@ test("QR menu token: seeded public resolve + issue/resolve + 404 anti-enumeratio
   await app.close();
 });
 
-test("Digital bill token: issue + resolve live Check projection", async () => {
+serialTest("Digital bill token: issue + resolve live Check projection", async () => {
   const container = await buildContainer();
   const { tenantId, branchId } = await getContext(container);
   const app = await buildApp(container);
@@ -203,7 +634,7 @@ test("Digital bill token: issue + resolve live Check projection", async () => {
   await app.close();
 });
 
-test("Digital bill token issue respects branch scope", async () => {
+serialTest("Digital bill token issue respects branch scope", async () => {
   const container = await buildContainer();
   const { tenantId, branchId } = await getContext(container);
   const app = await buildApp(container);
@@ -259,7 +690,62 @@ test("Digital bill token issue respects branch scope", async () => {
   await app.close();
 });
 
-test("Order tracking token: issue + public resolve (redacted)", async () => {
+serialTest("Capability token issue endpoints reject invalid ttlSeconds", async () => {
+  const container = await buildContainer();
+  const { tenantId, branchId } = await getContext(container);
+  const app = await buildApp(container);
+  const headers = ownerHeaders(container, tenantId);
+  const visitId = await openVisit(app, headers, branchId);
+
+  const check = (await app.inject({
+    method: "POST",
+    url: `/v1/visits/${visitId}/check`,
+    headers,
+    payload: { currency: "ARS" },
+  })).json().data;
+
+  const billToken = await app.inject({
+    method: "POST",
+    url: "/v1/bill-tokens",
+    headers,
+    payload: { checkId: check.id, ttlSeconds: 0 },
+  });
+  assert.equal(billToken.statusCode, 400);
+
+  const qrToken = await app.inject({
+    method: "POST",
+    url: "/v1/qr-menu-tokens",
+    headers,
+    payload: { menuId: DEMO_MENU_ID, ttlSeconds: 0 },
+  });
+  assert.equal(qrToken.statusCode, 400);
+
+  const order = (await app.inject({
+    method: "POST",
+    url: `/v1/visits/${visitId}/orders`,
+    headers,
+    payload: {},
+  })).json().data;
+  await app.inject({
+    method: "POST",
+    url: `/v1/orders/${order.id}/items`,
+    headers,
+    payload: { productId: DEMO_PRODUCT_ID, quantity: 1 },
+  });
+  await app.inject({ method: "POST", url: `/v1/orders/${order.id}/submit`, headers, payload: {} });
+
+  const trackingToken = await app.inject({
+    method: "POST",
+    url: `/v1/orders/${order.id}/tracking-token`,
+    headers,
+    payload: { ttlSeconds: 0 },
+  });
+  assert.equal(trackingToken.statusCode, 400);
+
+  await app.close();
+});
+
+serialTest("Order tracking token: issue + public resolve (redacted)", async () => {
   const container = await buildContainer();
   const { tenantId, branchId } = await getContext(container);
   const app = await buildApp(container);
@@ -283,7 +769,7 @@ test("Order tracking token: issue + public resolve (redacted)", async () => {
   await app.close();
 });
 
-test("Order tracking internal detail includes projection metadata and item names", async () => {
+serialTest("Order tracking internal detail includes projection metadata and item names", async () => {
   const container = await buildContainer();
   const { tenantId, branchId } = await getContext(container);
   const app = await buildApp(container);
@@ -304,7 +790,7 @@ test("Order tracking internal detail includes projection metadata and item names
   await app.close();
 });
 
-test("Order tracking internal access and token issue respect branch scope", async () => {
+serialTest("Order tracking internal access and token issue respect branch scope", async () => {
   const container = await buildContainer();
   const { tenantId, branchId } = await getContext(container);
   const app = await buildApp(container);
@@ -360,7 +846,7 @@ test("Order tracking internal access and token issue respect branch scope", asyn
   await app.close();
 });
 
-test("Menu recommendations fallback returns policyVersion fallback-v1", async () => {
+serialTest("Menu recommendations fallback returns policyVersion fallback-v1", async () => {
   const container = await buildContainer();
   const { tenantId } = await getContext(container);
   const app = await buildApp(container);
@@ -373,7 +859,7 @@ test("Menu recommendations fallback returns policyVersion fallback-v1", async ()
   await app.close();
 });
 
-test("Special request: create, accept, fulfill", async () => {
+serialTest("Special request: create, accept, fulfill", async () => {
   const container = await buildContainer();
   const { tenantId } = await getContext(container);
   const app = await buildApp(container);
@@ -395,7 +881,159 @@ test("Special request: create, accept, fulfill", async () => {
   await app.close();
 });
 
-test("403 without permission, 404 for unknown order id", async () => {
+serialTest("Special request: freeText is normalized and overlong text is rejected", async () => {
+  const container = await buildContainer();
+  const { tenantId } = await getContext(container);
+  const app = await buildApp(container);
+  const headers = ownerHeaders(container, tenantId);
+
+  const normalized = await app.inject({
+    method: "POST",
+    url: "/v1/special-requests",
+    headers,
+    payload: {
+      requestType: "BIRTHDAY",
+      targetType: "VISIT",
+      targetId: randomUUID(),
+      freeText: "  Bring   a   candle  ",
+    },
+  });
+  assert.equal(normalized.statusCode, 201);
+  assert.equal(normalized.json().data.freeText, "Bring a candle");
+
+  const tooLong = await app.inject({
+    method: "POST",
+    url: "/v1/special-requests",
+    headers,
+    payload: {
+      requestType: "ALLERGY_NOTE",
+      targetType: "ORDER",
+      targetId: randomUUID(),
+      freeText: "x".repeat(501),
+    },
+  });
+  assert.equal(tooLong.statusCode, 400);
+
+  await app.close();
+});
+
+serialTest("Special request: invalid transition and tenant isolation return conflict/not-found", async () => {
+  const container = await buildContainer();
+  const { tenantId } = await getContext(container);
+  const app = await buildApp(container);
+  const headers = ownerHeaders(container, tenantId);
+
+  const created = await app.inject({
+    method: "POST",
+    url: "/v1/special-requests",
+    headers,
+    payload: { requestType: "ALLERGY_NOTE", targetType: "ORDER", targetId: randomUUID() },
+  });
+  assert.equal(created.statusCode, 201);
+  const id = created.json().data.id as string;
+
+  const fulfillBeforeAccept = await app.inject({
+    method: "POST",
+    url: `/v1/special-requests/${id}/fulfill`,
+    headers,
+    payload: {},
+  });
+  assert.equal(fulfillBeforeAccept.statusCode, 409);
+
+  const otherTenantId = randomUUID();
+  await container.tenants.save({
+    id: otherTenantId,
+    name: "Other Tenant Ordering",
+    status: "ACTIVE",
+    defaultLocale: "es-AR",
+    defaultCurrency: "ARS",
+    defaultTimezone: "America/Argentina/Buenos_Aires",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+  const owner = await container.users.findByExternalIdentity("fixture", "demo-owner");
+  const now = new Date();
+  await container.memberships.save({
+    id: randomUUID(),
+    tenantId: otherTenantId,
+    userId: owner!.id,
+    status: "ACTIVE",
+    branchScopeType: "ALL_BRANCHES",
+    roleIds: ["role_owner"],
+    branchIds: [],
+    activatedAt: now,
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  const crossTenant = await app.inject({
+    method: "GET",
+    url: `/v1/special-requests/${id}`,
+    headers: { authorization: `Bearer ${container.demoAccessToken}`, "x-tenant-id": otherTenantId },
+  });
+  assert.equal(crossTenant.statusCode, 404);
+
+  await app.close();
+});
+
+serialTest("Special request: review endpoints require special_request:review permission", async () => {
+  const container = await buildContainer();
+  const { tenantId } = await getContext(container);
+  const app = await buildApp(container);
+  const headers = ownerHeaders(container, tenantId);
+  const now = new Date();
+
+  const created = await app.inject({
+    method: "POST",
+    url: "/v1/special-requests",
+    headers,
+    payload: { requestType: "BIRTHDAY", targetType: "VISIT", targetId: randomUUID() },
+  });
+  assert.equal(created.statusCode, 201);
+  const id = created.json().data.id as string;
+
+  const cashier = {
+    id: randomUUID(),
+    identityProvider: "fixture",
+    externalIdentityId: "demo-cashier-special-request",
+    displayName: "Demo Cashier Special Request",
+    status: "ACTIVE" as const,
+    createdAt: now,
+    updatedAt: now,
+  };
+  await container.users.save(cashier);
+  await container.memberships.save({
+    id: randomUUID(),
+    tenantId,
+    userId: cashier.id,
+    status: "ACTIVE",
+    branchScopeType: "ALL_BRANCHES",
+    roleIds: ["role_cashier"],
+    branchIds: [],
+    activatedAt: now,
+    createdAt: now,
+    updatedAt: now,
+  });
+  const cashierToken = "cashier-token-special-request";
+  sessionsOf(container).registerToken(cashierToken, {
+    provider: "fixture",
+    subject: "demo-cashier-special-request",
+    issuedAt: now,
+    expiresAt: new Date(now.getTime() + 60 * 60 * 1000),
+  });
+
+  const forbidden = await app.inject({
+    method: "POST",
+    url: `/v1/special-requests/${id}/accept`,
+    headers: { authorization: `Bearer ${cashierToken}`, "x-tenant-id": tenantId },
+    payload: {},
+  });
+  assert.equal(forbidden.statusCode, 403);
+
+  await app.close();
+});
+
+serialTest("403 without permission, 404 for unknown order id", async () => {
   const container = await buildContainer();
   const { tenantId, branchId } = await getContext(container);
   const app = await buildApp(container);

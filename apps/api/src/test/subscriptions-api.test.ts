@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 import { buildApp } from "../app.js";
 import { buildContainer, type Container } from "../composition/container.js";
 import type {
@@ -22,6 +23,38 @@ async function getTenantId(container: Container): Promise<string> {
   const owner = await container.users.findByExternalIdentity("fixture", "demo-owner");
   const memberships = await container.memberships.listActiveByUser(owner!.id);
   return memberships[0]!.tenantId;
+}
+
+async function seedForeignSubscription(container: Container) {
+  const now = new Date();
+  const tenantId = randomUUID();
+  const subscriptionId = randomUUID();
+  await container.tenants.save({
+    id: tenantId,
+    name: "Foreign Tenant",
+    status: "ACTIVE",
+    defaultLocale: "es-AR",
+    defaultCurrency: "ARS",
+    defaultTimezone: "America/Argentina/Buenos_Aires",
+    createdAt: now,
+    updatedAt: now,
+  });
+  await container.subscriptions.save({
+    id: subscriptionId,
+    tenantId,
+    planCode: "PROFESSIONAL",
+    status: "ACTIVE",
+    billingCycle: "MONTHLY",
+    startDate: now,
+    renewalDate: now,
+    cancellationDate: null,
+    currentPeriodStart: now,
+    currentPeriodEnd: now,
+    autoRenew: true,
+    createdAt: now,
+    updatedAt: now,
+  });
+  return { tenantId, subscriptionId };
 }
 
 test("GET /v1/subscriptions/:tenantId returns the seeded subscription", async () => {
@@ -177,6 +210,45 @@ test("DELETE .../services/:serviceId for an unknown service returns 404", async 
       "x-tenant-id": tenantId,
     },
   });
+  assert.equal(response.statusCode, 404);
+  await app.close();
+});
+
+test("POST /v1/subscriptions/:id/services hides cross-tenant subscriptions as 404", async () => {
+  const container = await buildContainer();
+  const tenantId = await getTenantId(container);
+  const app = await buildApp(container);
+  const foreign = await seedForeignSubscription(container);
+
+  const response = await app.inject({
+    method: "POST",
+    url: `/v1/subscriptions/${foreign.subscriptionId}/services`,
+    headers: {
+      authorization: `Bearer ${container.demoAccessToken}`,
+      "x-tenant-id": tenantId,
+    },
+    payload: { serviceId: "floor" },
+  });
+
+  assert.equal(response.statusCode, 404);
+  await app.close();
+});
+
+test("DELETE /v1/subscriptions/:id/services/:serviceId hides cross-tenant subscriptions as 404", async () => {
+  const container = await buildContainer();
+  const tenantId = await getTenantId(container);
+  const app = await buildApp(container);
+  const foreign = await seedForeignSubscription(container);
+
+  const response = await app.inject({
+    method: "DELETE",
+    url: `/v1/subscriptions/${foreign.subscriptionId}/services/floor`,
+    headers: {
+      authorization: `Bearer ${container.demoAccessToken}`,
+      "x-tenant-id": tenantId,
+    },
+  });
+
   assert.equal(response.statusCode, 404);
   await app.close();
 });

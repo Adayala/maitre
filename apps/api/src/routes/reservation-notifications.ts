@@ -9,6 +9,22 @@ import type { Container } from "../composition/container.js";
 import { requireTenantContext, requirePermission } from "../http/request-context.js";
 import { sendProblem, notFound } from "../http/problem-details.js";
 
+function toNotificationIntentResponse(intent: {
+  id: string;
+  reservationId: string;
+  purpose: string;
+  status: string;
+  createdAt: Date;
+}) {
+  return {
+    id: intent.id,
+    reservationId: intent.reservationId,
+    purpose: intent.purpose,
+    status: intent.status,
+    createdAt: intent.createdAt,
+  };
+}
+
 // SPEC-075 — Reservation Notifications API. Simplified per approved scope:
 // each command just creates+persists a NotificationIntent and appends an
 // outbox event; NO real provider/SMS/email send is integrated (see
@@ -38,7 +54,7 @@ export async function registerReservationNotificationRoutes(
           correlationId,
         });
         reply.code(201);
-        return { data: intent };
+        return { data: toNotificationIntentResponse(intent) };
       } catch (err) {
         return sendProblem(reply, correlationId, err);
       }
@@ -60,7 +76,7 @@ export async function registerReservationNotificationRoutes(
           correlationId,
         });
         reply.code(201);
-        return { data: intent };
+        return { data: toNotificationIntentResponse(intent) };
       } catch (err) {
         return sendProblem(reply, correlationId, err);
       }
@@ -82,7 +98,7 @@ export async function registerReservationNotificationRoutes(
           correlationId,
         });
         reply.code(201);
-        return { data: intent };
+        return { data: toNotificationIntentResponse(intent) };
       } catch (err) {
         return sendProblem(reply, correlationId, err);
       }
@@ -101,7 +117,7 @@ export async function registerReservationNotificationRoutes(
           req.params.notificationIntentId,
         );
         if (!intent) return sendProblem(reply, correlationId, notFound("NotificationIntent"));
-        return { data: intent };
+        return { data: toNotificationIntentResponse(intent) };
       } catch (err) {
         return sendProblem(reply, correlationId, err);
       }

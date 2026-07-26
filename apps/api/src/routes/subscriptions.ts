@@ -92,6 +92,10 @@ export async function registerSubscriptionRoutes(
         const ctx = await requireTenantContext(container, req);
         requirePermission(ctx, "service:manage");
         const body = addServiceBodySchema.parse(req.body);
+        const subscription = await container.subscriptions.findById(req.params.id);
+        if (!subscription || subscription.tenantId !== ctx.tenantId) {
+          return sendProblem(reply, correlationId, notFound("Subscription"));
+        }
 
         const item = await addService(
           {
@@ -123,6 +127,10 @@ export async function registerSubscriptionRoutes(
       try {
         const ctx = await requireTenantContext(container, req);
         requirePermission(ctx, "service:manage");
+        const subscription = await container.subscriptions.findById(req.params.id);
+        if (!subscription || subscription.tenantId !== ctx.tenantId) {
+          return sendProblem(reply, correlationId, notFound("Subscription"));
+        }
 
         const item = await removeService(
           {

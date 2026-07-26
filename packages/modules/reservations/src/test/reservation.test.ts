@@ -30,6 +30,16 @@ test("createReservation creates PENDING and emits created event", async () => {
   assert.equal(reservation.status, "PENDING");
   assert.equal(d.outbox.records.length, 1);
   assert.equal(d.outbox.records[0]?.eventName, "reservations.reservation.created.v1");
+  assert.deepEqual(d.outbox.records[0]?.payload, {
+    reservationId: reservation.id,
+    branchId: "b1",
+    startAt: "2026-08-01T20:00:00.000Z",
+    durationMinutes: 90,
+    partySize: 2,
+    source: "INTERNAL",
+    status: "PENDING",
+    aggregateRevision: 1,
+  });
 });
 
 test("confirmReservation moves PENDING -> CONFIRMED and assigns a table", async () => {
@@ -49,6 +59,16 @@ test("confirmReservation moves PENDING -> CONFIRMED and assigns a table", async 
   assert.equal(confirmed.status, "CONFIRMED");
   assert.deepEqual(confirmed.tableIds, ["table-1"]);
   assert.equal(d.outbox.records.at(-1)?.eventName, "reservations.reservation.confirmed.v1");
+  assert.deepEqual(d.outbox.records.at(-1)?.payload, {
+    reservationId: reservation.id,
+    branchId: "b1",
+    startAt: "2026-08-01T20:00:00.000Z",
+    durationMinutes: 90,
+    partySize: 2,
+    tableIds: ["table-1"],
+    confirmedAt: confirmed.updatedAt.toISOString(),
+    aggregateRevision: 2,
+  });
 });
 
 test("confirmReservation rejects when no table has capacity", async () => {
@@ -106,6 +126,14 @@ test("cancelReservation moves PENDING -> CANCELLED and emits event", async () =>
   });
   assert.equal(cancelled.status, "CANCELLED");
   assert.equal(d.outbox.records.at(-1)?.eventName, "reservations.reservation.cancelled.v1");
+  assert.deepEqual(d.outbox.records.at(-1)?.payload, {
+    reservationId: reservation.id,
+    branchId: "b1",
+    cancelledAt: cancelled.cancelledAt?.toISOString(),
+    reasonCode: "GUEST_REQUEST",
+    actorType: "INTERNAL",
+    aggregateRevision: 2,
+  });
 });
 
 test("full lifecycle: PENDING -> CONFIRMED -> SEATED -> COMPLETED", async () => {

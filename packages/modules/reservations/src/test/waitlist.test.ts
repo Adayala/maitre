@@ -80,4 +80,6 @@ test("FIFO ordering by arrivedAt, with priorityOverride sorting ahead", async ()
     overriddenOrder.map((e) => e.id),
     [second.id, first.id],
   );
+  assert.equal(overridden.arrivedAt.toISOString(), "2026-08-01T10:05:00.000Z");
+  assert.equal(overridden.overrideReason, "large party accommodation");
 });

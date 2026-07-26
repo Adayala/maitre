@@ -7,25 +7,21 @@
 ```json
 {
   "data": {
-    "items": [
-      {
-        "code": "organization.branch.minimum",
+    "setup": {
+      "tenant": { "status": "COMPLETE", "count": 1, "required": 1 },
+      "brands": {
         "status": "INCOMPLETE",
-        "reasonCodes": ["NO_ACTIVE_BRANCH"],
-        "action": {
-          "actionCode": "branch.create",
-          "routeRef": "dash.branch.create"
-        }
+        "count": 0,
+        "required": 1,
+        "actionLink": "/v1/brands"
       }
-    ]
-  },
-  "meta": {
-    "revision": "setup-v1:source-hash",
-    "asOf": "ISO8601",
-    "freshness": "FRESH | STALE | PARTIAL"
+    },
+    "nextSteps": ["Configurar brands"]
   }
 }
 ```
 
-Los items no exponen counts/IDs por defecto. `routeRef` se resuelve desde un registro de rutas
-allowlisted y no acepta URLs del backend.
+El I0 actual no expone `items[]`, `reasonCodes`, `routeRef`, `meta.revision`, `asOf` ni
+`freshness`. Devuelve un mapa `setup` por código (`tenant`, `brands`, `branches`, `users`,
+`menus`, `products`), con `status`, `count`, `required` y opcionalmente `actionLink`, más un
+array `nextSteps` derivado.

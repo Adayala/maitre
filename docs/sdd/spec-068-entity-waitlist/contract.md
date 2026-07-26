@@ -1,7 +1,8 @@
 # Contrato — SPEC-068 Waitlist
 
-WaitlistEntry representa un grupo esperando en Branch: party size, guest/contact mínimo,
-quotedAt/estimate, priority reason, status `WAITING | NOTIFIED | SEATED | CANCELLED | EXPIRED`,
-version y auditoría. Orden combina arrival sequence y prioridad explícita; nunca se altera
-silenciosamente. Notificación no reserva capacidad. Seating enlaza una Visit y es idempotente.
-Tests cubren orden estable, concurrencia, expiración, contacto/consent y cross-tenant.
+WaitlistEntry representa un grupo esperando en Branch con `partySize`, `guestId` opcional,
+`quotedMinutes` opcional, `priorityOverride`, status `WAITING | NOTIFIED | SEATED | CANCELLED |
+EXPIRED`, revisión y timestamps. El orden combina prioridad explícita, `arrivedAt` e `id`; nunca
+debe mutar `arrivedAt` al repriorizar. Notificación no reserva capacidad. Seating enlaza una
+Visit existente desde la capa de rutas. Tests cubren lifecycle básico, terminalidad, orden estable
+y override manual.

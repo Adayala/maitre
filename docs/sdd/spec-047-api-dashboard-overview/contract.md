@@ -1,9 +1,10 @@
 # Contrato API — SPEC-047
 
-`GET /v1/dashboard/overview` entrega resumen acotado para el tenant/alcance por sucursal: setup,
-operación activa, alertas y métricas disponibles. Cada sección declara `asOf`, freshness y
-estado `AVAILABLE | PARTIAL | UNAVAILABLE`; una dependencia fallida no fabrica cero.
+`GET /v1/dashboard/overview` entrega un resumen acotado del tenant. En el I0 real la respuesta
+materializada contiene sólo `setup`, `operations` y `lastUpdated`.
 
-Respuesta se compone con timeouts/budget, evita N+1 y PII, y permite ETag. Permisos filtran
-secciones, no sólo filas. Tests cubren datos parciales/desactualizados, alcance, timeout, cache y
-degradación según SPEC-216.
+`setup` declara `AVAILABLE` con nombre de tenant y conteos de brands/branches. `operations`
+declara `UNAVAILABLE` con `reason` explícito y métricas operativas en `null` mientras esa
+integración no exista. La respuesta no fabrica ceros operativos ni expone PII. I0 no implementa
+ETag, freshness ni secciones parciales tipadas. Tests cubren disponibilidad de setup y degradación
+explícita de operations.

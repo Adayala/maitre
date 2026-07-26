@@ -1,8 +1,16 @@
 # Especificación — SPEC-070 CancellationPolicy
 
-Policy versionada por sucursal/canal con effective interval, windows, classification, reason codes y
-consecuencias informativas. Reservation congela policy version al confirmar.
+I0 actual: una única policy simple por tenant. No hay versionado por sucursal/canal, intervalos de
+vigencia, ni reglas múltiples con precedencia. El modelo sólo expresa un cutoff en horas antes del
+inicio y una descripción informativa de cargo potencial.
 
-Evaluate es pura con `asOf` UTC + timezone. Override no muta policy: crea CancellationOverride con
-permission `reservation.policy.override`, actor, reason allowlisted, alcance, expiry, evidence y
-approval si supera límite. I0 nunca cobra penalidad automáticamente.
+`evaluateCancellation(policy, startAt, asOf)` es pura y usa sólo timestamps absolutos. Devuelve
+si la cancelación cae dentro de la ventana libre (`withinFreeCancellationWindow`) y una reason
+canónica mínima (`NO_POLICY`, `WITHIN_WINDOW`, `PAST_CUTOFF`).
+
+La policy se crea o reemplaza por tenant como registro único. Reservation puede referenciar
+`cancellationPolicyId`, pero este I0 no congela snapshots de policy al confirmar ni conserva
+historial de revisiones aplicadas.
+
+No existe `CancellationOverride` ni workflow de aprobación. I0 nunca bloquea la cancelación ni
+cobra penalidad automáticamente: la evaluación es sólo informativa.

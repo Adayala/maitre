@@ -8,4 +8,5 @@ autorización, Reservation inexistente, creación de intents y lectura por id.
 
 El I0 actual no es idempotente todavía y no resuelve template, locale, channel, consent ni
 provider. Sólo crea un `NotificationIntent` simple (`reservationId`, `purpose`, `status`,
-`createdAt`) y un registro de outbox asociado.
+`createdAt`) y un registro de outbox asociado. Los tres commands materializados producen
+purposes fijos: `REQUEST_CONFIRMATION`, `SEND_REMINDER` y `COMMUNICATE_CANCELLATION`.

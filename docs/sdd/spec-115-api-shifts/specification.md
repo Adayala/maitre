@@ -1,26 +1,10 @@
 # Especificación — SPEC-115 WorkShifts API
 
-Create/list/detail/edit DRAFT y comandos `publish`, `start`, `complete`, `cancel`. Create/commands
-son idempotentes; edits/transiciones usan `If-Match`. Intervals se reciben como UTC + timezone IANA
-y se validan contra LaborPolicyVersion.
+La API I0 de `WorkShift` expone create, list, detail y comandos explícitos `publish`, `start`,
+`complete` y `cancel`. No hay endpoint de update materializado para turnos `DRAFT`.
 
-Publish revalida cobertura, conflictos y Employment de assignments. Complete no cierra TimeEntry
-individual silenciosamente; reporta entradas abiertas y exige workflow explícito. Las respuestas
-separan planificación de asistencia real.
-
-El surface incluye create/list/detail/update sobre `DRAFT` y comandos explícitos `publish`,
-`start`, `complete` y `cancel`. No existe edición arbitraria de una revisión ya publicada o en
-progreso: un cambio material posterior genera una nueva revisión del WorkShift o un comando
-explícito de ciclo de vida según corresponda.
-
-Las lecturas respetan `tenantId`, `brandId`, `branchId` y filtros temporales. La API recibe y
-devuelve `startsAtUtc`, `endsAtUtc` y timezone IANA para evitar ambigüedad de DST. Fuera de alcance,
-detail usa `404`; las colecciones filtran antes de paginar.
-
-`publish` valida labor policy, staffing requerido, conflictos aprobados y vigencia de Employment de
-las asignaciones asociadas. `complete` nunca implica clock-out automático ni cierre implícito de
-TimeEntry/BreakLog: si existen marcas abiertas o anomalías relevantes, la API las reporta y exige
-workflow explícito en el dominio de time tracking.
+La API recibe y devuelve `startsAtUtc`, `endsAtUtc` y `timezone`, manteniendo separación entre
+planificación del turno y asistencia real.
 
 ## Surface I0
 
@@ -44,8 +28,7 @@ Regla aprobada para I0:
 
 - create produce siempre `DRAFT`
 - el lifecycle posterior ocurre sólo vía commands explícitos
-- si no existe endpoint de update materializado, la spec no lo exige en I0 aunque preserve el
-  concepto de revisión/versionado
+- no existe edición materializada del shift vía API aunque la entidad preserve `revision`
 
 ## Payload de create
 
@@ -61,7 +44,7 @@ Regla aprobada para I0:
 Validaciones mínimas:
 
 - `startsAtUtc < endsAtUtc`
-- timezone IANA presente
+- `timezone` presente
 - branch scope válido
 - `laborPolicyVersion` presente
 
@@ -95,18 +78,10 @@ Regla aprobada para I0:
 
 Regla aprobada para I0:
 
-- create y lifecycle commands deben ser idempotentes por `Idempotency-Key`
-- cuando un command no esté materializado aún con replay storage completo, la spec lo marca como
-  objetivo normativo aunque la implementación siga parcial
-- transiciones de estado deben validar revisión esperada (`If-Match` o equivalente) una vez que ese
-  control se materialice en la API de WorkShift
-- un retry no debe crear un segundo shift ni una segunda transición lógica
-
-Frontera I0 actual:
-
-- `If-Match` ya está bien establecido en assignments, breaks y ajustes
-- para WorkShift commands, la spec congela la exigencia aunque la materialización aún pueda estar
-  incompleta
+- lifecycle commands (`publish`, `start`, `complete`, `cancel`) requieren `If-Match`
+- si falta `If-Match`, la API responde `400`
+- si `If-Match` no coincide con `revision`, la API responde `409`
+- create no implementa hoy replay por `Idempotency-Key`
 
 ## Semántica de lifecycle
 
@@ -138,16 +113,14 @@ Regla aprobada para I0:
 
 Regla aprobada para I0:
 
-- revalida intervalos y policy vigente declarada en el shift
 - revalida conflictos de shift activo incompatible dentro de la branch
-- revalida que las asignaciones asociadas no queden obviamente fuera de elegibilidad de Employment
-- si una validación falla, responde error explícito; no publica “igual pero con warning”
+- si la validación falla, responde `409`
 
 Lo no exigido todavía en I0:
 
 - staffing target formal obligatorio
 - cálculo normativo pleno de compliance en `publish`
-- degradación automática a `DRAFT_WITH_WARNINGS`
+- revalidación profunda de assignments ya existentes antes de publicar
 
 ## Start
 
@@ -167,9 +140,9 @@ Regla aprobada para I0:
 
 - no hace `clock-out` automático
 - no cierra `TimeEntry` ni `BreakLog`
-- si existen marcas abiertas o anomalías relevantes, debe bloquear o derivar workflow explícito,
-  nunca “arreglar en silencio”
 - publica el evento normativo de SPEC-120 sólo si la transición realmente ocurrió
+
+No está implementado en I0 un bloqueo explícito de `complete` por marcas abiertas.
 
 ## Cancel
 

@@ -6,17 +6,15 @@
 
 ```text
 Query params:
-?actorId=opaque-id
-?action=branch.update
-?resourceType=Branch
-?resourceId=uuid
+?actor_id=opaque-id
+?resource_type=Branch
 ?from=ISO8601
 ?to=ISO8601
 ?limit=100
 ?cursor=opaque
 ```
 
-Response usa cursor opaco y no promete total exacto:
+Response I0 usa cursor opaco y no promete total exacto:
 
 ```json
 {
@@ -24,17 +22,20 @@ Response usa cursor opaco y no promete total exacto:
     {
       "id": "uuid",
       "occurredAt": "ISO8601",
-      "actor": { "type": "USER", "id": "opaque-id" },
-      "action": "branch.update",
-      "resource": { "type": "Branch", "id": "uuid" },
-      "outcome": "SUCCEEDED",
-      "reasonCode": "UPDATED",
-      "diff": { "redactedFields": ["phone"] },
-      "correlationId": "uuid"
+      "actorType": "USER",
+      "actorId": "opaque-id",
+      "action": "UPDATE",
+      "resourceType": "Branch",
+      "resourceId": "uuid",
+      "correlationId": "uuid-or-null"
     }
   ],
-  "meta": { "nextCursor": "opaque-or-null", "retentionPolicyId": "ref" }
+  "meta": { "limit": 100, "nextCursor": "opaque-or-null" }
 }
 ```
+
+El I0 actual no filtra por `action` ni `resourceId` desde la API route, aunque el dominio sí
+conserva esos campos en los registros. Tampoco expone `outcome`, `reasonCode`, `diff` ni
+`retentionPolicyId` en la respuesta pública actual.
 
 Detalle/export no pertenecen a v1. Un export futuro es job asíncrono con snapshot/hash/expiry.

@@ -73,6 +73,106 @@ test("GET /v1/audit-logs returns entries appended via the repository, filtered a
   await app.close();
 });
 
+test("GET /v1/audit-logs supports resource_type, from/to, limit clamp and cursor pagination", async () => {
+  const container = await buildContainer();
+  const tenantId = await getTenantId(container);
+  const app = await buildApp(container);
+
+  await container.auditLogs.append({
+    id: "11111111-1111-1111-1111-111111111111",
+    tenantId,
+    actorType: "USER",
+    actorId: "user-1",
+    action: "CREATE",
+    resourceType: "Branch",
+    resourceId: "branch-1",
+    occurredAt: new Date("2026-01-01T00:00:00Z"),
+  });
+  await container.auditLogs.append({
+    id: "22222222-2222-2222-2222-222222222222",
+    tenantId,
+    actorType: "USER",
+    actorId: "user-2",
+    action: "UPDATE",
+    resourceType: "Menu",
+    resourceId: "menu-1",
+    occurredAt: new Date("2026-02-01T00:00:00Z"),
+  });
+  await container.auditLogs.append({
+    id: "33333333-3333-3333-3333-333333333333",
+    tenantId,
+    actorType: "USER",
+    actorId: "user-3",
+    action: "DELETE",
+    resourceType: "Branch",
+    resourceId: "branch-2",
+    occurredAt: new Date("2026-03-01T00:00:00Z"),
+  });
+
+  const byResource = await app.inject({
+    method: "GET",
+    url: "/v1/audit-logs?resource_type=Branch",
+    headers: {
+      authorization: `Bearer ${container.demoAccessToken}`,
+      "x-tenant-id": tenantId,
+    },
+  });
+  assert.equal(byResource.statusCode, 200);
+  assert.equal(byResource.json().data.length, 2);
+  assert.equal(byResource.json().data[0].resourceType, "Branch");
+  assert.equal(byResource.json().data[1].resourceType, "Branch");
+
+  const ranged = await app.inject({
+    method: "GET",
+    url: "/v1/audit-logs?from=2026-01-15T00:00:00Z&to=2026-02-15T00:00:00Z",
+    headers: {
+      authorization: `Bearer ${container.demoAccessToken}`,
+      "x-tenant-id": tenantId,
+    },
+  });
+  assert.equal(ranged.statusCode, 200);
+  assert.equal(ranged.json().data.length, 1);
+  assert.equal(ranged.json().data[0].resourceType, "Menu");
+
+  const firstPage = await app.inject({
+    method: "GET",
+    url: "/v1/audit-logs?limit=1",
+    headers: {
+      authorization: `Bearer ${container.demoAccessToken}`,
+      "x-tenant-id": tenantId,
+    },
+  });
+  assert.equal(firstPage.statusCode, 200);
+  assert.equal(firstPage.json().data.length, 1);
+  assert.equal(typeof firstPage.json().meta.nextCursor, "string");
+  assert.equal(firstPage.json().meta.limit, 1);
+
+  const secondPage = await app.inject({
+    method: "GET",
+    url: `/v1/audit-logs?limit=1&cursor=${firstPage.json().meta.nextCursor}`,
+    headers: {
+      authorization: `Bearer ${container.demoAccessToken}`,
+      "x-tenant-id": tenantId,
+    },
+  });
+  assert.equal(secondPage.statusCode, 200);
+  assert.equal(secondPage.json().data.length, 1);
+  assert.notEqual(secondPage.json().data[0].id, firstPage.json().data[0].id);
+
+  const clamped = await app.inject({
+    method: "GET",
+    url: "/v1/audit-logs?limit=9999",
+    headers: {
+      authorization: `Bearer ${container.demoAccessToken}`,
+      "x-tenant-id": tenantId,
+    },
+  });
+  assert.equal(clamped.statusCode, 200);
+  assert.equal(clamped.json().meta.limit, 500);
+
+  await app.close();
+});
+
 test("GET /v1/audit-logs as EMPLOYEE returns 403 (audit:read is OWNER/ADMIN only)", async () => {
   const container = await buildContainer();
   const tenantId = await getTenantId(container);
