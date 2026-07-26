@@ -183,6 +183,10 @@ serialTest("Reservation create/detail preserve source while list redacts it", as
     headers,
   });
   assert.equal(list.statusCode, 200);
+  assert.deepEqual(
+    new Set(Object.keys(list.json() as Record<string, unknown>)),
+    new Set(["data"]),
+  );
   const listed = list.json().data.find((item: { id: string }) => item.id === create.json().data.id);
   assert.ok(listed);
   assert.equal("source" in listed, false);
@@ -209,6 +213,10 @@ serialTest("Reservation create/detail preserve source while list redacts it", as
     headers,
   });
   assert.equal(detail.statusCode, 200);
+  assert.deepEqual(
+    new Set(Object.keys(detail.json() as Record<string, unknown>)),
+    new Set(["data"]),
+  );
   assert.equal(detail.json().data.source, "PHONE");
   assert.equal(detail.json().data.guestId, "guest-list-redaction");
   assert.equal(detail.json().data.notes, "window");
@@ -313,6 +321,13 @@ serialTest("Reservation detail returns the reservation and hides cross-tenant re
     headers: { authorization: `Bearer ${container.demoAccessToken}`, "x-tenant-id": otherTenantId },
   });
   assert.equal(crossTenant.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(crossTenant.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(crossTenant.json().type, "not-found");
+  assert.equal(crossTenant.json().title, "Reservation not found");
+  assert.equal(crossTenant.json().status, 404);
 
   await app.close();
 });
@@ -337,6 +352,10 @@ serialTest("Reservation list returns empty for unknown or cross-tenant branches"
     headers,
   });
   assert.equal(unknownBranch.statusCode, 200);
+  assert.deepEqual(
+    new Set(Object.keys(unknownBranch.json() as Record<string, unknown>)),
+    new Set(["data"]),
+  );
   assert.deepEqual(unknownBranch.json().data, []);
 
   const otherTenantId = randomUUID();
@@ -371,6 +390,10 @@ serialTest("Reservation list returns empty for unknown or cross-tenant branches"
     headers: { authorization: `Bearer ${container.demoAccessToken}`, "x-tenant-id": otherTenantId },
   });
   assert.equal(crossTenant.statusCode, 200);
+  assert.deepEqual(
+    new Set(Object.keys(crossTenant.json() as Record<string, unknown>)),
+    new Set(["data"]),
+  );
   assert.deepEqual(crossTenant.json().data, []);
 
   await app.close();
@@ -616,6 +639,13 @@ serialTest("Reservation confirm and seat hide cross-tenant reservations as 404",
     headers: otherTenantHeaders,
   });
   assert.equal(crossTenantConfirm.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(crossTenantConfirm.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(crossTenantConfirm.json().type, "not-found");
+  assert.equal(crossTenantConfirm.json().title, "Reservation not found");
+  assert.equal(crossTenantConfirm.json().status, 404);
 
   const crossTenantSeat = await app.inject({
     method: "POST",
@@ -623,6 +653,13 @@ serialTest("Reservation confirm and seat hide cross-tenant reservations as 404",
     headers: otherTenantHeaders,
   });
   assert.equal(crossTenantSeat.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(crossTenantSeat.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(crossTenantSeat.json().type, "not-found");
+  assert.equal(crossTenantSeat.json().title, "Reservation not found");
+  assert.equal(crossTenantSeat.json().status, 404);
 
   await app.close();
 });
@@ -895,6 +932,13 @@ serialTest("Reservation cancel and no-show hide cross-tenant reservations as 404
     payload: { reasonCode: "GUEST_REQUEST" },
   });
   assert.equal(cancel.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(cancel.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(cancel.json().type, "not-found");
+  assert.equal(cancel.json().title, "Reservation not found");
+  assert.equal(cancel.json().status, 404);
 
   const noShow = await app.inject({
     method: "POST",
@@ -903,6 +947,13 @@ serialTest("Reservation cancel and no-show hide cross-tenant reservations as 404
     payload: { reason: "guest-did-not-arrive" },
   });
   assert.equal(noShow.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(noShow.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(noShow.json().type, "not-found");
+  assert.equal(noShow.json().title, "Reservation not found");
+  assert.equal(noShow.json().status, 404);
 
   await app.close();
 });
@@ -920,6 +971,13 @@ serialTest("Reservation command routes return 404 for unknown reservation ids", 
     headers,
   });
   assert.equal(confirm.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(confirm.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(confirm.json().type, "not-found");
+  assert.equal(confirm.json().title, "Reservation not found");
+  assert.equal(confirm.json().status, 404);
 
   const cancel = await app.inject({
     method: "POST",
@@ -928,6 +986,13 @@ serialTest("Reservation command routes return 404 for unknown reservation ids", 
     payload: { reasonCode: "GUEST_REQUEST" },
   });
   assert.equal(cancel.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(cancel.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(cancel.json().type, "not-found");
+  assert.equal(cancel.json().title, "Reservation not found");
+  assert.equal(cancel.json().status, 404);
 
   const seat = await app.inject({
     method: "POST",
@@ -935,6 +1000,13 @@ serialTest("Reservation command routes return 404 for unknown reservation ids", 
     headers,
   });
   assert.equal(seat.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(seat.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(seat.json().type, "not-found");
+  assert.equal(seat.json().title, "Reservation not found");
+  assert.equal(seat.json().status, 404);
 
   const noShow = await app.inject({
     method: "POST",
@@ -943,6 +1015,13 @@ serialTest("Reservation command routes return 404 for unknown reservation ids", 
     payload: { reason: "guest-did-not-arrive" },
   });
   assert.equal(noShow.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(noShow.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(noShow.json().type, "not-found");
+  assert.equal(noShow.json().title, "Reservation not found");
+  assert.equal(noShow.json().status, 404);
 
   await app.close();
 });
@@ -2505,6 +2584,7 @@ serialTest("Reservation notifications create and fetch notification intents", as
     headers: ownerHeaders(container, tenantId),
   });
   assert.equal(createIntent.statusCode, 201);
+  assert.deepEqual(Object.keys(createIntent.json()).sort(), ["data"]);
   const intent = createIntent.json().data;
   assert.equal(intent.reservationId, reservation.id);
   assert.equal(intent.purpose, "REQUEST_CONFIRMATION");
@@ -2537,6 +2617,7 @@ serialTest("Reservation notifications create and fetch notification intents", as
     headers: ownerHeaders(container, tenantId),
   });
   assert.equal(getIntent.statusCode, 200);
+  assert.deepEqual(Object.keys(getIntent.json()).sort(), ["data"]);
   assert.equal(getIntent.json().data.id, intent.id);
   assert.equal(getIntent.json().data.purpose, "REQUEST_CONFIRMATION");
   assert.equal("tenantId" in getIntent.json().data, false);
@@ -2555,6 +2636,7 @@ serialTest("Reservation notifications create and fetch notification intents", as
     headers: ownerHeaders(container, tenantId),
   });
   assert.equal(reminderIntent.statusCode, 201);
+  assert.deepEqual(Object.keys(reminderIntent.json()).sort(), ["data"]);
   assert.equal(reminderIntent.json().data.purpose, "SEND_REMINDER");
   assert.equal("tenantId" in reminderIntent.json().data, false);
   assert.equal(typeof reminderIntent.json().data.createdAt, "string");
@@ -2583,6 +2665,7 @@ serialTest("Reservation notifications create and fetch notification intents", as
     headers: ownerHeaders(container, tenantId),
   });
   assert.equal(getReminderIntent.statusCode, 200);
+  assert.deepEqual(Object.keys(getReminderIntent.json()).sort(), ["data"]);
   assert.equal(getReminderIntent.json().data.id, reminderIntent.json().data.id);
   assert.equal(getReminderIntent.json().data.purpose, "SEND_REMINDER");
   assert.equal(getReminderIntent.json().data.createdAt, reminderIntent.json().data.createdAt);
@@ -2600,6 +2683,7 @@ serialTest("Reservation notifications create and fetch notification intents", as
     headers: ownerHeaders(container, tenantId),
   });
   assert.equal(cancellationIntent.statusCode, 201);
+  assert.deepEqual(Object.keys(cancellationIntent.json()).sort(), ["data"]);
   assert.equal(cancellationIntent.json().data.purpose, "COMMUNICATE_CANCELLATION");
   assert.equal("tenantId" in cancellationIntent.json().data, false);
   assert.equal(typeof cancellationIntent.json().data.createdAt, "string");
@@ -2628,6 +2712,7 @@ serialTest("Reservation notifications create and fetch notification intents", as
     headers: ownerHeaders(container, tenantId),
   });
   assert.equal(getCancellationIntent.statusCode, 200);
+  assert.deepEqual(Object.keys(getCancellationIntent.json()).sort(), ["data"]);
   assert.equal(getCancellationIntent.json().data.id, cancellationIntent.json().data.id);
   assert.equal(getCancellationIntent.json().data.purpose, "COMMUNICATE_CANCELLATION");
   assert.equal(
@@ -2697,6 +2782,13 @@ serialTest("Reservation notifications require notification permission and reserv
     headers: { authorization: `Bearer ${waiterToken}`, "x-tenant-id": tenantId },
   });
   assert.equal(forbidden.statusCode, 403);
+  assert.deepEqual(
+    new Set(Object.keys(forbidden.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(forbidden.json().type, "insufficient-scope");
+  assert.equal(forbidden.json().title, "Insufficient scope");
+  assert.equal(forbidden.json().status, 403);
 
   const notFound = await app.inject({
     method: "POST",
@@ -2704,6 +2796,13 @@ serialTest("Reservation notifications require notification permission and reserv
     headers: ownerHeaders(container, tenantId),
   });
   assert.equal(notFound.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(notFound.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(notFound.json().type, "not-found");
+  assert.equal(notFound.json().title, "Reservation not found");
+  assert.equal(notFound.json().status, 404);
   await app.close();
 });
 
@@ -2766,6 +2865,13 @@ serialTest("Notification intent detail requires notification permission and hide
     headers: { authorization: `Bearer ${waiterToken}`, "x-tenant-id": tenantId },
   });
   assert.equal(forbidden.statusCode, 403);
+  assert.deepEqual(
+    new Set(Object.keys(forbidden.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(forbidden.json().type, "insufficient-scope");
+  assert.equal(forbidden.json().title, "Insufficient scope");
+  assert.equal(forbidden.json().status, 403);
 
   const otherTenantId = randomUUID();
   await container.tenants.save({
@@ -2798,6 +2904,13 @@ serialTest("Notification intent detail requires notification permission and hide
     headers: { authorization: `Bearer ${container.demoAccessToken}`, "x-tenant-id": otherTenantId },
   });
   assert.equal(crossTenant.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(crossTenant.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(crossTenant.json().type, "not-found");
+  assert.equal(crossTenant.json().title, "NotificationIntent not found");
+  assert.equal(crossTenant.json().status, 404);
 
   await app.close();
 });
@@ -2858,6 +2971,13 @@ serialTest("Notification intent creation hides cross-tenant reservations as 404 
       headers: crossTenantHeaders,
     });
     assert.equal(response.statusCode, 404);
+    assert.deepEqual(
+      new Set(Object.keys(response.json() as Record<string, unknown>)),
+      new Set(["type", "title", "status", "correlationId"]),
+    );
+    assert.equal(response.json().type, "not-found");
+    assert.equal(response.json().title, "Reservation not found");
+    assert.equal(response.json().status, 404);
   }
 
   await app.close();
@@ -2874,6 +2994,13 @@ serialTest("Notification intent detail returns 404 for unknown ids", async () =>
     headers: ownerHeaders(container, tenantId),
   });
   assert.equal(response.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(response.json().type, "not-found");
+  assert.equal(response.json().title, "NotificationIntent not found");
+  assert.equal(response.json().status, 404);
 
   await app.close();
 });
@@ -3130,6 +3257,13 @@ serialTest("Reservation preferences enforce create/read permissions and query va
     },
   });
   assert.equal(createForbidden.statusCode, 403);
+  assert.deepEqual(
+    new Set(Object.keys(createForbidden.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(createForbidden.json().type, "insufficient-scope");
+  assert.equal(createForbidden.json().title, "Insufficient scope");
+  assert.equal(createForbidden.json().status, 403);
 
   const listAllowed = await app.inject({
     method: "GET",
@@ -3137,6 +3271,7 @@ serialTest("Reservation preferences enforce create/read permissions and query va
     headers: waiterHeaders,
   });
   assert.equal(listAllowed.statusCode, 200);
+  assert.deepEqual(Object.keys(listAllowed.json()).sort(), ["data"]);
   assert.deepEqual(listAllowed.json().data, []);
 
   const invalidQuery = await app.inject({
@@ -3145,6 +3280,13 @@ serialTest("Reservation preferences enforce create/read permissions and query va
     headers: ownerHeaders(container, tenantId),
   });
   assert.equal(invalidQuery.statusCode, 400);
+  assert.deepEqual(
+    new Set(Object.keys(invalidQuery.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(invalidQuery.json().type, "bad-request");
+  assert.equal(invalidQuery.json().status, 400);
+  assert.match(String(invalidQuery.json().title), /subjectId/i);
 
   const invalidBody = await app.inject({
     method: "POST",
@@ -3158,6 +3300,13 @@ serialTest("Reservation preferences enforce create/read permissions and query va
     },
   });
   assert.equal(invalidBody.statusCode, 400);
+  assert.deepEqual(
+    new Set(Object.keys(invalidBody.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(invalidBody.json().type, "bad-request");
+  assert.equal(invalidBody.json().status, 400);
+  assert.match(String(invalidBody.json().title), /kind/i);
 
   await app.close();
 });
@@ -3181,6 +3330,19 @@ serialTest("Reservation preferences list returns empty across tenants for the sa
     },
   });
   assert.equal(create.statusCode, 201);
+  assert.deepEqual(Object.keys(create.json()).sort(), ["data"]);
+  assert.deepEqual(Object.keys(create.json().data).sort(), [
+    "code",
+    "createdAt",
+    "id",
+    "kind",
+    "revision",
+    "subjectId",
+    "subjectType",
+    "tenantId",
+    "updatedAt",
+    "value",
+  ]);
 
   const otherTenantId = randomUUID();
   await container.tenants.save({
@@ -3213,6 +3375,7 @@ serialTest("Reservation preferences list returns empty across tenants for the sa
     headers: { authorization: `Bearer ${container.demoAccessToken}`, "x-tenant-id": otherTenantId },
   });
   assert.equal(crossTenantList.statusCode, 200);
+  assert.deepEqual(Object.keys(crossTenantList.json()).sort(), ["data"]);
   assert.deepEqual(crossTenantList.json().data, []);
 
   await app.close();

@@ -274,6 +274,7 @@ test("order kitchen commands list and rollback from READY to IN_PROGRESS", async
     headers,
   });
   assert.equal(byOrder.statusCode, 200);
+  assert.deepEqual(Object.keys(byOrder.json()).sort(), ["data"]);
   assert.equal(byOrder.json().data.length, 1);
   assert.equal(byOrder.json().data[0].id, id);
 
@@ -288,6 +289,7 @@ test("order kitchen commands list and rollback from READY to IN_PROGRESS", async
     payload: { reason: "quality issue" },
   });
   assert.equal(rollback.statusCode, 200);
+  assert.deepEqual(Object.keys(rollback.json()).sort(), ["data"]);
   assert.deepEqual(
     new Set(Object.keys(rollback.json().data as Record<string, unknown>)),
     new Set([
@@ -330,9 +332,22 @@ test("invalid transition (mark-ready before start) returns 409; unknown id 404",
 
   const bad = await app.inject({ method: "POST", url: `/v1/kitchen/commands/${commands[0]!.id}/mark-ready`, headers, payload: {} });
   assert.equal(bad.statusCode, 409);
+  assert.deepEqual(
+    new Set(Object.keys(bad.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(bad.json().type, "conflict");
+  assert.equal(bad.json().status, 409);
 
   const missing = await app.inject({ method: "GET", url: `/v1/kitchen/commands/${randomUUID()}`, headers });
   assert.equal(missing.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(missing.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(missing.json().type, "not-found");
+  assert.equal(missing.json().title, "Command not found");
+  assert.equal(missing.json().status, 404);
   await app.close();
 });
 
@@ -382,6 +397,13 @@ test("kitchen commands enforce RBAC for cashier and hide unknown command ids as 
     headers: cashierHeaders,
   });
   assert.equal(forbiddenRead.statusCode, 403);
+  assert.deepEqual(
+    new Set(Object.keys(forbiddenRead.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(forbiddenRead.json().type, "insufficient-scope");
+  assert.equal(forbiddenRead.json().title, "Insufficient scope");
+  assert.equal(forbiddenRead.json().status, 403);
 
   const forbiddenClaim = await app.inject({
     method: "POST",
@@ -390,6 +412,13 @@ test("kitchen commands enforce RBAC for cashier and hide unknown command ids as 
     payload: {},
   });
   assert.equal(forbiddenClaim.statusCode, 403);
+  assert.deepEqual(
+    new Set(Object.keys(forbiddenClaim.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(forbiddenClaim.json().type, "insufficient-scope");
+  assert.equal(forbiddenClaim.json().title, "Insufficient scope");
+  assert.equal(forbiddenClaim.json().status, 403);
 
   const missingClaim = await app.inject({
     method: "POST",
@@ -398,6 +427,13 @@ test("kitchen commands enforce RBAC for cashier and hide unknown command ids as 
     payload: {},
   });
   assert.equal(missingClaim.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(missingClaim.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(missingClaim.json().type, "not-found");
+  assert.equal(missingClaim.json().title, "Command not found");
+  assert.equal(missingClaim.json().status, 404);
 
   await app.close();
 });
@@ -736,6 +772,12 @@ test("deactivating a station with active commands returns 409", async () => {
 
   const res = await app.inject({ method: "POST", url: `/v1/kitchen/stations/${DEMO_STATION_ID}/deactivate`, headers, payload: {} });
   assert.equal(res.statusCode, 409);
+  assert.deepEqual(
+    new Set(Object.keys(res.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(res.json().type, "conflict");
+  assert.equal(res.json().status, 409);
   await app.close();
 });
 
@@ -906,6 +948,13 @@ test("403 without permission (cashier), 404 for unknown station", async () => {
     headers: { authorization: `Bearer ${token}`, "x-tenant-id": tenantId },
   });
   assert.equal(forbidden.statusCode, 403);
+  assert.deepEqual(
+    new Set(Object.keys(forbidden.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(forbidden.json().type, "insufficient-scope");
+  assert.equal(forbidden.json().title, "Insufficient scope");
+  assert.equal(forbidden.json().status, 403);
 
   const missing = await app.inject({
     method: "GET",
@@ -913,5 +962,12 @@ test("403 without permission (cashier), 404 for unknown station", async () => {
     headers: ownerHeaders(container, tenantId),
   });
   assert.equal(missing.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(missing.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(missing.json().type, "not-found");
+  assert.equal(missing.json().title, "Station not found");
+  assert.equal(missing.json().status, 404);
   await app.close();
 });

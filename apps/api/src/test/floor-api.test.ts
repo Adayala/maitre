@@ -86,6 +86,7 @@ serialTest("Visit lifecycle: create, close happy path", async () => {
     payload: { branchId, tableIds: [tableId], guestCount: 2 },
   });
   assert.equal(create.statusCode, 201);
+  assert.deepEqual(Object.keys(create.json()).sort(), ["data"]);
   const visit = create.json().data;
   assert.deepEqual(
     new Set(Object.keys(visit as Record<string, unknown>)),
@@ -102,6 +103,7 @@ serialTest("Visit lifecycle: create, close happy path", async () => {
     headers: ownerHeaders(container, tenantId),
   });
   assert.equal(requestClose.statusCode, 200);
+  assert.deepEqual(Object.keys(requestClose.json()).sort(), ["data"]);
   assert.deepEqual(
     new Set(Object.keys(requestClose.json().data as Record<string, unknown>)),
     new Set(["id", "tenantId", "branchId", "tableIds", "guestCount", "status", "revision", "createdAt", "updatedAt"]),
@@ -117,6 +119,7 @@ serialTest("Visit lifecycle: create, close happy path", async () => {
     headers: ownerHeaders(container, tenantId),
   });
   assert.equal(close.statusCode, 200);
+  assert.deepEqual(Object.keys(close.json()).sort(), ["data"]);
   assert.deepEqual(
     new Set(Object.keys(close.json().data as Record<string, unknown>)),
     new Set(["id", "tenantId", "branchId", "tableIds", "guestCount", "status", "revision", "createdAt", "updatedAt", "closedAt"]),
@@ -142,6 +145,7 @@ serialTest("Visit reopen returns CLOSING to OPEN and visit list is query-scoped 
     payload: { branchId, tableIds: [tableId], guestCount: 2 },
   });
   assert.equal(create.statusCode, 201);
+  assert.deepEqual(Object.keys(create.json()).sort(), ["data"]);
   const visit = create.json().data;
   assert.equal(visit.revision, 1);
 
@@ -151,6 +155,7 @@ serialTest("Visit reopen returns CLOSING to OPEN and visit list is query-scoped 
     headers: ownerHeaders(container, tenantId),
   });
   assert.equal(list.statusCode, 200);
+  assert.deepEqual(Object.keys(list.json()).sort(), ["data"]);
   const listed = list.json().data.find((row: { id: string }) => row.id === visit.id);
   assert.ok(listed);
   assert.deepEqual(
@@ -167,6 +172,7 @@ serialTest("Visit reopen returns CLOSING to OPEN and visit list is query-scoped 
     headers: ownerHeaders(container, tenantId),
   });
   assert.equal(requestClose.statusCode, 200);
+  assert.deepEqual(Object.keys(requestClose.json()).sort(), ["data"]);
   assert.equal(requestClose.json().data.status, "CLOSING");
   assert.equal(requestClose.json().data.revision, 2);
 
@@ -177,6 +183,7 @@ serialTest("Visit reopen returns CLOSING to OPEN and visit list is query-scoped 
     payload: { reason: "manager correction" },
   });
   assert.equal(reopen.statusCode, 200);
+  assert.deepEqual(Object.keys(reopen.json()).sort(), ["data"]);
   assert.deepEqual(
     new Set(Object.keys(reopen.json().data as Record<string, unknown>)),
     new Set(["id", "tenantId", "branchId", "tableIds", "guestCount", "status", "revision", "createdAt", "updatedAt"]),
@@ -211,6 +218,13 @@ serialTest("Visit move and cancel commands update the visit and enforce branch-s
     headers: ownerHeaders(container, tenantId),
   });
   assert.equal(missingBranchQuery.statusCode, 400);
+  assert.deepEqual(
+    new Set(Object.keys(missingBranchQuery.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(missingBranchQuery.json().type, "bad-request");
+  assert.equal(missingBranchQuery.json().title, "branchId is required");
+  assert.equal(missingBranchQuery.json().status, 400);
 
   const move = await app.inject({
     method: "POST",
@@ -293,6 +307,12 @@ serialTest("Visit commands reject occupied moves, close with unsettled check, an
     payload: { tableIds: [occupiedTableId] },
   });
   assert.equal(moveConflict.statusCode, 409);
+  assert.deepEqual(
+    new Set(Object.keys(moveConflict.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(moveConflict.json().type, "conflict");
+  assert.equal(moveConflict.json().status, 409);
 
   const moveOk = await app.inject({
     method: "POST",
@@ -324,6 +344,12 @@ serialTest("Visit commands reject occupied moves, close with unsettled check, an
     headers,
   });
   assert.equal(closeBlocked.statusCode, 400);
+  assert.deepEqual(
+    new Set(Object.keys(closeBlocked.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(closeBlocked.json().type, "bad-request");
+  assert.equal(closeBlocked.json().status, 400);
 
   const requestCloseAgain = await app.inject({
     method: "POST",
@@ -331,6 +357,12 @@ serialTest("Visit commands reject occupied moves, close with unsettled check, an
     headers,
   });
   assert.equal(requestCloseAgain.statusCode, 409);
+  assert.deepEqual(
+    new Set(Object.keys(requestCloseAgain.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(requestCloseAgain.json().type, "conflict");
+  assert.equal(requestCloseAgain.json().status, 409);
 
   const cancelAfterCheck = await app.inject({
     method: "POST",
@@ -339,6 +371,12 @@ serialTest("Visit commands reject occupied moves, close with unsettled check, an
     payload: { reason: "too late" },
   });
   assert.equal(cancelAfterCheck.statusCode, 409);
+  assert.deepEqual(
+    new Set(Object.keys(cancelAfterCheck.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(cancelAfterCheck.json().type, "conflict");
+  assert.equal(cancelAfterCheck.json().status, 409);
 
   const reopenWithoutReason = await app.inject({
     method: "POST",
@@ -347,6 +385,13 @@ serialTest("Visit commands reject occupied moves, close with unsettled check, an
     payload: {},
   });
   assert.equal(reopenWithoutReason.statusCode, 400);
+  assert.deepEqual(
+    new Set(Object.keys(reopenWithoutReason.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(reopenWithoutReason.json().type, "bad-request");
+  assert.equal(reopenWithoutReason.json().status, 400);
+  assert.match(String(reopenWithoutReason.json().title), /reason/i);
 
   const reopen = await app.inject({
     method: "POST",
@@ -431,6 +476,7 @@ serialTest("Check + Payment: add line, capture payment, settle", async () => {
     payload: { amountMinorUnits: 1000, currency: "ARS", method: "CASH", idempotencyKey: "idem-test-1" },
   });
   assert.equal(createPayment.statusCode, 201);
+  assert.deepEqual(Object.keys(createPayment.json()).sort(), ["data"]);
   const payment = createPayment.json().data;
   assert.deepEqual(
     new Set(Object.keys(payment as Record<string, unknown>)),
@@ -547,6 +593,7 @@ serialTest("Payments API: create is idempotent, list/get work, fail and void tra
     payload: { amountMinorUnits: 500, currency: "ARS", method: "CARD", idempotencyKey: "idem-floor-1" },
   });
   assert.equal(first.statusCode, 201);
+  assert.deepEqual(Object.keys(first.json()).sort(), ["data"]);
   const payment = first.json().data;
   assert.deepEqual(
     new Set(Object.keys(payment as Record<string, unknown>)),
@@ -573,6 +620,7 @@ serialTest("Payments API: create is idempotent, list/get work, fail and void tra
     payload: { amountMinorUnits: 500, currency: "ARS", method: "CARD", idempotencyKey: "idem-floor-1" },
   });
   assert.equal(second.statusCode, 201);
+  assert.deepEqual(Object.keys(second.json()).sort(), ["data"]);
   assert.equal(second.json().data.id, payment.id);
 
   const list = await app.inject({
@@ -581,6 +629,7 @@ serialTest("Payments API: create is idempotent, list/get work, fail and void tra
     headers: ownerHeaders(container, tenantId),
   });
   assert.equal(list.statusCode, 200);
+  assert.deepEqual(Object.keys(list.json()).sort(), ["data"]);
   assert.equal(list.json().data.length, 1);
   assert.deepEqual(
     new Set(Object.keys(list.json().data[0] as Record<string, unknown>)),
@@ -607,6 +656,7 @@ serialTest("Payments API: create is idempotent, list/get work, fail and void tra
     headers: ownerHeaders(container, tenantId),
   });
   assert.equal(get.statusCode, 200);
+  assert.deepEqual(Object.keys(get.json()).sort(), ["data"]);
   assert.deepEqual(
     new Set(Object.keys(get.json().data as Record<string, unknown>)),
     new Set([
@@ -632,6 +682,7 @@ serialTest("Payments API: create is idempotent, list/get work, fail and void tra
     headers: ownerHeaders(container, tenantId),
   });
   assert.equal(fail.statusCode, 200);
+  assert.deepEqual(Object.keys(fail.json()).sort(), ["data"]);
   assert.equal(fail.json().data.status, "FAILED");
 
   const voidPending = await app.inject({
@@ -641,6 +692,7 @@ serialTest("Payments API: create is idempotent, list/get work, fail and void tra
     payload: { amountMinorUnits: 300, currency: "ARS", method: "OTHER", idempotencyKey: "idem-floor-void" },
   });
   assert.equal(voidPending.statusCode, 201);
+  assert.deepEqual(Object.keys(voidPending.json()).sort(), ["data"]);
   const pendingPayment = voidPending.json().data;
 
   const voidRes = await app.inject({
@@ -649,6 +701,7 @@ serialTest("Payments API: create is idempotent, list/get work, fail and void tra
     headers: ownerHeaders(container, tenantId),
   });
   assert.equal(voidRes.statusCode, 200);
+  assert.deepEqual(Object.keys(voidRes.json()).sort(), ["data"]);
   assert.equal(voidRes.json().data.status, "VOID");
 
   await app.close();
@@ -700,6 +753,7 @@ serialTest("Payments API: refund and over-capture validation", async () => {
     headers: ownerHeaders(container, tenantId),
   });
   assert.equal(capture.statusCode, 200);
+  assert.deepEqual(Object.keys(capture.json()).sort(), ["data"]);
 
   const refund = await app.inject({
     method: "POST",
@@ -708,6 +762,7 @@ serialTest("Payments API: refund and over-capture validation", async () => {
     payload: { amountMinorUnits: 500 },
   });
   assert.equal(refund.statusCode, 200);
+  assert.deepEqual(Object.keys(refund.json()).sort(), ["data"]);
   assert.deepEqual(
     new Set(Object.keys(refund.json().data as Record<string, unknown>)),
     new Set([
@@ -747,6 +802,12 @@ serialTest("Payments API: refund and over-capture validation", async () => {
     headers: ownerHeaders(container, tenantId),
   });
   assert.equal(overCapture.statusCode, 400);
+  assert.deepEqual(
+    new Set(Object.keys(overCapture.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(overCapture.json().type, "bad-request");
+  assert.equal(overCapture.json().status, 400);
 
   await app.close();
 });
@@ -794,6 +855,13 @@ serialTest("403 without permission, 404 for unknown ids", async () => {
     payload: { branchId: randomUUID(), tableIds: [randomUUID()], guestCount: 2 },
   });
   assert.equal(forbidden.statusCode, 403);
+  assert.deepEqual(
+    new Set(Object.keys(forbidden.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(forbidden.json().type, "insufficient-scope");
+  assert.equal(forbidden.json().title, "Insufficient scope");
+  assert.equal(forbidden.json().status, 403);
 
   const notFound = await app.inject({
     method: "GET",
@@ -801,6 +869,13 @@ serialTest("403 without permission, 404 for unknown ids", async () => {
     headers: ownerHeaders(container, tenantId),
   });
   assert.equal(notFound.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(notFound.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(notFound.json().type, "not-found");
+  assert.equal(notFound.json().title, "Visit not found");
+  assert.equal(notFound.json().status, 404);
 
   const reopenForbidden = await app.inject({
     method: "POST",
@@ -809,6 +884,13 @@ serialTest("403 without permission, 404 for unknown ids", async () => {
     payload: { reason: "not allowed" },
   });
   assert.equal(reopenForbidden.statusCode, 403);
+  assert.deepEqual(
+    new Set(Object.keys(reopenForbidden.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(reopenForbidden.json().type, "insufficient-scope");
+  assert.equal(reopenForbidden.json().title, "Insufficient scope");
+  assert.equal(reopenForbidden.json().status, 403);
   await app.close();
 });
 
@@ -903,6 +985,13 @@ serialTest("ServicePeriod force-close endpoint closes a closing period and requi
     payload: {},
   });
   assert.equal(missingReason.statusCode, 400);
+  assert.deepEqual(
+    new Set(Object.keys(missingReason.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(missingReason.json().type, "bad-request");
+  assert.equal(missingReason.json().status, 400);
+  assert.match(String(missingReason.json().title), /reason/i);
 
   const forceClose = await app.inject({
     method: "POST",
@@ -1078,6 +1167,7 @@ serialTest("ServicePeriod list/detail and transition guards enforce conflict and
     headers,
   });
   assert.equal(list.statusCode, 200);
+  assert.deepEqual(Object.keys(list.json()).sort(), ["data"]);
   assert.equal(list.json().data.length, 2);
   for (const row of list.json().data as Array<Record<string, unknown>>) {
     assert.deepEqual(
@@ -1103,6 +1193,7 @@ serialTest("ServicePeriod list/detail and transition guards enforce conflict and
     headers,
   });
   assert.equal(detail.statusCode, 200);
+  assert.deepEqual(Object.keys(detail.json()).sort(), ["data"]);
   assert.deepEqual(
     new Set(Object.keys(detail.json().data as Record<string, unknown>)),
     new Set([
@@ -1127,6 +1218,7 @@ serialTest("ServicePeriod list/detail and transition guards enforce conflict and
     headers,
   });
   assert.equal(openBreakfast.statusCode, 200);
+  assert.deepEqual(Object.keys(openBreakfast.json()).sort(), ["data"]);
   assert.equal(openBreakfast.json().data.status, "OPEN");
 
   const conflictingOpen = await app.inject({
@@ -1135,6 +1227,12 @@ serialTest("ServicePeriod list/detail and transition guards enforce conflict and
     headers,
   });
   assert.equal(conflictingOpen.statusCode, 409);
+  assert.deepEqual(
+    new Set(Object.keys(conflictingOpen.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(conflictingOpen.json().type, "conflict");
+  assert.equal(conflictingOpen.json().status, 409);
 
   const closeWithoutBegin = await app.inject({
     method: "POST",
@@ -1143,6 +1241,12 @@ serialTest("ServicePeriod list/detail and transition guards enforce conflict and
     payload: {},
   });
   assert.equal(closeWithoutBegin.statusCode, 409);
+  assert.deepEqual(
+    new Set(Object.keys(closeWithoutBegin.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(closeWithoutBegin.json().type, "conflict");
+  assert.equal(closeWithoutBegin.json().status, 409);
 
   const cancelPlannedDinner = await app.inject({
     method: "POST",
@@ -1174,6 +1278,12 @@ serialTest("ServicePeriod list/detail and transition guards enforce conflict and
     headers,
   });
   assert.equal(reopenCancelledDinner.statusCode, 409);
+  assert.deepEqual(
+    new Set(Object.keys(reopenCancelledDinner.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(reopenCancelledDinner.json().type, "conflict");
+  assert.equal(reopenCancelledDinner.json().status, 409);
 
   const unknownDetail = await app.inject({
     method: "GET",
@@ -1181,6 +1291,13 @@ serialTest("ServicePeriod list/detail and transition guards enforce conflict and
     headers,
   });
   assert.equal(unknownDetail.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(unknownDetail.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(unknownDetail.json().type, "not-found");
+  assert.equal(unknownDetail.json().title, "ServicePeriod not found");
+  assert.equal(unknownDetail.json().status, 404);
 
   const unknownOpen = await app.inject({
     method: "POST",
@@ -1188,6 +1305,13 @@ serialTest("ServicePeriod list/detail and transition guards enforce conflict and
     headers,
   });
   assert.equal(unknownOpen.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(unknownOpen.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(unknownOpen.json().type, "not-found");
+  assert.equal(unknownOpen.json().title, "ServicePeriod not found");
+  assert.equal(unknownOpen.json().status, 404);
 
   const unknownForceClose = await app.inject({
     method: "POST",
@@ -1196,6 +1320,13 @@ serialTest("ServicePeriod list/detail and transition guards enforce conflict and
     payload: { reason: "unknown target" },
   });
   assert.equal(unknownForceClose.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(unknownForceClose.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(unknownForceClose.json().type, "not-found");
+  assert.equal(unknownForceClose.json().title, "ServicePeriod not found");
+  assert.equal(unknownForceClose.json().status, 404);
 
   await app.close();
 });
@@ -1243,14 +1374,22 @@ serialTest("ServicePeriod routes enforce create schema and manage permission", a
     payload: { businessDate: "2026-07-25", name: "", type: "DINNER" },
   });
   assert.equal(invalidCreate.statusCode, 400);
+  assert.deepEqual(
+    new Set(Object.keys(invalidCreate.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(invalidCreate.json().type, "bad-request");
+  assert.equal(invalidCreate.json().status, 400);
+  assert.match(String(invalidCreate.json().title), /name/i);
 
   const create = await app.inject({
     method: "POST",
     url: `/v1/branches/${branchId}/service-periods`,
     headers,
-    payload: { businessDate: "2026-07-25", name: "Dinner", type: "DINNER" },
+      payload: { businessDate: "2026-07-25", name: "Dinner", type: "DINNER" },
   });
   assert.equal(create.statusCode, 201);
+  assert.deepEqual(Object.keys(create.json()).sort(), ["data"]);
   assert.deepEqual(
     new Set(Object.keys(create.json().data as Record<string, unknown>)),
     new Set([
@@ -1274,6 +1413,13 @@ serialTest("ServicePeriod routes enforce create schema and manage permission", a
     headers: { authorization: `Bearer ${token}`, "x-tenant-id": tenantId },
   });
   assert.equal(forbiddenList.statusCode, 403);
+  assert.deepEqual(
+    new Set(Object.keys(forbiddenList.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(forbiddenList.json().type, "insufficient-scope");
+  assert.equal(forbiddenList.json().title, "Insufficient scope");
+  assert.equal(forbiddenList.json().status, 403);
 
   const forbiddenOpen = await app.inject({
     method: "POST",
@@ -1281,6 +1427,13 @@ serialTest("ServicePeriod routes enforce create schema and manage permission", a
     headers: { authorization: `Bearer ${token}`, "x-tenant-id": tenantId },
   });
   assert.equal(forbiddenOpen.statusCode, 403);
+  assert.deepEqual(
+    new Set(Object.keys(forbiddenOpen.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(forbiddenOpen.json().type, "insufficient-scope");
+  assert.equal(forbiddenOpen.json().title, "Insufficient scope");
+  assert.equal(forbiddenOpen.json().status, 403);
 
   await app.close();
 });
@@ -1298,6 +1451,13 @@ serialTest("ServicePeriod detail and commands hide cross-tenant resources as 404
     headers,
   });
   assert.equal(detail.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(detail.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(detail.json().type, "not-found");
+  assert.equal(detail.json().title, "ServicePeriod not found");
+  assert.equal(detail.json().status, 404);
 
   const open = await app.inject({
     method: "POST",
@@ -1305,6 +1465,13 @@ serialTest("ServicePeriod detail and commands hide cross-tenant resources as 404
     headers,
   });
   assert.equal(open.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(open.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(open.json().type, "not-found");
+  assert.equal(open.json().title, "ServicePeriod not found");
+  assert.equal(open.json().status, 404);
 
   const beginClose = await app.inject({
     method: "POST",
@@ -1312,6 +1479,13 @@ serialTest("ServicePeriod detail and commands hide cross-tenant resources as 404
     headers,
   });
   assert.equal(beginClose.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(beginClose.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(beginClose.json().type, "not-found");
+  assert.equal(beginClose.json().title, "ServicePeriod not found");
+  assert.equal(beginClose.json().status, 404);
 
   const cancelPlanned = await app.inject({
     method: "POST",
@@ -1319,6 +1493,13 @@ serialTest("ServicePeriod detail and commands hide cross-tenant resources as 404
     headers,
   });
   assert.equal(cancelPlanned.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(cancelPlanned.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(cancelPlanned.json().type, "not-found");
+  assert.equal(cancelPlanned.json().title, "ServicePeriod not found");
+  assert.equal(cancelPlanned.json().status, 404);
 
   const close = await app.inject({
     method: "POST",
@@ -1327,6 +1508,13 @@ serialTest("ServicePeriod detail and commands hide cross-tenant resources as 404
     payload: {},
   });
   assert.equal(close.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(close.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(close.json().type, "not-found");
+  assert.equal(close.json().title, "ServicePeriod not found");
+  assert.equal(close.json().status, 404);
 
   const forceClose = await app.inject({
     method: "POST",
@@ -1335,6 +1523,13 @@ serialTest("ServicePeriod detail and commands hide cross-tenant resources as 404
     payload: { reason: "cross-tenant" },
   });
   assert.equal(forceClose.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(forceClose.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(forceClose.json().type, "not-found");
+  assert.equal(forceClose.json().title, "ServicePeriod not found");
+  assert.equal(forceClose.json().status, 404);
 
   await app.close();
 });
@@ -1472,6 +1667,7 @@ serialTest("Table statuses list returns OCCUPIED and PAYING projections for acti
     headers,
   });
   assert.equal(statuses.statusCode, 200);
+  assert.deepEqual(Object.keys(statuses.json()).sort(), ["data"]);
   const rows = statuses.json().data as Array<{ tableId: string; status: string; relatedVisitId?: string; asOf: string }>;
 
   const occupied = rows.find((row) => row.tableId === occupiedTableId);
@@ -1512,6 +1708,7 @@ serialTest("Occupancy endpoints list visit occupancies, release an occupancy, an
     headers,
   });
   assert.equal(list.statusCode, 200);
+  assert.deepEqual(Object.keys(list.json()).sort(), ["data"]);
   assert.equal(list.json().data.length, 1);
   assert.deepEqual(
     new Set(Object.keys(list.json().data[0] as Record<string, unknown>)),
@@ -1532,6 +1729,7 @@ serialTest("Occupancy endpoints list visit occupancies, release an occupancy, an
     headers,
   });
   assert.equal(release.statusCode, 200);
+  assert.deepEqual(Object.keys(release.json()).sort(), ["data"]);
   assert.deepEqual(
     new Set(Object.keys(release.json().data as Record<string, unknown>)),
     new Set(["id", "tenantId", "branchId", "tableId", "visitId", "guestCount", "status", "startedAt", "endedAt", "revision"]),
@@ -1551,6 +1749,7 @@ serialTest("Occupancy endpoints list visit occupancies, release an occupancy, an
     headers,
   });
   assert.equal(relisted.statusCode, 200);
+  assert.deepEqual(Object.keys(relisted.json()).sort(), ["data"]);
   assert.equal(relisted.json().data[0].revision, 2);
   assert.equal(relisted.json().data[0].status, "CLOSED");
   assert.ok(!Number.isNaN(Date.parse(relisted.json().data[0].endedAt as string)));
@@ -1561,6 +1760,13 @@ serialTest("Occupancy endpoints list visit occupancies, release an occupancy, an
     headers,
   });
   assert.equal(unknownRelease.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(unknownRelease.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(unknownRelease.json().type, "not-found");
+  assert.equal(unknownRelease.json().title, "Occupancy not found");
+  assert.equal(unknownRelease.json().status, 404);
 
   await app.close();
 });
@@ -1588,6 +1794,7 @@ serialTest("Checks API rejects duplicate checks, invalid mutations, and invalid 
     payload: { currency: "ARS" },
   });
   assert.equal(createCheck.statusCode, 201);
+  assert.deepEqual(Object.keys(createCheck.json()).sort(), ["data"]);
   const checkId = createCheck.json().data.id as string;
 
   const duplicateCheck = await app.inject({
@@ -1597,6 +1804,12 @@ serialTest("Checks API rejects duplicate checks, invalid mutations, and invalid 
     payload: { currency: "ARS" },
   });
   assert.equal(duplicateCheck.statusCode, 409);
+  assert.deepEqual(
+    new Set(Object.keys(duplicateCheck.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(duplicateCheck.json().type, "conflict");
+  assert.equal(duplicateCheck.json().status, 409);
 
   const invalidLine = await app.inject({
     method: "POST",
@@ -1605,6 +1818,13 @@ serialTest("Checks API rejects duplicate checks, invalid mutations, and invalid 
     payload: { description: "Broken", amountMinorUnits: -1 },
   });
   assert.equal(invalidLine.statusCode, 400);
+  assert.deepEqual(
+    new Set(Object.keys(invalidLine.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(invalidLine.json().type, "bad-request");
+  assert.equal(invalidLine.json().status, 400);
+  assert.match(String(invalidLine.json().title), /amountMinorUnits/i);
 
   const validLine = await app.inject({
     method: "POST",
@@ -1613,6 +1833,7 @@ serialTest("Checks API rejects duplicate checks, invalid mutations, and invalid 
     payload: { description: "Valid item", amountMinorUnits: 500 },
   });
   assert.equal(validLine.statusCode, 200);
+  assert.deepEqual(Object.keys(validLine.json()).sort(), ["data"]);
 
   const invalidVoidBody = await app.inject({
     method: "POST",
@@ -1621,6 +1842,13 @@ serialTest("Checks API rejects duplicate checks, invalid mutations, and invalid 
     payload: {},
   });
   assert.equal(invalidVoidBody.statusCode, 400);
+  assert.deepEqual(
+    new Set(Object.keys(invalidVoidBody.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(invalidVoidBody.json().type, "bad-request");
+  assert.equal(invalidVoidBody.json().status, 400);
+  assert.match(String(invalidVoidBody.json().title), /reason/i);
 
   const requestPayment = await app.inject({
     method: "POST",
@@ -1628,6 +1856,7 @@ serialTest("Checks API rejects duplicate checks, invalid mutations, and invalid 
     headers,
   });
   assert.equal(requestPayment.statusCode, 200);
+  assert.deepEqual(Object.keys(requestPayment.json()).sort(), ["data"]);
   assert.equal(requestPayment.json().data.status, "PAYMENT_PENDING");
 
   const addLineAfterPaymentRequested = await app.inject({
@@ -1637,6 +1866,12 @@ serialTest("Checks API rejects duplicate checks, invalid mutations, and invalid 
     payload: { description: "Late line", amountMinorUnits: 100 },
   });
   assert.equal(addLineAfterPaymentRequested.statusCode, 400);
+  assert.deepEqual(
+    new Set(Object.keys(addLineAfterPaymentRequested.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(addLineAfterPaymentRequested.json().type, "bad-request");
+  assert.equal(addLineAfterPaymentRequested.json().status, 400);
 
   const settleUnbalanced = await app.inject({
     method: "POST",
@@ -1644,6 +1879,12 @@ serialTest("Checks API rejects duplicate checks, invalid mutations, and invalid 
     headers,
   });
   assert.equal(settleUnbalanced.statusCode, 400);
+  assert.deepEqual(
+    new Set(Object.keys(settleUnbalanced.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(settleUnbalanced.json().type, "bad-request");
+  assert.equal(settleUnbalanced.json().status, 400);
 
   const voidCheck = await app.inject({
     method: "POST",
@@ -1652,6 +1893,7 @@ serialTest("Checks API rejects duplicate checks, invalid mutations, and invalid 
     payload: { reason: "operator cancelled" },
   });
   assert.equal(voidCheck.statusCode, 200);
+  assert.deepEqual(Object.keys(voidCheck.json()).sort(), ["data"]);
   assert.equal(voidCheck.json().data.status, "VOID");
 
   const settleVoid = await app.inject({
@@ -1660,6 +1902,12 @@ serialTest("Checks API rejects duplicate checks, invalid mutations, and invalid 
     headers,
   });
   assert.equal(settleVoid.statusCode, 409);
+  assert.deepEqual(
+    new Set(Object.keys(settleVoid.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(settleVoid.json().type, "conflict");
+  assert.equal(settleVoid.json().status, 409);
 
   const requestPaymentAgain = await app.inject({
     method: "POST",
@@ -1667,6 +1915,12 @@ serialTest("Checks API rejects duplicate checks, invalid mutations, and invalid 
     headers,
   });
   assert.equal(requestPaymentAgain.statusCode, 409);
+  assert.deepEqual(
+    new Set(Object.keys(requestPaymentAgain.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(requestPaymentAgain.json().type, "conflict");
+  assert.equal(requestPaymentAgain.json().status, 409);
 
   await app.close();
 });

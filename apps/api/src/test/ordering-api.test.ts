@@ -309,6 +309,12 @@ serialTest("Order item cancel and transition endpoints enforce lifecycle and per
     payload: { to: "DELIVERED" },
   });
   assert.equal(invalidDelivered.statusCode, 409);
+  assert.deepEqual(
+    new Set(Object.keys(invalidDelivered.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(invalidDelivered.json().type, "conflict");
+  assert.equal(invalidDelivered.json().status, 409);
 
   const now = new Date();
   const cashier = {
@@ -349,6 +355,13 @@ serialTest("Order item cancel and transition endpoints enforce lifecycle and per
     payload: { to: "IN_PREP" },
   });
   assert.equal(forbiddenPrep.statusCode, 403);
+  assert.deepEqual(
+    new Set(Object.keys(forbiddenPrep.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(forbiddenPrep.json().type, "insufficient-scope");
+  assert.equal(forbiddenPrep.json().title, "Insufficient scope");
+  assert.equal(forbiddenPrep.json().status, 403);
 
   const inPrep = await app.inject({
     method: "POST",
@@ -388,6 +401,13 @@ serialTest("Order item cancel and transition endpoints enforce lifecycle and per
     payload: { reasonCode: "GUEST_REQUEST" },
   });
   assert.equal(forbiddenPreparedCancel.statusCode, 403);
+  assert.deepEqual(
+    new Set(Object.keys(forbiddenPreparedCancel.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(forbiddenPreparedCancel.json().type, "insufficient-scope");
+  assert.equal(forbiddenPreparedCancel.json().title, "Insufficient scope");
+  assert.equal(forbiddenPreparedCancel.json().status, 403);
 
   const ready = await app.inject({
     method: "POST",
@@ -485,6 +505,12 @@ serialTest("Order item cancel and transition endpoints enforce lifecycle and per
     payload: { reasonCode: "GUEST_REQUEST" },
   });
   assert.equal(cancelAgain.statusCode, 409);
+  assert.deepEqual(
+    new Set(Object.keys(cancelAgain.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(cancelAgain.json().type, "conflict");
+  assert.equal(cancelAgain.json().status, 409);
 
   await app.close();
 });
@@ -515,7 +541,13 @@ serialTest("Order item cancel and transition hide unknown and cross-tenant targe
     payload: { to: "IN_PREP" },
   });
   assert.equal(unknownTransition.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(unknownTransition.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(unknownTransition.json().type, "not-found");
   assert.equal(unknownTransition.json().title, "OrderItem not found");
+  assert.equal(unknownTransition.json().status, 404);
 
   const unknownCancel = await app.inject({
     method: "POST",
@@ -524,7 +556,13 @@ serialTest("Order item cancel and transition hide unknown and cross-tenant targe
     payload: { reasonCode: "GUEST_REQUEST" },
   });
   assert.equal(unknownCancel.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(unknownCancel.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(unknownCancel.json().type, "not-found");
   assert.equal(unknownCancel.json().title, "OrderItem not found");
+  assert.equal(unknownCancel.json().status, 404);
 
   const otherTenantId = randomUUID();
   const now = new Date();
@@ -559,7 +597,13 @@ serialTest("Order item cancel and transition hide unknown and cross-tenant targe
     payload: { to: "IN_PREP" },
   });
   assert.equal(crossTenantTransition.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(crossTenantTransition.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(crossTenantTransition.json().type, "not-found");
   assert.equal(crossTenantTransition.json().title, "OrderItem not found");
+  assert.equal(crossTenantTransition.json().status, 404);
 
   const crossTenantCancel = await app.inject({
     method: "POST",
@@ -568,7 +612,13 @@ serialTest("Order item cancel and transition hide unknown and cross-tenant targe
     payload: { reasonCode: "GUEST_REQUEST" },
   });
   assert.equal(crossTenantCancel.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(crossTenantCancel.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(crossTenantCancel.json().type, "not-found");
   assert.equal(crossTenantCancel.json().title, "Order not found");
+  assert.equal(crossTenantCancel.json().status, 404);
 
   await app.close();
 });
@@ -595,9 +645,31 @@ serialTest("Order submit is idempotent and does not redispatch commands on re-su
     payload: { catalogRevisionId: "catalog-rev-1" },
   });
   assert.equal(first.statusCode, 200);
+  assert.deepEqual(Object.keys(first.json()).sort(), ["data"]);
   assert.deepEqual(
     new Set(Object.keys(first.json().data as Record<string, unknown>)),
     new Set(["order", "commands"]),
+  );
+  assert.deepEqual(
+    new Set(Object.keys(first.json().data.order as Record<string, unknown>)),
+    new Set([
+      "id",
+      "tenantId",
+      "branchId",
+      "visitId",
+      "currency",
+      "items",
+      "adjustments",
+      "status",
+      "subtotalMinorUnits",
+      "taxTotalMinorUnits",
+      "grandTotalMinorUnits",
+      "revision",
+      "createdAt",
+      "updatedAt",
+      "submittedAt",
+      "catalogRevisionId",
+    ]),
   );
   assert.equal(first.json().data.order.status, "SUBMITTED");
   assert.equal(first.json().data.order.catalogRevisionId, "catalog-rev-1");
@@ -612,9 +684,31 @@ serialTest("Order submit is idempotent and does not redispatch commands on re-su
     payload: { catalogRevisionId: "catalog-rev-2" },
   });
   assert.equal(second.statusCode, 200);
+  assert.deepEqual(Object.keys(second.json()).sort(), ["data"]);
   assert.deepEqual(
     new Set(Object.keys(second.json().data as Record<string, unknown>)),
     new Set(["order", "commands"]),
+  );
+  assert.deepEqual(
+    new Set(Object.keys(second.json().data.order as Record<string, unknown>)),
+    new Set([
+      "id",
+      "tenantId",
+      "branchId",
+      "visitId",
+      "currency",
+      "items",
+      "adjustments",
+      "status",
+      "subtotalMinorUnits",
+      "taxTotalMinorUnits",
+      "grandTotalMinorUnits",
+      "revision",
+      "createdAt",
+      "updatedAt",
+      "submittedAt",
+      "catalogRevisionId",
+    ]),
   );
   assert.equal(second.json().data.order.status, "SUBMITTED");
   assert.equal(second.json().data.order.catalogRevisionId, "catalog-rev-1");
@@ -628,6 +722,7 @@ serialTest("Order submit is idempotent and does not redispatch commands on re-su
     headers,
   });
   assert.equal(kitchenCommands.statusCode, 200);
+  assert.deepEqual(Object.keys(kitchenCommands.json()).sort(), ["data"]);
   assert.equal(kitchenCommands.json().data.length, 1);
 
   await app.close();
@@ -649,6 +744,12 @@ serialTest("Order submit rejects an empty draft with 409 conflict", async () => 
     payload: {},
   });
   assert.equal(submit.statusCode, 409);
+  assert.deepEqual(
+    new Set(Object.keys(submit.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(submit.json().type, "conflict");
+  assert.equal(submit.json().status, 409);
 
   const orderAfter = await app.inject({
     method: "GET",
@@ -656,6 +757,7 @@ serialTest("Order submit rejects an empty draft with 409 conflict", async () => 
     headers,
   });
   assert.equal(orderAfter.statusCode, 200);
+  assert.deepEqual(Object.keys(orderAfter.json()).sort(), ["data"]);
   assert.equal(orderAfter.json().data.status, "DRAFT");
   assert.equal(orderAfter.json().data.items.length, 0);
 
