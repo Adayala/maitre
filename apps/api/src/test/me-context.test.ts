@@ -34,7 +34,13 @@ test("GET /v1/me/context without a bearer token returns 401 authentication-requi
   const app = await buildApp(container);
   const response = await app.inject({ method: "GET", url: "/v1/me/context" });
   assert.equal(response.statusCode, 401);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
   assert.equal(response.json().type, "authentication-required");
+  assert.equal(response.json().title, "Authentication required");
+  assert.equal(response.json().status, 401);
   assert.equal(response.headers["www-authenticate"], "Bearer");
   await app.close();
 });
@@ -48,6 +54,10 @@ test("GET /v1/me/context with a bogus token returns 401 authentication-required"
     headers: { authorization: "Bearer not-a-real-token" },
   });
   assert.equal(response.statusCode, 401);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
   assert.equal(response.json().type, "authentication-required");
   await app.close();
 });
@@ -61,6 +71,11 @@ test("GET /v1/me/context with a malformed Authorization header returns 401", asy
     headers: { authorization: "not-bearer-scheme" },
   });
   assert.equal(response.statusCode, 401);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(response.json().type, "authentication-required");
   await app.close();
 });
 
@@ -74,9 +89,16 @@ test("GET /v1/me/context with the seeded demo token returns the authorized conte
   });
   assert.equal(response.statusCode, 200);
   const body = response.json();
+  assert.deepEqual(new Set(Object.keys(body as Record<string, unknown>)), new Set(["user", "tenants"]));
+  assert.deepEqual(new Set(Object.keys(body.user as Record<string, unknown>)), new Set(["id", "displayName", "email"]));
   assert.equal(body.user.displayName, "Demo Owner");
   assert.equal(body.tenants.length, 1);
+  assert.deepEqual(new Set(Object.keys(body.tenants[0] as Record<string, unknown>)), new Set(["id", "name", "branches"]));
   assert.equal(body.tenants[0].branches.length, 1);
+  assert.deepEqual(
+    new Set(Object.keys(body.tenants[0].branches[0] as Record<string, unknown>)),
+    new Set(["id", "code", "name"]),
+  );
   assert.equal(body.tenants[0].branches[0].code, "MAIN");
   await app.close();
 });
@@ -152,7 +174,13 @@ test("GET /v1/me/context rejects a token whose session has expired", async () =>
     headers: { authorization: "Bearer expired-token" },
   });
   assert.equal(response.statusCode, 401);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
   assert.equal(response.json().type, "session-expired");
+  assert.equal(response.json().title, "Session expired");
+  assert.equal(response.json().status, 401);
   await app.close();
 });
 
@@ -171,7 +199,13 @@ test("GET /v1/me/context rejects a principal with no matching User (identity-not
     headers: { authorization: "Bearer unknown-subject-token" },
   });
   assert.equal(response.statusCode, 403);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
   assert.equal(response.json().type, "identity-not-enabled");
+  assert.equal(response.json().title, "Identity not enabled");
+  assert.equal(response.json().status, 403);
   await app.close();
 });
 
@@ -233,9 +267,18 @@ test("GET /v1/me/context respects SELECTED_BRANCHES scope in memberships", async
     headers: { authorization: `Bearer ${token}` },
   });
   assert.equal(response.statusCode, 200);
-  assert.equal(response.json().tenants.length, 1);
-  assert.equal(response.json().tenants[0].branches.length, 1);
-  assert.equal(response.json().tenants[0].branches[0].id, secondBranchId);
-  assert.equal(response.json().tenants[0].branches[0].code, "ANNEX");
+  const body = response.json();
+  assert.deepEqual(new Set(Object.keys(body as Record<string, unknown>)), new Set(["user", "tenants"]));
+  assert.deepEqual(new Set(Object.keys(body.user as Record<string, unknown>)), new Set(["id", "displayName", "email"]));
+  assert.equal(body.user.displayName, "Scoped Me Context");
+  assert.equal(body.tenants.length, 1);
+  assert.deepEqual(new Set(Object.keys(body.tenants[0] as Record<string, unknown>)), new Set(["id", "name", "branches"]));
+  assert.equal(body.tenants[0].branches.length, 1);
+  assert.deepEqual(
+    new Set(Object.keys(body.tenants[0].branches[0] as Record<string, unknown>)),
+    new Set(["id", "code", "name"]),
+  );
+  assert.equal(body.tenants[0].branches[0].id, secondBranchId);
+  assert.equal(body.tenants[0].branches[0].code, "ANNEX");
   await app.close();
 });
