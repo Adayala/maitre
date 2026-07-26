@@ -70,6 +70,23 @@ test("GET /v1/subscriptions/:tenantId returns the seeded subscription", async ()
     },
   });
   assert.equal(response.statusCode, 200);
+  assert.deepEqual(
+    new Set(Object.keys(response.json().data as Record<string, unknown>)),
+    new Set([
+      "id",
+      "tenantId",
+      "planCode",
+      "status",
+      "billingCycle",
+      "startDate",
+      "renewalDate",
+      "currentPeriodStart",
+      "currentPeriodEnd",
+      "autoRenew",
+      "createdAt",
+      "updatedAt",
+    ]),
+  );
   assert.equal(response.json().data.planCode, "PROFESSIONAL");
   assert.equal(response.json().data.status, "TRIAL");
   await app.close();
@@ -88,6 +105,13 @@ test("GET /v1/subscriptions/:tenantId for a different tenant returns 404", async
     },
   });
   assert.equal(response.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(response.json().type, "not-found");
+  assert.equal(response.json().title, "Subscription not found");
+  assert.equal(response.json().status, 404);
   await app.close();
 });
 
@@ -104,6 +128,16 @@ test("GET /v1/entitlements/:tenantId lists entitlements and quotas", async () =>
     },
   });
   assert.equal(response.statusCode, 200);
+  assert.deepEqual(
+    new Set(Object.keys(response.json().data as Record<string, unknown>)),
+    new Set(["entitlements", "quotas"]),
+  );
+  assert.ok(Array.isArray(response.json().data.entitlements));
+  assert.ok(Array.isArray(response.json().data.quotas));
+  assert.deepEqual(
+    new Set(Object.keys(response.json().data.entitlements[0] as Record<string, unknown>)),
+    new Set(["resource", "hardLimit", "softLimit"]),
+  );
   const branches = response
     .json()
     .data.entitlements.find((e: { resource: string }) => e.resource === "branches");
@@ -127,7 +161,14 @@ test("POST /v1/subscriptions/:id/services activates a service and raises entitle
     payload: { serviceId: "floor" },
   });
   assert.equal(response.statusCode, 201);
+  assert.deepEqual(
+    new Set(Object.keys(response.json().data as Record<string, unknown>)),
+    new Set(["id", "subscriptionId", "serviceId", "status", "quantity", "unitPrice", "activatedAt"]),
+  );
   assert.equal(response.json().data.status, "ACTIVE");
+  assert.equal(response.json().data.quantity, 1);
+  assert.equal(response.json().data.unitPrice, 0);
+  assert.ok(!Number.isNaN(Date.parse(response.json().data.activatedAt as string)));
 
   const entResponse = await app.inject({
     method: "GET",
@@ -192,7 +233,15 @@ test("DELETE /v1/subscriptions/:id/services/:serviceId deactivates and lowers en
     },
   });
   assert.equal(del.statusCode, 200);
+  assert.deepEqual(
+    new Set(Object.keys(del.json().data as Record<string, unknown>)),
+    new Set(["id", "subscriptionId", "serviceId", "status", "quantity", "unitPrice", "activatedAt", "deactivatedAt"]),
+  );
   assert.equal(del.json().data.status, "INACTIVE");
+  assert.equal(del.json().data.quantity, 1);
+  assert.equal(del.json().data.unitPrice, 0);
+  assert.ok(!Number.isNaN(Date.parse(del.json().data.activatedAt as string)));
+  assert.ok(!Number.isNaN(Date.parse(del.json().data.deactivatedAt as string)));
   await app.close();
 });
 
@@ -211,6 +260,13 @@ test("DELETE .../services/:serviceId for an unknown service returns 404", async 
     },
   });
   assert.equal(response.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(response.json().type, "not-found");
+  assert.equal(response.json().title, "Service not found");
+  assert.equal(response.json().status, 404);
   await app.close();
 });
 
@@ -231,6 +287,13 @@ test("POST /v1/subscriptions/:id/services hides cross-tenant subscriptions as 40
   });
 
   assert.equal(response.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(response.json().type, "not-found");
+  assert.equal(response.json().title, "Subscription not found");
+  assert.equal(response.json().status, 404);
   await app.close();
 });
 
@@ -250,6 +313,13 @@ test("DELETE /v1/subscriptions/:id/services/:serviceId hides cross-tenant subscr
   });
 
   assert.equal(response.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(response.json().type, "not-found");
+  assert.equal(response.json().title, "Subscription not found");
+  assert.equal(response.json().status, 404);
   await app.close();
 });
 
@@ -257,6 +327,18 @@ test("POST /v1/subscriptions/upgrade changes the plan and recalculates entitleme
   const container = await buildContainer();
   const tenantId = await getTenantId(container);
   const app = await buildApp(container);
+  const beforeEntitlements = await app.inject({
+    method: "GET",
+    url: `/v1/entitlements/${tenantId}`,
+    headers: {
+      authorization: `Bearer ${container.demoAccessToken}`,
+      "x-tenant-id": tenantId,
+    },
+  });
+  const beforeBranches = beforeEntitlements
+    .json()
+    .data.entitlements.find((e: { resource: string }) => e.resource === "branches");
+  assert.equal(beforeBranches.hardLimit, 5);
 
   const response = await app.inject({
     method: "POST",
@@ -265,10 +347,41 @@ test("POST /v1/subscriptions/upgrade changes the plan and recalculates entitleme
       authorization: `Bearer ${container.demoAccessToken}`,
       "x-tenant-id": tenantId,
     },
-    payload: { planId: "ENTERPRISE" },
+    payload: { planId: "ENTERPRISE", billingCycle: "ANNUALLY" },
   });
   assert.equal(response.statusCode, 200);
+  assert.deepEqual(
+    new Set(Object.keys(response.json().data as Record<string, unknown>)),
+    new Set([
+      "id",
+      "tenantId",
+      "planCode",
+      "status",
+      "billingCycle",
+      "startDate",
+      "renewalDate",
+      "currentPeriodStart",
+      "currentPeriodEnd",
+      "autoRenew",
+      "createdAt",
+      "updatedAt",
+    ]),
+  );
   assert.equal(response.json().data.planCode, "ENTERPRISE");
+  assert.equal(response.json().data.billingCycle, "ANNUALLY");
+
+  const afterEntitlements = await app.inject({
+    method: "GET",
+    url: `/v1/entitlements/${tenantId}`,
+    headers: {
+      authorization: `Bearer ${container.demoAccessToken}`,
+      "x-tenant-id": tenantId,
+    },
+  });
+  const afterBranches = afterEntitlements
+    .json()
+    .data.entitlements.find((e: { resource: string }) => e.resource === "branches");
+  assert.equal(afterBranches.hardLimit, Number.MAX_SAFE_INTEGER);
   await app.close();
 });
 
@@ -286,6 +399,13 @@ test("POST /v1/subscriptions/upgrade with an unknown plan returns 400", async ()
     payload: { planId: "BOGUS" },
   });
   assert.equal(response.statusCode, 400);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(response.json().type, "bad-request");
+  assert.equal(response.json().title, 'Unknown plan "BOGUS"');
+  assert.equal(response.json().status, 400);
   await app.close();
 });
 
@@ -332,5 +452,111 @@ test("POST /v1/subscriptions/upgrade as EMPLOYEE returns 403 (plan:upgrade is OW
     payload: { planId: "ENTERPRISE" },
   });
   assert.equal(response.statusCode, 403);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(response.json().type, "insufficient-scope");
+  assert.equal(response.json().title, "Insufficient scope");
+  assert.equal(response.json().status, 403);
+  await app.close();
+});
+
+test("POST /v1/subscriptions/:id/services validates serviceId, quantity and unitPrice", async () => {
+  const container = await buildContainer();
+  const tenantId = await getTenantId(container);
+  const app = await buildApp(container);
+  const subscription = await container.subscriptions.findByTenantId(tenantId);
+
+  const emptyServiceId = await app.inject({
+    method: "POST",
+    url: `/v1/subscriptions/${subscription!.id}/services`,
+    headers: {
+      authorization: `Bearer ${container.demoAccessToken}`,
+      "x-tenant-id": tenantId,
+    },
+    payload: { serviceId: "" },
+  });
+  assert.equal(emptyServiceId.statusCode, 400);
+  assert.deepEqual(
+    new Set(Object.keys(emptyServiceId.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(emptyServiceId.json().type, "bad-request");
+  assert.equal(
+    emptyServiceId.json().title,
+    '[\n  {\n    "code": "too_small",\n    "minimum": 1,\n    "type": "string",\n    "inclusive": true,\n    "exact": false,\n    "message": "String must contain at least 1 character(s)",\n    "path": [\n      "serviceId"\n    ]\n  }\n]',
+  );
+  assert.equal(emptyServiceId.json().status, 400);
+
+  const zeroQuantity = await app.inject({
+    method: "POST",
+    url: `/v1/subscriptions/${subscription!.id}/services`,
+    headers: {
+      authorization: `Bearer ${container.demoAccessToken}`,
+      "x-tenant-id": tenantId,
+    },
+    payload: { serviceId: "floor", quantity: 0 },
+  });
+  assert.equal(zeroQuantity.statusCode, 400);
+  assert.deepEqual(
+    new Set(Object.keys(zeroQuantity.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(zeroQuantity.json().type, "bad-request");
+  assert.equal(
+    zeroQuantity.json().title,
+    '[\n  {\n    "code": "too_small",\n    "minimum": 0,\n    "type": "number",\n    "inclusive": false,\n    "exact": false,\n    "message": "Number must be greater than 0",\n    "path": [\n      "quantity"\n    ]\n  }\n]',
+  );
+  assert.equal(zeroQuantity.json().status, 400);
+
+  const negativeUnitPrice = await app.inject({
+    method: "POST",
+    url: `/v1/subscriptions/${subscription!.id}/services`,
+    headers: {
+      authorization: `Bearer ${container.demoAccessToken}`,
+      "x-tenant-id": tenantId,
+    },
+    payload: { serviceId: "floor", unitPrice: -1 },
+  });
+  assert.equal(negativeUnitPrice.statusCode, 400);
+  assert.deepEqual(
+    new Set(Object.keys(negativeUnitPrice.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(negativeUnitPrice.json().type, "bad-request");
+  assert.equal(
+    negativeUnitPrice.json().title,
+    '[\n  {\n    "code": "too_small",\n    "minimum": 0,\n    "type": "number",\n    "inclusive": true,\n    "exact": false,\n    "message": "Number must be greater than or equal to 0",\n    "path": [\n      "unitPrice"\n    ]\n  }\n]',
+  );
+  assert.equal(negativeUnitPrice.json().status, 400);
+  await app.close();
+});
+
+test("POST /v1/subscriptions/upgrade validates billingCycle enum", async () => {
+  const container = await buildContainer();
+  const tenantId = await getTenantId(container);
+  const app = await buildApp(container);
+
+  const response = await app.inject({
+    method: "POST",
+    url: "/v1/subscriptions/upgrade",
+    headers: {
+      authorization: `Bearer ${container.demoAccessToken}`,
+      "x-tenant-id": tenantId,
+    },
+    payload: { planId: "ENTERPRISE", billingCycle: "WEEKLY" },
+  });
+  assert.equal(response.statusCode, 400);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(response.json().type, "bad-request");
+  assert.equal(
+    response.json().title,
+    `[\n  {\n    "received": "WEEKLY",\n    "code": "invalid_enum_value",\n    "options": [\n      "MONTHLY",\n      "ANNUALLY"\n    ],\n    "path": [\n      "billingCycle"\n    ],\n    "message": "Invalid enum value. Expected 'MONTHLY' | 'ANNUALLY', received 'WEEKLY'"\n  }\n]`,
+  );
+  assert.equal(response.json().status, 400);
   await app.close();
 });

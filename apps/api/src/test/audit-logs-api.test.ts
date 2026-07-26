@@ -29,7 +29,16 @@ test("GET /v1/audit-logs returns an empty list when nothing has been recorded", 
     },
   });
   assert.equal(response.statusCode, 200);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["data", "meta"]),
+  );
   assert.deepEqual(response.json().data, []);
+  assert.deepEqual(
+    new Set(Object.keys(response.json().meta as Record<string, unknown>)),
+    new Set(["limit"]),
+  );
+  assert.equal(response.json().meta.limit, 100);
   await app.close();
 });
 
@@ -68,8 +77,17 @@ test("GET /v1/audit-logs returns entries appended via the repository, filtered a
     },
   });
   assert.equal(response.statusCode, 200);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["data", "meta"]),
+  );
   assert.equal(response.json().data.length, 2);
+  assert.deepEqual(
+    new Set(Object.keys(response.json().data[0] as Record<string, unknown>)),
+    new Set(["id", "tenantId", "actorType", "actorId", "action", "resourceType", "resourceId", "occurredAt"]),
+  );
   assert.equal(response.json().data[0].action, "UPDATE"); // most recent first
+  assert.equal(response.json().meta.limit, 100);
   await app.close();
 });
 
@@ -173,6 +191,26 @@ test("GET /v1/audit-logs supports resource_type, from/to, limit clamp and cursor
   await app.close();
 });
 
+test("GET /v1/audit-logs requires tenant context (403 without X-Tenant-Id)", async () => {
+  const container = await buildContainer();
+  const app = await buildApp(container);
+
+  const response = await app.inject({
+    method: "GET",
+    url: "/v1/audit-logs",
+    headers: { authorization: `Bearer ${container.demoAccessToken}` },
+  });
+  assert.equal(response.statusCode, 403);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(response.json().type, "insufficient-scope");
+  assert.equal(response.json().title, "Insufficient scope");
+  assert.equal(response.json().status, 403);
+  await app.close();
+});
+
 test("GET /v1/audit-logs as EMPLOYEE returns 403 (audit:read is OWNER/ADMIN only)", async () => {
   const container = await buildContainer();
   const tenantId = await getTenantId(container);
@@ -215,5 +253,12 @@ test("GET /v1/audit-logs as EMPLOYEE returns 403 (audit:read is OWNER/ADMIN only
     headers: { authorization: `Bearer ${token}`, "x-tenant-id": tenantId },
   });
   assert.equal(response.statusCode, 403);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(response.json().type, "insufficient-scope");
+  assert.equal(response.json().title, "Insufficient scope");
+  assert.equal(response.json().status, 403);
   await app.close();
 });

@@ -25,6 +25,10 @@ test("GET /health/live returns ok without touching dependencies", async () => {
   const app = await buildApp(container);
   const response = await app.inject({ method: "GET", url: "/health/live" });
   assert.equal(response.statusCode, 200);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["status"]),
+  );
   assert.deepEqual(response.json(), { status: "ok" });
   await app.close();
 });
@@ -48,10 +52,11 @@ test("GET /v1/me/context without a bearer token returns 401 authentication-requi
 test("GET /v1/me/context with a bogus token returns 401 authentication-required", async () => {
   const container = await buildContainer();
   const app = await buildApp(container);
+  const correlationId = "corr-bogus-1";
   const response = await app.inject({
     method: "GET",
     url: "/v1/me/context",
-    headers: { authorization: "Bearer not-a-real-token" },
+    headers: { authorization: "Bearer not-a-real-token", "x-correlation-id": correlationId },
   });
   assert.equal(response.statusCode, 401);
   assert.deepEqual(
@@ -59,16 +64,22 @@ test("GET /v1/me/context with a bogus token returns 401 authentication-required"
     new Set(["type", "title", "status", "correlationId"]),
   );
   assert.equal(response.json().type, "authentication-required");
+  assert.equal(response.json().title, "Authentication required");
+  assert.equal(response.json().status, 401);
+  assert.equal(response.json().correlationId, correlationId);
+  assert.equal(response.headers["x-correlation-id"], correlationId);
+  assert.equal(response.headers["www-authenticate"], "Bearer");
   await app.close();
 });
 
 test("GET /v1/me/context with a malformed Authorization header returns 401", async () => {
   const container = await buildContainer();
   const app = await buildApp(container);
+  const correlationId = "corr-malformed-1";
   const response = await app.inject({
     method: "GET",
     url: "/v1/me/context",
-    headers: { authorization: "not-bearer-scheme" },
+    headers: { authorization: "not-bearer-scheme", "x-correlation-id": correlationId },
   });
   assert.equal(response.statusCode, 401);
   assert.deepEqual(
@@ -76,6 +87,11 @@ test("GET /v1/me/context with a malformed Authorization header returns 401", asy
     new Set(["type", "title", "status", "correlationId"]),
   );
   assert.equal(response.json().type, "authentication-required");
+  assert.equal(response.json().title, "Authentication required");
+  assert.equal(response.json().status, 401);
+  assert.equal(response.json().correlationId, correlationId);
+  assert.equal(response.headers["x-correlation-id"], correlationId);
+  assert.equal(response.headers["www-authenticate"], "Bearer");
   await app.close();
 });
 
@@ -168,10 +184,11 @@ test("GET /v1/me/context rejects a token whose session has expired", async () =>
     expiresAt: new Date(Date.now() - 60 * 60 * 1000),
   });
   const app = await buildApp(container);
+  const correlationId = "corr-expired-1";
   const response = await app.inject({
     method: "GET",
     url: "/v1/me/context",
-    headers: { authorization: "Bearer expired-token" },
+    headers: { authorization: "Bearer expired-token", "x-correlation-id": correlationId },
   });
   assert.equal(response.statusCode, 401);
   assert.deepEqual(
@@ -181,6 +198,9 @@ test("GET /v1/me/context rejects a token whose session has expired", async () =>
   assert.equal(response.json().type, "session-expired");
   assert.equal(response.json().title, "Session expired");
   assert.equal(response.json().status, 401);
+  assert.equal(response.json().correlationId, correlationId);
+  assert.equal(response.headers["x-correlation-id"], correlationId);
+  assert.equal(response.headers["www-authenticate"], "Bearer");
   await app.close();
 });
 
