@@ -18,3 +18,7 @@ El resolved payload contiene sólo el catálogo efectivamente publicado para ese
 categorías, productos, modifiers, precios publicados, disponibilidad de lectura y metadatos de
 presentación permitidos. Nunca expone settings internos, productos archivados no publicados,
 estaciones, costos ni identificadores sensibles del tenant.
+
+Este capability define una superficie pública anónima de consulta. Puede convivir con discovery de
+promociones/sucursales públicas, pero no autentica al cliente ni habilita reservas, ordering o
+pagos por sí mismo.

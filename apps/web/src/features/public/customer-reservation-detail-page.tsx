@@ -1,0 +1,131 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { useAuth } from "../../app/auth-context.js";
+import { useTenantContext } from "../../app/tenant-context.js";
+import { apiRequest } from "../../lib/api-client.js";
+
+interface ReservationDetail {
+  data: {
+    id: string;
+    branchId: string;
+    partySize: number;
+    startAt: string;
+    durationMinutes: number;
+    status: string;
+    notes?: string;
+    visitId?: string;
+  };
+}
+
+export function CustomerReservationDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { accessToken } = useAuth();
+  const { selectedTenantId } = useTenantContext();
+
+  const reservationQuery = useQuery({
+    queryKey: ["customer-reservation-detail", selectedTenantId, id],
+    queryFn: () =>
+      apiRequest<ReservationDetail>(`/v1/reservations/${id}`, {
+        accessToken: accessToken!,
+        tenantId: selectedTenantId!,
+      }),
+    enabled: Boolean(accessToken && selectedTenantId && id),
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest<ReservationDetail>(`/v1/reservations/${id}/cancel`, {
+        accessToken: accessToken!,
+        tenantId: selectedTenantId!,
+        method: "POST",
+        body: { reasonCode: "GUEST_REQUEST" },
+      });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["customer-reservations"] });
+      await queryClient.invalidateQueries({ queryKey: ["customer-reservation-detail", selectedTenantId, id] });
+    },
+  });
+
+  const reservation = reservationQuery.data?.data;
+
+  return (
+    <section className="public-page" aria-labelledby="customer-reservation-detail-heading">
+      <div className="public-button-row">
+        <Link to="/public/reservations" className="public-secondary-cta">
+          Volver a mis reservas
+        </Link>
+      </div>
+
+      <h1 id="customer-reservation-detail-heading">Detalle de reserva</h1>
+
+      {reservationQuery.isLoading ? <p role="status">Cargando detalle…</p> : null}
+      {reservationQuery.error ? (
+        <p role="alert" className="login-error">
+          {reservationQuery.error instanceof Error ? reservationQuery.error.message : "No se pudo cargar la reserva"}
+        </p>
+      ) : null}
+
+      {reservation ? (
+        <>
+          <div className="public-card-grid">
+            <article className="public-card">
+              <h2>Estado</h2>
+              <p>{reservation.status}</p>
+            </article>
+            <article className="public-card">
+              <h2>Fecha y hora</h2>
+              <p>{new Date(reservation.startAt).toLocaleString("es-AR")}</p>
+            </article>
+            <article className="public-card">
+              <h2>Comensales</h2>
+              <p>{reservation.partySize}</p>
+            </article>
+            <article className="public-card">
+              <h2>Duración</h2>
+              <p>{reservation.durationMinutes} minutos</p>
+            </article>
+          </div>
+
+          {reservation.notes ? (
+            <article className="public-card">
+              <h2>Notas</h2>
+              <p>{reservation.notes}</p>
+            </article>
+          ) : null}
+
+          <div className="public-button-row">
+            <Link to="/public/reservations/new" className="public-secondary-cta">
+              Crear otra
+            </Link>
+            {reservation.status === "PENDING" || reservation.status === "CONFIRMED" ? (
+              <button
+                type="button"
+                className="public-button-danger"
+                disabled={cancelMutation.isPending}
+                onClick={() => void cancelMutation.mutateAsync()}
+              >
+                {cancelMutation.isPending ? "Cancelando…" : "Cancelar reserva"}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className="public-button-primary"
+              onClick={() => navigate("/public/reservations")}
+            >
+              Ver todas
+            </button>
+          </div>
+
+          {cancelMutation.error ? (
+            <p role="alert" className="login-error">
+              {cancelMutation.error instanceof Error ? cancelMutation.error.message : "No se pudo cancelar la reserva"}
+            </p>
+          ) : null}
+        </>
+      ) : null}
+    </section>
+  );
+}

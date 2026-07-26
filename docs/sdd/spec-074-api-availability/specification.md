@@ -5,9 +5,11 @@
 allowlisted. Devuelve una respuesta resumida con `startAt`, `timezone`, `durationMinutes`,
 `asOf`, `freshness`, `available` y `freeTableIds`.
 
-La misma ruta hoy sólo admite Membership interno autorizado; la capability pública limitada a
-sucursal queda diferida. Tampoco aplica aún normalización avanzada de horizonte, duración,
-partySize, cantidad de slots ni rate policy.
+La misma ruta hoy sólo admite Membership interno autorizado; la variante pública anónima limitada a
+sucursal queda definida pero diferida. Esa variante pública, cuando se materialice, será sólo de
+consulta/discovery y no autorizará crear holds ni reservas. La creación de reservas requiere
+cliente autenticado. Tampoco aplica aún normalización avanzada de horizonte, duración, partySize,
+cantidad de slots ni rate policy.
 
 Es una consulta live sobre reservas y ocupación vigentes; no crea hold, reserva ni garantía.
 La respuesta expone frescura básica (`LIVE`) y confirm siempre revalida contra capacidad actual.

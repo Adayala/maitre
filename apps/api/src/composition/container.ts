@@ -39,6 +39,12 @@ import {
   InMemoryCashReconciliationRepository,
   InMemoryDiscountRepository,
   InMemoryDiscountApplicationRepository,
+  InMemoryInvoiceRepository,
+  InMemoryFiscalPointOfSaleRepository,
+  InMemoryFiscalPrinterRepository,
+  InMemoryFiscalCertificateRepository,
+  InMemoryInvoiceTemplateRepository,
+  InMemoryTaxRateRepository,
   FixtureSessionVerificationPort,
 } from "@maitre/adapter-persistence-memory";
 import {
@@ -90,6 +96,12 @@ import {
   SupabaseCashReconciliationRepository,
   SupabaseDiscountRepository,
   SupabaseDiscountApplicationRepository,
+  SupabaseInvoiceRepository,
+  SupabaseFiscalPointOfSaleRepository,
+  SupabaseFiscalPrinterRepository,
+  SupabaseFiscalCertificateRepository,
+  SupabaseInvoiceTemplateRepository,
+  SupabaseTaxRateRepository,
 } from "@maitre/adapter-persistence-supabase";
 import {
   createTenant,
@@ -97,6 +109,7 @@ import {
   createBranch,
   createSalon,
   createTable,
+  createFiscalEntity,
   type TenantRepositoryPort,
   type BrandRepositoryPort,
   type FiscalEntityRepositoryPort,
@@ -164,6 +177,19 @@ import {
   type DiscountRepositoryPort,
   type DiscountApplicationRepositoryPort,
 } from "@maitre/cash";
+import {
+  SimulatedArcaAdapter,
+  createPointOfSale,
+  createTaxRate,
+  publishTaxRate,
+  type InvoiceRepositoryPort,
+  type FiscalPointOfSaleRepositoryPort,
+  type FiscalPrinterRepositoryPort,
+  type FiscalCertificateRepositoryPort,
+  type InvoiceTemplateRepositoryPort,
+  type TaxRateRepositoryPort,
+  type ArcaAdapterPort,
+} from "@maitre/fiscal";
 import type {
   EmploymentRepositoryPort,
   WorkShiftRepositoryPort,
@@ -221,6 +247,13 @@ export interface Container {
   cashReconciliations: CashReconciliationRepositoryPort;
   discounts: DiscountRepositoryPort;
   discountApplications: DiscountApplicationRepositoryPort;
+  invoices: InvoiceRepositoryPort;
+  fiscalPointsOfSale: FiscalPointOfSaleRepositoryPort;
+  fiscalPrinters: FiscalPrinterRepositoryPort;
+  fiscalCertificates: FiscalCertificateRepositoryPort;
+  invoiceTemplates: InvoiceTemplateRepositoryPort;
+  taxRates: TaxRateRepositoryPort;
+  arca: ArcaAdapterPort;
   employments?: EmploymentRepositoryPort;
   workShifts?: WorkShiftRepositoryPort;
   shiftAssignments?: ShiftAssignmentRepositoryPort;
@@ -264,6 +297,14 @@ const DEMO_STATION_ID = "00000000-0000-0000-0000-00000000000d";
 // can be opened for manual testing. Fixed id keeps the seed idempotent. Sessions
 // / movements / reconciliations are transactional (operational data), not seeded.
 const DEMO_CASH_REGISTER_ID = "00000000-0000-0000-0000-00000000000e";
+// Fiscal (SPEC-137..156): a demo FiscalEntity (legal/tax entity — Organization
+// SPEC-003/009), one demo FiscalPointOfSale and one PUBLISHED demo TaxRate so an
+// Invoice can be created + issued by hand. Invoices/notes are transactional, not
+// seeded. The FiscalEntity id is minted by createFiscalEntity, so it is looked up
+// by CUIT (idempotent) rather than by a fixed id.
+const DEMO_FISCAL_ENTITY_CUIT = "20123456786";
+const DEMO_FISCAL_POS_ID = "00000000-0000-0000-0000-00000000000f";
+const DEMO_TAX_RATE_ID = "00000000-0000-0000-0000-000000000010";
 
 interface Repositories {
   tenants: TenantRepositoryPort;
@@ -306,6 +347,12 @@ interface Repositories {
   cashReconciliations: CashReconciliationRepositoryPort;
   discounts: DiscountRepositoryPort;
   discountApplications: DiscountApplicationRepositoryPort;
+  invoices: InvoiceRepositoryPort;
+  fiscalPointsOfSale: FiscalPointOfSaleRepositoryPort;
+  fiscalPrinters: FiscalPrinterRepositoryPort;
+  fiscalCertificates: FiscalCertificateRepositoryPort;
+  invoiceTemplates: InvoiceTemplateRepositoryPort;
+  taxRates: TaxRateRepositoryPort;
   employments?: EmploymentRepositoryPort;
   workShifts?: WorkShiftRepositoryPort;
   shiftAssignments?: ShiftAssignmentRepositoryPort;
@@ -369,6 +416,12 @@ function buildRepositories(): Repositories {
       cashReconciliations: new SupabaseCashReconciliationRepository(client),
       discounts: new SupabaseDiscountRepository(client),
       discountApplications: new SupabaseDiscountApplicationRepository(client),
+      invoices: new SupabaseInvoiceRepository(client),
+      fiscalPointsOfSale: new SupabaseFiscalPointOfSaleRepository(client),
+      fiscalPrinters: new SupabaseFiscalPrinterRepository(client),
+      fiscalCertificates: new SupabaseFiscalCertificateRepository(client),
+      invoiceTemplates: new SupabaseInvoiceTemplateRepository(client),
+      taxRates: new SupabaseTaxRateRepository(client),
       employments: new SupabaseEmploymentRepository(client),
       workShifts: new SupabaseWorkShiftRepository(client),
       shiftAssignments: new SupabaseShiftAssignmentRepository(client),
@@ -422,6 +475,12 @@ function buildRepositories(): Repositories {
     cashReconciliations: new InMemoryCashReconciliationRepository(),
     discounts: new InMemoryDiscountRepository(),
     discountApplications: new InMemoryDiscountApplicationRepository(),
+    invoices: new InMemoryInvoiceRepository(),
+    fiscalPointsOfSale: new InMemoryFiscalPointOfSaleRepository(),
+    fiscalPrinters: new InMemoryFiscalPrinterRepository(),
+    fiscalCertificates: new InMemoryFiscalCertificateRepository(),
+    invoiceTemplates: new InMemoryInvoiceTemplateRepository(),
+    taxRates: new InMemoryTaxRateRepository(),
     laborPolicyVersions: new InMemoryLaborPolicyVersionRepository(),
     timeExportJobs: new InMemoryTimeExportJobRepository(),
   };
@@ -643,6 +702,93 @@ async function ensureSeed(repos: Repositories): Promise<void> {
       },
     );
   }
+
+  // Fiscal (SPEC-137..156): optional demo seed. If the connected Supabase
+  // project does not yet have the fiscal schema deployed, skip this block so
+  // the rest of the app can still boot against real organization/floor/ordering
+  // data while fiscal rollout catches up.
+  try {
+    let fiscalEntity = await repos.fiscalEntities.findByCuit(tenant.id, DEMO_FISCAL_ENTITY_CUIT);
+    if (!fiscalEntity) {
+      fiscalEntity = await createFiscalEntity(
+        { tenants: repos.tenants, fiscalEntities: repos.fiscalEntities, outbox: repos.outbox, now: () => now },
+        {
+          tenantId: tenant.id,
+          cuit: DEMO_FISCAL_ENTITY_CUIT,
+          name: "Maitre Demo Fiscal Entity",
+          taxCondition: "RI",
+          createIdempotencyKey: "demo-fiscal-entity",
+        },
+      );
+    }
+
+    const demoPos = await repos.fiscalPointsOfSale.findById(tenant.id, DEMO_FISCAL_POS_ID);
+    if (!demoPos) {
+      await createPointOfSale(
+        { pointsOfSale: repos.fiscalPointsOfSale, now: () => now },
+        {
+          id: DEMO_FISCAL_POS_ID,
+          tenantId: tenant.id,
+          fiscalEntityId: fiscalEntity.id,
+          environment: "HOMOLOGATION",
+          officialCode: "0001",
+          allowedVoucherTypes: [
+            "FACTURA_A",
+            "FACTURA_B",
+            "FACTURA_C",
+            "NOTA_CREDITO_A",
+            "NOTA_DEBITO_A",
+          ],
+        },
+      );
+    }
+
+    const demoRate = await repos.taxRates.findById(DEMO_TAX_RATE_ID);
+    if (!demoRate) {
+      await createTaxRate(
+        { taxRates: repos.taxRates, now: () => now },
+        {
+          id: DEMO_TAX_RATE_ID,
+          jurisdiction: "AR",
+          taxType: "IVA",
+          officialCode: "5",
+          treatment: "TAXED",
+          decimalRate: 2100, // 21.00% in basis points
+          includedInPrice: false,
+          effectiveFrom: new Date("2020-01-01T00:00:00.000Z"),
+          normativeSourceVersion: "AR-IVA-GENERAL",
+        },
+      );
+      await publishTaxRate({ taxRates: repos.taxRates, now: () => now }, { id: DEMO_TAX_RATE_ID });
+    }
+  } catch (err) {
+    if (err && typeof err === "object" && "code" in err && err.code === "PGRST205") {
+      // eslint-disable-next-line no-console
+      console.warn("Fiscal schema not fully deployed in Supabase; skipping fiscal demo seed");
+    } else {
+      throw err;
+    }
+  }
+}
+
+/**
+ * SPEC-145 — FISCAL_ARCA_DRIVER selects the ARCA authorization adapter. Only
+ * "simulated" exists today (the default): a local, offline SimulatedArcaAdapter
+ * that returns FAKE CAE values and NEVER contacts AFIP/ARCA. A future real
+ * WSAA/WSFEv1 adapter implements the same ArcaAdapterPort and is selected here
+ * (e.g. "wsfev1") without touching Invoice's domain/application code. See the
+ * prominent warning at the top of SimulatedArcaAdapter — issuing invoices with
+ * these fake CAE values in production is illegal.
+ */
+function buildArcaAdapter(): ArcaAdapterPort {
+  const driver = process.env["FISCAL_ARCA_DRIVER"] ?? "simulated";
+  // No real adapter exists yet, so any value resolves to the simulation. The
+  // switch shape mirrors PERSISTENCE_DRIVER/AUTH_DRIVER for a future swap.
+  if (driver !== "simulated") {
+    // eslint-disable-next-line no-console
+    console.warn(`FISCAL_ARCA_DRIVER="${driver}" is not implemented; falling back to the SIMULATED (fake CAE) adapter`);
+  }
+  return new SimulatedArcaAdapter();
 }
 
 /**
@@ -682,6 +828,7 @@ export async function buildContainer(): Promise<Container> {
 
   return {
     ...repos,
+    arca: buildArcaAdapter(),
     sessions,
     demoAccessToken: DEMO_ACCESS_TOKEN,
     demoQrMenuToken: DEMO_QR_MENU_TOKEN,

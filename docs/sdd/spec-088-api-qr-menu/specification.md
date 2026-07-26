@@ -9,6 +9,10 @@ El token se almacena como hash, aplica rate limit y no expone IDs internos. ETag
 snapshot vigente; rotación/revocación invalida cache. Esta API no crea orders, muestra bills ni
 acepta pagos.
 
+Forma parte de la experiencia pública anónima de consulta: menú, promociones editoriales acotadas y
+contexto visible de sucursal pueden exponerse sin login. Cualquier transición a acciones con
+identidad del cliente (por ejemplo reservar) deriva a autenticación explícita fuera de esta API.
+
 ## Endpoints
 
 ### POST /v1/qr-menu-tokens

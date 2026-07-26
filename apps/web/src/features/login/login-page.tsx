@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useSearchParams } from "react-router-dom";
 import { useAuth, isSupabaseConfigured } from "../../app/auth-context.js";
 
 // SPEC-023 — login happens via the identity provider's SDK; this screen
@@ -8,13 +8,16 @@ import { useAuth, isSupabaseConfigured } from "../../app/auth-context.js";
 // configured (AUTH_DRIVER=fixture, local/demo backend).
 export function LoginPage() {
   const { accessToken, signInWithPassword, signInWithToken } = useAuth();
+  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fixtureToken, setFixtureToken] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const next = searchParams.get("next") ?? "/";
+  const mode = searchParams.get("mode");
 
-  if (accessToken) return <Navigate to="/" replace />;
+  if (accessToken) return <Navigate to={next} replace />;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -31,7 +34,10 @@ export function LoginPage() {
 
   return (
     <main className="login-page">
-      <h1>Maitre — Dash</h1>
+      <h1>{mode === "customer" ? "Maitre — Cliente" : "Maitre — Dash"}</h1>
+      {mode === "customer" ? (
+        <p>Para continuar con tu reserva necesitamos que inicies sesión.</p>
+      ) : null}
 
       {isSupabaseConfigured ? (
         <form onSubmit={handleSubmit} aria-label="Iniciar sesión">

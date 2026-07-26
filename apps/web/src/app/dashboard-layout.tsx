@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { to: "/branches", label: "Sucursales" },
   { to: "/users", label: "Usuarios" },
   { to: "/subscription", label: "Suscripción" },
+  { to: "/profiles", label: "Perfiles" },
   { to: "/audit", label: "Auditoría" },
   { to: "/settings", label: "Configuración" },
 ];

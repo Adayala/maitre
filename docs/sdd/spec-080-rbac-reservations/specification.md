@@ -31,6 +31,14 @@ contexto operativo mínimo: `reservation:read`, `reservation:seat`, `waitlist:re
 `reservation:notification_send`, `guest:export`, `guest:anonymize` y
 `reservation:policy_override` quedan reservados a roles elevados según el catálogo actual.
 
-El canal público con capability tokens no está implementado en I0: todas las rutas actuales usan
-Membership autenticada normal. Priority override requiere permiso dedicado y reason en payload.
-RBAC no reemplaza lifecycle, capacity, retención, idempotencia ni revisión.
+La separación de superficies queda definida así:
+
+- consulta pública anónima puede existir para discovery/consulta previa (por ejemplo disponibilidad
+  resumida por sucursal) sin materializar `Role`;
+- cualquier acción que cree o muta identidad/comunicación del cliente — por ejemplo crear una
+  reserva — requiere cliente autenticado o un capability equivalente explícitamente diseñado para
+  ese flujo, nunca un acceso público implícito.
+
+El canal público por capability para reservas no está materializado en I0: todas las rutas actuales
+de reserva/waitlist usan Membership autenticada normal. Priority override requiere permiso dedicado
+y reason en payload. RBAC no reemplaza lifecycle, capacity, retención, idempotencia ni revisión.

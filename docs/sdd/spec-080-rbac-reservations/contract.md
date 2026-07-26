@@ -6,5 +6,6 @@ efectivos usan formato `resource:action`: `reservation:*`, `waitlist:read|manage
 `guest:pii_read|pii_write|export|anonymize`, `reservation:notification_send` y
 `reservation:policy_override`. WAITER conserva sólo el subset operativo y no accede a Guest PII ni
 notification send. El canal público por capability no está materializado todavía; todas las rutas
-usan Membership autenticada. Tests cubren permission denial para waitlist priority override,
-guest lookup PII y reservation notifications.
+usan Membership autenticada. La consulta pública anónima no se modela como rol de reservas y nunca
+autoriza por sí sola crear/cancelar reservas. Tests cubren permission denial para waitlist priority
+override, guest lookup PII y reservation notifications.
