@@ -148,6 +148,12 @@ import type {
   PaymentRepositoryPort,
   ServicePeriodRepositoryPort,
 } from "@maitre/floor";
+import {
+  deriveBusinessDate,
+  openVisit,
+  createCheck,
+  addCheckLine,
+} from "@maitre/floor";
 import type {
   ReservationRepositoryPort,
   GuestRepositoryPort,
@@ -157,19 +163,31 @@ import type {
   NotificationIntentRepositoryPort,
 } from "@maitre/reservations";
 import {
+  createGuest,
+  createReservation,
+  confirmReservation,
+  addWaitlistEntry,
+} from "@maitre/reservations";
+import {
   hashToken,
   type OrderRepositoryPort,
   type CapabilityTokenRepositoryPort,
   type SpecialRequestRepositoryPort,
+  createOrder,
+  addOrderItem,
+  submitOrder,
 } from "@maitre/ordering";
 import {
   createStation,
+  createCommand,
   type StationRepositoryPort,
   type CommandRepositoryPort,
   type KitchenAlertRepositoryPort,
 } from "@maitre/kitchen";
 import {
   createCashRegister,
+  openSession,
+  recordMovement,
   type CashRegisterRepositoryPort,
   type CashSessionRepositoryPort,
   type CashMovementRepositoryPort,
@@ -277,6 +295,8 @@ const DEMO_BRAND_ID = "00000000-0000-0000-0000-000000000002";
 const DEMO_BRANCH_ID = "00000000-0000-0000-0000-000000000003";
 const DEMO_SALON_ID = "00000000-0000-0000-0000-000000000004";
 const DEMO_TABLE_ID = "00000000-0000-0000-0000-000000000005";
+const DEMO_TABLE_2_ID = "00000000-0000-0000-0000-000000000011";
+const DEMO_TABLE_3_ID = "00000000-0000-0000-0000-000000000012";
 const DEMO_USER_ID = "00000000-0000-0000-0000-000000000006";
 const DEMO_MEMBERSHIP_ID = "00000000-0000-0000-0000-000000000007";
 const DEMO_SUBSCRIPTION_ID = "00000000-0000-0000-0000-000000000008";
@@ -305,6 +325,16 @@ const DEMO_CASH_REGISTER_ID = "00000000-0000-0000-0000-00000000000e";
 const DEMO_FISCAL_ENTITY_CUIT = "20123456786";
 const DEMO_FISCAL_POS_ID = "00000000-0000-0000-0000-00000000000f";
 const DEMO_TAX_RATE_ID = "00000000-0000-0000-0000-000000000010";
+const DEMO_SERVICE_PERIOD_ID = "00000000-0000-0000-0000-000000000013";
+const DEMO_GUEST_ID = "00000000-0000-0000-0000-000000000014";
+const DEMO_RESERVATION_ID = "00000000-0000-0000-0000-000000000015";
+const DEMO_WAITLIST_ID = "00000000-0000-0000-0000-000000000016";
+const DEMO_VISIT_ID = "00000000-0000-0000-0000-000000000017";
+const DEMO_ORDER_ID = "00000000-0000-0000-0000-000000000018";
+const DEMO_COMMAND_ID = "00000000-0000-0000-0000-000000000019";
+const DEMO_CASH_SESSION_ID = "00000000-0000-0000-0000-00000000001a";
+const DEMO_CASH_SALE_SOURCE_REF = "seed-cash-sale-1";
+const DEMO_CASH_WITHDRAWAL_SOURCE_REF = "seed-cash-withdrawal-1";
 
 interface Repositories {
   tenants: TenantRepositoryPort;
@@ -364,14 +394,29 @@ interface Repositories {
   timeExportJobs?: TimeExportJobRepositoryPort;
 }
 
+function hasSupabasePersistenceConfig(): boolean {
+  return Boolean(
+    process.env["SUPABASE_URL"] &&
+      (process.env["SUPABASE_SECRET_KEY"] || process.env["SUPABASE_SERVICE_ROLE_KEY"]),
+  );
+}
+
+function hasSupabaseAuthConfig(): boolean {
+  return Boolean(process.env["SUPABASE_URL"]);
+}
+
 /**
- * SPEC-210 — PERSISTENCE_DRIVER selects the adapter set. "memory" (default)
- * is the in-process fixture used by tests and local dev without Supabase
- * credentials. "supabase" talks to real Postgres via PostgREST using the
- * service role secret key (see adapters/persistence/supabase).
+ * SPEC-210 — PERSISTENCE_DRIVER selects the adapter set. When the variable is
+ * omitted, the API now auto-selects "supabase" if the required Supabase
+ * server-side secret credentials are present; otherwise it falls back to
+ * "memory".
+ * "memory" remains the in-process fixture used by tests and local dev without
+ * Supabase credentials. "supabase" talks to real Postgres via PostgREST using
+ * the configured server-side secret key (see adapters/persistence/supabase).
  */
 function buildRepositories(): Repositories {
-  const driver = process.env["PERSISTENCE_DRIVER"] ?? "memory";
+  const driver =
+    process.env["PERSISTENCE_DRIVER"] ?? (hasSupabasePersistenceConfig() ? "supabase" : "memory");
 
   if (driver === "supabase") {
     const client = createSupabaseClient();
@@ -497,6 +542,9 @@ function buildRepositories(): Repositories {
 // permanently skipped just because the Tenant already exists.
 async function ensureSeed(repos: Repositories): Promise<void> {
   const now = new Date();
+  const persistenceDriver =
+    process.env["PERSISTENCE_DRIVER"] ?? (hasSupabasePersistenceConfig() ? "supabase" : "memory");
+  const seedOperationalDemo = persistenceDriver === "supabase";
 
   let tenant = await repos.tenants.findById(DEMO_TENANT_ID);
   if (!tenant) {
@@ -565,6 +613,36 @@ async function ensureSeed(repos: Repositories): Promise<void> {
         salonId: salon.id,
         number: "1",
         capacity: 4,
+      },
+    );
+  }
+
+  const table2 = await repos.tables.findById(tenant.id, DEMO_TABLE_2_ID);
+  if (!table2) {
+    await createTable(
+      { salons: repos.salons, tables: repos.tables, now: () => now },
+      {
+        id: DEMO_TABLE_2_ID,
+        tenantId: tenant.id,
+        branchId: branch.id,
+        salonId: salon.id,
+        number: "2",
+        capacity: 4,
+      },
+    );
+  }
+
+  const table3 = await repos.tables.findById(tenant.id, DEMO_TABLE_3_ID);
+  if (!table3) {
+    await createTable(
+      { salons: repos.salons, tables: repos.tables, now: () => now },
+      {
+        id: DEMO_TABLE_3_ID,
+        tenantId: tenant.id,
+        branchId: branch.id,
+        salonId: salon.id,
+        number: "3",
+        capacity: 6,
       },
     );
   }
@@ -764,10 +842,265 @@ async function ensureSeed(repos: Repositories): Promise<void> {
   } catch (err) {
     if (err && typeof err === "object" && "code" in err && err.code === "PGRST205") {
       // eslint-disable-next-line no-console
-      console.warn("Fiscal schema not fully deployed in Supabase; skipping fiscal demo seed");
+      console.warn(
+        `Fiscal Supabase schema missing or not exposed (${String("message" in err ? err.message : "unknown table")}); apply fiscal migrations before enabling fiscal runtime seed`,
+      );
     } else {
       throw err;
     }
+  }
+
+  if (!seedOperationalDemo) return;
+
+  const businessDate = deriveBusinessDate(now, tenant.defaultTimezone);
+
+  let servicePeriod = await repos.servicePeriods.findById(tenant.id, DEMO_SERVICE_PERIOD_ID);
+  if (!servicePeriod) {
+    servicePeriod = {
+      id: DEMO_SERVICE_PERIOD_ID,
+      tenantId: tenant.id,
+      branchId: branch.id,
+      businessDate,
+      name: "Servicio principal",
+      type: "LUNCH" as const,
+      plannedOpen: new Date(now.getTime() - 30 * 60_000),
+      plannedClose: new Date(now.getTime() + 4 * 60 * 60_000),
+      actualOpen: now,
+      actualClose: null,
+      status: "OPEN" as const,
+      revision: 1,
+      createdAt: now,
+      updatedAt: now,
+    };
+    await repos.servicePeriods.save(servicePeriod);
+  }
+
+  let guest = await repos.guests.findById(tenant.id, DEMO_GUEST_ID);
+  if (!guest) {
+    guest = await createGuest(
+      { guests: repos.guests, now: () => now },
+      {
+        id: DEMO_GUEST_ID,
+        tenantId: tenant.id,
+        displayName: "Ana Demo",
+        email: "ana.demo@maitre.local",
+        phone: "+54 11 5555 0001",
+        locale: "es-AR",
+        consentGiven: true,
+        notes: "Guest seeded for live demo flows",
+      },
+    );
+  }
+
+  let reservation = await repos.reservations.findById(tenant.id, DEMO_RESERVATION_ID);
+  if (!reservation) {
+    reservation = await createReservation(
+      { reservations: repos.reservations, outbox: repos.outbox, now: () => now },
+      {
+        id: DEMO_RESERVATION_ID,
+        tenantId: tenant.id,
+        branchId: branch.id,
+        guestId: guest.id,
+        partySize: 2,
+        startAt: new Date(now.getTime() + 2 * 60 * 60_000),
+        durationMinutes: 90,
+        source: "WEB_PORTAL",
+        notes: "Reserva demo confirmada para validar host/customer",
+      },
+    );
+  }
+  if (reservation.status === "PENDING") {
+    reservation = await confirmReservation(
+      { reservations: repos.reservations, outbox: repos.outbox, now: () => now },
+      {
+        tenantId: tenant.id,
+        reservationId: reservation.id,
+        tables: [
+          { id: DEMO_TABLE_2_ID, capacity: 4 },
+          { id: DEMO_TABLE_ID, capacity: 4 },
+          { id: DEMO_TABLE_3_ID, capacity: 6 },
+        ],
+      },
+    );
+  }
+
+  const waitlist = await repos.waitlistEntries.findById(tenant.id, DEMO_WAITLIST_ID);
+  if (!waitlist) {
+    await addWaitlistEntry(
+      { waitlistEntries: repos.waitlistEntries, now: () => now },
+      {
+        id: DEMO_WAITLIST_ID,
+        tenantId: tenant.id,
+        branchId: branch.id,
+        guestId: guest.id,
+        partySize: 3,
+        quotedMinutes: 20,
+        notes: "Espera demo para validar host floor",
+      },
+    );
+  }
+
+  const visit = await repos.visits.findById(tenant.id, DEMO_VISIT_ID);
+  if (!visit) {
+    await openVisit(
+      { visits: repos.visits, occupancies: repos.occupancies, outbox: repos.outbox, now: () => now },
+      {
+        id: DEMO_VISIT_ID,
+        tenantId: tenant.id,
+        branchId: branch.id,
+        tableIds: [DEMO_TABLE_3_ID],
+        guestCount: 2,
+      },
+    );
+  }
+
+  let check = await repos.checks.findByVisit(tenant.id, DEMO_VISIT_ID);
+  if (!check) {
+    check = await createCheck(
+      { checks: repos.checks, visits: repos.visits, outbox: repos.outbox, now: () => now },
+      { tenantId: tenant.id, visitId: DEMO_VISIT_ID, currency: tenant.defaultCurrency },
+    );
+  }
+
+  let order = await repos.orders.findById(tenant.id, DEMO_ORDER_ID);
+  if (!order) {
+    order = await createOrder(
+      { orders: repos.orders, now: () => now },
+      {
+        id: DEMO_ORDER_ID,
+        tenantId: tenant.id,
+        branchId: branch.id,
+        visitId: DEMO_VISIT_ID,
+        currency: tenant.defaultCurrency,
+        notes: "Pedido demo enviado a cocina",
+      },
+    );
+  }
+  if (order.items.length === 0) {
+    order = await addOrderItem(
+      { orders: repos.orders, now: () => now },
+      {
+        tenantId: tenant.id,
+        orderId: order.id,
+        productId: DEMO_PRODUCT_ID,
+        name: "Empanadas de Carne",
+        quantity: 2,
+        unitPriceMinorUnits: 350000,
+        currency: tenant.defaultCurrency,
+        allergens: ["GLUTEN"],
+        notes: "Sin picante",
+      },
+    );
+  }
+  if (order.status === "DRAFT") {
+    const result = await submitOrder(
+      { orders: repos.orders, outbox: repos.outbox, now: () => now },
+      { tenantId: tenant.id, orderId: order.id },
+    );
+    order = result.order;
+  }
+
+  check = (await repos.checks.findByVisit(tenant.id, DEMO_VISIT_ID)) ?? check;
+  if (check && !check.lines.some((line) => line.description === `Order ${order.id}`)) {
+    await addCheckLine(
+      { checks: repos.checks, now: () => now },
+      {
+        tenantId: tenant.id,
+        checkId: check.id,
+        description: `Order ${order.id}`,
+        amountMinorUnits: order.grandTotalMinorUnits,
+      },
+    );
+  }
+
+  const existingCommands = await repos.commands.listByOrder(tenant.id, DEMO_ORDER_ID);
+  if (existingCommands.length === 0 && order.items.length > 0) {
+    const item = order.items[0]!;
+    await createCommand(
+      { commands: repos.commands, outbox: repos.outbox, now: () => now },
+      {
+        id: DEMO_COMMAND_ID,
+        tenantId: tenant.id,
+        brandId: brand.id,
+        branchId: branch.id,
+        visitId: DEMO_VISIT_ID,
+        orderId: order.id,
+        orderItemId: item.id,
+        stationId: DEMO_STATION_ID,
+        payload: {
+          displayName: item.name,
+          quantity: item.quantity,
+          allergenFlags: item.allergens,
+          ...(item.notes ? { notes: item.notes } : {}),
+        },
+      },
+    );
+  }
+
+  const liveSession =
+    (await repos.cashSessions.findLiveByRegisterAndCurrency(
+      tenant.id,
+      DEMO_CASH_REGISTER_ID,
+      tenant.defaultCurrency,
+    )) ??
+    (await openSession(
+      { registers: repos.cashRegisters, sessions: repos.cashSessions, now: () => now },
+      {
+        id: DEMO_CASH_SESSION_ID,
+        tenantId: tenant.id,
+        cashRegisterId: DEMO_CASH_REGISTER_ID,
+        currency: tenant.defaultCurrency,
+        businessDate,
+        timezone: tenant.defaultTimezone,
+        openingAmountMinorUnits: 5000000,
+        openedBy: DEMO_USER_ID,
+      },
+    ));
+
+  if (
+    !(await repos.cashMovements.findByRegisterAndSourceReference(
+      tenant.id,
+      DEMO_CASH_REGISTER_ID,
+      DEMO_CASH_SALE_SOURCE_REF,
+    ))
+  ) {
+    await recordMovement(
+      { sessions: repos.cashSessions, movements: repos.cashMovements, outbox: repos.outbox, now: () => now },
+      {
+        tenantId: tenant.id,
+        cashSessionId: liveSession.id,
+        type: "CASH_SALE",
+        amountMinorUnits: order.grandTotalMinorUnits,
+        currency: tenant.defaultCurrency,
+        actor: DEMO_USER_ID,
+        sourceType: "ORDER",
+        sourceReference: DEMO_CASH_SALE_SOURCE_REF,
+        reason: "Seeded cash sale for live cashier demo",
+      },
+    );
+  }
+
+  if (
+    !(await repos.cashMovements.findByRegisterAndSourceReference(
+      tenant.id,
+      DEMO_CASH_REGISTER_ID,
+      DEMO_CASH_WITHDRAWAL_SOURCE_REF,
+    ))
+  ) {
+    await recordMovement(
+      { sessions: repos.cashSessions, movements: repos.cashMovements, outbox: repos.outbox, now: () => now },
+      {
+        tenantId: tenant.id,
+        cashSessionId: liveSession.id,
+        type: "WITHDRAWAL",
+        amountMinorUnits: 50000,
+        currency: tenant.defaultCurrency,
+        actor: DEMO_USER_ID,
+        sourceType: "PETTY_CASH",
+        sourceReference: DEMO_CASH_WITHDRAWAL_SOURCE_REF,
+        reason: "Seeded petty cash withdrawal for live cashier demo",
+      },
+    );
   }
 }
 
@@ -792,15 +1125,17 @@ function buildArcaAdapter(): ArcaAdapterPort {
 }
 
 /**
- * SPEC-023 — AUTH_DRIVER selects how bearer tokens are verified. "fixture"
- * (default) accepts only tokens registered via registerToken(), used by
- * tests and local dev. "supabase" verifies real Supabase Auth access
- * tokens against the project's JWKS (SupabaseSessionVerificationPort) —
- * no synthetic demoAccessToken exists in that mode; callers must obtain a
- * real token via Supabase Auth (e.g. POST /auth/v1/token?grant_type=password).
+ * SPEC-023 — AUTH_DRIVER selects how bearer tokens are verified. When omitted,
+ * the API auto-selects "supabase" if SUPABASE_URL is present; otherwise it
+ * falls back to "fixture". "fixture" accepts only tokens registered via
+ * registerToken(), used by tests and local dev. "supabase" verifies real
+ * Supabase Auth access tokens against the project's JWKS
+ * (SupabaseSessionVerificationPort) — no synthetic demoAccessToken exists in
+ * that mode; callers must obtain a real token via Supabase Auth
+ * (e.g. POST /auth/v1/token?grant_type=password).
  */
 function buildSessionVerifier(): SessionVerificationPort {
-  const driver = process.env["AUTH_DRIVER"] ?? "fixture";
+  const driver = process.env["AUTH_DRIVER"] ?? (hasSupabaseAuthConfig() ? "supabase" : "fixture");
   if (driver === "supabase") {
     const url = process.env["SUPABASE_URL"];
     if (!url) throw new Error("SUPABASE_URL must be set for AUTH_DRIVER=supabase");

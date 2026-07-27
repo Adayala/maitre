@@ -18,7 +18,8 @@
     "@maitre/reservations": "*",
     "@maitre/ordering": "*",
     "@maitre/kitchen": "*",
-    "@maitre/cash": "*"
+    "@maitre/cash": "*",
+    "@maitre/fiscal": "*"
   },
   "devDependencies": {
     "typescript": "^5.5.4"

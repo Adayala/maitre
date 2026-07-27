@@ -27,6 +27,9 @@ export class FakeReservationRepository implements ReservationRepositoryPort {
         (!filter?.status || r.status === filter.status),
     );
   }
+  async listByGuest(tenantId: string, guestId: string) {
+    return this.items.filter((r) => r.tenantId === tenantId && r.guestId === guestId);
+  }
   async listActiveByBranchWindow(tenantId: string, branchId: string) {
     return this.items.filter((r) => r.tenantId === tenantId && r.branchId === branchId);
   }

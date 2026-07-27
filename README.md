@@ -45,6 +45,7 @@ La arquitectura mantiene dominio, datos e integraciones desacoplados de Vercel p
 - [Modelo de dominio](docs/foundation/06-domain-model.md)
 - [Recorridos principales](docs/foundation/07-core-journeys.md)
 - [Principios de arquitectura](docs/foundation/10-architecture-principles.md)
+- [Mapa visual de arquitectura, componentes y diseño](docs/foundation/18-architecture-components-design-views.md)
 - [Roadmap del MVP](docs/foundation/11-mvp-roadmap.md)
 - [Decisiones y preguntas abiertas](docs/foundation/13-decisions-and-open-questions.md)
 
@@ -97,3 +98,12 @@ La arquitectura mantiene dominio, datos e integraciones desacoplados de Vercel p
 ## Estado del repositorio
 
 Este repositorio contiene actualmente la definición funcional, estratégica y técnica de Maitre. Las especificaciones actúan como contrato para las futuras implementaciones de backend, frontend, integraciones y pruebas.
+
+## Estado operativo local actual
+
+- El backend `apps/api` ya puede correr contra Supabase como persistencia y auth principal cuando existen `SUPABASE_URL` y una credencial server-side (`SUPABASE_SECRET_KEY` o `SUPABASE_SERVICE_ROLE_KEY`).
+- En el proyecto Supabase conectado ya hay datos reales mínimos para probar organización, floor, reservations, ordering, kitchen y cash.
+- Los adapters `memory` y `fixture` quedan como fallback de desarrollo local sin credenciales o para tests, no como camino operativo principal.
+- El rollout fiscal ya quedó aplicado en el proyecto Supabase conectado mediante [supabase/migrations/20260727143000_fiscal_domain.sql](supabase/migrations/20260727143000_fiscal_domain.sql), con schema cache recargado y seed fiscal operativo.
+- El flujo fiscal técnico ya fue validado en vivo el **27 de julio de 2026**: creación, validación, emisión y QR de una `FACTURA_A` sobre Supabase. La autorización ARCA sigue siendo **simulada** (`FISCAL_ARCA_DRIVER=simulated`), por lo que el CAE emitido no es legal/fiscal real.
+- La app `host` ya quedó re-alineada como superficie de recepción/maître; su shell y documentación ya no presentan el rol como `waiter/mozo`.

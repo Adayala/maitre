@@ -17,6 +17,7 @@ export function AlertsBanner({ branchId }: { branchId: string }) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [deniedOps, setDeniedOps] = useState<Partial<Record<"evaluate" | "acknowledge" | "resolve", true>>>({});
 
   const queryKey = ["alerts", selectedTenantId, branchId];
   const { data } = useQuery({
@@ -48,15 +49,14 @@ export function AlertsBanner({ branchId }: { branchId: string }) {
       queryClient.invalidateQueries({ queryKey });
     },
     onError: (err) => {
-      setActionError(
-        err instanceof ApiError && err.status === 403
-          ? "No tenés permiso para gestionar alertas."
-          : err.message,
-      );
+      if (err instanceof ApiError && err.status === 403) {
+        return setActionError("No tenés permiso para gestionar alertas.");
+      }
+      setActionError(err.message);
     },
   });
 
-  const evaluate = useMutation({
+  const evaluate = useMutation<unknown, Error, void>({
     mutationFn: () =>
       apiRequest(`/v1/branches/${branchId}/kitchen/alerts/evaluate`, {
         accessToken: accessToken!,
@@ -67,7 +67,13 @@ export function AlertsBanner({ branchId }: { branchId: string }) {
       setActionError(null);
       queryClient.invalidateQueries({ queryKey });
     },
-    onError: (err) => setActionError(err.message),
+    onError: (err) => {
+      if (err instanceof ApiError && err.status === 403) {
+        setDeniedOps((current) => ({ ...current, evaluate: true }));
+        return setActionError("No tenés permiso para revisar o recalcular alertas desde esta estación.");
+      }
+      setActionError(err.message);
+    },
   });
 
   const count = active.length;
@@ -97,9 +103,9 @@ export function AlertsBanner({ branchId }: { branchId: string }) {
               type="button"
               className="btn btn--ghost btn--sm"
               onClick={() => evaluate.mutate()}
-              disabled={evaluate.isPending}
+              disabled={evaluate.isPending || deniedOps.evaluate}
             >
-              Revisar ahora
+              {deniedOps.evaluate ? "Sólo lectura" : "Revisar ahora"}
             </button>
           </div>
           {actionError && <p className="alerts-error">{actionError}</p>}
@@ -121,8 +127,22 @@ export function AlertsBanner({ branchId }: { branchId: string }) {
                       <button
                         type="button"
                         className="btn btn--neutral btn--sm"
-                        disabled={mutation.isPending}
-                        onClick={() => mutation.mutate({ id: a.id, op: "acknowledge" })}
+                        disabled={mutation.isPending || deniedOps.acknowledge}
+                        onClick={() =>
+                          mutation.mutate(
+                            { id: a.id, op: "acknowledge" },
+                            {
+                              onError: (err) => {
+                                if (err instanceof ApiError && err.status === 403) {
+                                  setDeniedOps((current) => ({ ...current, acknowledge: true }));
+                                  setActionError("No tenés permiso para reconocer alertas.");
+                                  return;
+                                }
+                                setActionError(err.message);
+                              },
+                            },
+                          )
+                        }
                       >
                         Reconocer
                       </button>
@@ -130,8 +150,22 @@ export function AlertsBanner({ branchId }: { branchId: string }) {
                     <button
                       type="button"
                       className="btn btn--success btn--sm"
-                      disabled={mutation.isPending}
-                      onClick={() => mutation.mutate({ id: a.id, op: "resolve" })}
+                      disabled={mutation.isPending || deniedOps.resolve}
+                      onClick={() =>
+                        mutation.mutate(
+                          { id: a.id, op: "resolve" },
+                          {
+                            onError: (err) => {
+                              if (err instanceof ApiError && err.status === 403) {
+                                setDeniedOps((current) => ({ ...current, resolve: true }));
+                                setActionError("No tenés permiso para resolver alertas.");
+                                return;
+                              }
+                              setActionError(err.message);
+                            },
+                          },
+                        )
+                      }
                     >
                       Resolver
                     </button>

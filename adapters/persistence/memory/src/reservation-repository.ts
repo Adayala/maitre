@@ -23,6 +23,12 @@ export class InMemoryReservationRepository implements ReservationRepositoryPort 
     );
   }
 
+  async listByGuest(tenantId: string, guestId: string): Promise<Reservation[]> {
+    return [...this.byId.values()].filter(
+      (r) => r.tenantId === tenantId && r.guestId === guestId,
+    );
+  }
+
   async listActiveByBranchWindow(
     tenantId: string,
     branchId: string,

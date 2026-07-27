@@ -48,13 +48,24 @@ interface CommandCardProps {
   currentUserId: string | null;
   now: number;
   pending: boolean;
+  isNew: boolean;
+  deniedActions?: Partial<Record<CommandAction, true>>;
   onAction: (commandId: string, action: CommandAction, reason?: string) => void;
 }
 
-export function CommandCard({ command, currentUserId, now, pending, onAction }: CommandCardProps) {
+export function CommandCard({
+  command,
+  currentUserId,
+  now,
+  pending,
+  isNew,
+  deniedActions,
+  onAction,
+}: CommandCardProps) {
   const receivedMs = new Date(command.receivedAt).getTime();
   const elapsedMs = now - receivedMs;
   const urgency: Urgency = urgencyFor(elapsedMs);
+  const newAndUrgent = isNew && urgency !== "calm";
   const { payload, status } = command;
 
   const ownedByMe = Boolean(command.ownerActorRef && command.ownerActorRef === currentUserId);
@@ -62,8 +73,8 @@ export function CommandCard({ command, currentUserId, now, pending, onAction }: 
     command.ownerActorRef && command.ownerActorRef !== currentUserId,
   );
 
-  const actions = primaryActionsFor(status);
-  const canCancel = status !== "READY"; // keep the destructive tap away from the hand-off moment
+  const actions = primaryActionsFor(status).filter((action) => !deniedActions?.[action.action]);
+  const canCancel = status !== "READY" && !deniedActions?.cancel; // keep the destructive tap away from the hand-off moment
 
   function handleCancel() {
     const reason = window.prompt("Motivo de la cancelación:");
@@ -76,6 +87,7 @@ export function CommandCard({ command, currentUserId, now, pending, onAction }: 
         "card",
         `card--${status.toLowerCase()}`,
         `card--u-${urgency}`,
+        newAndUrgent ? "card--new-urgent" : "",
         ownedByOther ? "card--other-owner" : "",
         ownedByMe ? "card--mine" : "",
       ]
@@ -88,7 +100,17 @@ export function CommandCard({ command, currentUserId, now, pending, onAction }: 
           ×{payload.quantity}
         </span>
         <div className="card-heading">
-          <h3 className="card-name">{payload.displayName}</h3>
+          <div className="card-heading-top">
+            <h3 className="card-name">{payload.displayName}</h3>
+            <div className="card-flags">
+              {isNew && <span className="pill pill--new">Nueva</span>}
+              {newAndUrgent && (
+                <span className={`pill ${urgency === "late" ? "pill--rush" : "pill--warn"}`}>
+                  {urgency === "late" ? "Urgente" : "Atención"}
+                </span>
+              )}
+            </div>
+          </div>
           <span className={`pill pill--${status.toLowerCase()}`}>{STATUS_LABEL[status]}</span>
         </div>
         <span

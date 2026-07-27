@@ -1,45 +1,36 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "../../app/auth-context.js";
-import { useTenantContext } from "../../app/tenant-context.js";
-import { apiRequest } from "../../lib/api-client.js";
+const PUBLIC_MENU_TOKEN = "demo-qr-menu-token";
 
-interface Branch {
-  id: string;
-  name: string;
-  code: string;
-  status: string;
-  timezone: string;
-  contactEmail?: string;
-  contactPhone?: string;
+interface PublicBranchPayload {
+  data: {
+    branch: {
+      id: string;
+      name: string;
+      code: string;
+      timezone: string;
+      contactEmail: string | null;
+      contactPhone: string | null;
+    };
+  };
 }
 
 export function PublicBranchesPage() {
-  const { accessToken } = useAuth();
-  const { selectedTenantId } = useTenantContext();
   const branchesQuery = useQuery({
-    queryKey: ["public-branches-live", selectedTenantId],
-    queryFn: () =>
-      apiRequest<{ data: Branch[] }>("/v1/branches", {
-        accessToken: accessToken!,
-        tenantId: selectedTenantId!,
-      }),
-    enabled: Boolean(accessToken && selectedTenantId),
+    queryKey: ["public-branches-live", PUBLIC_MENU_TOKEN],
+    queryFn: async () => {
+      const response = await fetch(`http://127.0.0.1:3001/public/branches/${PUBLIC_MENU_TOKEN}`);
+      if (!response.ok) throw new Error("No se pudieron cargar las sucursales públicas");
+      return (await response.json()) as PublicBranchPayload;
+    },
   });
 
   return (
     <section className="public-page" aria-labelledby="public-branches-heading">
       <h1 id="public-branches-heading">Sucursales</h1>
-      <p>Listado público de sucursales. En este entorno, la lectura live todavía reutiliza la sesión autenticada.</p>
+      <p>Listado público de sucursales conectado a la surface pública real del backend.</p>
 
-      {!accessToken || !selectedTenantId ? (
-        <div className="public-card">
-          <p>No hay sesión activa para cargar sucursales reales.</p>
-          <Link to="/login?mode=customer&next=%2Fpublic%2Fbranches" className="public-secondary-cta">
-            Ingresar para ver datos reales
-          </Link>
-        </div>
-      ) : branchesQuery.isLoading ? (
+      {branchesQuery.isLoading ? (
         <p role="status">Cargando sucursales…</p>
       ) : branchesQuery.error ? (
         <p role="alert" className="login-error">
@@ -47,16 +38,15 @@ export function PublicBranchesPage() {
         </p>
       ) : (
         <div className="public-card-grid">
-          {branchesQuery.data?.data.map((branch) => (
-            <article key={branch.id} className="public-card">
-              <h2>{branch.name}</h2>
-              <p>Código: {branch.code}</p>
-              <p>Zona horaria: {branch.timezone}</p>
-              <p>Estado: {branch.status}</p>
-              {branch.contactEmail ? <p>Email: {branch.contactEmail}</p> : null}
-              {branch.contactPhone ? <p>Teléfono: {branch.contactPhone}</p> : null}
+          {branchesQuery.data?.data.branch ? (
+            <article className="public-card">
+              <h2>{branchesQuery.data.data.branch.name}</h2>
+              <p>Código: {branchesQuery.data.data.branch.code}</p>
+              <p>Zona horaria: {branchesQuery.data.data.branch.timezone}</p>
+              {branchesQuery.data.data.branch.contactEmail ? <p>Email: {branchesQuery.data.data.branch.contactEmail}</p> : null}
+              {branchesQuery.data.data.branch.contactPhone ? <p>Teléfono: {branchesQuery.data.data.branch.contactPhone}</p> : null}
             </article>
-          ))}
+          ) : null}
         </div>
       )}
 
