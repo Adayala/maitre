@@ -168,7 +168,7 @@ Formato: **SPEC-NNN | Título | Tipo | Dominio | Fase | Prioridad | Estado | Rea
 
 ## Billing & Tax
 
-- [ ] **SPEC-145** | Integración fiscal ARCA | API | Billing & Tax | Fase 4 | P0 | DRAFT | BLOCKED
+- [ ] **SPEC-145** | Integración fiscal ARCA | API | Billing & Tax | Fase 4 | P0 | IN_PROGRESS | WALKING_SKELETON_I0 (SimulatedArcaAdapter — fake CAE, sin WSAA/WSFEv1 real, no apto para emisión)
 
 ---
 
@@ -296,25 +296,25 @@ Estas carpetas existen pero su `README.md` no fue completado (contenido tipo TBD
 - [ ] **SPEC-134** | Daily Settlement Calculation | Calculation | Cash | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
 - [ ] **SPEC-135** | Cash RBAC | RBAC | Cash | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
 - [ ] **SPEC-136** | Cash Compliance Rules | Rules | Cash | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0 (placeholder — ver README)
-- [ ] **SPEC-137** | spec-137-entity-invoice | STUB
-- [ ] **SPEC-138** | spec-138-entity-invoice-line-item | STUB
-- [ ] **SPEC-139** | spec-139-entity-fiscal-printer | STUB
-- [ ] **SPEC-140** | spec-140-entity-fiscal-certificate | STUB
-- [ ] **SPEC-141** | spec-141-entity-qr-code-fiscal | STUB
-- [ ] **SPEC-142** | spec-142-entity-invoice-template | STUB
-- [ ] **SPEC-143** | spec-143-entity-tax-rate | STUB
-- [ ] **SPEC-144** | spec-144-api-invoices | STUB
-- [ ] **SPEC-146** | spec-146-api-fiscal-printers | STUB
-- [ ] **SPEC-147** | spec-147-api-qr-code | STUB
-- [ ] **SPEC-148** | spec-148-api-invoice-templates | STUB
-- [ ] **SPEC-149** | spec-149-api-tax-rates | STUB
-- [ ] **SPEC-150** | spec-150-api-invoice-export | STUB
-- [ ] **SPEC-151** | spec-151-event-invoice-generated | STUB
-- [ ] **SPEC-152** | spec-152-event-invoice-emitted | STUB
-- [ ] **SPEC-153** | spec-153-event-arca-confirmed | STUB
-- [ ] **SPEC-154** | spec-154-calculation-tax | STUB
-- [ ] **SPEC-155** | spec-155-calculation-invoice-numbering | STUB
-- [ ] **SPEC-156** | spec-156-rules-fiscal-compliance | STUB
+- [ ] **SPEC-137** | Invoice Entity | Entity | Fiscal | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-138** | InvoiceLineItem Entity | Entity | Fiscal | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-139** | FiscalPrinter Entity | Entity | Fiscal | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-140** | FiscalCertificate Entity | Entity | Fiscal | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-141** | FiscalQrCode Entity | Entity | Fiscal | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-142** | InvoiceTemplate Entity | Entity | Fiscal | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-143** | TaxRate Entity | Entity | Fiscal | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-144** | Invoices API | API | Fiscal | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-146** | Fiscal Printers API | API | Fiscal | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-147** | Fiscal QR API | API | Fiscal | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-148** | Invoice Templates API | API | Fiscal | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-149** | Tax Rates API | API | Fiscal | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-150** | Invoice/Libro IVA Export | API | Fiscal | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-151** | InvoiceValidated Event | Event | Fiscal | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-152** | InvoiceAuthorized Event | Event | Fiscal | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-153** | FiscalAuthorizationResolved Event | Event | Fiscal | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0 (no code path triggers this — simulated adapter never resolves ambiguously)
+- [ ] **SPEC-154** | Tax Calculation | Calculation | Fiscal | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-155** | FiscalPointOfSale y Numbering | Calculation | Fiscal | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
+- [ ] **SPEC-156** | Fiscal Compliance Rules | Rules | Fiscal | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0 (placeholder — ver README)
 - [ ] **SPEC-157** | spec-157-entity-feedback | STUB
 - [ ] **SPEC-158** | spec-158-entity-rating | STUB
 - [ ] **SPEC-159** | spec-159-entity-external-review | STUB
