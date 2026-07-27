@@ -13,6 +13,7 @@ interface ReservationDetail {
 export function CustomerReservationConfirmationPage() {
   const location = useLocation();
   const reservation = location.state as ReservationDetail | undefined;
+  const confirmationNextAction = getConfirmationNextAction(reservation?.status ?? "");
 
   if (!reservation) {
     return <Navigate to="/public/reservations/new" replace />;
@@ -22,6 +23,19 @@ export function CustomerReservationConfirmationPage() {
     <section className="public-page" aria-labelledby="customer-reservation-confirmation-heading">
       <h1 id="customer-reservation-confirmation-heading">Reserva creada</h1>
       <p>Tu solicitud de reserva quedó creada correctamente.</p>
+
+      <article className="public-card public-info-card">
+        <strong>{confirmationNextAction.title}</strong>
+        <p>{confirmationNextAction.message}</p>
+        <div className="public-checklist">
+          {confirmationNextAction.steps.map((step) => (
+            <div key={step} className="public-check-item public-check-item--done">
+              <strong>✓</strong>
+              <span>{step}</span>
+            </div>
+          ))}
+        </div>
+      </article>
 
       <div className="public-card-grid">
         <article className="public-card">
@@ -81,4 +95,20 @@ function reservationStatusLabel(status: string) {
     default:
       return status;
   }
+}
+
+function getConfirmationNextAction(status: string) {
+  if (status === "CONFIRMED") {
+    return {
+      title: "La reserva ya quedó confirmada",
+      message: "Ahora conviene revisar el detalle, guardar la información y seguir el estado desde Mis reservas.",
+      steps: ["Guardá fecha y hora", "Revisá el detalle de la reserva", "Volvé a Mis reservas para seguimiento"],
+    };
+  }
+
+  return {
+    title: "La reserva quedó creada y en seguimiento",
+    message: "Dependiendo del flujo del local, puede requerir confirmación posterior. Desde Mis reservas vas a poder ver cambios o cancelarla.",
+    steps: ["Verificá fecha, cantidad y notas", "Entrá a Mis reservas para seguir el estado", "Si hace falta, creá otra reserva"],
+  };
 }

@@ -54,6 +54,12 @@ export function CustomerReservationsPage() {
         reservation.status === "NO_SHOW",
     )
     .reverse();
+  const nextReservation = upcomingReservations[0] ?? null;
+  const reservationsNextAction = getReservationsNextAction({
+    hasUpcoming: upcomingReservations.length > 0,
+    hasHistory: historyReservations.length > 0,
+    nextReservationStatus: nextReservation?.status ?? null,
+  });
 
   return (
     <section className="public-page" aria-labelledby="customer-reservations-heading">
@@ -62,6 +68,22 @@ export function CustomerReservationsPage() {
         Vista customer-facing usando el scope actual de la sesión. Cuando exista ownership estricto
         por cliente, esta pantalla se reducirá automáticamente a sus reservas propias.
       </p>
+
+      <article className="public-card public-info-card">
+        <strong>{reservationsNextAction.title}</strong>
+        <p>{reservationsNextAction.message}</p>
+        <div className="public-detail-list">
+          <span>
+            <strong>Próximas:</strong> {upcomingReservations.length}
+          </span>
+          <span>
+            <strong>Historial:</strong> {historyReservations.length}
+          </span>
+          <span>
+            <strong>Estado próximo:</strong> {nextReservation ? reservationStatusLabel(nextReservation.status) : "Sin próxima reserva"}
+          </span>
+        </div>
+      </article>
 
       {reservationsQuery.isLoading ? <p role="status">Cargando reservas…</p> : null}
       {reservationsQuery.error ? (
@@ -180,4 +202,36 @@ function reservationStatusLabel(status: string) {
     default:
       return status;
   }
+}
+
+function getReservationsNextAction({
+  hasUpcoming,
+  hasHistory,
+  nextReservationStatus,
+}: {
+  hasUpcoming: boolean;
+  hasHistory: boolean;
+  nextReservationStatus: string | null;
+}) {
+  if (hasUpcoming) {
+    return {
+      title: "Ya tenés una próxima reserva",
+      message:
+        nextReservationStatus === "PENDING"
+          ? "Conviene revisar el detalle y seguir si cambia de estado antes de la visita."
+          : "Podés entrar al detalle para confirmar fecha, sucursal y cualquier nota cargada.",
+    };
+  }
+
+  if (hasHistory) {
+    return {
+      title: "No hay próximas reservas",
+      message: "Podés revisar tu historial o crear una nueva reserva para una próxima visita.",
+    };
+  }
+
+  return {
+    title: "Todavía no tenés reservas",
+    message: "El siguiente paso natural es crear tu primera reserva desde esta experiencia pública.",
+  };
 }
