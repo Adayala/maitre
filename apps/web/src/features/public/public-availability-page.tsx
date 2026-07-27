@@ -1,6 +1,11 @@
 import { Link } from "react-router-dom";
 
 export function PublicAvailabilityPage() {
+  const nextSteps = [
+    "Elegí primero una sucursal si todavía no la definiste.",
+    "Si ya sabés cuándo querés ir, avanzá a reserva para validar capacidad real.",
+    "Si todavía estás comparando, volvés a menú o sucursales sin perder contexto.",
+  ];
   const availabilitySignals = [
     {
       title: "Disponibilidad resumida",
@@ -40,6 +45,14 @@ export function PublicAvailabilityPage() {
           no está materializado, así que el siguiente paso correcto es iniciar la reserva y dejar que la API valide en
           tiempo real.
         </p>
+        <div className="public-checklist">
+          {nextSteps.map((step, index) => (
+            <div key={step} className={`public-check-item ${index === 0 ? "public-check-item--done" : ""}`}>
+              <strong>{index === 0 ? "✓" : index + 1}</strong>
+              <span>{step}</span>
+            </div>
+          ))}
+        </div>
       </article>
 
       <div className="public-button-row">

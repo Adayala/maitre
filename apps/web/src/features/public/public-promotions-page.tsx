@@ -31,6 +31,12 @@ const PUBLIC_PROMOTIONS = [
 ];
 
 export function PublicPromotionsPage() {
+  const promotionJourney = [
+    "Descubrí una promo o propuesta pública.",
+    "Chequeá si te conviene por sede, horario o tipo de visita.",
+    "Cuando ya decidiste, pasá a reserva o seguí explorando menú.",
+  ];
+
   return (
     <section className="public-page" aria-labelledby="public-promotions-heading">
       <h1 id="public-promotions-heading">Promociones</h1>
@@ -45,6 +51,14 @@ export function PublicPromotionsPage() {
           Las promociones públicas todavía no tienen backend dedicado. Mientras tanto, la experiencia se mantiene
           honesta: informa beneficios posibles y dirige al cliente al siguiente paso correcto.
         </p>
+        <div className="public-checklist">
+          {promotionJourney.map((step, index) => (
+            <div key={step} className={`public-check-item ${index === 0 ? "public-check-item--done" : ""}`}>
+              <strong>{index === 0 ? "✓" : index + 1}</strong>
+              <span>{step}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="public-card-grid">
