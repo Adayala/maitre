@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppHeader } from "../../components/app-header.js";
 import { StateView } from "../../components/state-view.js";
 import { useApi } from "../../app/use-api.js";
+import { useNow } from "../../app/use-now.js";
 import { useSession } from "../../app/session-context.js";
 
 interface ApiData<T> {
@@ -98,6 +99,7 @@ export function HostPage() {
   const api = useApi();
   const queryClient = useQueryClient();
   const { selectedBranch, selectedBranchId } = useSession();
+  const now = useNow();
 
   const [tab, setTab] = useState<HostTab>("reservations");
   const [reservationStatus, setReservationStatus] = useState<ReservationListItem["status"] | "ALL">("ALL");
@@ -291,6 +293,47 @@ export function HostPage() {
   const confirmedSoonReservations = useMemo(
     () => arrivingSoonReservations.filter((reservation) => reservation.status === "CONFIRMED"),
     [arrivingSoonReservations],
+  );
+  const prioritizedReservations = useMemo(
+    () =>
+      (reservationsQuery.data?.data ?? [])
+        .slice()
+        .sort((a, b) => {
+          const score = (reservation: ReservationListItem) => {
+            const minutesUntil = Math.round((Date.parse(reservation.startAt) - now) / 60000);
+            const hasAssignedTable = Boolean(reservation.tableIds?.length);
+            if (reservation.status === "CONFIRMED" && minutesUntil <= 0) return 0;
+            if (reservation.status === "CONFIRMED" && !hasAssignedTable && minutesUntil <= 30) return 1;
+            if (reservation.status === "CONFIRMED" && minutesUntil <= 90) return 2;
+            if (reservation.status === "PENDING" && minutesUntil <= 15) return 3;
+            if (reservation.status === "PENDING" && minutesUntil <= 90) return 4;
+            if (reservation.status === "CONFIRMED") return 5;
+            if (reservation.status === "PENDING") return 6;
+            return 7;
+          };
+          return score(a) - score(b) || Date.parse(a.startAt) - Date.parse(b.startAt);
+        }),
+    [now, reservationsQuery.data],
+  );
+  const prioritizedWaitlistEntries = useMemo(
+    () =>
+      (waitlistQuery.data?.data ?? [])
+        .slice()
+        .sort((a, b) => {
+          const score = (entry: WaitlistEntry) => {
+            const hasTableNow = availableTables.some((table) => table.capacity >= entry.partySize);
+            const waitedMinutes = Math.max(0, Math.round((now - Date.parse(entry.createdAt)) / 60000));
+            const quotedMinutes = entry.quotedMinutes ?? 0;
+            const overdue = quotedMinutes > 0 && waitedMinutes > quotedMinutes;
+            if ((entry.status === "WAITING" || entry.status === "NOTIFIED") && hasTableNow) return 0;
+            if (overdue) return 1;
+            if (entry.status === "NOTIFIED") return 2;
+            if (entry.status === "WAITING") return 3;
+            return 4;
+          };
+          return score(a) - score(b) || Date.parse(a.createdAt) - Date.parse(b.createdAt);
+        }),
+    [availableTables, now, waitlistQuery.data],
   );
   const triagePriority =
     seatableWaitlistCount > 0
@@ -754,11 +797,9 @@ export function HostPage() {
                 emptyMessage="No hay reservas para este filtro."
                 onRetry={() => void reservationsQuery.refetch()}
               >
+                <p className="host-list-hint">Ordenado por prioridad operativa y horario de llegada.</p>
                 <div className="host-reservation-list">
-                  {(reservationsQuery.data?.data ?? [])
-                    .slice()
-                    .sort((a, b) => Date.parse(a.startAt) - Date.parse(b.startAt))
-                    .map((reservation) => {
+                  {prioritizedReservations.map((reservation) => {
                       const startAtMs = Date.parse(reservation.startAt);
                       const minutesUntil = Math.round((startAtMs - Date.now()) / 60000);
                       const isSoon =
@@ -788,7 +829,7 @@ export function HostPage() {
                       return (
                         <article
                           key={reservation.id}
-                          className={`host-reservation-card ${isSoon ? "host-reservation-card--soon" : ""}`}
+                          className={`host-reservation-card ${isSoon ? "host-reservation-card--soon" : ""} ${reservationFlowHint?.tone === "ready" || reservationFlowHint?.label === "Asignar mesa" ? "host-reservation-card--actionable" : ""}`}
                         >
                           <div className="host-reservation-main">
                             <div className="host-reservation-head">
@@ -966,8 +1007,9 @@ export function HostPage() {
                   void tableStatusesQuery.refetch();
                 }}
               >
+                <p className="host-list-hint">Primero se muestran grupos sentables ahora o con demora vencida.</p>
                 <div className="host-waitlist-list">
-                  {sortedWaitlistEntries.map((entry) => {
+                  {prioritizedWaitlistEntries.map((entry) => {
                     const selected = waitlistSeatSelections[entry.id] ?? [];
                     const entryTables = availableTables
                       .filter((table) => table.capacity >= entry.partySize)
@@ -994,7 +1036,7 @@ export function HostPage() {
                     return (
                       <article
                         key={entry.id}
-                        className={`host-waitlist-card host-waitlist-card--${entry.status.toLowerCase()} ${overdue ? "host-waitlist-card--overdue" : ""}`}
+                        className={`host-waitlist-card host-waitlist-card--${entry.status.toLowerCase()} ${overdue ? "host-waitlist-card--overdue" : ""} ${entryTables.length > 0 && (entry.status === "WAITING" || entry.status === "NOTIFIED") ? "host-waitlist-card--seatable" : ""}`}
                       >
                         <div className="host-waitlist-main">
                           <div className="host-waitlist-head">

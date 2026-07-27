@@ -454,6 +454,11 @@ body {
   gap: 0.8rem;
 }
 
+.host-list-hint {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
 .host-reservation-card {
   display: grid;
   gap: 0.85rem;
@@ -466,6 +471,11 @@ body {
 .host-reservation-card--soon {
   border-color: color-mix(in srgb, #f59e0b 48%, transparent);
   background: color-mix(in srgb, #f59e0b 9%, var(--surface-2));
+}
+
+.host-reservation-card--actionable {
+  border-color: color-mix(in srgb, var(--primary) 48%, transparent);
+  background: color-mix(in srgb, var(--primary) 10%, var(--surface-2));
 }
 
 .host-reservation-main {
@@ -832,6 +842,11 @@ body {
 
 .host-waitlist-card--overdue {
   background: color-mix(in srgb, #f59e0b 10%, var(--surface-2));
+}
+
+.host-waitlist-card--seatable {
+  border-color: color-mix(in srgb, var(--success) 48%, transparent);
+  background: color-mix(in srgb, var(--success) 10%, var(--surface-2));
 }
 
 .host-waitlist-main {
