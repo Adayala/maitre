@@ -48,6 +48,22 @@ const MOVEMENT_LABELS: Record<CashMovementType, string> = {
   CLOSING_COUNT: "Conteo cierre",
 };
 
+const SESSION_STATUS_LABELS: Record<CashSession["status"], string> = {
+  OPEN: "Abierta",
+  CLOSING: "En cierre",
+  CLOSED: "Cerrada",
+  RECONCILED: "Reconciliada",
+};
+
+const RECONCILIATION_STATUS_LABELS: Record<CashReconciliation["status"], string> = {
+  DRAFT: "Borrador",
+  SUBMITTED: "Enviada",
+  APPROVED: "Aprobada",
+  REJECTED: "Rechazada",
+};
+
+type CashierFocusSection = "session" | "movement" | "reconciliation" | "history";
+
 export function CashierPage() {
   const api = useApi();
   const { selectedBranchId, selectedRegisterId } = useSession();
@@ -62,6 +78,7 @@ export function CashierPage() {
   const [selectedHistorySessionId, setSelectedHistorySessionId] = useState<string | null>(null);
   const [movementFilter, setMovementFilter] = useState<"ALL" | "IN" | "OUT">("ALL");
   const [sessionStatusFilter, setSessionStatusFilter] = useState<"ALL" | CashSession["status"]>("ALL");
+  const [focusSection, setFocusSection] = useState<CashierFocusSection | null>(null);
 
   const registerQuery = useQuery({
     queryKey: ["cashier-register", selectedRegisterId],
@@ -279,7 +296,17 @@ export function CashierPage() {
       (sessionListQuery.data?.data ?? [])
         .filter((session) => sessionStatusFilter === "ALL" || session.status === sessionStatusFilter)
         .slice()
-        .sort((a, b) => new Date(b.openedAt).getTime() - new Date(a.openedAt).getTime()),
+        .sort((a, b) => {
+          const score = (session: CashSession) => {
+            if (session.status === "CLOSING") return 0;
+            if (session.status === "OPEN") return 1;
+            if (session.status === "CLOSED") return 2;
+            return 3;
+          };
+          const scoreDiff = score(a) - score(b);
+          if (scoreDiff !== 0) return scoreDiff;
+          return new Date(b.openedAt).getTime() - new Date(a.openedAt).getTime();
+        }),
     [sessionListQuery.data, sessionStatusFilter],
   );
   const selectedHistorySession =
@@ -302,13 +329,28 @@ export function CashierPage() {
       reconciliationSummaryQuery.data?.data.countedMinorUnits != null ||
       reconciliationRecordQuery.data?.countedMinorUnits != null,
   });
+  const priority = getCashierPriority({
+    activeSession,
+    movementCount: movementStats.count,
+    withdrawalsOut: movementStats.withdrawalsOut,
+    salesIn: movementStats.salesIn,
+    reconciliationStatus: reconciliationRecordQuery.data?.status ?? null,
+    hasCountedAmount:
+      reconciliationSummaryQuery.data?.data.countedMinorUnits != null ||
+      reconciliationRecordQuery.data?.countedMinorUnits != null,
+    differenceMinorUnits: reconciliationDifference,
+  });
 
   return (
     <main className="cashier-app">
       <AppHeader
         title="Caja"
         subtitle={registerQuery.data?.data.displayName ?? "Operación de cajero"}
-        right={activeSession ? <span className="cashier-session-pill">{activeSession.status}</span> : undefined}
+        right={
+          activeSession ? (
+            <span className="cashier-session-pill">{SESSION_STATUS_LABELS[activeSession.status]}</span>
+          ) : undefined
+        }
       />
 
       <section className="cashier-shell">
@@ -327,6 +369,24 @@ export function CashierPage() {
 
           <div className={`cashier-banner ${nextStep.tone === "success" ? "cashier-banner--success" : nextStep.tone === "warning" ? "cashier-banner--warning" : "cashier-banner--info"}`}>
             <span>{nextStep.message}</span>
+          </div>
+
+          <div
+            className={`cashier-priority-banner cashier-priority-banner--${priority.tone}`}
+            role="region"
+            aria-label="Prioridad operativa de caja"
+          >
+            <div className="cashier-priority-copy">
+              <strong>{priority.title}</strong>
+              <span>{priority.message}</span>
+            </div>
+            <button
+              type="button"
+              className="btn btn--ghost btn--sm"
+              onClick={() => setFocusSection(priority.section)}
+            >
+              {priority.ctaLabel}
+            </button>
           </div>
 
           <div className="cashier-grid">
@@ -365,18 +425,19 @@ export function CashierPage() {
               </div>
             </article>
 
-            <article className="cashier-card">
+            <article className={`cashier-card${focusSection === "session" ? " cashier-card--focus" : ""}`}>
               <h2>Caja actual</h2>
               <p>{registerQuery.data?.data.displayName ?? "—"}</p>
               <p className="muted">{registerQuery.data?.data.code ?? ""}</p>
               <p className="muted">{selectedBranchId ?? ""}</p>
             </article>
 
-            <article className="cashier-card">
+            <article className={`cashier-card${focusSection === "session" ? " cashier-card--focus" : ""}`}>
               <h2>Sesión</h2>
+              <p className="cashier-list-hint">Abrí, pausá o cerrá la caja desde acá según el momento del turno.</p>
               {activeSession ? (
                 <>
-                  <p className="cashier-session-status">{activeSession.status}</p>
+                  <p className="cashier-session-status">{SESSION_STATUS_LABELS[activeSession.status]}</p>
                   <p className="muted">Fecha operativa: {activeSession.businessDate}</p>
                   <p className="muted">Abierta: {sessionAgeLabel}</p>
                   <p className="muted">Apertura: {formatMoney(activeSession.openingAmountMinorUnits, activeSession.currency)}</p>
@@ -430,7 +491,7 @@ export function CashierPage() {
               )}
             </article>
 
-            <article className="cashier-card cashier-card--wide">
+            <article className={`cashier-card cashier-card--wide${focusSection === "movement" ? " cashier-card--focus" : ""}`}>
               <div className="cashier-card-head">
                 <h2>Registrar movimiento</h2>
                 <span className="muted">Acciones rápidas y carga manual</span>
@@ -512,11 +573,12 @@ export function CashierPage() {
               ) : null}
             </article>
 
-            <article className="cashier-card cashier-card--wide">
+            <article className={`cashier-card cashier-card--wide${focusSection === "movement" ? " cashier-card--focus" : ""}`}>
               <div className="cashier-card-head">
                 <h2>Movimientos recientes</h2>
                 <span className="muted">Últimos registros de esta sesión</span>
               </div>
+              <p className="cashier-list-hint">Usá los filtros para auditar rápido entradas, salidas y retiros atípicos.</p>
               <div className="cashier-toolbar">
                 <div className="cashier-segmented">
                   <button type="button" className={`btn btn--sm ${movementFilter === "ALL" ? "btn--primary" : "btn--ghost"}`} onClick={() => setMovementFilter("ALL")}>Todos</button>
@@ -556,11 +618,12 @@ export function CashierPage() {
             </article>
 
             {reconciliationRecordQuery.data ? (
-              <article className="cashier-card cashier-card--wide">
+              <article className={`cashier-card cashier-card--wide${focusSection === "reconciliation" ? " cashier-card--focus" : ""}`}>
                 <div className="cashier-card-head">
                   <h2>Reconciliación</h2>
-                  <span className="muted">{reconciliationRecordQuery.data.status}</span>
+                  <span className="muted">{RECONCILIATION_STATUS_LABELS[reconciliationRecordQuery.data.status]}</span>
                 </div>
+                <p className="cashier-list-hint">Compará esperado vs contado y dejá enviada la conciliación antes del cierre final.</p>
 
                 <StateView
                   isLoading={reconciliationSummaryQuery.isLoading}
@@ -759,18 +822,19 @@ export function CashierPage() {
               </StateView>
             </article>
 
-            <article className="cashier-card cashier-card--wide">
+            <article className={`cashier-card cashier-card--wide${focusSection === "history" ? " cashier-card--focus" : ""}`}>
               <div className="cashier-card-head">
                 <h2>Historial de sesiones</h2>
                 <span className="muted">Caja actual y cierres recientes</span>
               </div>
+              <p className="cashier-list-hint">El listado prioriza primero sesiones activas o en cierre y luego cierres recientes.</p>
               <div className="cashier-toolbar">
                 <div className="cashier-segmented">
                   <button type="button" className={`btn btn--sm ${sessionStatusFilter === "ALL" ? "btn--primary" : "btn--ghost"}`} onClick={() => setSessionStatusFilter("ALL")}>Todas</button>
-                  <button type="button" className={`btn btn--sm ${sessionStatusFilter === "OPEN" ? "btn--primary" : "btn--ghost"}`} onClick={() => setSessionStatusFilter("OPEN")}>Open</button>
-                  <button type="button" className={`btn btn--sm ${sessionStatusFilter === "CLOSING" ? "btn--primary" : "btn--ghost"}`} onClick={() => setSessionStatusFilter("CLOSING")}>Closing</button>
-                  <button type="button" className={`btn btn--sm ${sessionStatusFilter === "CLOSED" ? "btn--primary" : "btn--ghost"}`} onClick={() => setSessionStatusFilter("CLOSED")}>Closed</button>
-                  <button type="button" className={`btn btn--sm ${sessionStatusFilter === "RECONCILED" ? "btn--primary" : "btn--ghost"}`} onClick={() => setSessionStatusFilter("RECONCILED")}>Reconciled</button>
+                  <button type="button" className={`btn btn--sm ${sessionStatusFilter === "OPEN" ? "btn--primary" : "btn--ghost"}`} onClick={() => setSessionStatusFilter("OPEN")}>Abiertas</button>
+                  <button type="button" className={`btn btn--sm ${sessionStatusFilter === "CLOSING" ? "btn--primary" : "btn--ghost"}`} onClick={() => setSessionStatusFilter("CLOSING")}>En cierre</button>
+                  <button type="button" className={`btn btn--sm ${sessionStatusFilter === "CLOSED" ? "btn--primary" : "btn--ghost"}`} onClick={() => setSessionStatusFilter("CLOSED")}>Cerradas</button>
+                  <button type="button" className={`btn btn--sm ${sessionStatusFilter === "RECONCILED" ? "btn--primary" : "btn--ghost"}`} onClick={() => setSessionStatusFilter("RECONCILED")}>Reconciliadas</button>
                 </div>
               </div>
 
@@ -793,7 +857,7 @@ export function CashierPage() {
                       >
                         <div className="cashier-history-head">
                           <strong>{session.businessDate}</strong>
-                          <span className={`cashier-session-pill cashier-session-pill--inline cashier-session-pill--${session.status.toLowerCase()}`}>{session.status}</span>
+                          <span className={`cashier-session-pill cashier-session-pill--inline cashier-session-pill--${session.status.toLowerCase()}`}>{SESSION_STATUS_LABELS[session.status]}</span>
                         </div>
                         <span className="muted">
                           {elapsedLabel(session.openedAt, now)} · rev {session.ledgerRevision}
@@ -817,7 +881,7 @@ export function CashierPage() {
                     <div className="cashier-history-detail">
                       <div className="cashier-kpi-card">
                         <span>Sesión elegida</span>
-                        <strong>{selectedHistorySession.status}</strong>
+                        <strong>{SESSION_STATUS_LABELS[selectedHistorySession.status]}</strong>
                       </div>
                       <div className="cashier-kpi-card">
                         <span>Abierta</span>
@@ -888,4 +952,100 @@ function getNextStep({
     return { tone: "success" as const, message: "Turno reconciliado. Podés revisar historial o cambiar de fecha." };
   }
   return { tone: "info" as const, message: "Caja operativa." };
+}
+
+function getCashierPriority({
+  activeSession,
+  movementCount,
+  withdrawalsOut,
+  salesIn,
+  reconciliationStatus,
+  hasCountedAmount,
+  differenceMinorUnits,
+}: {
+  activeSession: CashSession | null;
+  movementCount: number;
+  withdrawalsOut: number;
+  salesIn: number;
+  reconciliationStatus: CashReconciliation["status"] | null;
+  hasCountedAmount: boolean;
+  differenceMinorUnits: number | null;
+}) {
+  if (!activeSession) {
+    return {
+      tone: "info" as const,
+      title: "Caja lista para abrir",
+      message: "Todavía no hay sesión activa en esta caja. Abrí una para empezar a operar.",
+      ctaLabel: "Ir a sesión",
+      section: "session" as const,
+    };
+  }
+
+  if (activeSession.status === "CLOSING" && !hasCountedAmount) {
+    return {
+      tone: "warning" as const,
+      title: "Falta conteo físico",
+      message: "El turno ya entró en cierre, pero todavía no se registró el conteo final.",
+      ctaLabel: "Ir a conciliación",
+      section: "reconciliation" as const,
+    };
+  }
+
+  if (activeSession.status === "CLOSING" && reconciliationStatus === "DRAFT") {
+    return {
+      tone: "warning" as const,
+      title: "Reconciliación pendiente de envío",
+      message: "El conteo ya está cargado. Falta enviar la conciliación para aprobación.",
+      ctaLabel: "Enviar conciliación",
+      section: "reconciliation" as const,
+    };
+  }
+
+  if (reconciliationStatus === "SUBMITTED") {
+    return {
+      tone: "success" as const,
+      title: "Cierre enviado",
+      message: "La conciliación ya fue enviada. Ahora conviene seguir el estado desde el historial.",
+      ctaLabel: "Ver historial",
+      section: "history" as const,
+    };
+  }
+
+  if (differenceMinorUnits != null && differenceMinorUnits !== 0) {
+    return {
+      tone: "warning" as const,
+      title: "Hay diferencia para revisar",
+      message: "El esperado y el contado no coinciden. Validá el detalle antes de cerrar el turno operativo.",
+      ctaLabel: "Revisar conciliación",
+      section: "reconciliation" as const,
+    };
+  }
+
+  if (movementCount === 0) {
+    return {
+      tone: "info" as const,
+      title: "Turno sin movimientos",
+      message: "La caja está abierta, pero todavía no registra actividad. Cargá el primer movimiento del turno.",
+      ctaLabel: "Ir a movimientos",
+      section: "movement" as const,
+    };
+  }
+
+  if (withdrawalsOut > salesIn && withdrawalsOut > 0) {
+    return {
+      tone: "warning" as const,
+      title: "Salidas por encima de ingresos cash",
+      message: "Los retiros/salidas superan a las ventas en efectivo observadas en la sesión actual.",
+      ctaLabel: "Auditar movimientos",
+      section: "movement" as const,
+    };
+  }
+
+  return {
+    tone: "success" as const,
+    title: "Caja bajo control",
+    message: "La operación del turno se ve consistente. Podés seguir con movimientos o revisar el historial.",
+    ctaLabel: "Ver historial",
+    section: "history" as const,
+  };
 }
