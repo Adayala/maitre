@@ -286,6 +286,52 @@ body {
   color: var(--muted);
 }
 
+.cashier-panel {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.95rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.cashier-checklist {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.cashier-check {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-3);
+}
+
+.cashier-check strong {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4rem;
+  color: var(--muted);
+}
+
+.cashier-check--done {
+  border-color: color-mix(in srgb, var(--success) 40%, transparent);
+  background: color-mix(in srgb, var(--success) 10%, var(--surface-3));
+}
+
+.cashier-check--done strong {
+  color: var(--success);
+}
+
+.cashier-panel-note {
+  margin: 0;
+  color: var(--muted);
+}
+
 .cashier-form label {
   display: grid;
   gap: 0.35rem;

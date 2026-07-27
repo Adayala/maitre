@@ -35,6 +35,7 @@ const QUICK_MOVEMENTS: Array<{
 ];
 
 const QUICK_AMOUNTS = [1000, 5000, 10000, 20000];
+const OPENING_PRESETS = [0, 10000, 20000, 50000];
 
 const MOVEMENT_LABELS: Record<CashMovementType, string> = {
   OPENING: "Apertura",
@@ -373,6 +374,25 @@ export function CashierPage() {
       : activeSession.status === "CLOSING"
         ? "Pendiente"
         : "No iniciada";
+  const sessionChecklist = [
+    { label: "Sesión abierta", done: Boolean(activeSession) },
+    { label: "Turno en operación", done: activeSession?.status === "OPEN" },
+    { label: "Cierre iniciado", done: activeSession?.status === "CLOSING" },
+    { label: "Turno reconciliado", done: activeSession?.status === "RECONCILED" || reconciliationRecordQuery.data?.status === "APPROVED" },
+  ];
+  const sessionPending = sessionChecklist.filter((step) => !step.done).map((step) => step.label);
+  const movementChecklist = [
+    { label: "Caja abierta para operar", done: Boolean(activeSession) },
+    { label: "Hay actividad registrada", done: movementStats.count > 0 },
+    { label: "Entradas/salidas visibles", done: filteredMovements.length > 0 || movementFilter === "ALL" },
+    { label: "Sin desbalance obvio cash", done: !(movementStats.withdrawalsOut > movementStats.salesIn && movementStats.withdrawalsOut > 0) },
+  ];
+  const reconciliationChecklist = [
+    { label: "Cierre iniciado", done: activeSession?.status === "CLOSING" || activeSession?.status === "CLOSED" || activeSession?.status === "RECONCILED" },
+    { label: "Conteo cargado", done: hasRecordedCount(reconciliationSummaryQuery.data?.data.countedMinorUnits, reconciliationRecordQuery.data?.countedMinorUnits) },
+    { label: "Conciliación enviada", done: reconciliationRecordQuery.data?.status === "SUBMITTED" || reconciliationRecordQuery.data?.status === "APPROVED" },
+    { label: "Sin diferencia", done: reconciliationDifference === 0 || reconciliationDifference == null },
+  ];
 
   return (
     <main className="cashier-app">
@@ -500,6 +520,26 @@ export function CashierPage() {
               <p className="cashier-list-hint">Abrí, pausá o cerrá la caja desde acá según el momento del turno.</p>
               {activeSession ? (
                 <>
+                  <div className="cashier-panel">
+                    <strong>Checkpoint del turno</strong>
+                    <div className="cashier-checklist">
+                      {sessionChecklist.map((step) => (
+                        <div key={step.label} className={`cashier-check ${step.done ? "cashier-check--done" : ""}`}>
+                          <strong>{step.done ? "✓" : "•"}</strong>
+                          <span>{step.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className={`cashier-banner ${activeSession.status === "OPEN" ? "cashier-banner--info" : activeSession.status === "CLOSING" ? "cashier-banner--warning" : "cashier-banner--success"}`}>
+                      <span>
+                        {activeSession.status === "OPEN"
+                          ? "La caja está operativa; podés seguir cargando movimientos o preparar el cierre."
+                          : activeSession.status === "CLOSING"
+                            ? "El turno ya entró en cierre; conviene completar conteo y conciliación."
+                            : "La sesión ya salió de operación activa."}
+                      </span>
+                    </div>
+                  </div>
                   <p className="cashier-session-status">{SESSION_STATUS_LABELS[activeSession.status]}</p>
                   <p className="muted">Fecha operativa: {activeSession.businessDate}</p>
                   <p className="muted">Abierta: {sessionAgeLabel}</p>
@@ -543,10 +583,35 @@ export function CashierPage() {
                 </>
               ) : (
                 <div className="cashier-form">
+                  <div className="cashier-panel">
+                    <strong>Antes de abrir</strong>
+                    <div className="cashier-checklist">
+                      <div className="cashier-check">
+                        <strong>•</strong>
+                        <span>Definí el efectivo inicial del turno.</span>
+                      </div>
+                      <div className="cashier-check">
+                        <strong>•</strong>
+                        <span>Verificá que esta sea la caja física correcta.</span>
+                      </div>
+                    </div>
+                  </div>
                   <label>
                     <span>Apertura inicial</span>
                     <input type="number" min="0" step="0.01" value={openingAmount} onChange={(e) => setOpeningAmount(e.target.value)} />
                   </label>
+                  <div className="cashier-quick-amounts">
+                    {OPENING_PRESETS.map((amount) => (
+                      <button
+                        key={amount}
+                        type="button"
+                        className="btn btn--ghost btn--sm"
+                        onClick={() => setOpeningAmount((amount / 100).toFixed(2))}
+                      >
+                        {formatMoney(amount, DEFAULT_CURRENCY)}
+                      </button>
+                    ))}
+                  </div>
                   <button type="button" className="btn btn--primary" onClick={() => void openSessionMutation.mutateAsync()}>
                     Abrir sesión
                   </button>
@@ -579,6 +644,17 @@ export function CashierPage() {
 
               {activeSession ? (
                 <div className="cashier-form">
+                  <div className="cashier-panel">
+                    <strong>Chequeo de movimientos</strong>
+                    <div className="cashier-checklist">
+                      {movementChecklist.map((step) => (
+                        <div key={step.label} className={`cashier-check ${step.done ? "cashier-check--done" : ""}`}>
+                          <strong>{step.done ? "✓" : "•"}</strong>
+                          <span>{step.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                   <label>
                     <span>Tipo</span>
                     <select value={movementType} onChange={(e) => setMovementType(e.target.value as CashMovementType)}>
@@ -692,6 +768,20 @@ export function CashierPage() {
                   isLoading={reconciliationSummaryQuery.isLoading}
                   error={(reconciliationSummaryQuery.error as Error) ?? null}
                 >
+                  <div className="cashier-panel">
+                    <strong>Checklist de conciliación</strong>
+                    <div className="cashier-checklist">
+                      {reconciliationChecklist.map((step) => (
+                        <div key={step.label} className={`cashier-check ${step.done ? "cashier-check--done" : ""}`}>
+                          <strong>{step.done ? "✓" : "•"}</strong>
+                          <span>{step.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                    {sessionPending.length > 0 ? (
+                      <p className="cashier-panel-note">Todavía hay hitos pendientes del turno: {sessionPending.join(", ")}.</p>
+                    ) : null}
+                  </div>
                   {reconciliationSummaryQuery.data ? (
                     <div className="cashier-reconciliation-grid">
                       <div className="cashier-kpi-card">
@@ -1115,4 +1205,11 @@ function getCashierPriority({
     ctaLabel: "Ver historial",
     section: "history" as const,
   };
+}
+
+function hasRecordedCount(
+  summaryCountedMinorUnits: number | null | undefined,
+  recordCountedMinorUnits: number | null | undefined,
+) {
+  return summaryCountedMinorUnits != null || recordCountedMinorUnits != null;
 }
