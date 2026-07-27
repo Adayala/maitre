@@ -15,6 +15,8 @@ import { SubscriptionPage } from "./features/subscription/subscription-page.js";
 import { AuditLogsPage } from "./features/audit/audit-logs-page.js";
 import { SettingsPage } from "./features/settings/settings-page.js";
 import { ProfilesPage } from "./features/profiles/profiles-page.js";
+import { FloorPage } from "./features/floor/floor-page.js";
+import { WaiterPage } from "./features/waiter/waiter-page.js";
 import { PublicHomePage } from "./features/public/public-home-page.js";
 import { PublicMenuPage } from "./features/public/public-menu-page.js";
 import { PublicBranchesPage } from "./features/public/public-branches-page.js";
@@ -83,6 +85,8 @@ export function App() {
                 <Route path="brands" element={<BrandsPage />} />
                 <Route path="branches" element={<BranchesPage />} />
                 <Route path="users" element={<UsersPage />} />
+                <Route path="floor" element={<FloorPage />} />
+                <Route path="waiter" element={<WaiterPage />} />
                 <Route path="subscription" element={<SubscriptionPage />} />
                 <Route path="audit" element={<AuditLogsPage />} />
                 <Route path="settings" element={<SettingsPage />} />

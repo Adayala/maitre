@@ -25,19 +25,15 @@ export function CustomerReservationsPage() {
   const branches = selectedTenant?.branches ?? [];
 
   const reservationsQuery = useQuery({
-    queryKey: ["customer-reservations", selectedTenantId, branches.map((branch) => branch.id).join(",")],
+    queryKey: ["customer-reservations", selectedTenantId],
     queryFn: async () => {
-      const responses = await Promise.all(
-        branches.map((branch) =>
-          apiRequest<ReservationListResponse>(`/v1/branches/${branch.id}/reservations`, {
-            accessToken: accessToken!,
-            tenantId: selectedTenantId!,
-          }),
-        ),
-      );
-      return responses.flatMap((response) => response.data);
+      const response = await apiRequest<ReservationListResponse>("/v1/my/reservations", {
+        accessToken: accessToken!,
+        tenantId: selectedTenantId!,
+      });
+      return response.data;
     },
-    enabled: Boolean(accessToken && selectedTenantId && branches.length > 0),
+    enabled: Boolean(accessToken && selectedTenantId),
   });
 
   return (

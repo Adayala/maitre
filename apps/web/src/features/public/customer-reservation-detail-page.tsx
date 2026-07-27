@@ -27,7 +27,7 @@ export function CustomerReservationDetailPage() {
   const reservationQuery = useQuery({
     queryKey: ["customer-reservation-detail", selectedTenantId, id],
     queryFn: () =>
-      apiRequest<ReservationDetail>(`/v1/reservations/${id}`, {
+      apiRequest<ReservationDetail>(`/v1/my/reservations/${id}`, {
         accessToken: accessToken!,
         tenantId: selectedTenantId!,
       }),

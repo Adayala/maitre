@@ -1,0 +1,481 @@
+import { useMemo, useState, type FormEvent } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuth, isSupabaseConfigured } from "../../app/auth-context.js";
+import { useSession } from "../../app/session-context.js";
+import { useApi } from "../../app/use-api.js";
+import { StateView } from "../../components/state-view.js";
+
+const PUBLIC_MENU_TOKEN = "demo-qr-menu-token";
+
+interface PublicMenuPayload {
+  data: {
+    menu: { name: string; slug: string; asOf: string };
+    categories: Array<{
+      name: string;
+      products: Array<{ name: string; priceMinorUnits: number; currency: string }>;
+    }>;
+  };
+}
+
+interface PublicBranchPayload {
+  data: {
+    branch: {
+      id: string;
+      name: string;
+      code: string;
+      timezone: string;
+      contactEmail: string | null;
+      contactPhone: string | null;
+    };
+  };
+}
+
+interface ReservationListItem {
+  id: string;
+  branchId: string;
+  partySize: number;
+  startAt: string;
+  durationMinutes: number;
+  status: string;
+  notes?: string | null;
+}
+
+interface ReservationListResponse {
+  data: ReservationListItem[];
+}
+
+interface ReservationResponse {
+  data: ReservationListItem;
+}
+
+interface AvailabilityResponse {
+  data: {
+    asOf: string;
+    timezone: string;
+    freshness: "LIVE";
+    startAt: string;
+    durationMinutes: number;
+    available: boolean;
+    freeTableIds: string[];
+  };
+}
+
+type CustomerTab = "discover" | "menu" | "branches" | "reserve" | "mine";
+
+export function CustomerPage() {
+  const queryClient = useQueryClient();
+  const api = useApi();
+  const { accessToken, email, signInWithPassword, signInWithToken, signOut } = useAuth();
+  const { me, tenants, isLoading, error, selectedTenantId, selectedBranchId, selectTenant, selectBranch } = useSession();
+
+  const [tab, setTab] = useState<CustomerTab>("discover");
+  const [fixtureToken, setFixtureToken] = useState("demo-token");
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [partySize, setPartySize] = useState("2");
+  const [startAt, setStartAt] = useState(defaultDateTimeLocal());
+  const [durationMinutes, setDurationMinutes] = useState("90");
+  const [notes, setNotes] = useState("");
+  const [flashMessage, setFlashMessage] = useState<string | null>(null);
+
+  const selectedTenant = tenants.find((tenant) => tenant.id === selectedTenantId) ?? null;
+  const branches = selectedTenant?.branches ?? [];
+
+  const menuQuery = useQuery({
+    queryKey: ["customer-public-menu", PUBLIC_MENU_TOKEN],
+    queryFn: async () => {
+      const response = await fetch(`http://127.0.0.1:3001/public/menu/${PUBLIC_MENU_TOKEN}`);
+      if (!response.ok) throw new Error("No se pudo cargar el menú público");
+      return (await response.json()) as PublicMenuPayload;
+    },
+  });
+
+  const branchesQuery = useQuery({
+    queryKey: ["customer-public-branch", PUBLIC_MENU_TOKEN],
+    queryFn: async () => {
+      const response = await fetch(`http://127.0.0.1:3001/public/branches/${PUBLIC_MENU_TOKEN}`);
+      if (!response.ok) throw new Error("No se pudieron cargar las sucursales públicas");
+      return (await response.json()) as PublicBranchPayload;
+    },
+  });
+
+  const canCheckAvailability =
+    Boolean(accessToken && selectedTenantId && selectedBranchId && startAt && Number(partySize) > 0 && Number(durationMinutes) > 0);
+
+  const availabilityQuery = useQuery({
+    queryKey: ["customer-availability", selectedTenantId, selectedBranchId, partySize, startAt, durationMinutes],
+    enabled: canCheckAvailability,
+    queryFn: () =>
+      api<AvailabilityResponse>(
+        `/v1/branches/${selectedBranchId}/availability?partySize=${encodeURIComponent(
+          partySize,
+        )}&startAt=${encodeURIComponent(new Date(startAt).toISOString())}&durationMinutes=${encodeURIComponent(durationMinutes)}`,
+      ),
+  });
+
+  const reservationsQuery = useQuery({
+    queryKey: ["customer-my-reservations", selectedTenantId],
+    enabled: Boolean(accessToken && selectedTenantId),
+    queryFn: () => api<ReservationListResponse>("/v1/my/reservations"),
+  });
+
+  const createReservationMutation = useMutation({
+    mutationFn: () =>
+      api<ReservationResponse>(`/v1/branches/${selectedBranchId}/reservations`, {
+        method: "POST",
+        body: {
+          partySize: Number(partySize),
+          startAt: new Date(startAt).toISOString(),
+          durationMinutes: Number(durationMinutes),
+          ...(notes.trim() ? { notes: notes.trim() } : {}),
+          source: "CUSTOMER_APP",
+        },
+      }),
+    onSuccess: async () => {
+      setFlashMessage("Reserva creada correctamente.");
+      setNotes("");
+      await queryClient.invalidateQueries({ queryKey: ["customer-my-reservations"] });
+    },
+  });
+
+  const cancelReservationMutation = useMutation({
+    mutationFn: (reservationId: string) =>
+      api<ReservationResponse>(`/v1/reservations/${reservationId}/cancel`, {
+        method: "POST",
+        body: { reasonCode: "GUEST_REQUEST" },
+      }),
+    onSuccess: async () => {
+      setFlashMessage("Reserva cancelada.");
+      await queryClient.invalidateQueries({ queryKey: ["customer-my-reservations"] });
+    },
+  });
+
+  const nextBranches = useMemo(() => branches, [branches]);
+
+  async function handlePasswordLogin(event: FormEvent) {
+    event.preventDefault();
+    setLoginError(null);
+    try {
+      await signInWithPassword(loginEmail, loginPassword);
+    } catch (err) {
+      setLoginError(err instanceof Error ? err.message : "No se pudo iniciar sesión");
+    }
+  }
+
+  return (
+    <main className="customer-app">
+      <section className="customer-shell">
+        <section className="customer-hero">
+          <p className="customer-eyebrow">Experiencia cliente</p>
+          <h1>Paperclip / Maitre Customer</h1>
+          <p>
+            Discovery público primero; reserva y seguimiento cuando la persona decide identificarse.
+          </p>
+          <div className="cashier-segmented">
+            <button type="button" className={`seg-btn ${tab === "discover" ? "seg-btn--active" : ""}`} onClick={() => setTab("discover")}>
+              Inicio
+            </button>
+            <button type="button" className={`seg-btn ${tab === "menu" ? "seg-btn--active" : ""}`} onClick={() => setTab("menu")}>
+              Menú
+            </button>
+            <button type="button" className={`seg-btn ${tab === "branches" ? "seg-btn--active" : ""}`} onClick={() => setTab("branches")}>
+              Sucursales
+            </button>
+            <button type="button" className={`seg-btn ${tab === "reserve" ? "seg-btn--active" : ""}`} onClick={() => setTab("reserve")}>
+              Reservar
+            </button>
+            <button type="button" className={`seg-btn ${tab === "mine" ? "seg-btn--active" : ""}`} onClick={() => setTab("mine")}>
+              Mis reservas
+            </button>
+          </div>
+        </section>
+
+        {flashMessage ? (
+          <div className="cashier-banner cashier-banner--success">
+            <span>{flashMessage}</span>
+            <button type="button" className="btn btn--ghost" onClick={() => setFlashMessage(null)}>
+              Ocultar
+            </button>
+          </div>
+        ) : null}
+
+        <section className="customer-grid">
+          <article className="cashier-card">
+            <h2 className="owner-card-title">Acceso</h2>
+            {!accessToken ? (
+              <>
+                {isSupabaseConfigured ? (
+                  <form className="cashier-form" onSubmit={handlePasswordLogin}>
+                    <label>
+                      Email
+                      <input type="email" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} />
+                    </label>
+                    <label>
+                      Contraseña
+                      <input type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} />
+                    </label>
+                    <button type="submit" className="btn btn--primary btn--xl">Ingresar</button>
+                  </form>
+                ) : null}
+                <div className="cashier-form">
+                  <label>
+                    Token fixture
+                    <input value={fixtureToken} onChange={(e) => setFixtureToken(e.target.value)} />
+                  </label>
+                  <button type="button" className="btn btn--primary btn--xl" onClick={() => signInWithToken(fixtureToken.trim())}>
+                    Continuar
+                  </button>
+                  <button type="button" className="btn btn--ghost btn--xl" onClick={() => signInWithToken("demo-token")}>
+                    Entrar con demo-token
+                  </button>
+                </div>
+                {loginError ? <p className="login-error">{loginError}</p> : null}
+              </>
+            ) : (
+              <div className="customer-auth-state">
+                <strong>{email ?? me?.user.displayName ?? "Sesión iniciada"}</strong>
+                <p>Ya podés reservar y ver tus reservas.</p>
+                <button type="button" className="btn btn--ghost" onClick={() => void signOut()}>
+                  Cerrar sesión
+                </button>
+              </div>
+            )}
+          </article>
+
+          {accessToken ? (
+            <article className="cashier-card">
+              <h2 className="owner-card-title">Contexto</h2>
+              <StateView
+                isLoading={isLoading}
+                error={error ?? null}
+                isEmpty={tenants.length === 0}
+                emptyIcon="🏢"
+                emptyTitle="Sin tenant"
+                emptyMessage="La sesión no tiene tenants visibles."
+              >
+                <div className="cashier-form">
+                  <label>
+                    Tenant
+                    <select value={selectedTenantId ?? ""} onChange={(e) => selectTenant(e.target.value)}>
+                      <option value="">Elegí tenant</option>
+                      {tenants.map((tenant) => (
+                        <option key={tenant.id} value={tenant.id}>{tenant.name}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Sucursal
+                    <select value={selectedBranchId ?? ""} onChange={(e) => selectBranch(e.target.value)} disabled={!selectedTenantId}>
+                      <option value="">Elegí sucursal</option>
+                      {nextBranches.map((branch) => (
+                        <option key={branch.id} value={branch.id}>{branch.name} ({branch.code})</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              </StateView>
+            </article>
+          ) : null}
+        </section>
+
+        {tab === "discover" ? (
+          <section className="customer-grid">
+            <article className="cashier-card cashier-card--hero">
+              <h2 className="owner-card-title">Descubrí el restaurante</h2>
+              <p className="owner-card-copy">
+                Navegación pública pensada para mobile: menú, sucursales y después reserva.
+              </p>
+              <div className="cashier-quick-actions">
+                <button type="button" className="btn btn--primary" onClick={() => setTab("menu")}>Ver menú</button>
+                <button type="button" className="btn btn--ghost" onClick={() => setTab("branches")}>Ver sucursales</button>
+                <button type="button" className="btn btn--ghost" onClick={() => setTab("reserve")}>Reservar</button>
+              </div>
+            </article>
+          </section>
+        ) : null}
+
+        {tab === "menu" ? (
+          <section className="customer-grid">
+            <article className="cashier-card">
+              <h2 className="owner-card-title">Menú público</h2>
+              <StateView isLoading={menuQuery.isLoading} error={(menuQuery.error as Error) ?? null} onRetry={() => void menuQuery.refetch()}>
+                {menuQuery.data ? (
+                  <div className="owner-links">
+                    <div className="owner-link-card">
+                      <strong>{menuQuery.data.data.menu.name}</strong>
+                      <span>{new Date(menuQuery.data.data.menu.asOf).toLocaleString("es-AR")}</span>
+                    </div>
+                    {menuQuery.data.data.categories.map((category) => (
+                      <article key={category.name} className="owner-link-card">
+                        <strong>{category.name}</strong>
+                        <span>
+                          {(category.products ?? [])
+                            .map((product) => `${product.name} · ${(product.priceMinorUnits / 100).toLocaleString("es-AR")} ${product.currency}`)
+                            .join(" · ")}
+                        </span>
+                      </article>
+                    ))}
+                  </div>
+                ) : null}
+              </StateView>
+            </article>
+          </section>
+        ) : null}
+
+        {tab === "branches" ? (
+          <section className="customer-grid">
+            <article className="cashier-card">
+              <h2 className="owner-card-title">Sucursales</h2>
+              <StateView isLoading={branchesQuery.isLoading} error={(branchesQuery.error as Error) ?? null} onRetry={() => void branchesQuery.refetch()}>
+                {branchesQuery.data ? (
+                  <div className="owner-link-card">
+                    <strong>{branchesQuery.data.data.branch.name}</strong>
+                    <span>{branchesQuery.data.data.branch.code} · {branchesQuery.data.data.branch.timezone}</span>
+                    {branchesQuery.data.data.branch.contactEmail ? <span>{branchesQuery.data.data.branch.contactEmail}</span> : null}
+                    {branchesQuery.data.data.branch.contactPhone ? <span>{branchesQuery.data.data.branch.contactPhone}</span> : null}
+                  </div>
+                ) : null}
+              </StateView>
+            </article>
+          </section>
+        ) : null}
+
+        {tab === "reserve" ? (
+          <section className="customer-grid">
+            <article className="cashier-card">
+              <h2 className="owner-card-title">Nueva reserva</h2>
+              {!accessToken ? (
+                <div className="cashier-banner cashier-banner--info">
+                  <span>Para reservar necesitás iniciar sesión.</span>
+                </div>
+              ) : (
+                <form
+                  className="cashier-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void createReservationMutation.mutateAsync();
+                  }}
+                >
+                  <label>
+                    Comensales
+                    <input value={partySize} onChange={(e) => setPartySize(e.target.value)} inputMode="numeric" />
+                  </label>
+                  <label>
+                    Fecha y hora
+                    <input type="datetime-local" value={startAt} onChange={(e) => setStartAt(e.target.value)} />
+                  </label>
+                  <label>
+                    Duración (min)
+                    <input value={durationMinutes} onChange={(e) => setDurationMinutes(e.target.value)} inputMode="numeric" />
+                  </label>
+                  <label>
+                    Notas
+                    <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Alergias, silla alta, cumpleaños..." />
+                  </label>
+                  <button
+                    type="submit"
+                    className="btn btn--primary btn--xl"
+                    disabled={!selectedTenantId || !selectedBranchId || createReservationMutation.isPending}
+                  >
+                    {createReservationMutation.isPending ? "Creando…" : "Reservar"}
+                  </button>
+                  {createReservationMutation.error ? (
+                    <div className="cashier-banner cashier-banner--warning">
+                      <span>{toErrorMessage(createReservationMutation.error)}</span>
+                    </div>
+                  ) : null}
+                </form>
+              )}
+            </article>
+
+            <article className="cashier-card">
+              <h2 className="owner-card-title">Disponibilidad</h2>
+              {!accessToken ? (
+                <div className="cashier-banner cashier-banner--info">
+                  <span>Iniciá sesión y elegí tenant/sucursal para consultar disponibilidad real.</span>
+                </div>
+              ) : (
+                <StateView isLoading={availabilityQuery.isLoading} error={(availabilityQuery.error as Error) ?? null} onRetry={() => void availabilityQuery.refetch()}>
+                  {availabilityQuery.data ? (
+                    <>
+                      <div className={`cashier-banner ${availabilityQuery.data.data.available ? "cashier-banner--success" : "cashier-banner--warning"}`}>
+                        <span>{availabilityQuery.data.data.available ? "Hay disponibilidad." : "No hay disponibilidad para ese horario."}</span>
+                      </div>
+                      <div className="owner-links">
+                        {availabilityQuery.data.data.freeTableIds.map((tableId) => (
+                          <div key={tableId} className="owner-link-card">
+                            <strong>Mesa disponible</strong>
+                            <span>{tableId.slice(0, 8)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : null}
+                </StateView>
+              )}
+            </article>
+          </section>
+        ) : null}
+
+        {tab === "mine" ? (
+          <section className="customer-grid">
+            <article className="cashier-card">
+              <h2 className="owner-card-title">Mis reservas</h2>
+              {!accessToken ? (
+                <div className="cashier-banner cashier-banner--info">
+                  <span>Iniciá sesión para ver tus reservas.</span>
+                </div>
+              ) : (
+                <StateView
+                  isLoading={reservationsQuery.isLoading}
+                  error={(reservationsQuery.error as Error) ?? null}
+                  isEmpty={(reservationsQuery.data?.data.length ?? 0) === 0}
+                  emptyIcon="📖"
+                  emptyTitle="Sin reservas"
+                  emptyMessage="Todavía no tenés reservas cargadas."
+                  onRetry={() => void reservationsQuery.refetch()}
+                >
+                  <div className="owner-checklist">
+                    {(reservationsQuery.data?.data ?? [])
+                      .slice()
+                      .sort((a, b) => Date.parse(b.startAt) - Date.parse(a.startAt))
+                      .map((reservation) => (
+                        <article key={reservation.id} className="owner-check">
+                          <div className="owner-list-main">
+                            <strong>{new Date(reservation.startAt).toLocaleString("es-AR")}</strong>
+                            <p>{reservation.partySize} pax · {reservation.durationMinutes} min</p>
+                            <p>Estado: {reservation.status}</p>
+                          </div>
+                          {(reservation.status === "PENDING" || reservation.status === "CONFIRMED") ? (
+                            <button
+                              type="button"
+                              className="btn btn--ghost"
+                              disabled={cancelReservationMutation.isPending}
+                              onClick={() => void cancelReservationMutation.mutateAsync(reservation.id)}
+                            >
+                              Cancelar
+                            </button>
+                          ) : null}
+                        </article>
+                      ))}
+                  </div>
+                </StateView>
+              )}
+            </article>
+          </section>
+        ) : null}
+      </section>
+    </main>
+  );
+}
+
+function defaultDateTimeLocal() {
+  const date = new Date(Date.now() + 60 * 60 * 1000);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}T${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+}
+
+function toErrorMessage(error: unknown) {
+  if (error instanceof Error) return error.message;
+  return "Ocurrió un error.";
+}

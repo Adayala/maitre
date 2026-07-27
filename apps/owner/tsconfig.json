@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUncheckedIndexedAccess": true
+  },
+  "include": [
+    "src/App.tsx",
+    "src/main.tsx",
+    "src/vite-env.d.ts",
+    "src/app/auth-context.tsx",
+    "src/app/session-context.tsx",
+    "src/app/use-api.ts",
+    "src/components/app-header.tsx",
+    "src/components/state-view.tsx",
+    "src/features/login/login-page.tsx",
+    "src/features/setup/setup-page.tsx",
+    "src/features/owner/owner-page.tsx",
+    "src/lib/api-client.ts",
+    "src/lib/format.ts",
+    "src/lib/supabase.ts",
+    "src/styles/global.css"
+  ]
+}
