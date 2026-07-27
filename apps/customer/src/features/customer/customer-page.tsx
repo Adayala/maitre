@@ -223,11 +223,23 @@ export function CustomerPage() {
     availability: availabilityQuery.data?.data.available ?? null,
     nextReservation,
   });
+  const reserveActionPlan = getCustomerReserveActionPlan({
+    accessToken: Boolean(accessToken),
+    selectedTenantId,
+    selectedBranch,
+    startAt,
+    availability: availabilityQuery.data?.data.available ?? null,
+  });
   const customerNextAction = getCustomerNextAction({
     accessToken: Boolean(accessToken),
     selectedTenantId,
     selectedBranch,
     nextReservation,
+  });
+  const reservationFollowUp = getCustomerReservationFollowUp({
+    nextReservation,
+    upcomingCount: upcomingReservations.length,
+    historyCount: pastReservations.length,
   });
 
   async function handlePasswordLogin(event: FormEvent) {
@@ -581,6 +593,19 @@ export function CustomerPage() {
             </article>
 
             <article className="cashier-card">
+              <h2 className="owner-card-title">Siguiente paso recomendado</h2>
+              <p className="owner-card-copy">{reserveActionPlan.message}</p>
+              <div className="customer-checklist">
+                {reserveActionPlan.steps.map((step) => (
+                  <div key={step.label} className={`customer-check ${step.done ? "customer-check--done" : ""}`}>
+                    <strong>{step.done ? "✓" : "•"}</strong>
+                    <span>{step.label}</span>
+                  </div>
+                ))}
+              </div>
+            </article>
+
+            <article className="cashier-card">
               <h2 className="owner-card-title">Nueva reserva</h2>
               {!accessToken ? (
                 <div className="cashier-banner cashier-banner--info">
@@ -719,6 +744,22 @@ export function CustomerPage() {
                 <div className="cashier-kpi-card">
                   <span>Historial</span>
                   <strong>{pastReservations.length}</strong>
+                </div>
+              </article>
+            ) : null}
+            {accessToken ? (
+              <article className="cashier-card">
+                <div className={`cashier-banner ${reservationFollowUp.tone === "success" ? "cashier-banner--success" : reservationFollowUp.tone === "warning" ? "cashier-banner--warning" : "cashier-banner--info"}`}>
+                  <span>{reservationFollowUp.title}</span>
+                </div>
+                <p className="owner-card-copy">{reservationFollowUp.message}</p>
+                <div className="customer-checklist">
+                  {reservationFollowUp.steps.map((step) => (
+                    <div key={step.label} className={`customer-check ${step.done ? "customer-check--done" : ""}`}>
+                      <strong>{step.done ? "✓" : "•"}</strong>
+                      <span>{step.label}</span>
+                    </div>
+                  ))}
                 </div>
               </article>
             ) : null}
@@ -1025,6 +1066,74 @@ function getCustomerNextAction({
     detail: `Tenés ${selectedBranch.name} elegida. El siguiente paso es cargar horario, cantidad de comensales y confirmar.`,
     ctaLabel: "Ir a reservar",
     nextTab: "reserve" as CustomerTab,
+  };
+}
+
+function getCustomerReserveActionPlan({
+  accessToken,
+  selectedTenantId,
+  selectedBranch,
+  startAt,
+  availability,
+}: {
+  accessToken: boolean;
+  selectedTenantId: string | null | undefined;
+  selectedBranch: { name: string } | null;
+  startAt: string;
+  availability: boolean | null;
+}) {
+  return {
+    message: !accessToken
+      ? "Primero resolvé el acceso y después completá el contexto de la reserva."
+      : availability === false
+        ? "Recalculá el plan de visita antes de confirmar: el horario actual no tiene lugar."
+        : availability === true
+          ? `La visita para ${selectedBranch?.name ?? "la sucursal elegida"} ya está lista para confirmarse.`
+          : "Completá los datos mínimos y después revisá disponibilidad real antes de reservar.",
+    steps: [
+      { label: "Sesión activa", done: accessToken },
+      { label: "Tenant definido", done: Boolean(selectedTenantId) },
+      { label: "Sucursal definida", done: Boolean(selectedBranch) },
+      { label: "Horario cargado", done: Boolean(startAt) },
+      { label: "Disponibilidad favorable", done: availability === true },
+    ],
+  };
+}
+
+function getCustomerReservationFollowUp({
+  nextReservation,
+  upcomingCount,
+  historyCount,
+}: {
+  nextReservation: ReservationListItem | null;
+  upcomingCount: number;
+  historyCount: number;
+}) {
+  if (nextReservation) {
+    return {
+      tone: nextReservation.status === "PENDING" ? ("warning" as const) : ("success" as const),
+      title: nextReservation.status === "PENDING" ? "Tu próxima reserva todavía está pendiente" : "Ya tenés una próxima reserva activa",
+      message:
+        nextReservation.status === "PENDING"
+          ? "Conviene revisar el estado antes de la visita y conservar fecha, sucursal y notas."
+          : "Podés usar esta vista para seguir la próxima visita y decidir si necesitás crear otra.",
+      steps: [
+        { label: "Próxima reserva visible", done: upcomingCount > 0 },
+        { label: "Historial disponible", done: historyCount > 0 },
+        { label: "Estado confirmado", done: nextReservation.status === "CONFIRMED" || nextReservation.status === "SEATED" },
+      ],
+    };
+  }
+
+  return {
+    tone: "info" as const,
+    title: "No tenés una próxima reserva cargada",
+    message: "Podés seguir explorando o volver a Reservar para planificar una nueva visita.",
+    steps: [
+      { label: "Próxima reserva visible", done: false },
+      { label: "Historial disponible", done: historyCount > 0 },
+      { label: "Listo para crear otra", done: true },
+    ],
   };
 }
 
