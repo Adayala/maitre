@@ -24,6 +24,7 @@ interface ProfileDefinition {
   primarySurface: string;
   interactionMode: string;
   focusSummary: string;
+  appKey: string;
   modules: ProfileModule[];
   notes?: string[];
 }
@@ -38,6 +39,7 @@ const PROFILE_DEFINITIONS: ProfileDefinition[] = [
     primarySurface: "Backoffice web",
     interactionMode: "No táctil / escritorio",
     focusSummary: "Decisiones, estructura y lectura transversal del negocio.",
+    appKey: "web",
     modules: [
       { name: "Organización", capabilities: ["Crear tenants, marcas y sucursales", "Gestionar usuarios y permisos"] },
       { name: "Operación", capabilities: ["Ver y operar floor, reservas, cocina y caja", "Acceder auditoría y dashboard"] },
@@ -53,6 +55,7 @@ const PROFILE_DEFINITIONS: ProfileDefinition[] = [
     primarySurface: "Backoffice web",
     interactionMode: "No táctil / escritorio",
     focusSummary: "Configuración diaria, usuarios y soporte operativo del tenant.",
+    appKey: "web",
     modules: [
       { name: "Organización", capabilities: ["Gestionar marcas, sucursales, salones y mesas", "Administrar usuarios, membresías y suscripciones"] },
       { name: "Operación", capabilities: ["Operar floor, reservas, ordering, cocina y caja", "Leer auditoría y métricas"] },
@@ -68,6 +71,7 @@ const PROFILE_DEFINITIONS: ProfileDefinition[] = [
     primarySurface: "Web / tablet",
     interactionMode: "Mixto",
     focusSummary: "Supervisión operativa, autorizaciones y corrección de excepciones.",
+    appKey: "web + host/floor",
     modules: [
       { name: "Floor & reservas", capabilities: ["Supervisar seating, waitlist y service periods", "Autorizar correcciones operativas"] },
       { name: "Cocina & caja", capabilities: ["Gestionar excepciones de cocina y reconciliaciones", "Aprobar ajustes y descuentos"] },
@@ -83,6 +87,7 @@ const PROFILE_DEFINITIONS: ProfileDefinition[] = [
     primarySurface: "Tablet táctil",
     interactionMode: "Táctil",
     focusSummary: "Seating, reservas, waitlist y coordinación de sala.",
+    appKey: "host",
     modules: [
       { name: "Floor", capabilities: ["Abrir, mover y cerrar visitas", "Gestionar ocupación y estado de mesas"] },
       { name: "Reservas", capabilities: ["Crear, confirmar, sentar y cancelar reservas", "Gestionar waitlist y prioridades"] },
@@ -98,6 +103,7 @@ const PROFILE_DEFINITIONS: ProfileDefinition[] = [
     primarySurface: "Mobile táctil",
     interactionMode: "Táctil",
     focusSummary: "Mesas, pedidos y seguimiento de servicio en piso.",
+    appKey: "waiter",
     modules: [
       { name: "Floor", capabilities: ["Abrir, mover y cerrar visitas", "Leer mesa, cuenta y estado operativo"] },
       { name: "Ordering", capabilities: ["Crear, enviar, modificar y cancelar pedidos", "Marcar entrega al cliente"] },
@@ -113,6 +119,7 @@ const PROFILE_DEFINITIONS: ProfileDefinition[] = [
     primarySurface: "Tablet / web táctil",
     interactionMode: "Táctil",
     focusSummary: "Cobro, caja y conciliación del turno.",
+    appKey: "cashier",
     modules: [
       { name: "Caja", capabilities: ["Abrir/cerrar sesión", "Registrar movimientos y conteos"] },
       { name: "Pagos", capabilities: ["Crear, capturar y refund pagos", "Liquidar checks"] },
@@ -128,6 +135,7 @@ const PROFILE_DEFINITIONS: ProfileDefinition[] = [
     primarySurface: "KDS tablet / monitor",
     interactionMode: "Táctil",
     focusSummary: "Producción, prioridad de cola y handoff.",
+    appKey: "kitchen",
     modules: [
       { name: "Kitchen", capabilities: ["Claim/start/hold/ready/handoff de comandos", "Leer cola y estaciones asignadas"] },
       { name: "Ordering", capabilities: ["Leer órdenes relevantes para producción", "Actualizar líneas en preparación/listas"] },
@@ -144,6 +152,7 @@ const PROFILE_DEFINITIONS: ProfileDefinition[] = [
     primarySurface: "Web pública / mobile",
     interactionMode: "Self-service",
     focusSummary: "Discovery, reserva y seguimiento personal.",
+    appKey: "customer / public web",
     modules: [
       { name: "Experiencia pública", capabilities: ["Ver menú publicado", "Consultar promociones y sucursales visibles sin login"] },
       { name: "Discovery", capabilities: ["Consultar disponibilidad resumida si habilitamos surface pública", "Iniciar flujo de reserva"] },
@@ -164,6 +173,14 @@ export function ProfilesPage() {
     if (!fallbackProfile) throw new Error("Profile definitions are required");
     return PROFILE_DEFINITIONS.find((profile) => profile.id === selectedProfileId) ?? fallbackProfile;
   }, [selectedProfileId]);
+  const profileChecklist = [
+    { label: "Superficie principal definida", done: Boolean(selectedProfile.primarySurface) },
+    { label: "Modo de interacción definido", done: Boolean(selectedProfile.interactionMode) },
+    { label: "App asociada identificada", done: Boolean(selectedProfile.appKey) },
+    { label: "Capacidades mapeadas", done: selectedProfile.modules.length > 0 },
+  ];
+  const profileLinks = getProfileLinks(selectedProfile);
+  const profilePriority = getProfilePriority(selectedProfile);
 
   return (
     <section aria-labelledby="profiles-heading" className="profiles-page">
@@ -177,6 +194,14 @@ export function ProfilesPage() {
         </div>
         <span className={`profile-pill profile-pill--${selectedProfile.type}`}>{selectedProfile.badge}</span>
       </div>
+
+      <article className={`overview-priority overview-priority--${profilePriority.tone}`}>
+        <div className="overview-priority__copy">
+          <span className="overview-priority__eyebrow">Lectura del perfil</span>
+          <strong>{profilePriority.title}</strong>
+          <p>{profilePriority.message}</p>
+        </div>
+      </article>
 
       <div className="profiles-layout">
         <aside className="profiles-sidebar" aria-label="Listado de perfiles">
@@ -200,6 +225,18 @@ export function ProfilesPage() {
             <p>{selectedProfile.description}</p>
           </header>
 
+          <section className="profile-card" aria-label="Checklist del perfil">
+            <h3>Checklist de diseño del perfil</h3>
+            <div className="overview-checklist">
+              {profileChecklist.map((step) => (
+                <div key={step.label} className={`overview-check ${step.done ? "overview-check--done" : ""}`}>
+                  <strong>{step.done ? "✓" : "•"}</strong>
+                  <span>{step.label}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+
           <section className="profile-module-grid" aria-label="Resumen del perfil">
             <article className="profile-card">
               <h3>Superficie principal</h3>
@@ -213,6 +250,23 @@ export function ProfilesPage() {
               <h3>Foco principal</h3>
               <p>{selectedProfile.focusSummary}</p>
             </article>
+            <article className="profile-card">
+              <h3>App objetivo</h3>
+              <p>{selectedProfile.appKey}</p>
+            </article>
+          </section>
+
+          <section className="profile-card" aria-label="Atajos relacionados">
+            <h3>Siguiente vista útil</h3>
+            <div className="overview-link-grid">
+              {profileLinks.map((link) => (
+                <div key={link.label} className="overview-link-card">
+                  <span>{link.eyebrow}</span>
+                  <strong>{link.label}</strong>
+                  <p>{link.detail}</p>
+                </div>
+              ))}
+            </div>
           </section>
 
           <div className="profile-module-grid">
@@ -242,4 +296,96 @@ export function ProfilesPage() {
       </div>
     </section>
   );
+}
+
+function getProfilePriority(profile: ProfileDefinition) {
+  if (profile.type === "public") {
+    return {
+      tone: "info" as const,
+      title: "Este perfil representa una experiencia pública, no un rol interno",
+      message: "Sirve para pensar discovery, reserva y seguimiento del cliente sin mezclarlo con RBAC interno.",
+    };
+  }
+
+  if (profile.id === "owner" || profile.id === "admin") {
+    return {
+      tone: "success" as const,
+      title: "Perfil de gobierno y configuración",
+      message: "Este perfil mira el tenant de punta a punta y necesita contexto de backoffice más que velocidad táctil.",
+    };
+  }
+
+  if (profile.id === "maitre" || profile.id === "waiter" || profile.id === "cashier" || profile.id === "cook") {
+    return {
+      tone: "warning" as const,
+      title: "Perfil operacional en tiempo real",
+      message: "Este perfil depende de fricción baja, foco táctil y decisiones rápidas durante el turno.",
+    };
+  }
+
+  return {
+    tone: "info" as const,
+    title: "Perfil mixto de supervisión",
+    message: "Necesita ver operación y al mismo tiempo conservar lectura amplia del tenant.",
+  };
+}
+
+function getProfileLinks(profile: ProfileDefinition) {
+  if (profile.type === "public") {
+    return [
+      {
+        eyebrow: "Customer",
+        label: "Discovery y reserva",
+        detail: "Revisar cómo la experiencia pública deriva desde consulta sin login hacia reserva autenticada.",
+      },
+      {
+        eyebrow: "Arquitectura",
+        label: "Mapa multiapp",
+        detail: "Comparar este perfil con las apps táctiles e internas para no mezclar responsabilidades.",
+      },
+    ];
+  }
+
+  if (profile.id === "owner" || profile.id === "admin") {
+    return [
+      {
+        eyebrow: "Backoffice",
+        label: "Overview / Setup",
+        detail: "Validar estructura, sucursales y estado general del tenant.",
+      },
+      {
+        eyebrow: "Gobierno",
+        label: "Usuarios / Suscripción",
+        detail: "Cruzar permisos, capacidades y límites del tenant.",
+      },
+    ];
+  }
+
+  if (profile.id === "manager" || profile.id === "maitre") {
+    return [
+      {
+        eyebrow: "Operación",
+        label: "Host / Floor",
+        detail: "Seguir seating, waitlist, reservas y ritmo del salón.",
+      },
+      {
+        eyebrow: "Coordinación",
+        label: "Kitchen / Cashier",
+        detail: "Conectar cocina, caja y piso sin perder visibilidad del turno.",
+      },
+    ];
+  }
+
+  return [
+    {
+      eyebrow: "App operativa",
+      label: profile.appKey,
+      detail: "Este perfil ya tiene una app táctil específica como superficie principal.",
+    },
+    {
+      eyebrow: "Backoffice",
+      label: "Profiles / Overview",
+      detail: "Usar estas vistas para validar que el diseño del perfil siga alineado con foundations.",
+    },
+  ];
 }
