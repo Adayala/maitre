@@ -35,6 +35,10 @@ export function PublicBranchesPage() {
         <p>
           Antes de reservar, el cliente puede validar en qué sede quiere continuar y por qué canal conviene seguir.
         </p>
+        <div className="public-detail-list">
+          <span><strong>Objetivo:</strong> elegir sede antes de reservar</span>
+          <span><strong>Siguiente paso:</strong> revisar disponibilidad o pasar a reserva</span>
+        </div>
       </article>
 
       {branchesQuery.isLoading ? (
@@ -50,6 +54,16 @@ export function PublicBranchesPage() {
               <div className="public-route-meta">
                 <span className="public-route-badge">Sucursal visible</span>
                 <h2>{branchesQuery.data.data.branch.name}</h2>
+              </div>
+              <div className="public-checklist">
+                <div className="public-check-item public-check-item--done">
+                  <strong>✓</strong>
+                  <span>Ya encontraste una sede visible para continuar.</span>
+                </div>
+                <div className="public-check-item">
+                  <strong>→</strong>
+                  <span>Ahora conviene validar horario o pasar directo a la reserva.</span>
+                </div>
               </div>
               <div className="public-detail-list">
                 <span>
@@ -81,6 +95,24 @@ export function PublicBranchesPage() {
           ) : null}
         </div>
       )}
+
+      <article className="public-card">
+        <h2>Recorrido desde sucursales</h2>
+        <div className="public-checklist">
+          <div className="public-check-item public-check-item--done">
+            <strong>1</strong>
+            <span>Elegí la sede que mejor te sirve.</span>
+          </div>
+          <div className="public-check-item">
+            <strong>2</strong>
+            <span>Consultá disponibilidad pública si todavía dudás del horario.</span>
+          </div>
+          <div className="public-check-item">
+            <strong>3</strong>
+            <span>Pasá a reserva autenticada cuando ya tengas una decisión.</span>
+          </div>
+        </div>
+      </article>
 
       <div className="public-button-row">
         <Link to="/public/availability" className="public-secondary-cta">

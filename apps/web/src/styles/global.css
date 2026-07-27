@@ -255,6 +255,34 @@ td {
   padding: 1rem 1.1rem;
 }
 
+.public-journey-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.public-journey-pill {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-bg-soft, #f6f7f9) 75%, white);
+}
+
+.public-journey-pill span {
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-fg-muted, inherit);
+}
+
+.public-journey-pill strong {
+  font-size: 0.98rem;
+}
+
 .public-card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
