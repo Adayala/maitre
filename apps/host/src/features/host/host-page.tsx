@@ -214,6 +214,21 @@ export function HostPage() {
     () => new Map((tableStatusesQuery.data?.data ?? []).map((status) => [status.tableId, status])),
     [tableStatusesQuery.data],
   );
+  const tableStatusSummary = useMemo(() => {
+    const summary = {
+      AVAILABLE: 0,
+      OCCUPIED: 0,
+      PAYING: 0,
+      RESERVED: 0,
+      BLOCKED: 0,
+      CLEANING: 0,
+    };
+    for (const table of allTables) {
+      const liveStatus = tableStatusById.get(table.id)?.status ?? "AVAILABLE";
+      summary[liveStatus] += 1;
+    }
+    return summary;
+  }, [allTables, tableStatusById]);
 
   const availableTables = useMemo(
     () =>
@@ -533,7 +548,7 @@ export function HostPage() {
             <div className="host-quick-grid">
               <button
                 type="button"
-                className="host-quick-card"
+                className={`host-quick-card ${tab === "reservations" && reservationStatus === "PENDING" ? "host-quick-card--active" : ""}`}
                 onClick={() => {
                   setTab("reservations");
                   setReservationStatus("PENDING");
@@ -545,7 +560,7 @@ export function HostPage() {
               </button>
               <button
                 type="button"
-                className="host-quick-card"
+                className={`host-quick-card ${tab === "reservations" && reservationStatus === "CONFIRMED" ? "host-quick-card--active" : ""}`}
                 onClick={() => {
                   setTab("reservations");
                   setReservationStatus("CONFIRMED");
@@ -557,16 +572,16 @@ export function HostPage() {
               </button>
               <button
                 type="button"
-                className="host-quick-card"
+                className={`host-quick-card ${tab === "waitlist" ? "host-quick-card--active" : ""}`}
                 onClick={() => setTab("waitlist")}
               >
                 <span>Waitlist</span>
-                <strong>{waitingEntries.length}</strong>
-                <p>Grupos esperando o notificados</p>
+                <strong>{seatableWaitlistCount > 0 ? seatableWaitlistCount : waitingEntries.length}</strong>
+                <p>{seatableWaitlistCount > 0 ? "Ya se pueden sentar" : "Grupos esperando o notificados"}</p>
               </button>
               <button
                 type="button"
-                className="host-quick-card"
+                className={`host-quick-card ${tab === "availability" ? "host-quick-card--active" : ""}`}
                 onClick={() => setTab("availability")}
               >
                 <span>Disponibilidad</span>
@@ -605,6 +620,24 @@ export function HostPage() {
               void tableStatusesQuery.refetch();
             }}
           >
+            <section className="host-table-summary" aria-label="Resumen de estados de mesa">
+              <article className="host-table-kpi host-table-kpi--available">
+                <span>Libres</span>
+                <strong>{tableStatusSummary.AVAILABLE}</strong>
+              </article>
+              <article className="host-table-kpi host-table-kpi--occupied">
+                <span>Ocupadas</span>
+                <strong>{tableStatusSummary.OCCUPIED}</strong>
+              </article>
+              <article className="host-table-kpi host-table-kpi--reserved">
+                <span>Reservadas / pagando</span>
+                <strong>{tableStatusSummary.RESERVED + tableStatusSummary.PAYING}</strong>
+              </article>
+              <article className="host-table-kpi host-table-kpi--blocked">
+                <span>Bloqueadas / cleaning</span>
+                <strong>{tableStatusSummary.BLOCKED + tableStatusSummary.CLEANING}</strong>
+              </article>
+            </section>
             <div className="host-table-grid">
               {allTables.map((table) => {
                 const liveStatus = tableStatusById.get(table.id)?.status ?? "AVAILABLE";
