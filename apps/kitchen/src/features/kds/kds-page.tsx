@@ -425,6 +425,32 @@ export function KdsPage() {
   const readyCount = commands.filter((command) => command.status === "READY").length;
   const mineCount = commands.filter((command) => command.ownerActorRef === me?.user.id).length;
   const newCount = commands.filter((command) => newArrivalAt[command.id] !== undefined).length;
+  const rushPriority =
+    lateCount > 0
+      ? {
+          tone: "late" as const,
+          title: `${lateCount} atrasada${lateCount === 1 ? "" : "s"}`,
+          message: "Priorizá tarjetas en rojo antes de seguir tomando carga nueva.",
+          actionLabel: quickView === "LATE" ? "Ver cola completa" : "Ir a atrasadas",
+          onAction: () => setQuickView((current) => (current === "LATE" ? "NONE" : "LATE")),
+        }
+      : readyCount > 0
+        ? {
+            tone: "ready" as const,
+            title: `${readyCount} lista${readyCount === 1 ? "" : "s"} para salir`,
+            message: "Conviene destrabar handoff para liberar espacio de producción.",
+            actionLabel: quickView === "READY" ? "Ver cola completa" : "Ir a listas",
+            onAction: () => setQuickView((current) => (current === "READY" ? "NONE" : "READY")),
+          }
+        : newCount > 0
+          ? {
+              tone: "new" as const,
+              title: `${newCount} ingreso${newCount === 1 ? "" : "s"} reciente${newCount === 1 ? "" : "s"}`,
+              message: "Revisá rápido lo nuevo para repartir carga sin atrasarte.",
+              actionLabel: quickView === "NEW" ? "Ver cola completa" : "Ir a recién",
+              onAction: () => setQuickView((current) => (current === "NEW" ? "NONE" : "NEW")),
+            }
+          : null;
   const quickViewLabel =
     quickView === "LATE"
       ? "Atrasadas"
@@ -686,6 +712,18 @@ export function KdsPage() {
           <section className="rush-banner" aria-label="Vista rush activa">
             <strong>Vista rush activa</strong>
             <span>Cards compactas para meter más comandas en pantalla durante hora pico.</span>
+          </section>
+        )}
+        {rushMode && rushPriority && (
+          <section className={`rush-priority rush-priority--${rushPriority.tone}`} aria-label="Prioridad actual">
+            <div className="rush-priority__copy">
+              <span className="rush-priority__eyebrow">Prioridad actual</span>
+              <strong>{rushPriority.title}</strong>
+              <span>{rushPriority.message}</span>
+            </div>
+            <button type="button" className="btn btn--ghost btn--sm" onClick={rushPriority.onAction}>
+              {rushPriority.actionLabel}
+            </button>
           </section>
         )}
         <section className="kds-critical-bar" aria-label="Métricas críticas">
