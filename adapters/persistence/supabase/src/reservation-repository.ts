@@ -107,6 +107,16 @@ export class SupabaseReservationRepository implements ReservationRepositoryPort 
     return (data as ReservationRow[]).map(fromRow);
   }
 
+  async listByGuest(tenantId: string, guestId: string): Promise<Reservation[]> {
+    const { data, error } = await this.client
+      .from(TABLE)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("guest_id", guestId);
+    if (error) throw error;
+    return (data as ReservationRow[]).map(fromRow);
+  }
+
   async listActiveByBranchWindow(
     tenantId: string,
     branchId: string,

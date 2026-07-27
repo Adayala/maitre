@@ -12,6 +12,7 @@ export interface ReservationRepositoryPort {
     branchId: string,
     filter?: { status?: string; from?: Date; to?: Date },
   ): Promise<Reservation[]>;
+  listByGuest(tenantId: string, guestId: string): Promise<Reservation[]>;
   listActiveByBranchWindow(
     tenantId: string,
     branchId: string,
