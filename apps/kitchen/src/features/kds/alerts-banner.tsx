@@ -11,6 +11,19 @@ import type { ApiData, KitchenAlert } from "../../lib/kitchen-types.js";
 // manager-tier and intentionally omitted from the cook UI.
 const ALERTS_POLL_MS = 30_000;
 
+const ALERT_SEVERITY_LABEL: Record<KitchenAlert["severity"], string> = {
+  LOW: "Baja",
+  MEDIUM: "Media",
+  HIGH: "Alta",
+};
+
+const ALERT_STATUS_LABEL: Record<KitchenAlert["status"], string> = {
+  OPEN: "Abierta",
+  ACKNOWLEDGED: "Reconocida",
+  RESOLVED: "Resuelta",
+  ESCALATED: "Escalada",
+};
+
 export function AlertsBanner({ branchId }: { branchId: string }) {
   const { accessToken } = useAuth();
   const { selectedTenantId } = useSession();
@@ -38,6 +51,7 @@ export function AlertsBanner({ branchId }: { branchId: string }) {
   const active = alerts.filter((a) => a.status === "OPEN" || a.status === "ESCALATED");
   const acknowledged = alerts.filter((a) => a.status === "ACKNOWLEDGED");
   const shown = [...active, ...acknowledged];
+  const highSeverityCount = active.filter((alert) => alert.severity === "HIGH").length;
 
   const mutation = useMutation<unknown, Error, { id: string; op: "acknowledge" | "resolve" }>({
     mutationFn: ({ id, op }) =>
@@ -153,6 +167,20 @@ export function AlertsBanner({ branchId }: { branchId: string }) {
               {deniedOps.evaluate ? "Sólo lectura" : "Revisar ahora"}
             </button>
           </div>
+          <div className="alerts-summary" aria-label="Resumen de alertas">
+            <div className="alerts-summary-card">
+              <span>Abiertas</span>
+              <strong>{active.length}</strong>
+            </div>
+            <div className="alerts-summary-card">
+              <span>Reconocidas</span>
+              <strong>{acknowledged.length}</strong>
+            </div>
+            <div className="alerts-summary-card">
+              <span>Alta severidad</span>
+              <strong>{highSeverityCount}</strong>
+            </div>
+          </div>
           {actionError && <p className="alerts-error">{actionError}</p>}
           {!hasAny ? (
             <p className="alerts-empty">No hay alertas activas. ✅</p>
@@ -161,11 +189,12 @@ export function AlertsBanner({ branchId }: { branchId: string }) {
               {shown.map((a) => (
                 <li key={a.id} className={`alert-row alert-row--${a.severity.toLowerCase()}`}>
                   <div className="alert-info">
-                    <span className={`sev sev--${a.severity.toLowerCase()}`}>{a.severity}</span>
+                    <span className={`sev sev--${a.severity.toLowerCase()}`}>{ALERT_SEVERITY_LABEL[a.severity]}</span>
                     <span className="alert-rule">{a.ruleCode}</span>
                     <span className={`alert-status alert-status--${a.status.toLowerCase()}`}>
-                      {a.status}
+                      {ALERT_STATUS_LABEL[a.status]}
                     </span>
+                    <span className="alert-opened">Desde {formatOpenedAt(a.openedAt)}</span>
                   </div>
                   <div className="alert-actions">
                     {a.status !== "ACKNOWLEDGED" && (
@@ -223,4 +252,13 @@ export function AlertsBanner({ branchId }: { branchId: string }) {
       )}
     </div>
   );
+}
+
+function formatOpenedAt(openedAt: string) {
+  const elapsedMinutes = Math.max(0, Math.round((Date.now() - Date.parse(openedAt)) / 60000));
+  if (elapsedMinutes < 1) return "ahora";
+  if (elapsedMinutes < 60) return `${elapsedMinutes} min`;
+  const hours = Math.floor(elapsedMinutes / 60);
+  const minutes = elapsedMinutes % 60;
+  return minutes > 0 ? `${hours} h ${minutes} min` : `${hours} h`;
 }
