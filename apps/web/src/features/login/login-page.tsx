@@ -16,6 +16,18 @@ export function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const next = searchParams.get("next") ?? "/";
   const mode = searchParams.get("mode");
+  const isCustomerMode = mode === "customer";
+  const checklist = isCustomerMode
+    ? [
+        "Ingresar con cuenta para continuar una reserva o ver tus reservas.",
+        "Sin login igual podés navegar menú, promociones y sucursales públicas.",
+        "Después del ingreso volvés al flujo que estabas haciendo.",
+      ]
+    : [
+        "Usá tu acceso de staff u owner para entrar al backoffice.",
+        "El contexto del tenant se carga después del login.",
+        "Si el build local no tiene Supabase Auth, podés usar token manual.",
+      ];
 
   if (accessToken) return <Navigate to={next} replace />;
 
@@ -34,58 +46,78 @@ export function LoginPage() {
 
   return (
     <main className="login-page">
-      <h1>{mode === "customer" ? "Maitre — Cliente" : "Maitre — Dash"}</h1>
-      {mode === "customer" ? (
-        <p>Para continuar con tu reserva necesitamos que inicies sesión.</p>
-      ) : null}
-
-      {isSupabaseConfigured ? (
-        <form onSubmit={handleSubmit} aria-label="Iniciar sesión">
-          <label htmlFor="email">Email</label>
-          <input
-            id="email"
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            autoComplete="username"
-          />
-          <label htmlFor="password">Contraseña</label>
-          <input
-            id="password"
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="current-password"
-          />
-          {error && (
-            <p role="alert" className="login-error">
-              {error}
-            </p>
-          )}
-          <button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Ingresando…" : "Ingresar"}
-          </button>
-        </form>
-      ) : (
-        <div>
+      <section className="login-card">
+        <div className="login-copy">
+          <p className="profile-eyebrow">{isCustomerMode ? "Acceso cliente" : "Acceso interno"}</p>
+          <h1>{isCustomerMode ? "Entrá para seguir tu experiencia como cliente" : "Entrá al centro operativo"}</h1>
           <p>
-            Supabase Auth no está configurado en este build (falta VITE_SUPABASE_URL). Pegá un
-            access token válido del backend local para continuar.
+            {isCustomerMode
+              ? "El acceso te deja continuar una reserva, revisar tus reservas activas y retomar el flujo sin perder contexto."
+              : "Desde acá se habilita el backoffice del tenant para owner, administración y operación interna."}
           </p>
-          <label htmlFor="fixture-token">Access token</label>
-          <input
-            id="fixture-token"
-            type="text"
-            value={fixtureToken}
-            onChange={(e) => setFixtureToken(e.target.value)}
-          />
-          <button type="button" onClick={() => signInWithToken(fixtureToken)}>
-            Continuar
-          </button>
+          <article className="overview-card">
+            <h2>Qué pasa después</h2>
+            <div className="overview-checklist">
+              {checklist.map((step) => (
+                <div key={step} className="overview-check overview-check--done">
+                  <strong>✓</strong>
+                  <span>{step}</span>
+                </div>
+              ))}
+            </div>
+          </article>
         </div>
-      )}
+
+        {isSupabaseConfigured ? (
+          <form onSubmit={handleSubmit} aria-label="Iniciar sesión" className="login-form-card">
+            <h2>{isCustomerMode ? "Ingresar para reservar" : "Ingresar al dashboard"}</h2>
+            <label htmlFor="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="username"
+            />
+            <label htmlFor="password">Contraseña</label>
+            <input
+              id="password"
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+            />
+            {error && (
+              <p role="alert" className="login-error">
+                {error}
+              </p>
+            )}
+            <button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Ingresando…" : "Ingresar"}
+            </button>
+          </form>
+        ) : (
+          <div className="login-form-card">
+            <h2>Acceso local con token</h2>
+            <p>
+              Supabase Auth no está configurado en este build. Pegá un access token válido del backend local para
+              continuar con pruebas.
+            </p>
+            <label htmlFor="fixture-token">Access token</label>
+            <input
+              id="fixture-token"
+              type="text"
+              value={fixtureToken}
+              onChange={(e) => setFixtureToken(e.target.value)}
+            />
+            <button type="button" onClick={() => signInWithToken(fixtureToken)} disabled={!fixtureToken.trim()}>
+              Continuar
+            </button>
+          </div>
+        )}
+      </section>
     </main>
   );
 }

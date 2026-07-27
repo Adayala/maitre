@@ -62,16 +62,57 @@ button {
 }
 
 .login-page {
-  max-width: 24rem;
+  width: min(72rem, 100%);
   margin: 4rem auto;
   padding: 1rem;
 }
-.login-page form,
-.login-page div {
+
+.login-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(18rem, 26rem);
+  gap: 1rem;
+  align-items: start;
+}
+
+.login-copy,
+.login-form-card {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
 }
+
+.login-form-card {
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  padding: 1rem 1.1rem;
+  background: color-mix(in srgb, var(--color-bg) 96%, var(--color-accent) 4%);
+}
+
+.login-copy h1,
+.login-form-card h2,
+.login-form-card p {
+  margin-top: 0;
+}
+
+.login-form-card label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.login-form-card input {
+  font: inherit;
+  padding: 0.75rem 0.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  background: var(--color-bg);
+  color: var(--color-fg);
+}
+
+.login-form-card button {
+  min-height: 2.75rem;
+}
+
 .login-error {
   color: #c0392b;
 }
