@@ -42,6 +42,10 @@ import { registerKitchenAlertRoutes } from "./routes/kitchen-alerts.js";
 import { registerWorkforceRoutes } from "./routes/workforce.js";
 import { registerBreakRoutes } from "./routes/breaks.js";
 import { registerCashRegisterRoutes } from "./routes/cash-registers.js";
+import { registerInvoiceRoutes } from "./routes/invoices.js";
+import { registerTaxRateRoutes } from "./routes/tax-rates.js";
+import { registerFiscalPrinterRoutes } from "./routes/fiscal-printers.js";
+import { registerInvoiceTemplateRoutes } from "./routes/invoice-templates.js";
 
 // SPEC-211 — app.ts instantiates and wires plugins/routes without listen().
 // server.ts (local/process) and api/serverless.ts (Vercel) both consume this.
@@ -100,6 +104,10 @@ export async function buildApp(container?: Container): Promise<FastifyInstance> 
   await registerWorkforceRoutes(app, resolvedContainer);
   await registerBreakRoutes(app, resolvedContainer);
   await registerCashRegisterRoutes(app, resolvedContainer);
+  await registerInvoiceRoutes(app, resolvedContainer);
+  await registerTaxRateRoutes(app, resolvedContainer);
+  await registerFiscalPrinterRoutes(app, resolvedContainer);
+  await registerInvoiceTemplateRoutes(app, resolvedContainer);
 
   return app;
 }

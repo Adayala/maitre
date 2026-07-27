@@ -22,7 +22,8 @@
     "@maitre/ordering": "*",
     "@maitre/workforce": "*",
     "@maitre/kitchen": "*",
-    "@maitre/cash": "*"
+    "@maitre/cash": "*",
+    "@maitre/fiscal": "*"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
