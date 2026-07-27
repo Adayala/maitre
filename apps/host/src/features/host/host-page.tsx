@@ -765,6 +765,16 @@ export function HostPage() {
                         minutesUntil >= 0 &&
                         minutesUntil <= 90 &&
                         (reservation.status === "PENDING" || reservation.status === "CONFIRMED");
+                      const reservationFlowHint =
+                        reservation.status === "PENDING" && isSoon
+                          ? { label: minutesUntil <= 15 ? "Confirmar ya" : "Confirmar hoy", tone: "pending" as const }
+                          : reservation.status === "CONFIRMED" && minutesUntil <= 0
+                            ? { label: "Sentar ahora", tone: "ready" as const }
+                            : reservation.status === "CONFIRMED" && isSoon
+                              ? { label: reservation.tableIds?.length ? "Preparar seating" : "Asignar mesa", tone: "confirmed" as const }
+                              : reservation.status === "PENDING"
+                                ? { label: "Pendiente", tone: "pending" as const }
+                                : null;
                       return (
                         <article
                           key={reservation.id}
@@ -782,6 +792,9 @@ export function HostPage() {
                                   <span className="host-status host-status--soon">
                                     {minutesUntil <= 0 ? "Ahora" : `${minutesUntil} min`}
                                   </span>
+                                ) : null}
+                                {reservationFlowHint ? (
+                                  <span className={`host-flow-hint host-flow-hint--${reservationFlowHint.tone}`}>{reservationFlowHint.label}</span>
                                 ) : null}
                               </div>
                             </div>
@@ -943,6 +956,16 @@ export function HostPage() {
                     const waitedMinutes = Math.max(0, Math.round((Date.now() - Date.parse(entry.createdAt)) / 60000));
                     const quotedMinutes = entry.quotedMinutes ?? 0;
                     const overdue = quotedMinutes > 0 && waitedMinutes > quotedMinutes;
+                    const waitlistFlowHint =
+                      (entry.status === "WAITING" || entry.status === "NOTIFIED") && entryTables.length > 0
+                        ? { label: "Sentable ahora", tone: "ready" as const }
+                        : overdue
+                          ? { label: "Resolver demora", tone: "overdue" as const }
+                          : entry.status === "WAITING"
+                            ? { label: "Notificar", tone: "waiting" as const }
+                            : entry.status === "NOTIFIED"
+                              ? { label: "Esperando llegada", tone: "notified" as const }
+                              : null;
                     return (
                       <article
                         key={entry.id}
@@ -957,6 +980,9 @@ export function HostPage() {
                             <div className="host-waitlist-flags">
                               <span className={`host-status host-status--${entry.status.toLowerCase()}`}>{entry.status}</span>
                               {overdue ? <span className="host-status host-status--soon">Demorado</span> : null}
+                              {waitlistFlowHint ? (
+                                <span className={`host-flow-hint host-flow-hint--${waitlistFlowHint.tone}`}>{waitlistFlowHint.label}</span>
+                              ) : null}
                             </div>
                           </div>
                           <div className="host-waitlist-meta">
