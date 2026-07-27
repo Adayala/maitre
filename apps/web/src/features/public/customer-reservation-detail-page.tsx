@@ -53,6 +53,7 @@ export function CustomerReservationDetailPage() {
   });
 
   const reservation = reservationQuery.data?.data;
+  const detailNextAction = reservation ? getReservationDetailNextAction(reservation.status, Boolean(reservation.visitId)) : null;
 
   return (
     <section className="public-page" aria-labelledby="customer-reservation-detail-heading">
@@ -73,6 +74,18 @@ export function CustomerReservationDetailPage() {
 
       {reservation ? (
         <>
+          {detailNextAction ? (
+            <article className="public-card public-info-card">
+              <strong>{detailNextAction.title}</strong>
+              <p>{detailNextAction.message}</p>
+              <div className="public-detail-list">
+                {detailNextAction.items.map((item) => (
+                  <span key={item}>{item}</span>
+                ))}
+              </div>
+            </article>
+          ) : null}
+
           <div className="public-card-grid">
             <article className="public-card">
               <h2>Estado</h2>
@@ -154,4 +167,46 @@ function reservationStatusLabel(status: string) {
     default:
       return status;
   }
+}
+
+function getReservationDetailNextAction(status: string, hasVisit: boolean) {
+  if (status === "PENDING") {
+    return {
+      title: "La reserva sigue pendiente",
+      message: "Todavía puede cambiar de estado. Conviene seguirla desde Mis reservas y conservar los datos de fecha y sucursal.",
+      items: ["Revisar el estado antes de la visita", "Conservar fecha, hora y sucursal", "Cancelar sólo si ya no la necesitás"],
+    };
+  }
+
+  if (status === "CONFIRMED") {
+    return {
+      title: "La reserva está confirmada",
+      message: "Ahora el foco pasa a presentarte a horario y usar este detalle como referencia rápida.",
+      items: ["Verificar hora y comensales", "Usar este detalle como referencia", "Cancelar sólo si cambió el plan"],
+    };
+  }
+
+  if (status === "SEATED") {
+    return {
+      title: "La visita ya fue tomada por el local",
+      message: hasVisit
+        ? "La reserva ya derivó en una visita activa dentro del restaurante."
+        : "La reserva ya fue tomada por el local y debería estar en curso.",
+      items: ["La gestión ya pasó al local", "No hace falta cancelar", "Conservá este registro como referencia"],
+    };
+  }
+
+  if (status === "CANCELLED") {
+    return {
+      title: "La reserva está cancelada",
+      message: "Si querés volver a visitar el restaurante, el siguiente paso natural es crear una nueva reserva.",
+      items: ["Podés crear otra reserva", "Revisá historial para contexto", "Volvé a explorar menú o sucursales"],
+    };
+  }
+
+  return {
+    title: "Seguimiento de reserva",
+    message: "Esta pantalla te sirve para consultar el estado actual y decidir si necesitás crear otra reserva.",
+    items: ["Revisar estado actual", "Consultar historial si hace falta", "Crear otra reserva cuando corresponda"],
+  };
 }
