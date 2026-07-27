@@ -17,6 +17,11 @@ const NAV_ITEMS = [
 export function DashboardLayout() {
   const { accessToken, email, signOut } = useAuth();
   const { me, selectedTenantId, selectTenant, isLoading } = useTenantContext();
+  const tenantChecklist = [
+    { label: "Sesión iniciada", done: Boolean(accessToken) },
+    { label: "Tenant disponible", done: (me?.tenants.length ?? 0) > 0 },
+    { label: "Tenant seleccionado", done: Boolean(selectedTenantId) },
+  ];
 
   if (!accessToken) return <Navigate to="/login" replace />;
 
@@ -64,7 +69,32 @@ export function DashboardLayout() {
         {isLoading ? (
           <p role="status">Cargando contexto…</p>
         ) : !selectedTenantId ? (
-          <p role="alert">No hay un tenant seleccionado.</p>
+          <section className="overview-page" aria-label="Contexto pendiente">
+            <article className="overview-priority overview-priority--info">
+              <div className="overview-priority__copy">
+                <span className="overview-priority__eyebrow">Contexto pendiente</span>
+                <strong>No hay un tenant seleccionado</strong>
+                <p>
+                  El backoffice ya está listo, pero todavía falta elegir con qué tenant querés operar esta sesión.
+                </p>
+              </div>
+            </article>
+
+            <article className="overview-card">
+              <h2>Qué falta para entrar al dashboard</h2>
+              <div className="overview-checklist">
+                {tenantChecklist.map((step) => (
+                  <div key={step.label} className={`overview-check ${step.done ? "overview-check--done" : ""}`}>
+                    <strong>{step.done ? "✓" : "•"}</strong>
+                    <span>{step.label}</span>
+                  </div>
+                ))}
+              </div>
+              <p>
+                Si arriba ves más de un tenant, elegí uno desde el selector para habilitar Overview, Setup y el resto del backoffice.
+              </p>
+            </article>
+          </section>
         ) : (
           <Outlet />
         )}
