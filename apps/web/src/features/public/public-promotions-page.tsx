@@ -1,59 +1,83 @@
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "../../app/auth-context.js";
-import { useTenantContext } from "../../app/tenant-context.js";
-import { apiRequest } from "../../lib/api-client.js";
 
-interface Brand {
-  id: string;
-  name: string;
-  slug: string;
-  status: string;
-}
+const PUBLIC_PROMOTIONS = [
+  {
+    id: "happy-hour",
+    title: "Happy hour de barra",
+    summary: "Beneficio ideal para discovery público: deja ver propuesta y momento recomendado de visita.",
+    schedule: "Lunes a viernes · 18:00 a 20:00",
+    scope: "Participan sucursales adheridas",
+    cta: "Ver sucursales",
+    to: "/public/branches",
+  },
+  {
+    id: "executive-menu",
+    title: "Menú ejecutivo",
+    summary: "Formato editorial para comunicar una propuesta acotada de mediodía sin exponer pricing interno sensible.",
+    schedule: "Lunes a viernes · mediodía",
+    scope: "Sujeto a disponibilidad",
+    cta: "Ver menú",
+    to: "/public/menu",
+  },
+  {
+    id: "celebrations",
+    title: "Reservas para celebraciones",
+    summary: "Camino público para detectar intención de reserva con ocasión especial antes del login.",
+    schedule: "Todos los días",
+    scope: "Coordinación posterior al crear reserva",
+    cta: "Reservar",
+    to: "/public/reservations/new",
+  },
+];
 
 export function PublicPromotionsPage() {
-  const { accessToken } = useAuth();
-  const { selectedTenantId } = useTenantContext();
-  const brandsQuery = useQuery({
-    queryKey: ["public-promotions-fallback", selectedTenantId],
-    queryFn: () =>
-      apiRequest<{ data: Brand[] }>("/v1/brands", {
-        accessToken: accessToken!,
-        tenantId: selectedTenantId!,
-      }),
-    enabled: Boolean(accessToken && selectedTenantId),
-  });
-
   return (
     <section className="public-page" aria-labelledby="public-promotions-heading">
       <h1 id="public-promotions-heading">Promociones</h1>
-      <p>Surface pública editorial. Todavía no existe API de promociones; acá mostramos un fallback honesto derivado del tenant actual.</p>
-      <div className="public-card-grid">
-        {brandsQuery.data?.data.length ? (
-          brandsQuery.data.data.map((brand) => (
-            <article key={brand.id} className="public-card">
-              <h2>{brand.name}</h2>
-              <p>Marca activa en el tenant actual.</p>
-              <p>Slug: {brand.slug}</p>
-              <p>Estado: {brand.status}</p>
-            </article>
-          ))
-        ) : (
-          <>
-            <article className="public-card">
-              <h2>Happy hour</h2>
-              <p>Placeholder de promoción pública con vigencia y sucursal aplicable.</p>
-            </article>
-            <article className="public-card">
-              <h2>Menú ejecutivo</h2>
-              <p>Otro bloque promocional para probar navegación pública.</p>
-            </article>
-          </>
-        )}
+      <p>
+        Esta surface pública hoy es editorial: muestra campañas y propuestas de discovery sin depender de login ni de
+        APIs internas.
+      </p>
+
+      <div className="public-card public-info-card">
+        <strong>Cómo funciona hoy</strong>
+        <p>
+          Las promociones públicas todavía no tienen backend dedicado. Mientras tanto, la experiencia se mantiene
+          honesta: informa beneficios posibles y dirige al cliente al siguiente paso correcto.
+        </p>
       </div>
-      <Link to="/public/reservations/new" className="public-cta">
-        Reservar con promo
-      </Link>
+
+      <div className="public-card-grid">
+        {PUBLIC_PROMOTIONS.map((promotion) => (
+          <article key={promotion.id} className="public-card">
+            <div className="public-route-meta">
+              <span className="public-route-badge">Editorial pública</span>
+              <h2>{promotion.title}</h2>
+            </div>
+            <p>{promotion.summary}</p>
+            <div className="public-detail-list">
+              <span>
+                <strong>Vigencia:</strong> {promotion.schedule}
+              </span>
+              <span>
+                <strong>Alcance:</strong> {promotion.scope}
+              </span>
+            </div>
+            <Link to={promotion.to} className="public-secondary-cta">
+              {promotion.cta}
+            </Link>
+          </article>
+        ))}
+      </div>
+
+      <div className="public-button-row">
+        <Link to="/public/reservations/new" className="public-cta">
+          Reservar con promoción
+        </Link>
+        <Link to="/public/menu" className="public-secondary-cta">
+          Explorar menú
+        </Link>
+      </div>
     </section>
   );
 }

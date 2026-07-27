@@ -322,6 +322,18 @@ td {
   gap: 0.5rem;
 }
 
+.public-info-card {
+  display: grid;
+  gap: 0.65rem;
+  background: color-mix(in srgb, var(--color-accent) 6%, white);
+}
+
+.public-detail-list {
+  display: grid;
+  gap: 0.45rem;
+  color: var(--color-fg-muted, inherit);
+}
+
 .public-form {
   display: grid;
   gap: 1rem;

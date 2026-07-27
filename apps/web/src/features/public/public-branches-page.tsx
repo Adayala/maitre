@@ -30,6 +30,13 @@ export function PublicBranchesPage() {
       <h1 id="public-branches-heading">Sucursales</h1>
       <p>Listado público de sucursales conectado a la surface pública real del backend.</p>
 
+      <article className="public-card public-info-card">
+        <strong>Qué resuelve esta pantalla</strong>
+        <p>
+          Antes de reservar, el cliente puede validar en qué sede quiere continuar y por qué canal conviene seguir.
+        </p>
+      </article>
+
       {branchesQuery.isLoading ? (
         <p role="status">Cargando sucursales…</p>
       ) : branchesQuery.error ? (
@@ -40,19 +47,49 @@ export function PublicBranchesPage() {
         <div className="public-card-grid">
           {branchesQuery.data?.data.branch ? (
             <article className="public-card">
-              <h2>{branchesQuery.data.data.branch.name}</h2>
-              <p>Código: {branchesQuery.data.data.branch.code}</p>
-              <p>Zona horaria: {branchesQuery.data.data.branch.timezone}</p>
-              {branchesQuery.data.data.branch.contactEmail ? <p>Email: {branchesQuery.data.data.branch.contactEmail}</p> : null}
-              {branchesQuery.data.data.branch.contactPhone ? <p>Teléfono: {branchesQuery.data.data.branch.contactPhone}</p> : null}
+              <div className="public-route-meta">
+                <span className="public-route-badge">Sucursal visible</span>
+                <h2>{branchesQuery.data.data.branch.name}</h2>
+              </div>
+              <div className="public-detail-list">
+                <span>
+                  <strong>Código:</strong> {branchesQuery.data.data.branch.code}
+                </span>
+                <span>
+                  <strong>Zona horaria:</strong> {branchesQuery.data.data.branch.timezone}
+                </span>
+                {branchesQuery.data.data.branch.contactEmail ? (
+                  <span>
+                    <strong>Email:</strong> {branchesQuery.data.data.branch.contactEmail}
+                  </span>
+                ) : null}
+                {branchesQuery.data.data.branch.contactPhone ? (
+                  <span>
+                    <strong>Teléfono:</strong> {branchesQuery.data.data.branch.contactPhone}
+                  </span>
+                ) : null}
+              </div>
+              <div className="public-button-row">
+                <Link to="/public/availability" className="public-secondary-cta">
+                  Consultar disponibilidad
+                </Link>
+                <Link to="/public/reservations/new" className="public-cta">
+                  Reservar en esta sede
+                </Link>
+              </div>
             </article>
           ) : null}
         </div>
       )}
 
-      <Link to="/public/availability" className="public-secondary-cta">
-        Consultar disponibilidad
-      </Link>
+      <div className="public-button-row">
+        <Link to="/public/availability" className="public-secondary-cta">
+          Consultar disponibilidad
+        </Link>
+        <Link to="/public/menu" className="public-secondary-cta">
+          Ver menú
+        </Link>
+      </div>
     </section>
   );
 }
