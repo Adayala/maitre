@@ -56,6 +56,7 @@ export function ProductAddSheet({
         <div className="sheet-grip" aria-hidden="true" />
         <h2 className="sheet-title">{product.name}</h2>
         <p className="sheet-sub">{formatMoney(product.priceMinorUnits, product.currency)} c/u</p>
+        <p className="sheet-hint">Confirmá cantidad y, si hace falta, dejá una nota clara para cocina.</p>
 
         {product.allergens.length > 0 && (
           <p className="sheet-allergens">⚠ Alérgenos: {product.allergens.join(", ")}</p>
@@ -100,6 +101,11 @@ export function ProductAddSheet({
             {notes.length}/{NOTE_MAX}
           </span>
         </label>
+
+        <div className="sheet-total-row">
+          <span>Total de esta línea</span>
+          <strong>{formatMoney(lineTotal, product.currency)}</strong>
+        </div>
 
         {errorMsg && (
           <p role="alert" className="sheet-error">

@@ -40,13 +40,18 @@ export function CartSheet({
   });
 
   const busy = changeQty.isPending || removeItem.isPending;
+  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
     <div className="sheet-root" role="dialog" aria-modal="true" aria-label="Pedido actual">
       <div className="sheet-backdrop" onClick={onClose} />
       <div className="sheet sheet--tall">
         <div className="sheet-grip" aria-hidden="true" />
-        <h2 className="sheet-title">Pedido actual</h2>
+        <h2 className="sheet-title">
+          Pedido actual
+          <span className="sheet-title-badge">{itemCount}</span>
+        </h2>
+        <p className="sheet-sub">Podés ajustar cantidades o quitar líneas antes de enviar a cocina.</p>
 
         <ul className="cart-list">
           {items.map((item) => {
@@ -108,6 +113,13 @@ export function CartSheet({
 
         <div className="cart-foot">
           <div className="cart-foot-total">
+            <span>{itemCount} ítem{itemCount === 1 ? "" : "s"}</span>
+            <strong>{formatMoney(order.subtotalMinorUnits, order.currency)}</strong>
+          </div>
+          <div className="cart-foot-note">
+            Los cambios impactan solo en este borrador hasta que lo envíes.
+          </div>
+          <div className="cart-foot-total cart-foot-total--compact">
             <span>Subtotal</span>
             <strong>{formatMoney(order.subtotalMinorUnits, order.currency)}</strong>
           </div>
