@@ -93,6 +93,15 @@ export function CustomerPage() {
   const selectedTenant = tenants.find((tenant) => tenant.id === selectedTenantId) ?? null;
   const branches = selectedTenant?.branches ?? [];
   const selectedBranch = branches.find((branch) => branch.id === selectedBranchId) ?? null;
+  const branchNameById = useMemo(
+    () =>
+      new Map(
+        tenants.flatMap((tenant) =>
+          tenant.branches.map((branch) => [branch.id, `${branch.name} (${branch.code})`] as const),
+        ),
+      ),
+    [tenants],
+  );
 
   const menuQuery = useQuery({
     queryKey: ["customer-public-menu", PUBLIC_MENU_TOKEN],
@@ -206,6 +215,14 @@ export function CustomerPage() {
   ];
   const reservationReady = reservationChecklist.every((step) => step.done);
   const reservationPending = reservationChecklist.filter((step) => !step.done).map((step) => step.label);
+  const reservePriority = getCustomerReservePriority({
+    accessToken: Boolean(accessToken),
+    selectedTenantId,
+    selectedBranchId,
+    reservationReady,
+    availability: availabilityQuery.data?.data.available ?? null,
+    nextReservation,
+  });
 
   async function handlePasswordLogin(event: FormEvent) {
     event.preventDefault();
@@ -519,6 +536,9 @@ export function CustomerPage() {
         {tab === "reserve" ? (
           <section className="customer-grid">
             <article className="cashier-card">
+              <div className={`cashier-banner ${reservePriority.tone === "success" ? "cashier-banner--success" : reservePriority.tone === "warning" ? "cashier-banner--warning" : "cashier-banner--info"}`}>
+                <span>{reservePriority.message}</span>
+              </div>
               <h2 className="owner-card-title">Qué falta para reservar</h2>
               <div className="customer-checklist">
                 {reservationChecklist.map((step) => (
@@ -666,7 +686,7 @@ export function CustomerPage() {
                   {new Date(nextReservation.startAt).toLocaleString("es-AR")} · {nextReservation.partySize} pax · {nextReservation.durationMinutes} min
                 </p>
                 <div className="cashier-banner cashier-banner--info">
-                  <span>Estado actual: {nextReservation.status}</span>
+                  <span>Estado actual: {reservationStatusLabel(nextReservation.status)}</span>
                 </div>
               </article>
             ) : null}
@@ -709,7 +729,7 @@ export function CustomerPage() {
                                   </span>
                                 </div>
                                 <p>{reservation.partySize} pax · {reservation.durationMinutes} min</p>
-                                <p>Sucursal: {reservation.branchId.slice(0, 8)}</p>
+                                <p>Sucursal: {branchNameById.get(reservation.branchId) ?? reservation.branchId.slice(0, 8)}</p>
                                 {reservation.notes ? <p>Notas: {reservation.notes}</p> : null}
                               </div>
                               {(reservation.status === "PENDING" || reservation.status === "CONFIRMED") ? (
@@ -750,7 +770,7 @@ export function CustomerPage() {
                                   </span>
                                 </div>
                                 <p>{reservation.partySize} pax · {reservation.durationMinutes} min</p>
-                                <p>Sucursal: {reservation.branchId.slice(0, 8)}</p>
+                                <p>Sucursal: {branchNameById.get(reservation.branchId) ?? reservation.branchId.slice(0, 8)}</p>
                               </div>
                             </article>
                           ))
@@ -815,6 +835,69 @@ function reservationStatusLabel(status: string) {
     default:
       return status;
   }
+}
+
+function getCustomerReservePriority({
+  accessToken,
+  selectedTenantId,
+  selectedBranchId,
+  reservationReady,
+  availability,
+  nextReservation,
+}: {
+  accessToken: boolean;
+  selectedTenantId: string | null | undefined;
+  selectedBranchId: string | null | undefined;
+  reservationReady: boolean;
+  availability: boolean | null;
+  nextReservation: ReservationListItem | null;
+}) {
+  if (!accessToken) {
+    return {
+      tone: "info" as const,
+      message: "Primero iniciá sesión para poder reservar y seguir tus reservas después.",
+    };
+  }
+
+  if (!selectedTenantId) {
+    return {
+      tone: "info" as const,
+      message: "Elegí un tenant para continuar con el flujo de reserva.",
+    };
+  }
+
+  if (!selectedBranchId) {
+    return {
+      tone: "info" as const,
+      message: "Elegí una sucursal antes de consultar disponibilidad y confirmar la reserva.",
+    };
+  }
+
+  if (availability === false) {
+    return {
+      tone: "warning" as const,
+      message: "Para ese horario no hay disponibilidad. Probá con otro horario o una duración distinta.",
+    };
+  }
+
+  if (reservationReady) {
+    return {
+      tone: "success" as const,
+      message: "Ya tenés todo listo para reservar.",
+    };
+  }
+
+  if (nextReservation) {
+    return {
+      tone: "info" as const,
+      message: "Ya tenés una próxima reserva; igual podés crear otra si lo necesitás.",
+    };
+  }
+
+  return {
+    tone: "info" as const,
+    message: "Completá los datos clave para pasar de discovery a reserva confirmable.",
+  };
 }
 
 function toErrorMessage(error: unknown) {
