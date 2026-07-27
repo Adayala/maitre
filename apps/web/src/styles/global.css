@@ -413,6 +413,109 @@ td {
   color: inherit;
 }
 
+.public-reservations-layout {
+  display: grid;
+  gap: 1rem;
+}
+
+.public-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.public-section-head h2 {
+  margin: 0;
+}
+
+.public-section-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 0.65rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-border) 55%, white);
+  font-weight: 700;
+}
+
+.public-reservation-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.public-reservation-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-bg-soft, #f6f7f9) 65%, white);
+}
+
+.public-reservation-card--upcoming {
+  border-color: color-mix(in srgb, var(--color-accent) 30%, var(--color-border));
+}
+
+.public-reservation-main {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.public-reservation-main p {
+  margin: 0;
+}
+
+.public-reservation-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.public-status-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.85rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.public-status-pill--pending {
+  background: color-mix(in srgb, #f59e0b 14%, white);
+}
+
+.public-status-pill--confirmed,
+.public-status-pill--seated {
+  background: color-mix(in srgb, var(--color-accent) 12%, white);
+}
+
+.public-status-pill--completed {
+  background: color-mix(in srgb, #2fa86b 14%, white);
+}
+
+.public-status-pill--cancelled,
+.public-status-pill--no_show {
+  background: color-mix(in srgb, #c0392b 12%, white);
+}
+
+.public-reservation-empty {
+  display: grid;
+  gap: 0.25rem;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  border: 1px dashed var(--color-border);
+}
+
 .profiles-page {
   display: flex;
   flex-direction: column;

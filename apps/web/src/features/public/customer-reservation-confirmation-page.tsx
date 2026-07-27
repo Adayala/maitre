@@ -26,7 +26,7 @@ export function CustomerReservationConfirmationPage() {
       <div className="public-card-grid">
         <article className="public-card">
           <h2>Estado</h2>
-          <p>{reservation.status}</p>
+          <p>{reservationStatusLabel(reservation.status)}</p>
         </article>
         <article className="public-card">
           <h2>Fecha y hora</h2>
@@ -62,4 +62,23 @@ export function CustomerReservationConfirmationPage() {
       </div>
     </section>
   );
+}
+
+function reservationStatusLabel(status: string) {
+  switch (status) {
+    case "PENDING":
+      return "Pendiente";
+    case "CONFIRMED":
+      return "Confirmada";
+    case "SEATED":
+      return "Sentada";
+    case "COMPLETED":
+      return "Completada";
+    case "CANCELLED":
+      return "Cancelada";
+    case "NO_SHOW":
+      return "No-show";
+    default:
+      return status;
+  }
 }

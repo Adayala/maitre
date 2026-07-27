@@ -23,6 +23,7 @@ export function CustomerReservationsPage() {
   const { me, selectedTenantId } = useTenantContext();
   const selectedTenant = me?.tenants.find((tenant) => tenant.id === selectedTenantId) ?? null;
   const branches = selectedTenant?.branches ?? [];
+  const branchNameById = new Map(branches.map((branch) => [branch.id, `${branch.name} (${branch.code})`] as const));
 
   const reservationsQuery = useQuery({
     queryKey: ["customer-reservations", selectedTenantId],
@@ -35,6 +36,24 @@ export function CustomerReservationsPage() {
     },
     enabled: Boolean(accessToken && selectedTenantId),
   });
+
+  const sortedReservations = (reservationsQuery.data ?? [])
+    .slice()
+    .sort((a, b) => Date.parse(a.startAt) - Date.parse(b.startAt));
+  const upcomingReservations = sortedReservations.filter(
+    (reservation) =>
+      Date.parse(reservation.startAt) >= Date.now() &&
+      reservation.status !== "CANCELLED" &&
+      reservation.status !== "NO_SHOW",
+  );
+  const historyReservations = sortedReservations
+    .filter(
+      (reservation) =>
+        Date.parse(reservation.startAt) < Date.now() ||
+        reservation.status === "CANCELLED" ||
+        reservation.status === "NO_SHOW",
+    )
+    .reverse();
 
   return (
     <section className="public-page" aria-labelledby="customer-reservations-heading">
@@ -60,27 +79,105 @@ export function CustomerReservationsPage() {
         </div>
       ) : null}
 
-      <div className="public-card-grid">
-        {reservationsQuery.data
-          ?.slice()
-          .sort((a, b) => Date.parse(b.startAt) - Date.parse(a.startAt))
-          .map((reservation) => (
-            <article key={reservation.id} className="public-card">
-              <h2>{new Date(reservation.startAt).toLocaleString("es-AR")}</h2>
-              <p>Estado: {reservation.status}</p>
-              <p>Comensales: {reservation.partySize}</p>
-              <p>Duración: {reservation.durationMinutes} min</p>
-              <div className="public-button-row">
-                <Link
-                  to={`/public/reservations/${reservation.id}`}
-                  className="public-secondary-cta"
-                >
-                  Ver detalle
-                </Link>
-              </div>
-            </article>
-          ))}
-      </div>
+      {reservationsQuery.data?.length ? (
+        <div className="public-reservations-layout">
+          <article className="public-card">
+            <div className="public-section-head">
+              <h2>Próximas</h2>
+              <span className="public-section-count">{upcomingReservations.length}</span>
+            </div>
+            <div className="public-reservation-list">
+              {upcomingReservations.length === 0 ? (
+                <div className="public-reservation-empty">
+                  <strong>No tenés reservas próximas.</strong>
+                  <span>Cuando generes una nueva reserva futura, la vas a ver primero acá.</span>
+                </div>
+              ) : (
+                upcomingReservations.map((reservation) => (
+                  <article key={reservation.id} className="public-reservation-card public-reservation-card--upcoming">
+                    <div className="public-reservation-main">
+                      <div className="public-reservation-top">
+                        <strong>{new Date(reservation.startAt).toLocaleString("es-AR")}</strong>
+                        <span className={`public-status-pill public-status-pill--${reservation.status.toLowerCase()}`}>
+                          {reservationStatusLabel(reservation.status)}
+                        </span>
+                      </div>
+                      <p>{reservation.partySize} pax · {reservation.durationMinutes} min</p>
+                      <p>Sucursal: {branchNameById.get(reservation.branchId) ?? reservation.branchId.slice(0, 8)}</p>
+                      {reservation.notes ? <p>Notas: {reservation.notes}</p> : null}
+                    </div>
+                    <div className="public-button-row">
+                      <Link
+                        to={`/public/reservations/${reservation.id}`}
+                        className="public-secondary-cta"
+                      >
+                        Ver detalle
+                      </Link>
+                    </div>
+                  </article>
+                ))
+              )}
+            </div>
+          </article>
+
+          <article className="public-card">
+            <div className="public-section-head">
+              <h2>Historial</h2>
+              <span className="public-section-count">{historyReservations.length}</span>
+            </div>
+            <div className="public-reservation-list">
+              {historyReservations.length === 0 ? (
+                <div className="public-reservation-empty">
+                  <strong>Sin historial todavía.</strong>
+                  <span>Tus reservas pasadas o canceladas van a quedar visibles acá.</span>
+                </div>
+              ) : (
+                historyReservations.map((reservation) => (
+                  <article key={reservation.id} className="public-reservation-card public-reservation-card--history">
+                    <div className="public-reservation-main">
+                      <div className="public-reservation-top">
+                        <strong>{new Date(reservation.startAt).toLocaleString("es-AR")}</strong>
+                        <span className={`public-status-pill public-status-pill--${reservation.status.toLowerCase()}`}>
+                          {reservationStatusLabel(reservation.status)}
+                        </span>
+                      </div>
+                      <p>{reservation.partySize} pax · {reservation.durationMinutes} min</p>
+                      <p>Sucursal: {branchNameById.get(reservation.branchId) ?? reservation.branchId.slice(0, 8)}</p>
+                    </div>
+                    <div className="public-button-row">
+                      <Link
+                        to={`/public/reservations/${reservation.id}`}
+                        className="public-secondary-cta"
+                      >
+                        Ver detalle
+                      </Link>
+                    </div>
+                  </article>
+                ))
+              )}
+            </div>
+          </article>
+        </div>
+      ) : null}
     </section>
   );
+}
+
+function reservationStatusLabel(status: string) {
+  switch (status) {
+    case "PENDING":
+      return "Pendiente";
+    case "CONFIRMED":
+      return "Confirmada";
+    case "SEATED":
+      return "Sentada";
+    case "COMPLETED":
+      return "Completada";
+    case "CANCELLED":
+      return "Cancelada";
+    case "NO_SHOW":
+      return "No-show";
+    default:
+      return status;
+  }
 }

@@ -22,7 +22,10 @@ export function CustomerReservationDetailPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { accessToken } = useAuth();
-  const { selectedTenantId } = useTenantContext();
+  const { me, selectedTenantId } = useTenantContext();
+  const selectedTenant = me?.tenants.find((tenant) => tenant.id === selectedTenantId) ?? null;
+  const branches = selectedTenant?.branches ?? [];
+  const branchNameById = new Map(branches.map((branch) => [branch.id, `${branch.name} (${branch.code})`] as const));
 
   const reservationQuery = useQuery({
     queryKey: ["customer-reservation-detail", selectedTenantId, id],
@@ -73,7 +76,7 @@ export function CustomerReservationDetailPage() {
           <div className="public-card-grid">
             <article className="public-card">
               <h2>Estado</h2>
-              <p>{reservation.status}</p>
+              <p>{reservationStatusLabel(reservation.status)}</p>
             </article>
             <article className="public-card">
               <h2>Fecha y hora</h2>
@@ -86,6 +89,10 @@ export function CustomerReservationDetailPage() {
             <article className="public-card">
               <h2>Duración</h2>
               <p>{reservation.durationMinutes} minutos</p>
+            </article>
+            <article className="public-card">
+              <h2>Sucursal</h2>
+              <p>{branchNameById.get(reservation.branchId) ?? reservation.branchId.slice(0, 8)}</p>
             </article>
           </div>
 
@@ -128,4 +135,23 @@ export function CustomerReservationDetailPage() {
       ) : null}
     </section>
   );
+}
+
+function reservationStatusLabel(status: string) {
+  switch (status) {
+    case "PENDING":
+      return "Pendiente";
+    case "CONFIRMED":
+      return "Confirmada";
+    case "SEATED":
+      return "Sentada";
+    case "COMPLETED":
+      return "Completada";
+    case "CANCELLED":
+      return "Cancelada";
+    case "NO_SHOW":
+      return "No-show";
+    default:
+      return status;
+  }
 }
