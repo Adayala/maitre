@@ -1,84 +1,78 @@
-# Maitre Waiter (mozo) app — `@maitre/waiter-app`
+# Maitre — Cashier (caja) app — `@maitre/cashier-app`
 
-A mobile-first frontend for **waiters working the floor**, used on a personal
-phone while walking around the restaurant. It is the second role-specific staff
-app after `apps/kitchen` (the KDS), and consumes the already-built Maitre API —
-it contains no backend logic of its own.
+A frontend for **cashiers running a cash register**, used at a fixed point of
+sale (desktop or counter tablet) to open and close cash sessions, record
+movements, and reconcile the drawer. It is one of several role-specific staff
+apps (kitchen, waiter, cashier, host, customer) and consumes the already-built
+Maitre Cash / Settlement API — it contains no backend logic of its own.
 
 ## What it does
 
-- **Floor map** (home): a touch grid of tables, color-coded by live status
-  (green = libre / blue = ocupada / amber = pagando). Tap a free table to seat a
-  party; tap an occupied/paying table to open its visit.
-- **Seat a visit**: a bottom sheet with a guest-count stepper and optional
-  combining of extra free tables → `POST /v1/visits`.
-- **Visit detail**: the visit's orders (grouped by status) and the check
-  total/balance, with thumb-reachable bottom actions — **Nuevo pedido**, **Pedir
-  la cuenta** (`request-payment`), and **Cerrar mesa** (`request-close` +
-  `close`, gated on a settled check). READY items can be marked **Entregar**
-  (`order:deliver`).
-- **Order-taking**: browse menu categories (chip strip) → products, add to a
-  running DRAFT order with a quantity stepper and optional per-item note, review
-  the cart in a sheet (edit quantities / remove), then **Enviar a cocina**
-  (`submit`), which dispatches the items to the kitchen (KDS) and appends the
-  total to the check.
+- **Login** — dual-mode (same as `apps/web` / `apps/kitchen`): Supabase password
+  sign-in when configured, otherwise a pasted fixture access token. A counter
+  device signs in once and stays signed in for the shift.
+- **Device setup** — a sticky cascade to pick tenant → branch → **cash register**
+  (each auto-resolves when there's only one option), so the device is dedicated
+  to one register.
+- **Cash session** — the core screen bound to the selected register
+  (`GET /v1/cash-registers/:id`, `…/sessions`):
+  - **Apertura** — open a session with a declared opening float
+    (`POST /v1/cash-registers/:id/sessions`).
+  - **Movements** — record drawer movements against the open session
+    (`POST /v1/cash-sessions/:id/movements`) with quick-action buttons and
+    preset amounts: cash sale, refund, deposit, withdrawal, tip in/out, and
+    signed adjustments. A live "movimientos recientes" list (filterable by
+    IN/OUT) and a per-type breakdown keep a running picture of the drawer.
+  - **Cierre** — a two-step close: **begin-close**
+    (`POST /v1/cash-sessions/:id/begin-close`) then **close** with the counted
+    total (`POST /v1/cash-sessions/:id/close`), which produces a reconciliation.
+- **Reconciliation** — for a closed/reconciled session, pull the reconciliation
+  record and its expected summary (`/v1/cash-reconciliations/:id`, `…/summary`),
+  enter the physical **counted amounts** (`…/record-counts`) to compute the
+  variance against expected, then **submit** (`…/submit`) to finalize.
+- **Daily settlement** — a branch-level end-of-day roll-up for a chosen business
+  date (`GET /v1/branches/:id/daily-settlement?businessDate=…&currency=…`).
+- **Session history** — the day's sessions with a status filter (OPEN / CLOSING
+  / CLOSED / RECONCILED) for at-a-glance auditing.
 
 ## Design
 
-Dark-first (respects `prefers-color-scheme`), tuned for a 390×844 phone: bold
-color-coded status, 48px+ tap targets, and primary actions anchored to a bottom
-dock so they are reachable one-handed. Visual language mirrors `apps/kitchen`,
-re-flowed for a narrow viewport.
+Follows the same visual language as the other role apps, respecting
+`prefers-color-scheme`. Tuned for a counter workstation: quick-movement buttons,
+preset amounts, and large numeric readouts so the current drawer balance and
+variance are legible at a glance. Currency defaults to `ARS`
+(`America/Argentina/Buenos_Aires`).
 
-## Running
+## Run
 
 ```bash
-npm install                 # from the repo root (workspaces glob picks this up)
-npm run dev --workspace apps/waiter
+# from the repo root — install the workspace (apps/* is auto-globbed)
+npm install
+
+# start the API with the fast in-memory + fixture-token backend
+PERSISTENCE_DRIVER=memory AUTH_DRIVER=fixture npm run dev --workspace apps/api
+
+# start this app (dev server on :5174)
+npm run dev --workspace apps/cashier
 ```
 
-Dev server runs on **http://localhost:5176** (web=5173, kitchen=5175).
+Copy `.env.example` to `.env` and set `VITE_API_URL` to the API origin. Leave the
+Supabase vars empty to use the fixture-token login (the demo backend token is
+`demo-token`).
 
-Point it at the API and choose an auth mode via `.env` (see `.env.example`):
-
-```
-VITE_API_URL=http://localhost:3001
-VITE_SUPABASE_URL=            # empty → fixture-token login (paste e.g. "demo-token")
-VITE_SUPABASE_PUBLISHABLE_KEY=
-```
-
-With the API booted as `PERSISTENCE_DRIVER=memory AUTH_DRIVER=fixture`, log in
-with the demo fixture token `demo-token`.
+Build / type-check: `npm run build --workspace apps/cashier`.
 
 ## Auth & context
 
-Reuses the dual-mode auth pattern from `apps/web` / `apps/kitchen`: a real
-Supabase session when configured, otherwise a pasted fixture bearer token. After
-login, a sticky tenant + branch selection (`/v1/me/context`) scopes the app;
-both auto-resolve when there is only one option.
+Reuses the dual-mode auth pattern from `apps/web`: a real Supabase session when
+configured, otherwise a pasted fixture bearer token. After login, a sticky
+tenant + branch + register selection scopes the app; each level auto-resolves
+when there is only one option.
 
-## Permissions & known gaps
+## Deferred / future enhancements
 
-The app targets the `role_waiter` grant set. Some floor conveniences read data
-that role does **not** have by default:
-
-- **Full table grid** needs `salon:read` + `table:read`; a plain waiter token
-  lacks them, so the app falls back to the **table-status projection**, which
-  only lists tables that currently have visit activity. With an
-  admin/manager/owner token (e.g. the `demo-token`) the complete salon grid
-  renders.
-- **Menu browsing** resolves the brand via `GET /v1/branches/:id` (`branch:read`).
-  A waiter token without it surfaces a clear error on the order screen. Resolving
-  the brand from `/v1/me/context` instead would remove this dependency — a
-  suggested backend follow-up.
-
-## Deferred (not built)
-
-- **No modifier UI** — the Catalog `Product` domain has no modifier/option
-  schema, so only per-item notes are supported.
-- **No payment collection** — waiters can *request* payment
-  (`check:request-payment`); actually settling/capturing is the Cashier app's job
-  (`check:settle`, `payment:*` are not granted here).
-- **Polling only** — live-ness is short-interval React Query refetch, not push /
-  realtime.
-- **No offline support.**
+- **Polling only** — live-ness is short-interval React Query refetch (register
+  15s, sessions/movements 5s), not push / realtime.
+- **No offline support** — every action refetches from the API.
+- **No card / non-cash capture** — this app tracks the physical cash drawer; card
+  and other tender settlement live elsewhere in the settlement pipeline.
