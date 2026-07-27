@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../app/auth-context.js";
@@ -44,6 +44,7 @@ export function CustomerReservationPage() {
   const resolvedTenantId = selectedTenantId ?? (availableTenants.length === 1 ? availableTenants[0]!.id : "");
   const selectedTenant = availableTenants.find((tenant) => tenant.id === resolvedTenantId) ?? null;
   const availableBranches = selectedTenant?.branches ?? [];
+  const selectedBranch = availableBranches.find((branch) => branch.id === selectedBranchId) ?? null;
   const canCheckAvailability =
     Boolean(accessToken) &&
     Boolean(resolvedTenantId) &&
@@ -52,7 +53,7 @@ export function CustomerReservationPage() {
     Number(partySize) > 0 &&
     Number(durationMinutes) > 0;
 
-  useMemo(() => {
+  useEffect(() => {
     if (!selectedBranchId && availableBranches.length === 1) {
       setSelectedBranchId(availableBranches[0]!.id);
     }
@@ -124,10 +125,31 @@ export function CustomerReservationPage() {
     await createReservationMutation.mutateAsync();
   }
 
+  const reservePriority = getReservationPriority({
+    accessToken: Boolean(accessToken),
+    resolvedTenantId,
+    selectedBranchId,
+    canCheckAvailability,
+    availability: availabilityQuery.data?.data.available ?? null,
+  });
+
   return (
     <section className="public-page" aria-labelledby="customer-reservation-heading">
       <h1 id="customer-reservation-heading">Nueva reserva</h1>
       <p>Ya con sesión iniciada, podés crear una reserva real sobre la API actual.</p>
+
+      <article className="public-card public-info-card">
+        <strong>{reservePriority.title}</strong>
+        <p>{reservePriority.message}</p>
+        <div className="public-detail-list">
+          <span>
+            <strong>Tenant:</strong> {selectedTenant?.name ?? "Sin elegir"}
+          </span>
+          <span>
+            <strong>Sucursal:</strong> {selectedBranch ? `${selectedBranch.name} (${selectedBranch.code})` : "Sin elegir"}
+          </span>
+        </div>
+      </article>
 
       <form className="public-form" onSubmit={handleSubmit}>
         {availableTenants.length > 1 ? (
@@ -223,6 +245,9 @@ export function CustomerReservationPage() {
                 Estado:{" "}
                 <strong>{availabilityQuery.data.data.available ? "Disponible" : "Sin disponibilidad"}</strong>
               </p>
+              <p>
+                Sucursal: <strong>{selectedBranch ? `${selectedBranch.name} (${selectedBranch.code})` : "—"}</strong>
+              </p>
               <p>Timezone: {availabilityQuery.data.data.timezone}</p>
               <p>Frescura: {availabilityQuery.data.data.freshness}</p>
               <p>
@@ -258,4 +283,65 @@ export function CustomerReservationPage() {
       </form>
     </section>
   );
+}
+
+function getReservationPriority({
+  accessToken,
+  resolvedTenantId,
+  selectedBranchId,
+  canCheckAvailability,
+  availability,
+}: {
+  accessToken: boolean;
+  resolvedTenantId: string;
+  selectedBranchId: string;
+  canCheckAvailability: boolean;
+  availability: boolean | null;
+}) {
+  if (!accessToken) {
+    return {
+      title: "Primero iniciá sesión",
+      message: "La reserva real necesita una sesión activa para guardar contexto y seguimiento.",
+    };
+  }
+
+  if (!resolvedTenantId) {
+    return {
+      title: "Elegí un tenant",
+      message: "Antes de reservar, necesitás definir para qué tenant querés operar.",
+    };
+  }
+
+  if (!selectedBranchId) {
+    return {
+      title: "Elegí una sucursal",
+      message: "Definí la sede antes de consultar disponibilidad y confirmar la reserva.",
+    };
+  }
+
+  if (!canCheckAvailability) {
+    return {
+      title: "Completá los datos base",
+      message: "Faltan personas, horario o duración para consultar disponibilidad real.",
+    };
+  }
+
+  if (availability === false) {
+    return {
+      title: "Ese horario no está disponible",
+      message: "Probá con otro horario, otra duración o incluso otra sucursal.",
+    };
+  }
+
+  if (availability === true) {
+    return {
+      title: "Todo listo para reservar",
+      message: "La disponibilidad luce favorable; ya podés confirmar la reserva.",
+    };
+  }
+
+  return {
+    title: "Consultá disponibilidad",
+    message: "Cuando completes los datos, esta pantalla te dirá si conviene avanzar.",
+  };
 }
