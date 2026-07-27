@@ -41,16 +41,21 @@ Cada nivel puede sobrescribir solamente propiedades autorizadas.
 
 ## Suscripción
 
-La suscripción agrupa ítems contratados:
+La suscripción agrupa ítems contratados. Cada ítem es de tipo **servicio** (on/off, habilita una capacidad) o de tipo **cantidad** (unidades contratadas de un recurso, con precio por unidad y franjas/descuentos por volumen opcionales):
 
 ```text
 Subscription
 ├── SubscriptionItem: Core
-├── SubscriptionItem: 3 sucursales
-├── SubscriptionItem: Floor para Palermo y Belgrano
-├── SubscriptionItem: Reservations para Palermo
-└── SubscriptionItem: ARCA para Entidad Fiscal A
+├── SubscriptionItem: 3 sucursales (cantidad)
+├── SubscriptionItem: Floor para Palermo y Belgrano (servicio)
+├── SubscriptionItem: 12 plazas para Palermo (cantidad)
+├── SubscriptionItem: 4 cajeros concurrentes para Palermo (cantidad)
+├── SubscriptionItem: 8 mozos para Palermo (cantidad)
+├── SubscriptionItem: Reservations para Palermo (servicio)
+└── SubscriptionItem: ARCA para Entidad Fiscal A (servicio)
 ```
+
+Todo lo contratable —servicios y recursos por cantidad— se da de alta y de baja de forma independiente, en cualquier momento, sin afectar al resto de la suscripción.
 
 ## Alcances
 
@@ -72,6 +77,9 @@ FLOOR.ACCESS = true
 FLOOR.BRANCHES = [PALERMO, BELGRANO]
 BRANCHES.MAX = 3
 USERS.MAX = 25
+SEATS.MAX[PALERMO] = 12
+CASHIERS.MAX[PALERMO] = 4
+WAITERS.MAX[PALERMO] = 8
 ARCA.FISCAL_ENTITIES.MAX = 1
 REPUTATION.CONNECTORS.GOOGLE = true
 ```
@@ -128,18 +136,20 @@ Los comprobantes, pagos, auditoría y datos legalmente necesarios no se eliminan
 
 ## Medición de uso
 
-Posibles métricas:
+Toda unidad medible es un recurso contratable por cantidad, con alcance de sucursal salvo indicación contraria:
 
 - Sucursales activas.
-- Usuarios o dispositivos concurrentes.
+- Plazas (capacidad de comensales por sucursal).
+- Mozos (usuarios con rol de mozo activos por sucursal).
+- Cajeros (usuarios con rol de cajero, o cajas concurrentes, según el plan).
+- Usuarios o dispositivos concurrentes (otros roles).
 - Puntos de venta fiscales.
-- Cajas concurrentes.
 - Reservas procesadas.
 - Mensajes enviados.
 - Reseñas sincronizadas.
 - Pagos procesados.
 
-Las mesas y plazas no serán inicialmente unidades principales de facturación.
+Cada recurso por cantidad tiene precio unitario propio y puede tener franjas o descuentos por volumen. El cliente ajusta la cantidad contratada de cualquier recurso de forma independiente del resto de servicios activos.
 
 ## Autogestión
 
