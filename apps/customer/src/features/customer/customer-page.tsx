@@ -223,6 +223,12 @@ export function CustomerPage() {
     availability: availabilityQuery.data?.data.available ?? null,
     nextReservation,
   });
+  const customerNextAction = getCustomerNextAction({
+    accessToken: Boolean(accessToken),
+    selectedTenantId,
+    selectedBranch,
+    nextReservation,
+  });
 
   async function handlePasswordLogin(event: FormEvent) {
     event.preventDefault();
@@ -409,6 +415,23 @@ export function CustomerPage() {
                 <button type="button" className="btn btn--primary" onClick={() => setTab("menu")}>Ver menú</button>
                 <button type="button" className="btn btn--ghost" onClick={() => setTab("branches")}>Ver sucursales</button>
                 <button type="button" className="btn btn--ghost" onClick={() => setTab("reserve")}>Reservar</button>
+              </div>
+            </article>
+            <article className="cashier-card">
+              <div className={`cashier-banner ${customerNextAction.tone === "success" ? "cashier-banner--success" : "cashier-banner--info"}`}>
+                <span>{customerNextAction.title}</span>
+              </div>
+              <h2 className="owner-card-title">Siguiente paso recomendado</h2>
+              <p className="owner-card-copy">{customerNextAction.detail}</p>
+              <div className="cashier-quick-actions">
+                <button type="button" className="btn btn--primary" onClick={() => setTab(customerNextAction.nextTab)}>
+                  {customerNextAction.ctaLabel}
+                </button>
+                {accessToken && selectedBranchId ? (
+                  <button type="button" className="btn btn--ghost" onClick={() => setTab("mine")}>
+                    Ver mis reservas
+                  </button>
+                ) : null}
               </div>
             </article>
             <article className="cashier-card">
@@ -679,14 +702,59 @@ export function CustomerPage() {
 
         {tab === "mine" ? (
           <section className="customer-grid">
+            {accessToken ? (
+              <article className="cashier-kpi-strip">
+                <div className="cashier-kpi-card">
+                  <span>Acceso</span>
+                  <strong>{email ?? "Sesión activa"}</strong>
+                </div>
+                <div className="cashier-kpi-card">
+                  <span>Sucursal elegida</span>
+                  <strong>{selectedBranch?.name ?? "Sin definir"}</strong>
+                </div>
+                <div className="cashier-kpi-card">
+                  <span>Próximas</span>
+                  <strong>{upcomingReservations.length}</strong>
+                </div>
+                <div className="cashier-kpi-card">
+                  <span>Historial</span>
+                  <strong>{pastReservations.length}</strong>
+                </div>
+              </article>
+            ) : null}
             {accessToken && nextReservation ? (
               <article className="cashier-card cashier-card--hero">
                 <h2 className="owner-card-title">Próxima reserva</h2>
                 <p className="owner-card-copy">
                   {new Date(nextReservation.startAt).toLocaleString("es-AR")} · {nextReservation.partySize} pax · {nextReservation.durationMinutes} min
                 </p>
+                <p className="owner-card-copy">
+                  Sucursal: {branchNameById.get(nextReservation.branchId) ?? nextReservation.branchId.slice(0, 8)}
+                </p>
                 <div className="cashier-banner cashier-banner--info">
                   <span>Estado actual: {reservationStatusLabel(nextReservation.status)}</span>
+                </div>
+                <div className="cashier-quick-actions">
+                  <button type="button" className="btn btn--ghost" onClick={() => setTab("branches")}>
+                    Ver sucursales
+                  </button>
+                  <button type="button" className="btn btn--primary" onClick={() => setTab("reserve")}>
+                    Crear otra reserva
+                  </button>
+                </div>
+              </article>
+            ) : null}
+            {accessToken && !nextReservation ? (
+              <article className="cashier-card cashier-card--hero">
+                <h2 className="owner-card-title">Todavía no tenés una próxima reserva</h2>
+                <p className="owner-card-copy">{customerNextAction.detail}</p>
+                <div className="cashier-quick-actions">
+                  <button type="button" className="btn btn--primary" onClick={() => setTab(customerNextAction.nextTab)}>
+                    {customerNextAction.ctaLabel}
+                  </button>
+                  <button type="button" className="btn btn--ghost" onClick={() => setTab("menu")}>
+                    Seguir explorando
+                  </button>
                 </div>
               </article>
             ) : null}
@@ -897,6 +965,66 @@ function getCustomerReservePriority({
   return {
     tone: "info" as const,
     message: "Completá los datos clave para pasar de discovery a reserva confirmable.",
+  };
+}
+
+function getCustomerNextAction({
+  accessToken,
+  selectedTenantId,
+  selectedBranch,
+  nextReservation,
+}: {
+  accessToken: boolean;
+  selectedTenantId: string | null | undefined;
+  selectedBranch: { name: string } | null;
+  nextReservation: ReservationListItem | null;
+}) {
+  if (!accessToken) {
+    return {
+      tone: "info" as const,
+      title: "Explorá sin login y reservá cuando quieras",
+      detail: "Podés ver menú y sucursales sin cuenta. Cuando decidas reservar o seguir tu historial, iniciá sesión.",
+      ctaLabel: "Ir a acceso",
+      nextTab: "mine" as CustomerTab,
+    };
+  }
+
+  if (nextReservation) {
+    return {
+      tone: "success" as const,
+      title: "Ya tenés una próxima reserva",
+      detail: "Tu próxima visita ya está cargada. Desde Mis reservas podés revisar estado, sucursal y, si hace falta, crear otra.",
+      ctaLabel: "Ver mis reservas",
+      nextTab: "mine" as CustomerTab,
+    };
+  }
+
+  if (!selectedTenantId) {
+    return {
+      tone: "info" as const,
+      title: "Elegí primero el restaurante",
+      detail: "Seleccioná el tenant para habilitar las sucursales disponibles y pasar al flujo real de reserva.",
+      ctaLabel: "Ver sucursales",
+      nextTab: "branches" as CustomerTab,
+    };
+  }
+
+  if (!selectedBranch) {
+    return {
+      tone: "info" as const,
+      title: "Definí una sucursal",
+      detail: "Con una sucursal elegida ya podemos consultar disponibilidad real y encaminar la reserva.",
+      ctaLabel: "Elegir sucursal",
+      nextTab: "branches" as CustomerTab,
+    };
+  }
+
+  return {
+    tone: "success" as const,
+    title: "Ya podés avanzar con la reserva",
+    detail: `Tenés ${selectedBranch.name} elegida. El siguiente paso es cargar horario, cantidad de comensales y confirmar.`,
+    ctaLabel: "Ir a reservar",
+    nextTab: "reserve" as CustomerTab,
   };
 }
 
