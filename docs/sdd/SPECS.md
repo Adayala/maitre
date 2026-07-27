@@ -6,6 +6,8 @@ Formato: **SPEC-NNN | Título | Tipo | Dominio | Fase | Prioridad | Estado | Rea
 
 > Nota: este catálogo fue regenerado leyendo directamente el `README.md` de cada carpeta en `docs/sdd/spec-*`, ya que la numeración y contenido habían divergido de versiones anteriores de este archivo.
 
+> Estado operativo relevado el **27 de julio de 2026**: el runtime local contra Supabase ya quedó validado para organization, floor, reservations, ordering, kitchen y cash. El frente fiscal ya tiene adapters, rutas, migration aplicada (`supabase/migrations/20260727143000_fiscal_domain.sql`) y validación live de create/validate/issue/QR con una `FACTURA_A` técnica. La emisión sigue usando ARCA simulado, por lo que el flujo es técnicamente operativo pero no fiscal/legalmente productivo todavía.
+
 ---
 
 ## Organization

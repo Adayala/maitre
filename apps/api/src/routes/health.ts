@@ -1,6 +1,8 @@
 import type { FastifyInstance } from "fastify";
 import type { Container } from "../composition/container.js";
 
+const READINESS_PROBE_TENANT_ID = "00000000-0000-0000-0000-000000000000";
+
 // SPEC-213 §3 — /health/live and /health/ready.
 export async function registerHealthRoutes(
   app: FastifyInstance,
@@ -14,7 +16,7 @@ export async function registerHealthRoutes(
 
     try {
       await Promise.race([
-        container.tenants.findById("readiness-probe"),
+        container.tenants.findById(READINESS_PROBE_TENANT_ID),
         new Promise((_, reject) =>
           setTimeout(() => reject(new Error("timeout")), timeoutMs),
         ),

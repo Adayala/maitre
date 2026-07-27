@@ -1,5 +1,5 @@
-// Client-side mirrors of the API shapes the Waiter app consumes. Only the
-// fields the UI reads are declared. Kept in sync by hand with the domain
+// Client-side mirrors of the API shapes the Host / Maître app consumes. Only
+// the fields the UI reads are declared. Kept in sync by hand with the domain
 // modules (@maitre/floor, @maitre/ordering, @maitre/catalog, @maitre/organization).
 
 export interface ApiData<T> {

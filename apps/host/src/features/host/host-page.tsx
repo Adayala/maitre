@@ -287,7 +287,7 @@ export function HostPage() {
   });
 
   return (
-    <main className="owner-app">
+    <main className="host-app">
       <AppHeader
         title="Host / Maître"
         subtitle={selectedBranch ? `${selectedBranch.name} · reservas y lista de espera` : "Operación de salón"}
@@ -303,8 +303,8 @@ export function HostPage() {
           <div className="cashier-hero-row">
             <div>
               <div className="cashier-eyebrow">Frente de salón</div>
-              <h2 className="owner-hero-title">{selectedBranch?.name ?? "Sucursal"}</h2>
-              <p className="owner-hero-copy">Gestioná confirmaciones, lista de espera, disponibilidad y seating.</p>
+              <h2 className="host-hero-title">{selectedBranch?.name ?? "Sucursal"}</h2>
+              <p className="host-hero-copy">Gestioná confirmaciones, lista de espera, disponibilidad y seating.</p>
             </div>
             <div className="cashier-balance-block">
               <span className="cashier-balance-label">Mesas libres</span>
@@ -336,8 +336,8 @@ export function HostPage() {
           <article className="cashier-card">
             <div className="cashier-card-head">
               <div>
-                <h2 className="owner-card-title">Próximas llegadas</h2>
-                <p className="owner-card-copy">Lo que llega dentro de los próximos 90 minutos.</p>
+                <h2 className="host-card-title">Próximas llegadas</h2>
+                <p className="host-card-copy">Lo que llega dentro de los próximos 90 minutos.</p>
               </div>
               <span className="host-count-pill">{arrivingSoonReservations.length}</span>
             </div>
@@ -385,8 +385,8 @@ export function HostPage() {
           <article className="cashier-card">
             <div className="cashier-card-head">
               <div>
-                <h2 className="owner-card-title">Acciones rápidas</h2>
-                <p className="owner-card-copy">Atajos para entrar directo a la cola que importa ahora.</p>
+                <h2 className="host-card-title">Acciones rápidas</h2>
+                <p className="host-card-copy">Atajos para entrar directo a la cola que importa ahora.</p>
               </div>
             </div>
             <div className="host-quick-grid">
@@ -448,8 +448,8 @@ export function HostPage() {
         <section className="cashier-card">
           <div className="cashier-card-head">
             <div>
-              <h2 className="owner-card-title">Snapshot de mesas</h2>
-              <p className="owner-card-copy">Estado live del salón para decidir seating rápido.</p>
+              <h2 className="host-card-title">Snapshot de mesas</h2>
+              <p className="host-card-copy">Estado live del salón para decidir seating rápido.</p>
             </div>
           </div>
           <StateView
@@ -495,12 +495,12 @@ export function HostPage() {
         </div>
 
         {tab === "reservations" ? (
-          <div className="owner-grid">
+          <div className="host-grid">
             <section className="cashier-card">
               <div className="cashier-card-head">
                 <div>
-                  <h2 className="owner-card-title">Nueva reserva</h2>
-                  <p className="owner-card-copy">Alta rápida desde recepción.</p>
+                  <h2 className="host-card-title">Nueva reserva</h2>
+                  <p className="host-card-copy">Alta rápida desde recepción.</p>
                 </div>
               </div>
               <form
@@ -540,8 +540,8 @@ export function HostPage() {
             <section className="cashier-card">
               <div className="cashier-card-head">
                 <div>
-                  <h2 className="owner-card-title">Reservas activas</h2>
-                  <p className="owner-card-copy">Confirmá, marcá no-show o sentá la mesa.</p>
+                  <h2 className="host-card-title">Reservas activas</h2>
+                  <p className="host-card-copy">Confirmá, marcá no-show o sentá la mesa.</p>
                 </div>
               </div>
               <div className="cashier-segmented">
@@ -663,12 +663,12 @@ export function HostPage() {
         ) : null}
 
         {tab === "waitlist" ? (
-          <div className="owner-grid">
+          <div className="host-grid">
             <section className="cashier-card">
               <div className="cashier-card-head">
                 <div>
-                  <h2 className="owner-card-title">Nueva espera</h2>
-                  <p className="owner-card-copy">Alta rápida para recepción walk-in.</p>
+                  <h2 className="host-card-title">Nueva espera</h2>
+                  <p className="host-card-copy">Alta rápida para recepción walk-in.</p>
                 </div>
               </div>
               <form
@@ -704,8 +704,8 @@ export function HostPage() {
             <section className="cashier-card">
               <div className="cashier-card-head">
                 <div>
-                  <h2 className="owner-card-title">Lista de espera</h2>
-                  <p className="owner-card-copy">Notificá, priorizá o sentá con una mesa libre.</p>
+                  <h2 className="host-card-title">Lista de espera</h2>
+                  <p className="host-card-copy">Notificá, priorizá o sentá con una mesa libre.</p>
                 </div>
               </div>
               <section className="host-waitlist-summary" aria-label="Resumen de waitlist">
@@ -857,12 +857,12 @@ export function HostPage() {
         ) : null}
 
         {tab === "availability" ? (
-          <div className="owner-grid">
+          <div className="host-grid">
             <section className="cashier-card">
               <div className="cashier-card-head">
                 <div>
-                  <h2 className="owner-card-title">Chequeo de disponibilidad</h2>
-                  <p className="owner-card-copy">Consulta live para una fecha y cantidad de cubiertos.</p>
+                  <h2 className="host-card-title">Chequeo de disponibilidad</h2>
+                  <p className="host-card-copy">Consulta live para una fecha y cantidad de cubiertos.</p>
                 </div>
               </div>
               <div className="cashier-form">
@@ -884,8 +884,8 @@ export function HostPage() {
             <section className="cashier-card">
               <div className="cashier-card-head">
                 <div>
-                  <h2 className="owner-card-title">Resultado</h2>
-                  <p className="owner-card-copy">Mesas libres según reservas y ocupación actual.</p>
+                  <h2 className="host-card-title">Resultado</h2>
+                  <p className="host-card-copy">Mesas libres según reservas y ocupación actual.</p>
                 </div>
               </div>
               <StateView

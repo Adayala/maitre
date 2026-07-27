@@ -1,9 +1,8 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
 
-// The waiter app is multi-screen (unlike the single-screen KDS) but the flow is
-// a simple linear drill-down: floor → visit → order. Rather than pull in a
-// router, we model navigation as a small screen stack with push/pop, which maps
-// naturally to a mobile back button and keeps the dependency surface minimal.
+// Legacy lightweight screen stack kept from the earlier touch-app shell. This
+// host app currently renders a single operational surface, but retaining the
+// tiny push/pop navigator keeps future drill-down flows cheap if they return.
 export type Screen =
   | { name: "floor" }
   | { name: "visit"; visitId: string }

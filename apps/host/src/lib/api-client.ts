@@ -1,8 +1,8 @@
 const API_URL = (import.meta.env["VITE_API_URL"] as string | undefined) ?? "http://localhost:3001";
 
-// Shared transport for the Waiter app. Copied from apps/web / apps/kitchen
-// (SPEC-215 §4): the client only expresses a requested tenant selection via
-// X-Tenant-Id; the server remains the sole authority on authorization.
+// Shared transport for the Host / Maître app. Per SPEC-215 §4 the client only
+// expresses a requested tenant selection via X-Tenant-Id; the server remains
+// the sole authority on authorization.
 export class ApiError extends Error {
   constructor(
     public readonly status: number,

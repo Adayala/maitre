@@ -1,9 +1,8 @@
 /* ============================================================================
-   Maitre Waiter (mozo) — mobile-first floor app.
-   Dark-first (dim dining rooms, phone battery/glare) with a light override that
-   respects prefers-color-scheme. Big touch targets (48px+), bottom-anchored
-   primary actions reachable one-handed, bold color-coded table/check status.
-   Design language mirrors apps/kitchen but re-flowed for a narrow phone.
+   Maitre Host / Maître — touch-first reception app.
+   Dark-first with a light override that respects prefers-color-scheme. Large
+   touch targets, quick triage cards, status chips and salon visibility tuned
+   for reception / host-stand work on tablet or phone.
    ========================================================================== */
 
 :root {
@@ -261,21 +260,27 @@ body {
   gap: 0.5rem;
 }
 
+.host-app,
 .owner-app {
   min-height: 100%;
 }
 
+.host-grid,
 .owner-grid {
   display: grid;
   gap: 1rem;
 }
 
+.host-hero-title,
 .owner-hero-title,
+.host-card-title,
 .owner-card-title {
   margin: 0;
 }
 
+.host-hero-copy,
 .owner-hero-copy,
+.host-card-copy,
 .owner-card-copy {
   margin: 0.35rem 0 0;
   color: var(--muted);
@@ -743,6 +748,7 @@ body {
     grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
   }
 
+  .host-grid,
   .owner-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
