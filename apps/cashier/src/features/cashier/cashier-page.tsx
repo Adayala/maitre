@@ -313,6 +313,25 @@ export function CashierPage() {
     sessionHistory.find((session) => session.id === selectedHistorySessionId) ?? closedSession ?? null;
   const selectedSettlementSession =
     dailySettlementQuery.data?.data.sessions.find((session) => session.cashSessionId === selectedHistorySession?.id) ?? null;
+  const prioritizedSettlementSessions = useMemo(
+    () =>
+      (dailySettlementQuery.data?.data.sessions ?? [])
+        .slice()
+        .sort((a, b) => {
+          const score = (session: DailySettlement["sessions"][number]) => {
+            const hasDifference = (session.differenceMinorUnits ?? 0) !== 0;
+            if (hasDifference) return 0;
+            if (session.status === "CLOSING") return 1;
+            if (session.status === "OPEN") return 2;
+            if (session.status === "CLOSED") return 3;
+            return 4;
+          };
+          const scoreDiff = score(a) - score(b);
+          if (scoreDiff !== 0) return scoreDiff;
+          return (b.differenceMinorUnits ?? 0) - (a.differenceMinorUnits ?? 0);
+        }),
+    [dailySettlementQuery.data],
+  );
   const reconciliationDifference = reconciliationSummaryQuery.data?.data.differenceMinorUnits ?? null;
   const differenceTone =
     reconciliationDifference == null
@@ -737,6 +756,7 @@ export function CashierPage() {
               >
                 {dailySettlementQuery.data ? (
                   <>
+                    <p className="cashier-list-hint">Primero se muestran las sesiones del día con diferencia o todavía en cierre.</p>
                     <div className="cashier-reconciliation-grid">
                       <div className="cashier-kpi-card">
                         <span>Sesiones</span>
@@ -787,7 +807,7 @@ export function CashierPage() {
                         {Object.entries(dailySettlementQuery.data.data.movementsByType).map(([type, amount]) => (
                           <li key={type}>
                             <div className="cashier-movement-main">
-                              <strong>{type}</strong>
+                              <strong>{MOVEMENT_LABELS[type as CashMovementType] ?? type}</strong>
                             </div>
                             <span>{formatMoney(amount, dailySettlementQuery.data.data.currency)}</span>
                           </li>
@@ -798,11 +818,14 @@ export function CashierPage() {
                     <div className="cashier-settlement-block">
                       <h3>Sesiones del día</h3>
                       <ul className="cashier-movement-list">
-                        {dailySettlementQuery.data.data.sessions.map((session) => (
-                          <li key={session.cashSessionId}>
+                        {prioritizedSettlementSessions.map((session) => (
+                          <li
+                            key={session.cashSessionId}
+                            className={session.differenceMinorUnits ? "cashier-session-row cashier-session-row--difference" : "cashier-session-row"}
+                          >
                             <div className="cashier-movement-main">
                               <strong>{session.cashRegisterId.slice(0, 8)}</strong>
-                              <span>{session.status}</span>
+                              <span>{SESSION_STATUS_LABELS[session.status]}</span>
                             </div>
                             <span>
                               Esperado: {formatMoney(session.expectedMinorUnits, dailySettlementQuery.data.data.currency)}
@@ -810,7 +833,7 @@ export function CashierPage() {
                             <span>
                               Contado: {formatMoney(session.countedMinorUnits ?? 0, dailySettlementQuery.data.data.currency)}
                             </span>
-                            <span className="muted">
+                            <span className={`muted ${session.differenceMinorUnits ? "cashier-session-difference" : ""}`}>
                               Diferencia: {formatMoney(session.differenceMinorUnits ?? 0, dailySettlementQuery.data.data.currency)}
                             </span>
                           </li>
