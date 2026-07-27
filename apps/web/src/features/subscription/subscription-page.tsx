@@ -59,6 +59,31 @@ export function SubscriptionPage() {
     { label: "Monitoreo de límites visible", done: entitlements.length === quotas.length && entitlements.length > 0 },
   ];
   const summary = subscription ? getSubscriptionSummary(subscription.status, alertResources.length, nearLimitResources.length) : null;
+  const pendingChecklist = readinessChecklist.filter((step) => !step.done).map((step) => step.label);
+  const nextStep = subscription
+    ? getSubscriptionNextStep({
+        status: subscription.status,
+        alertCount: alertResources.length,
+        nearLimitCount: nearLimitResources.length,
+      })
+    : null;
+  const quickLinks = [
+    {
+      eyebrow: "Gobierno",
+      label: "Overview / Settings",
+      detail: "Cruzar el estado comercial con el contexto real del tenant y sus configuraciones activas.",
+    },
+    {
+      eyebrow: "Estructura",
+      label: "Branches / Users",
+      detail: "Validar si el crecimiento del tenant explica la presión sobre límites y capacidades.",
+    },
+    {
+      eyebrow: "Apps",
+      label: "Profiles",
+      detail: "Comparar qué superficies y perfiles van a consumir los servicios contratados.",
+    },
+  ];
 
   return (
     <section aria-labelledby="subscription-heading" className="overview-page">
@@ -112,7 +137,25 @@ export function SubscriptionPage() {
                   </div>
                 ))}
               </div>
+              <p>
+                {pendingChecklist.length > 0
+                  ? `Todavía conviene revisar: ${pendingChecklist.join(", ")}.`
+                  : "La lectura comercial base está completa y no muestra bloqueos inmediatos."}
+              </p>
             </article>
+
+            {nextStep ? (
+              <article className="overview-card">
+                <h2>Siguiente paso recomendado</h2>
+                <div className="overview-link-grid">
+                  <div className="overview-link-card overview-link-card--primary">
+                    <span>{nextStep.eyebrow}</span>
+                    <strong>{nextStep.label}</strong>
+                    <p>{nextStep.detail}</p>
+                  </div>
+                </div>
+              </article>
+            ) : null}
 
             <section className="profile-module-grid" aria-label="Límites por recurso">
               {entitlements.map((entitlement) => {
@@ -135,6 +178,19 @@ export function SubscriptionPage() {
                 );
               })}
             </section>
+
+            <article className="overview-card">
+              <h2>Atajos relacionados</h2>
+              <div className="overview-link-grid">
+                {quickLinks.map((link) => (
+                  <div key={link.label} className="overview-link-card">
+                    <span>{link.eyebrow}</span>
+                    <strong>{link.label}</strong>
+                    <p>{link.detail}</p>
+                  </div>
+                ))}
+              </div>
+            </article>
 
             <article className="overview-card">
               <h2>Detalle tabular</h2>
@@ -204,6 +260,46 @@ function getSubscriptionSummary(status: string, alertCount: number, nearLimitCou
     tone: "success" as const,
     title: "Suscripción sana y con margen operativo",
     message: "El plan está activo y los límites visibles no muestran presión inmediata sobre la operación.",
+  };
+}
+
+function getSubscriptionNextStep({
+  status,
+  alertCount,
+  nearLimitCount,
+}: {
+  status: string;
+  alertCount: number;
+  nearLimitCount: number;
+}) {
+  if (status !== "ACTIVE") {
+    return {
+      eyebrow: "Billing",
+      label: "Revisar estado comercial",
+      detail: "Antes de seguir expandiendo operación conviene normalizar el estado de la suscripción del tenant.",
+    };
+  }
+
+  if (alertCount > 0) {
+    return {
+      eyebrow: "Capacidad",
+      label: "Resolver recursos críticos",
+      detail: "Hay recursos al límite; revisá consumo real o ampliación antes de que afecte operación o setup.",
+    };
+  }
+
+  if (nearLimitCount > 0) {
+    return {
+      eyebrow: "Crecimiento",
+      label: "Monitorear recursos en expansión",
+      detail: "Todavía hay margen, pero ya conviene revisar cómo está creciendo el tenant contra sus límites.",
+    };
+  }
+
+  return {
+    eyebrow: "Siguiente control",
+    label: "Cruzar plan con uso operativo",
+    detail: "Con la suscripción sana, el próximo paso útil es validar que capacidades y perfiles sigan alineados con el uso real.",
   };
 }
 
