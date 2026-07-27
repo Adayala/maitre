@@ -75,6 +75,13 @@ No es TDD (test-driven). **No escribimos tests primero; escribimos especificacio
 | [13-decisions-and-open-questions.md](13-decisions-and-open-questions.md) | Qué se decidió, qué aún es abierto | Todos |
 | [14-references.md](14-references.md) | Links a normativa, APIs, benchmarks | Engineering, Compliance |
 
+### Capa 5 bis: Vistas transversales
+
+| Doc | Propósito | Lector |
+| --- | --- | --- |
+| [18-architecture-components-design-views.md](18-architecture-components-design-views.md) | Relevamiento visual consolidado de arquitectura, componentes y diseño | Product, UX, Architecture, Engineering |
+| [19-runtime-persistence-inventory.md](19-runtime-persistence-inventory.md) | Inventario operativo de runtime, persistencia Supabase y gaps reales por dominio | Architecture, Engineering, Product |
+
 La implementación inicial usa **React.js**, **Node.js** y **Vercel**, manteniendo el núcleo portable. Consulta [el perfil técnico vigente](../sdd/TECH_STACK.md).
 
 ### Capa 6: Especificaciones ejecutables (SDD)
@@ -105,6 +112,7 @@ La implementación inicial usa **React.js**, **Node.js** y **Vercel**, mantenien
 3. Lee [16-api-specifications.md](16-api-specifications.md) — APIs que expones.
 4. Lee [17-event-specifications.md](17-event-specifications.md) — eventos que publicas/consumes.
 5. Lee [10-architecture-principles.md](10-architecture-principles.md) — patrones globales.
+6. Usa [18-architecture-components-design-views.md](18-architecture-components-design-views.md) para conectar las specs con la estructura real del repo.
 
 ### Si eres **Product/UX**
 
@@ -122,6 +130,7 @@ Lee todos. En orden:
 2. 10 (arquitectura)
 3. 11 (MVP phases)
 4. 15–17 (especificaciones ejecutables)
+5. 18 (vistas visuales consolidadas)
 
 ---
 
