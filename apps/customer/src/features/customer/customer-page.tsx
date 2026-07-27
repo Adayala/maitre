@@ -241,6 +241,18 @@ export function CustomerPage() {
     upcomingCount: upcomingReservations.length,
     historyCount: pastReservations.length,
   });
+  const menuNextStep = getCustomerBrowseNextStep({
+    accessToken: Boolean(accessToken),
+    selectedBranch,
+    selectedBranchId,
+    source: "menu",
+  });
+  const branchesNextStep = getCustomerBrowseNextStep({
+    accessToken: Boolean(accessToken),
+    selectedBranch,
+    selectedBranchId,
+    source: "branches",
+  });
 
   async function handlePasswordLogin(event: FormEvent) {
     event.preventDefault();
@@ -494,6 +506,20 @@ export function CustomerPage() {
                 ) : null}
               </StateView>
             </article>
+            <article className="cashier-card">
+              <div className={`cashier-banner ${menuNextStep.tone === "success" ? "cashier-banner--success" : "cashier-banner--info"}`}>
+                <span>{menuNextStep.title}</span>
+              </div>
+              <p className="owner-card-copy">{menuNextStep.detail}</p>
+              <div className="cashier-quick-actions">
+                <button type="button" className="btn btn--primary" onClick={() => setTab(menuNextStep.nextTab)}>
+                  {menuNextStep.ctaLabel}
+                </button>
+                <button type="button" className="btn btn--ghost" onClick={() => setTab("branches")}>
+                  Ver sucursales
+                </button>
+              </div>
+            </article>
           </section>
         ) : null}
 
@@ -564,6 +590,20 @@ export function CustomerPage() {
                   )}
                 </div>
               </StateView>
+            </article>
+            <article className="cashier-card">
+              <div className={`cashier-banner ${branchesNextStep.tone === "success" ? "cashier-banner--success" : "cashier-banner--info"}`}>
+                <span>{branchesNextStep.title}</span>
+              </div>
+              <p className="owner-card-copy">{branchesNextStep.detail}</p>
+              <div className="cashier-quick-actions">
+                <button type="button" className="btn btn--primary" onClick={() => setTab(branchesNextStep.nextTab)}>
+                  {branchesNextStep.ctaLabel}
+                </button>
+                <button type="button" className="btn btn--ghost" onClick={() => setTab("reserve")}>
+                  Ir a reservar
+                </button>
+              </div>
             </article>
           </section>
         ) : null}
@@ -1134,6 +1174,55 @@ function getCustomerReservationFollowUp({
       { label: "Historial disponible", done: historyCount > 0 },
       { label: "Listo para crear otra", done: true },
     ],
+  };
+}
+
+function getCustomerBrowseNextStep({
+  accessToken,
+  selectedBranch,
+  selectedBranchId,
+  source,
+}: {
+  accessToken: boolean;
+  selectedBranch: { name: string } | null;
+  selectedBranchId: string | null | undefined;
+  source: "menu" | "branches";
+}) {
+  if (!accessToken) {
+    return {
+      tone: "info" as const,
+      title: source === "menu" ? "Después del menú, resolvé el acceso" : "Para operar sobre una sucursal, iniciá sesión",
+      detail:
+        source === "menu"
+          ? "Ya podés explorar la propuesta. Cuando decidas avanzar con una reserva, necesitás identificarte."
+          : "Podés mirar la sede públicamente, pero para elegirla y reservar hace falta una sesión activa.",
+      ctaLabel: "Ir a acceso",
+      nextTab: "mine" as CustomerTab,
+    };
+  }
+
+  if (!selectedBranchId || !selectedBranch) {
+    return {
+      tone: "info" as const,
+      title: "Definí la sucursal para continuar",
+      detail:
+        source === "menu"
+          ? "Ya viste la propuesta gastronómica. El siguiente paso es elegir en qué sede querés vivirla."
+          : "Cuando elijas una sede, ya podés pasar a disponibilidad y reserva real.",
+      ctaLabel: "Elegir sucursal",
+      nextTab: "branches" as CustomerTab,
+    };
+  }
+
+  return {
+    tone: "success" as const,
+    title: `Ya tenés ${selectedBranch.name} seleccionada`,
+    detail:
+      source === "menu"
+        ? "Con menú visto y sucursal definida, el paso natural es cargar fecha, horario y cantidad."
+        : "La sede ya está elegida. Ahora podés pasar directo al flujo de reserva real.",
+    ctaLabel: "Continuar reserva",
+    nextTab: "reserve" as CustomerTab,
   };
 }
 
