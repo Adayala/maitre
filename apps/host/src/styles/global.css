@@ -634,6 +634,22 @@ body {
   background: var(--surface-2);
 }
 
+.host-arrival-card--pending {
+  border-color: color-mix(in srgb, var(--reserved) 45%, transparent);
+}
+
+.host-arrival-card--soon {
+  border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+}
+
+.host-arrival-card--ready {
+  border-color: color-mix(in srgb, var(--available) 45%, transparent);
+}
+
+.host-arrival-card--scheduled {
+  border-color: color-mix(in srgb, var(--border) 80%, transparent);
+}
+
 .host-arrival-main {
   display: grid;
   gap: 0.2rem;
