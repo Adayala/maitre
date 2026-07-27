@@ -848,8 +848,50 @@ body {
   gap: 0.45rem;
 }
 
+.customer-mode-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.customer-mode-card {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.95rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.customer-mode-card--active {
+  border-color: color-mix(in srgb, var(--primary) 42%, transparent);
+  background: color-mix(in srgb, var(--primary) 10%, var(--surface-2));
+}
+
+.customer-mode-card__eyebrow {
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.customer-mode-card p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.customer-mode-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
 @media (min-width: 900px) {
   .customer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .customer-mode-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

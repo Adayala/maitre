@@ -286,6 +286,81 @@ body {
   color: var(--muted);
 }
 
+.host-form-panel {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.95rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.host-checklist {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.host-check {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-3);
+}
+
+.host-check strong {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4rem;
+  color: var(--muted);
+}
+
+.host-check--done {
+  border-color: color-mix(in srgb, var(--success) 40%, transparent);
+  background: color-mix(in srgb, var(--success) 10%, var(--surface-3));
+}
+
+.host-check--done strong {
+  color: var(--success);
+}
+
+.host-preset-group {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.host-preset-label {
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.host-preset-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.host-preset-chip {
+  min-height: 42px;
+  padding: 0 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.host-preset-chip--active {
+  border-color: color-mix(in srgb, var(--primary) 48%, transparent);
+  background: color-mix(in srgb, var(--primary) 16%, var(--surface-2));
+}
+
 .owner-checklist,
 .owner-action-list,
 .owner-links {

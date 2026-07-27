@@ -84,6 +84,7 @@ export function CustomerPage() {
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [partySize, setPartySize] = useState("2");
   const [startAt, setStartAt] = useState(defaultDateTimeLocal());
   const [durationMinutes, setDurationMinutes] = useState("90");
@@ -257,10 +258,29 @@ export function CustomerPage() {
   async function handlePasswordLogin(event: FormEvent) {
     event.preventDefault();
     setLoginError(null);
+    setIsAuthenticating(true);
     try {
       await signInWithPassword(loginEmail, loginPassword);
+      setFlashMessage("Sesión iniciada. Ya podés pasar del modo público al flujo de reserva.");
+      setTab(selectedBranchId ? "reserve" : "branches");
     } catch (err) {
       setLoginError(err instanceof Error ? err.message : "No se pudo iniciar sesión");
+    } finally {
+      setIsAuthenticating(false);
+    }
+  }
+
+  function handleFixtureLogin() {
+    setLoginError(null);
+    setIsAuthenticating(true);
+    try {
+      signInWithToken(fixtureToken.trim());
+      setFlashMessage("Acceso local resuelto. Continuá con la elección de sucursal.");
+      setTab(selectedBranchId ? "reserve" : "branches");
+    } catch (err) {
+      setLoginError(err instanceof Error ? err.message : "No se pudo iniciar sesión");
+    } finally {
+      setIsAuthenticating(false);
     }
   }
 
@@ -310,7 +330,7 @@ export function CustomerPage() {
               Reservar
             </button>
             <button type="button" className={`seg-btn ${tab === "mine" ? "seg-btn--active" : ""}`} onClick={() => setTab("mine")}>
-              Mis reservas
+              {accessToken ? "Mis reservas" : "Acceso"}
             </button>
           </div>
         </section>
@@ -327,6 +347,37 @@ export function CustomerPage() {
         <section className="customer-grid">
           <article className="cashier-card">
             <h2 className="owner-card-title">Acceso</h2>
+            <p className="owner-card-copy">
+              Podés descubrir menú y sucursales sin cuenta. El login aparece recién cuando querés reservar o seguir tu historial.
+            </p>
+            <div className="customer-mode-grid">
+              <div className={`customer-mode-card ${!accessToken ? "customer-mode-card--active" : ""}`}>
+                <span className="customer-mode-card__eyebrow">Modo público</span>
+                <strong>Exploración sin login</strong>
+                <p>Ver menú, propuesta y sucursales públicas antes de decidir.</p>
+                <div className="customer-mode-card__actions">
+                  <button type="button" className="btn btn--ghost" onClick={() => setTab("menu")}>
+                    Ver menú
+                  </button>
+                  <button type="button" className="btn btn--ghost" onClick={() => setTab("branches")}>
+                    Ver sucursales
+                  </button>
+                </div>
+              </div>
+              <div className={`customer-mode-card ${accessToken ? "customer-mode-card--active" : ""}`}>
+                <span className="customer-mode-card__eyebrow">Modo identificado</span>
+                <strong>Reserva y seguimiento</strong>
+                <p>Elegir tenant, definir sucursal, reservar y revisar próximas visitas.</p>
+                <div className="customer-mode-card__actions">
+                  <button type="button" className="btn btn--primary" onClick={() => setTab(accessToken ? "reserve" : "mine")}>
+                    {accessToken ? "Continuar reserva" : "Ir a acceso"}
+                  </button>
+                  <button type="button" className="btn btn--ghost" onClick={() => setTab(accessToken ? "mine" : "discover")}>
+                    {accessToken ? "Ver mis reservas" : "Volver al inicio"}
+                  </button>
+                </div>
+              </div>
+            </div>
             {!accessToken ? (
               <>
                 {isSupabaseConfigured ? (
@@ -339,7 +390,13 @@ export function CustomerPage() {
                       Contraseña
                       <input type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} />
                     </label>
-                    <button type="submit" className="btn btn--primary btn--xl">Ingresar</button>
+                    <button
+                      type="submit"
+                      className="btn btn--primary btn--xl"
+                      disabled={isAuthenticating || !loginEmail.trim() || !loginPassword.trim()}
+                    >
+                      {isAuthenticating ? "Ingresando…" : "Ingresar"}
+                    </button>
                   </form>
                 ) : (
                   <div className="cashier-form">
@@ -354,10 +411,10 @@ export function CustomerPage() {
                     <button
                       type="button"
                       className="btn btn--primary btn--xl"
-                      onClick={() => signInWithToken(fixtureToken.trim())}
-                      disabled={!fixtureToken.trim()}
+                      onClick={handleFixtureLogin}
+                      disabled={isAuthenticating || !fixtureToken.trim()}
                     >
-                      Continuar
+                      {isAuthenticating ? "Validando…" : "Continuar"}
                     </button>
                   </div>
                 )}
@@ -648,9 +705,19 @@ export function CustomerPage() {
             <article className="cashier-card">
               <h2 className="owner-card-title">Nueva reserva</h2>
               {!accessToken ? (
-                <div className="cashier-banner cashier-banner--info">
-                  <span>Para reservar necesitás iniciar sesión.</span>
-                </div>
+                <>
+                  <div className="cashier-banner cashier-banner--info">
+                    <span>Para reservar necesitás iniciar sesión.</span>
+                  </div>
+                  <div className="cashier-quick-actions">
+                    <button type="button" className="btn btn--primary" onClick={() => setTab("mine")}>
+                      Ir a acceso
+                    </button>
+                    <button type="button" className="btn btn--ghost" onClick={() => setTab("menu")}>
+                      Seguir explorando
+                    </button>
+                  </div>
+                </>
               ) : (
                 <form
                   className="cashier-form"
@@ -659,6 +726,11 @@ export function CustomerPage() {
                     void createReservationMutation.mutateAsync();
                   }}
                 >
+                  {!selectedTenantId || !selectedBranchId ? (
+                    <div className="cashier-banner cashier-banner--info">
+                      <span>Antes de confirmar, definí tenant y sucursal para operar con contexto real.</span>
+                    </div>
+                  ) : null}
                   <label>
                     Comensales
                     <input value={partySize} onChange={(e) => setPartySize(e.target.value)} inputMode="numeric" />
@@ -842,9 +914,19 @@ export function CustomerPage() {
             <article className="cashier-card">
               <h2 className="owner-card-title">Mis reservas</h2>
               {!accessToken ? (
-                <div className="cashier-banner cashier-banner--info">
-                  <span>Iniciá sesión para ver tus reservas.</span>
-                </div>
+                <>
+                  <div className="cashier-banner cashier-banner--info">
+                    <span>Iniciá sesión para ver tus reservas.</span>
+                  </div>
+                  <div className="cashier-quick-actions">
+                    <button type="button" className="btn btn--primary" onClick={() => setTab("mine")}>
+                      Ir a acceso
+                    </button>
+                    <button type="button" className="btn btn--ghost" onClick={() => setTab("discover")}>
+                      Volver al inicio
+                    </button>
+                  </div>
+                </>
               ) : (
                 <StateView
                   isLoading={reservationsQuery.isLoading}

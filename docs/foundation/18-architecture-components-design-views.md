@@ -140,7 +140,7 @@ graph TB
         ADMIN["Web / Admin"]
     end
 
-    GUEST -->|"consulta, reserva, seguimiento"| CUSTOMER_SURFACE["cliente"]
+    GUEST -->|"consulta pública, reserva, seguimiento"| CUSTOMER_SURFACE["cliente"]
     FLOOR_APP -->|"salón, pedidos, mesas"| OPS_SURFACE["operación"]
     HOST_APP -->|"recepción, reservas, waitlist"| OPS_SURFACE
     KDS -->|"producción, despacho"| OPS_SURFACE

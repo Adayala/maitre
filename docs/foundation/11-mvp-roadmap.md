@@ -41,6 +41,7 @@ Demostrar que un tenant puede contratar servicios, configurar una sucursal y com
 
 **App:** Maitre Guest (táctil, mobile-first)
 
+- Discovery público sin login para menú, promociones y sucursales.
 - Reservas remotas desde Guest (mobile-first).
 - Confirmación y recordatorio.
 - QR Ordering híbrido: comensal pide desde celular, mozo revisa (Floor).

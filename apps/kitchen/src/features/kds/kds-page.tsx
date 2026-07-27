@@ -453,6 +453,14 @@ export function KdsPage() {
     setQuickView,
     setActiveFilter,
   });
+  const queueChecklist = [
+    { label: "Atrasadas controladas", done: lateCount === 0 },
+    { label: "Listas despachadas", done: readyCount === 0 },
+    { label: "Ingresos nuevos absorbidos", done: receivedCount === 0 || claimedCount + inProgressCount > 0 },
+    { label: "Pausas revisadas", done: onHoldCount === 0 },
+  ];
+  const queuePendingLabels = queueChecklist.filter((step) => !step.done).map((step) => step.label);
+  const queueNeedsAttention = queuePendingLabels.length > 0;
   const quickViewLabel =
     quickView === "LATE"
       ? "Atrasadas"
@@ -544,6 +552,7 @@ export function KdsPage() {
       : activeFilter !== "ALL"
         ? () => setActiveFilter("ALL")
         : undefined;
+  const constrainedView = quickView !== "NONE" || activeFilter !== "ALL";
 
   return (
     <div className={`kds ${focusMode ? "kds--focus" : ""} ${rushMode ? "kds--rush" : ""}`}>
@@ -913,6 +922,61 @@ export function KdsPage() {
             </span>
           </section>
         )}
+
+        <section className="kds-guidance" aria-label="Guía operativa">
+          <article className="kds-guidance-card">
+            <div className="kds-guidance-card__head">
+              <div>
+                <span className="kds-guidance-card__eyebrow">Chequeo operativo</span>
+                <strong>Estado de la cola</strong>
+              </div>
+            </div>
+            <div className="kds-checklist">
+              {queueChecklist.map((step) => (
+                <div key={step.label} className={`kds-check ${step.done ? "kds-check--done" : ""}`}>
+                  <strong>{step.done ? "✓" : "•"}</strong>
+                  <span>{step.label}</span>
+                </div>
+              ))}
+            </div>
+            <p className="kds-guidance-note">
+              {queueNeedsAttention
+                ? `Todavía conviene resolver: ${queuePendingLabels.join(", ")}.`
+                : "La cola está equilibrada para seguir operando en ritmo normal."}
+            </p>
+          </article>
+
+          <article className="kds-guidance-card">
+            <div className="kds-guidance-card__head">
+              <div>
+                <span className="kds-guidance-card__eyebrow">Próximo frente</span>
+                <strong>{operationalFocus?.title ?? "Cola estabilizada"}</strong>
+              </div>
+            </div>
+            <p className="kds-guidance-note">
+              {operationalFocus?.message ?? "No hay un bloqueo dominante ahora mismo; mantené monitoreo general de la estación."}
+            </p>
+            <div className="kds-guidance-actions">
+              {operationalFocus ? (
+                <button type="button" className="btn btn--ghost btn--sm" onClick={operationalFocus.onAction}>
+                  {operationalFocus.actionLabel}
+                </button>
+              ) : null}
+              {constrainedView ? (
+                <button
+                  type="button"
+                  className="btn btn--ghost btn--sm"
+                  onClick={() => {
+                    setQuickView("NONE");
+                    setActiveFilter("ALL");
+                  }}
+                >
+                  Ver cola completa
+                </button>
+              ) : null}
+            </div>
+          </article>
+        </section>
 
         <StateView
           isLoading={isLoading}

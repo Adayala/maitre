@@ -1121,6 +1121,80 @@ h3 {
   font-weight: 600;
 }
 
+.kds-guidance {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.kds-guidance-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem 1.1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-2) 90%, transparent);
+}
+
+.kds-guidance-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.kds-guidance-card__eyebrow {
+  display: inline-flex;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  font-weight: 800;
+  margin-bottom: 0.2rem;
+}
+
+.kds-checklist {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.kds-check {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-3);
+}
+
+.kds-check strong {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  color: var(--muted);
+}
+
+.kds-check--done {
+  border-color: color-mix(in srgb, var(--success) 42%, transparent);
+  background: color-mix(in srgb, var(--success) 10%, var(--surface-3));
+}
+
+.kds-check--done strong {
+  color: var(--success);
+}
+
+.kds-guidance-note {
+  margin: 0;
+  color: var(--muted);
+}
+
+.kds-guidance-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
 .quickview-chip {
   flex: 0 0 auto;
   display: inline-flex;
@@ -1173,6 +1247,12 @@ h3 {
 .kds--rush .card-grid {
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 0.65rem;
+}
+
+@media (min-width: 980px) {
+  .kds-guidance {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 .card {
   display: flex;
