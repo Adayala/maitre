@@ -637,6 +637,54 @@ body {
   color: var(--muted);
 }
 
+.host-priority-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.9rem;
+  padding: 0.95rem 1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.host-priority-banner--waitlist {
+  border-color: color-mix(in srgb, #f59e0b 45%, transparent);
+  background: color-mix(in srgb, #f59e0b 10%, var(--surface));
+}
+
+.host-priority-banner--arrival {
+  border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+  background: color-mix(in srgb, var(--primary) 10%, var(--surface));
+}
+
+.host-priority-banner--pending {
+  border-color: color-mix(in srgb, var(--reserved) 45%, transparent);
+  background: color-mix(in srgb, var(--reserved) 10%, var(--surface));
+}
+
+.host-priority-copy {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.host-priority-eyebrow {
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.host-priority-copy strong {
+  font-size: 1.05rem;
+}
+
+.host-priority-copy p {
+  color: var(--muted);
+}
+
 .host-waitlist-summary {
   display: grid;
   gap: 1px;
@@ -751,6 +799,13 @@ body {
   .host-grid,
   .owner-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .host-priority-banner {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 

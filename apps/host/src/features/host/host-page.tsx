@@ -273,6 +273,42 @@ export function HostPage() {
       ).length,
     [sortedWaitlistEntries, availableTables],
   );
+  const confirmedSoonReservations = useMemo(
+    () => arrivingSoonReservations.filter((reservation) => reservation.status === "CONFIRMED"),
+    [arrivingSoonReservations],
+  );
+  const triagePriority =
+    seatableWaitlistCount > 0
+      ? {
+          tone: "waitlist" as const,
+          title: `${seatableWaitlistCount} grupo${seatableWaitlistCount === 1 ? "" : "s"} ya se puede sentar`,
+          message: "Hay capacidad disponible para destrabar waitlist ahora mismo.",
+          actionLabel: "Ir a waitlist",
+          onAction: () => setTab("waitlist"),
+        }
+      : confirmedSoonReservations.length > 0
+        ? {
+            tone: "arrival" as const,
+            title: `${confirmedSoonReservations.length} llegada${confirmedSoonReservations.length === 1 ? "" : "s"} próxima${confirmedSoonReservations.length === 1 ? "" : "s"}`,
+            message: "Conviene preparar seating de reservas confirmadas que llegan pronto.",
+            actionLabel: "Ir a confirmadas",
+            onAction: () => {
+              setTab("reservations");
+              setReservationStatus("CONFIRMED");
+            },
+          }
+        : pendingReservations.length > 0
+          ? {
+              tone: "pending" as const,
+              title: `${pendingReservations.length} reserva${pendingReservations.length === 1 ? "" : "s"} pendiente${pendingReservations.length === 1 ? "" : "s"} de confirmación`,
+              message: "Todavía quedan reservas por confirmar para estabilizar el servicio.",
+              actionLabel: "Ir a pendientes",
+              onAction: () => {
+                setTab("reservations");
+                setReservationStatus("PENDING");
+              },
+            }
+          : null;
 
   const refreshAll = async () => {
     await Promise.all([
@@ -404,6 +440,19 @@ export function HostPage() {
             </div>
           </div>
         </section>
+
+        {triagePriority ? (
+          <section className={`host-priority-banner host-priority-banner--${triagePriority.tone}`} aria-label="Prioridad actual de recepción">
+            <div className="host-priority-copy">
+              <span className="host-priority-eyebrow">Prioridad actual</span>
+              <strong>{triagePriority.title}</strong>
+              <p>{triagePriority.message}</p>
+            </div>
+            <button type="button" className="btn btn--ghost" onClick={triagePriority.onAction}>
+              {triagePriority.actionLabel}
+            </button>
+          </section>
+        ) : null}
 
         <section className="cashier-kpi-strip">
           <article className="cashier-kpi-card">
