@@ -129,6 +129,7 @@ export function KdsPage() {
   const [soundEnabled, setSoundEnabled] = useState<boolean>(() => readSoundPreference());
   const [focusMode, setFocusMode] = useState(false);
   const [rushMode, setRushMode] = useState(false);
+  const [deniedActions, setDeniedActions] = useState<Partial<Record<CommandAction, true>>>({});
   const prevRef = useRef<Map<string, Command>>(new Map());
   const initializedRef = useRef(false);
   const lateIdsRef = useRef<Set<string>>(new Set());
@@ -259,11 +260,12 @@ export function KdsPage() {
       { commandId, action: act, ...(reason !== undefined ? { reason } : {}) },
       {
         onError: (err) => {
-          setActionError(
-            err instanceof ApiError && err.status === 403
-              ? "No tenés permiso para esta acción."
-              : err.message,
-          );
+          if (err instanceof ApiError && err.status === 403) {
+            setDeniedActions((current) => ({ ...current, [act]: true }));
+            setActionError("No tenés permiso para esta acción. La ocultamos para no volver a interrumpir el flujo.");
+            return;
+          }
+          setActionError(err.message);
         },
       },
     );
@@ -587,6 +589,7 @@ export function KdsPage() {
                         now={now}
                         pending={action.isPending}
                         isNew={newArrivalAt[command.id] !== undefined}
+                        deniedActions={deniedActions}
                         onAction={runAction}
                       />
                     ))}
@@ -604,6 +607,7 @@ export function KdsPage() {
                   now={now}
                   pending={action.isPending}
                   isNew={newArrivalAt[command.id] !== undefined}
+                  deniedActions={deniedActions}
                   onAction={runAction}
                 />
               ))}

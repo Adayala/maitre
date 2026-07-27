@@ -49,6 +49,7 @@ interface CommandCardProps {
   now: number;
   pending: boolean;
   isNew: boolean;
+  deniedActions?: Partial<Record<CommandAction, true>>;
   onAction: (commandId: string, action: CommandAction, reason?: string) => void;
 }
 
@@ -58,6 +59,7 @@ export function CommandCard({
   now,
   pending,
   isNew,
+  deniedActions,
   onAction,
 }: CommandCardProps) {
   const receivedMs = new Date(command.receivedAt).getTime();
@@ -71,8 +73,8 @@ export function CommandCard({
     command.ownerActorRef && command.ownerActorRef !== currentUserId,
   );
 
-  const actions = primaryActionsFor(status);
-  const canCancel = status !== "READY"; // keep the destructive tap away from the hand-off moment
+  const actions = primaryActionsFor(status).filter((action) => !deniedActions?.[action.action]);
+  const canCancel = status !== "READY" && !deniedActions?.cancel; // keep the destructive tap away from the hand-off moment
 
   function handleCancel() {
     const reason = window.prompt("Motivo de la cancelación:");
