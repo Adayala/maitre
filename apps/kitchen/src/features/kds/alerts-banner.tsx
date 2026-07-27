@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest, ApiError } from "../../lib/api-client.js";
 import { useAuth } from "../../app/auth-context.js";
@@ -18,6 +18,9 @@ export function AlertsBanner({ branchId }: { branchId: string }) {
   const [open, setOpen] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [deniedOps, setDeniedOps] = useState<Partial<Record<"evaluate" | "acknowledge" | "resolve", true>>>({});
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const toggleRef = useRef<HTMLButtonElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
 
   const queryKey = ["alerts", selectedTenantId, branchId];
   const { data } = useQuery({
@@ -76,16 +79,51 @@ export function AlertsBanner({ branchId }: { branchId: string }) {
     },
   });
 
+  useEffect(() => {
+    setDeniedOps({});
+    setActionError(null);
+  }, [branchId, selectedTenantId]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    panelRef.current?.focus();
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+        toggleRef.current?.focus();
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+        toggleRef.current?.focus();
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
+
   const count = active.length;
   const hasAny = shown.length > 0;
 
   return (
-    <div className="alerts">
+    <div className="alerts" ref={rootRef}>
       <button
+        ref={toggleRef}
         type="button"
         className={`alerts-toggle ${count > 0 ? "alerts-toggle--active" : ""}`}
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
+        aria-haspopup="dialog"
+        aria-controls="kitchen-alerts-panel"
       >
         <span className="alerts-bell" aria-hidden="true">
           {count > 0 ? "🔔" : "🔕"}
@@ -96,7 +134,14 @@ export function AlertsBanner({ branchId }: { branchId: string }) {
       </button>
 
       {open && (
-        <div className="alerts-panel" role="dialog" aria-label="Alertas de cocina">
+        <div
+          id="kitchen-alerts-panel"
+          ref={panelRef}
+          className="alerts-panel"
+          role="dialog"
+          aria-label="Alertas de cocina"
+          tabIndex={-1}
+        >
           <div className="alerts-panel-head">
             <strong>Alertas de cocina</strong>
             <button

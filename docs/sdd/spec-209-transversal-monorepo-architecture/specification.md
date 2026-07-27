@@ -2,6 +2,25 @@
 
 ## Estructura normativa
 
+```mermaid
+graph TB
+    ROOT["maitre/"]
+    ROOT --> APPS["apps"]
+    ROOT --> PACKAGES["packages"]
+    ROOT --> ADAPTERS["adapters"]
+    ROOT --> DOCS["docs"]
+    ROOT --> SCRIPTS["scripts"]
+
+    APPS --> API["api"]
+    APPS --> ROLE_APPS["apps por rol"]
+    PACKAGES --> CONTRACTS["contracts"]
+    PACKAGES --> MODULES["modules/*"]
+    ADAPTERS --> PERSIST["persistence/*"]
+    ADAPTERS --> IDENT["identity/*"]
+    ADAPTERS --> MSG["messaging/*"]
+    ADAPTERS --> INT["integrations/*"]
+```
+
 ```text
 maitre/
 ├── apps/
@@ -32,6 +51,16 @@ maitre/
 Los directorios se crean cuando contienen una primera necesidad aprobada. El scaffolding no debe generar paquetes vacíos salvo los mínimos requeridos para demostrar los límites.
 
 ## Dirección de dependencias
+
+```mermaid
+graph LR
+    WEB["apps/web o apps por rol"] --> CONTRACTS["contracts"]
+    API["apps/api"] --> APP["application"]
+    APP --> DOMAIN["domain"]
+    ADAPTERS["adapters"] --> PORTS["ports"]
+    PORTS --> APP
+    APP --> DOMAIN
+```
 
 ```text
 apps/web --------------------> contracts
@@ -84,6 +113,8 @@ npm run test:e2e:smoke
 ```
 
 Los scripts delegan a los workspaces afectados y devuelven código distinto de cero ante fallos.
+
+> Vista relacionada: [Foundation 18 — Architecture, Components & Design Views](../../foundation/18-architecture-components-design-views.md)
 
 ## TypeScript
 

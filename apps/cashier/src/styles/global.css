@@ -225,6 +225,46 @@ body {
   border-color: color-mix(in srgb, var(--primary) 40%, transparent);
 }
 
+.cashier-priority-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.cashier-priority-banner--success {
+  background: color-mix(in srgb, var(--success) 16%, var(--surface));
+  border-color: color-mix(in srgb, var(--success) 38%, transparent);
+}
+
+.cashier-priority-banner--warning {
+  background: color-mix(in srgb, #f59e0b 16%, var(--surface));
+  border-color: color-mix(in srgb, #f59e0b 38%, transparent);
+}
+
+.cashier-priority-banner--info {
+  background: color-mix(in srgb, var(--primary) 16%, var(--surface));
+  border-color: color-mix(in srgb, var(--primary) 38%, transparent);
+}
+
+.cashier-priority-copy {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.cashier-priority-copy strong {
+  font-size: 1rem;
+}
+
+.cashier-priority-copy span {
+  color: var(--muted);
+}
+
 .cashier-form label {
   display: grid;
   gap: 0.35rem;
@@ -379,6 +419,16 @@ body {
   gap: 0.75rem;
 }
 
+.cashier-card--focus {
+  border-color: color-mix(in srgb, var(--primary) 75%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 20%, transparent), var(--shadow);
+}
+
+.cashier-list-hint {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
 .cashier-difference--ok {
   color: var(--success);
 }
@@ -415,6 +465,13 @@ body {
   .cashier-history-layout {
     grid-template-columns: minmax(18rem, 24rem) 1fr;
     align-items: start;
+  }
+}
+
+@media (max-width: 720px) {
+  .cashier-priority-banner {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 button {

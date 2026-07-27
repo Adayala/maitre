@@ -9,6 +9,10 @@ export class InMemoryMembershipRepository implements MembershipRepositoryPort {
     );
   }
 
+  async listByUser(userId: string): Promise<Membership[]> {
+    return [...this.byId.values()].filter((m) => m.userId === userId);
+  }
+
   async findActiveByUserAndTenant(
     userId: string,
     tenantId: string,

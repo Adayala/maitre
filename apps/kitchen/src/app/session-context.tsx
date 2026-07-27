@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../lib/api-client.js";
 import { useAuth } from "./auth-context.js";
@@ -87,6 +87,34 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const resolvedBranchId =
     selectedBranchId ?? (branches.length === 1 ? branches[0]!.id : null);
   const selectedBranch = branches.find((b) => b.id === resolvedBranchId) ?? null;
+
+  useEffect(() => {
+    if (!data) return;
+    if (selectedTenantId && !tenants.some((tenant) => tenant.id === selectedTenantId)) {
+      localStorage.removeItem(TENANT_KEY);
+      localStorage.removeItem(BRANCH_KEY);
+      setSelectedTenantId(null);
+      setSelectedBranchId(null);
+      return;
+    }
+    if (!selectedTenantId && tenants.length === 1) {
+      localStorage.setItem(TENANT_KEY, tenants[0]!.id);
+      setSelectedTenantId(tenants[0]!.id);
+    }
+  }, [data, selectedTenantId, tenants]);
+
+  useEffect(() => {
+    if (!data || !resolvedTenantId) return;
+    if (selectedBranchId && !branches.some((branch) => branch.id === selectedBranchId)) {
+      localStorage.removeItem(BRANCH_KEY);
+      setSelectedBranchId(null);
+      return;
+    }
+    if (!selectedBranchId && branches.length === 1) {
+      localStorage.setItem(BRANCH_KEY, branches[0]!.id);
+      setSelectedBranchId(branches[0]!.id);
+    }
+  }, [branches, data, resolvedTenantId, selectedBranchId]);
 
   return (
     <SessionContext.Provider

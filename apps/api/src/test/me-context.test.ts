@@ -229,6 +229,97 @@ test("GET /v1/me/context rejects a principal with no matching User (identity-not
   await app.close();
 });
 
+test("GET /v1/me/context claims a pending invite for a Supabase identity and activates invited memberships", async () => {
+  const container = await buildContainer();
+  const now = new Date();
+  const owner = await container.users.findByExternalIdentity("fixture", "demo-owner");
+  const seededMemberships = await container.memberships.listActiveByUser(owner!.id);
+  const tenantId = seededMemberships[0]!.tenantId;
+
+  const invitedUser = {
+    id: randomUUID(),
+    identityProvider: "pending-invite",
+    externalIdentityId: randomUUID(),
+    displayName: "Invited Host",
+    email: "host@example.com",
+    status: "ACTIVE" as const,
+    createdAt: now,
+    updatedAt: now,
+  };
+  await container.users.save(invitedUser);
+  await container.memberships.save({
+    id: randomUUID(),
+    tenantId,
+    userId: invitedUser.id,
+    status: "INVITED",
+    branchScopeType: "ALL_BRANCHES",
+    roleIds: ["role_maitre"],
+    branchIds: [],
+    invitedAt: now,
+    activatedAt: null,
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  sessionsOf(container).registerToken("supabase-first-login", {
+    provider: "supabase",
+    subject: "supabase-user-1",
+    email: "host@example.com",
+    emailVerified: true,
+    issuedAt: now,
+    expiresAt: new Date(now.getTime() + 60 * 60 * 1000),
+  });
+
+  const app = await buildApp(container);
+  const response = await app.inject({
+    method: "GET",
+    url: "/v1/me/context",
+    headers: { authorization: "Bearer supabase-first-login" },
+  });
+  assert.equal(response.statusCode, 200);
+
+  const claimed = await container.users.findByExternalIdentity("supabase", "supabase-user-1");
+  assert.ok(claimed);
+  assert.equal(claimed?.id, invitedUser.id);
+  assert.equal(claimed?.identityProvider, "supabase");
+  assert.equal(claimed?.email, "host@example.com");
+
+  const memberships = await container.memberships.listByUser(invitedUser.id);
+  assert.equal(memberships.length, 1);
+  assert.equal(memberships[0]?.status, "ACTIVE");
+  assert.ok(memberships[0]?.activatedAt);
+  await app.close();
+});
+
+test("GET /v1/me/context auto-provisions a Supabase user with no memberships yet", async () => {
+  const container = await buildContainer();
+  const now = new Date();
+
+  sessionsOf(container).registerToken("supabase-no-membership", {
+    provider: "supabase",
+    subject: "supabase-user-2",
+    email: "new.owner@example.com",
+    emailVerified: true,
+    issuedAt: now,
+    expiresAt: new Date(now.getTime() + 60 * 60 * 1000),
+  });
+
+  const app = await buildApp(container);
+  const response = await app.inject({
+    method: "GET",
+    url: "/v1/me/context",
+    headers: { authorization: "Bearer supabase-no-membership" },
+  });
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.json().user.email, "new.owner@example.com");
+  assert.deepEqual(response.json().tenants, []);
+
+  const created = await container.users.findByExternalIdentity("supabase", "supabase-user-2");
+  assert.ok(created);
+  assert.equal(created?.email, "new.owner@example.com");
+  await app.close();
+});
+
 test("GET /v1/me/context respects SELECTED_BRANCHES scope in memberships", async () => {
   const container = await buildContainer();
   const now = new Date();

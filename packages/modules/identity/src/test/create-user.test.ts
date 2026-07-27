@@ -15,8 +15,13 @@ class FakeUserRepository implements UserRepositoryPort {
   async findById(id: string) {
     return this.items.find((u) => u.id === id) ?? null;
   }
+  async findByEmail(email: string) {
+    return this.items.find((u) => (u.email ?? "").toLowerCase() === email.toLowerCase()) ?? null;
+  }
   async save(user: User) {
-    this.items.push(user);
+    const index = this.items.findIndex((item) => item.id === user.id);
+    if (index >= 0) this.items[index] = user;
+    else this.items.push(user);
   }
 }
 

@@ -2,6 +2,7 @@ import type { FastifyRequest } from "fastify";
 import { isUserEligibleForSession, hasPermission } from "@maitre/identity";
 import { isTenantOperable } from "@maitre/organization";
 import type { Container } from "../composition/container.js";
+import { resolveDomainUser } from "../composition/resolve-domain-user.js";
 import {
   authenticationRequired,
   sessionExpired,
@@ -46,10 +47,7 @@ export async function requireAuthenticatedContext(
     throw authenticationRequired();
   }
 
-  const user = await container.users.findByExternalIdentity(
-    principal.provider,
-    principal.subject,
-  );
+  const user = await resolveDomainUser(container, principal);
   if (!user || !isUserEligibleForSession(user)) throw identityNotEnabled();
 
   return {

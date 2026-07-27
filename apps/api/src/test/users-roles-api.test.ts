@@ -38,6 +38,10 @@ test("POST /v1/users invites a user: creates User + INVITED Membership", async (
   });
   assert.equal(response.statusCode, 201);
   const body = response.json().data;
+  assert.deepEqual(
+    new Set(Object.keys(body as Record<string, unknown>)),
+    new Set(["id", "email", "name", "status", "membershipId", "roleIds"]),
+  );
   assert.equal(body.status, "INVITED");
   assert.equal(body.email, "waiter@demo.maitre");
   assert.deepEqual(body.roleIds, ["role_employee"]);
@@ -107,6 +111,13 @@ test("POST /v1/users as EMPLOYEE returns 403 (user:create not granted)", async (
     payload: { email: "x@demo.maitre", name: "X" },
   });
   assert.equal(response.statusCode, 403);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(response.json().type, "insufficient-scope");
+  assert.equal(response.json().title, "Insufficient scope");
+  assert.equal(response.json().status, 403);
   await app.close();
 });
 
@@ -123,8 +134,21 @@ test("GET /v1/users lists the seeded owner", async () => {
     },
   });
   assert.equal(response.statusCode, 200);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["data", "meta"]),
+  );
   assert.equal(response.json().data.length, 1);
+  assert.deepEqual(
+    new Set(Object.keys(response.json().data[0] as Record<string, unknown>)),
+    new Set(["id", "email", "name", "status", "membershipId", "roleIds"]),
+  );
   assert.equal(response.json().data[0].name, "Demo Owner");
+  assert.deepEqual(
+    new Set(Object.keys(response.json().meta as Record<string, unknown>)),
+    new Set(["total", "limit", "offset"]),
+  );
+  assert.equal(response.json().meta.total, 1);
   await app.close();
 });
 
@@ -141,6 +165,13 @@ test("GET /v1/users/:id returns 404 for an unknown id", async () => {
     },
   });
   assert.equal(response.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(response.json().type, "not-found");
+  assert.equal(response.json().title, "User not found");
+  assert.equal(response.json().status, 404);
   await app.close();
 });
 
@@ -159,6 +190,10 @@ test("PATCH /v1/users/:id updates the display name", async () => {
     payload: { name: "Renamed Owner" },
   });
   assert.equal(response.statusCode, 200);
+  assert.deepEqual(
+    new Set(Object.keys(response.json().data as Record<string, unknown>)),
+    new Set(["id", "email", "name", "status", "membershipId", "roleIds"]),
+  );
   assert.equal(response.json().data.name, "Renamed Owner");
   await app.close();
 });
@@ -176,6 +211,14 @@ test("GET /v1/roles lists the predefined role catalog", async () => {
     },
   });
   assert.equal(response.statusCode, 200);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["data"]),
+  );
+  assert.deepEqual(
+    new Set(Object.keys(response.json().data[0] as Record<string, unknown>)),
+    new Set(["id", "name", "description", "permissions"]),
+  );
   const ids = response.json().data.map((r: { id: string }) => r.id);
   assert.ok(ids.includes("role_owner"));
   assert.ok(ids.includes("role_admin"));
@@ -195,6 +238,13 @@ test("GET /v1/roles/:id returns 404 for an unknown role", async () => {
     },
   });
   assert.equal(response.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(response.json().type, "not-found");
+  assert.equal(response.json().title, "Role not found");
+  assert.equal(response.json().status, 404);
   await app.close();
 });
 
@@ -211,6 +261,14 @@ test("GET /v1/permissions lists every permission id referenced by a role, exclud
     },
   });
   assert.equal(response.statusCode, 200);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["data"]),
+  );
+  assert.deepEqual(
+    new Set(Object.keys(response.json().data[0] as Record<string, unknown>)),
+    new Set(["id", "resource", "action"]),
+  );
   const ids = response.json().data.map((p: { id: string }) => p.id);
   assert.ok(ids.includes("user:read"));
   assert.ok(!ids.includes("*"));

@@ -48,14 +48,14 @@ export function LoginPage() {
           </form>
         ) : (
           <div className="login-fixture">
-            <p>Pegá un access token válido para entrar a la app de caja.</p>
+            <p>Este build local no tiene Supabase Auth. Pegá un access token válido para entrar a la app de caja.</p>
             <label htmlFor="fixture-token">Access token</label>
             <input
               id="fixture-token"
               type="text"
               value={fixtureToken}
               onChange={(e) => setFixtureToken(e.target.value)}
-              placeholder="demo-token"
+              placeholder="Bearer token"
             />
             <button
               type="button"

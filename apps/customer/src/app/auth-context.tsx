@@ -1,8 +1,8 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase, isSupabaseConfigured } from "../lib/supabase.js";
 
-// Dual-mode auth: a real Supabase session when configured, or a fixture bearer
-// token used in local dev. Stored separately from the staff apps.
+// Supabase-first auth for customer reservations. A fixture bearer token stays
+// available only as a local fallback when the build has no Supabase config.
 interface AuthState {
   accessToken: string | null;
   email: string | null;
@@ -19,12 +19,15 @@ const SIGN_IN_TIMEOUT_MS = 10_000;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [accessToken, setAccessToken] = useState<string | null>(
-    () => sessionStorage.getItem(FIXTURE_TOKEN_KEY),
+    () => (isSupabaseConfigured ? null : sessionStorage.getItem(FIXTURE_TOKEN_KEY)),
   );
   const [email, setEmail] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (isSupabaseConfigured) {
+      sessionStorage.removeItem(FIXTURE_TOKEN_KEY);
+    }
     if (!supabase) {
       setIsLoading(false);
       return;
@@ -61,6 +64,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   function signInWithToken(token: string) {
+    if (isSupabaseConfigured) {
+      throw new Error("Este build usa Supabase Auth; no acepta fixture tokens.");
+    }
     sessionStorage.setItem(FIXTURE_TOKEN_KEY, token);
     setAccessToken(token);
     setEmail(null);

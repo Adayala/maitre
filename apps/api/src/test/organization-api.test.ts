@@ -103,7 +103,13 @@ test("POST /v1/brands without X-Tenant-Id returns 403 insufficient-scope", async
     payload: { name: "Nueva Marca", config: { language: "es", currency: "ARS" } },
   });
   assert.equal(response.statusCode, 403);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
   assert.equal(response.json().type, "insufficient-scope");
+  assert.equal(response.json().title, "Insufficient scope");
+  assert.equal(response.json().status, 403);
   await app.close();
 });
 
@@ -121,6 +127,25 @@ test("POST /v1/brands as OWNER succeeds and derives a slug", async () => {
     payload: { name: "Pizzeria Bella", config: { language: "es", currency: "ARS" } },
   });
   assert.equal(response.statusCode, 201);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["data"]),
+  );
+  assert.deepEqual(
+    new Set(Object.keys(response.json().data as Record<string, unknown>)),
+    new Set([
+      "id",
+      "tenantId",
+      "name",
+      "slug",
+      "status",
+      "config",
+      "createdAt",
+      "updatedAt",
+      "createdBy",
+      "updatedBy",
+    ]),
+  );
   assert.equal(response.json().data.slug, "pizzeria-bella");
   await app.close();
 });
@@ -137,6 +162,13 @@ test("POST /v1/brands as EMPLOYEE returns 403 (SPEC-016: EMPLOYEE cannot manage 
     payload: { name: "Pizzeria Bella", config: { language: "es", currency: "ARS" } },
   });
   assert.equal(response.statusCode, 403);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(response.json().type, "insufficient-scope");
+  assert.equal(response.json().title, "Insufficient scope");
+  assert.equal(response.json().status, 403);
   await app.close();
 });
 
@@ -151,6 +183,13 @@ test("GET /v1/brands as EMPLOYEE returns 403 (brand:read not granted to EMPLOYEE
     headers: { authorization: `Bearer ${token}`, "x-tenant-id": tenantId },
   });
   assert.equal(response.statusCode, 403);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(response.json().type, "insufficient-scope");
+  assert.equal(response.json().title, "Insufficient scope");
+  assert.equal(response.json().status, 403);
   await app.close();
 });
 
@@ -167,8 +206,29 @@ test("GET /v1/brands lists the seeded demo brand", async () => {
     },
   });
   assert.equal(response.statusCode, 200);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["data", "meta"]),
+  );
   assert.equal(response.json().data.length, 1);
+  assert.deepEqual(
+    new Set(Object.keys(response.json().data[0] as Record<string, unknown>)),
+    new Set([
+      "id",
+      "tenantId",
+      "name",
+      "slug",
+      "status",
+      "config",
+      "createdAt",
+      "updatedAt",
+    ]),
+  );
   assert.equal(response.json().data[0].name, "Maitre Demo Brand");
+  assert.deepEqual(
+    new Set(Object.keys(response.json().meta as Record<string, unknown>)),
+    new Set(["total", "limit", "offset"]),
+  );
   await app.close();
 });
 
@@ -185,6 +245,13 @@ test("GET /v1/brands/:id returns 404 for an unknown id", async () => {
     },
   });
   assert.equal(response.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(response.json().type, "not-found");
+  assert.equal(response.json().title, "Brand not found");
+  assert.equal(response.json().status, 404);
   await app.close();
 });
 
@@ -236,6 +303,13 @@ test("POST /v1/fiscal-entities as EMPLOYEE returns 403 (OWNER only per SPEC-009)
     },
   });
   assert.equal(response.statusCode, 403);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(response.json().type, "insufficient-scope");
+  assert.equal(response.json().title, "Insufficient scope");
+  assert.equal(response.json().status, 403);
   await app.close();
 });
 
@@ -293,6 +367,58 @@ test("POST /v1/fiscal-entities with a duplicate CUIT returns 409 conflict", asyn
     payload: { name: "Otra Razón Social", cuit: "20-12345678-6", taxCondition: "RI" },
   });
   assert.equal(response.statusCode, 409);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(response.json().type, "conflict");
+  assert.equal(
+    response.json().title,
+    `CUIT "20123456786" already exists for tenant ${tenantId}`,
+  );
+  assert.equal(response.json().status, 409);
+  await app.close();
+});
+
+test("GET /v1/fiscal-entities lists the seeded fiscal entity", async () => {
+  const container = await buildContainer();
+  const tenantId = await getTenantId(container);
+  const app = await buildApp(container);
+  const response = await app.inject({
+    method: "GET",
+    url: "/v1/fiscal-entities",
+    headers: {
+      authorization: `Bearer ${container.demoAccessToken}`,
+      "x-tenant-id": tenantId,
+    },
+  });
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["data", "meta"]),
+  );
+  assert.equal(response.json().data.length, 1);
+  assert.deepEqual(
+    new Set(Object.keys(response.json().data[0] as Record<string, unknown>)),
+    new Set([
+      "id",
+      "tenantId",
+      "cuit",
+      "name",
+      "createIdempotencyKey",
+      "status",
+      "taxCondition",
+      "createdAt",
+      "updatedAt",
+    ]),
+  );
+  assert.equal(response.json().data[0].name, "Maitre Demo Fiscal Entity");
+  assert.equal(response.json().data[0].cuit, "20123456786");
+  assert.deepEqual(
+    new Set(Object.keys(response.json().meta as Record<string, unknown>)),
+    new Set(["total", "limit", "offset"]),
+  );
+  assert.equal(response.json().meta.total, 1);
   await app.close();
 });
 
@@ -344,14 +470,6 @@ test("GET /v1/fiscal-entities lists tenant-owned entities and detail returns ETa
     "x-tenant-id": tenantId,
   };
 
-  const created = await app.inject({
-    method: "POST",
-    url: "/v1/fiscal-entities",
-    headers,
-    payload: { name: "Fiscal Uno", cuit: "20-12345678-6", taxCondition: "RI", activityCode: "561011" },
-  });
-  assert.equal(created.statusCode, 201);
-
   const list = await app.inject({
     method: "GET",
     url: "/v1/fiscal-entities",
@@ -359,13 +477,32 @@ test("GET /v1/fiscal-entities lists tenant-owned entities and detail returns ETa
   });
   assert.equal(list.statusCode, 200);
   assert.equal(list.json().meta.total >= 1, true);
+  const entityId = list.json().data[0].id;
 
   const detail = await app.inject({
     method: "GET",
-    url: `/v1/fiscal-entities/${created.json().data.id}`,
+    url: `/v1/fiscal-entities/${entityId}`,
     headers,
   });
   assert.equal(detail.statusCode, 200);
+  assert.deepEqual(
+    new Set(Object.keys(detail.json() as Record<string, unknown>)),
+    new Set(["data"]),
+  );
+  assert.deepEqual(
+    new Set(Object.keys(detail.json().data as Record<string, unknown>)),
+    new Set([
+      "id",
+      "tenantId",
+      "cuit",
+      "name",
+      "createIdempotencyKey",
+      "status",
+      "taxCondition",
+      "createdAt",
+      "updatedAt",
+    ]),
+  );
   assert.equal(typeof detail.headers.etag, "string");
 
   await app.close();
@@ -387,7 +524,7 @@ test("GET /v1/fiscal-entities as MANAGER returns redacted fiscal fields", async 
     headers: ownerHeaders,
     payload: {
       name: "Fiscal Redacted",
-      cuit: "20-12345678-6",
+      cuit: "30-12345678-1",
       taxCondition: "RI",
       legalAddress: "Privada 123",
       fiscalAddress: "Fiscal 456",
@@ -403,8 +540,27 @@ test("GET /v1/fiscal-entities as MANAGER returns redacted fiscal fields", async 
     headers: { authorization: `Bearer ${managerToken}`, "x-tenant-id": tenantId },
   });
   assert.equal(list.statusCode, 200);
+  assert.deepEqual(
+    new Set(Object.keys(list.json() as Record<string, unknown>)),
+    new Set(["data", "meta"]),
+  );
   const listed = list.json().data.find((item: { id: string }) => item.id === entityId);
   assert.ok(listed);
+  assert.deepEqual(
+    new Set(Object.keys(listed as Record<string, unknown>)),
+    new Set([
+      "id",
+      "tenantId",
+      "cuit",
+      "name",
+      "status",
+      "taxCondition",
+      "createdAt",
+      "updatedAt",
+      "createdBy",
+      "updatedBy",
+    ]),
+  );
   assert.equal("legalAddress" in listed, false);
   assert.equal("fiscalAddress" in listed, false);
   assert.equal("activityCode" in listed, false);
@@ -415,7 +571,26 @@ test("GET /v1/fiscal-entities as MANAGER returns redacted fiscal fields", async 
     headers: { authorization: `Bearer ${managerToken}`, "x-tenant-id": tenantId },
   });
   assert.equal(detail.statusCode, 200);
+  assert.deepEqual(
+    new Set(Object.keys(detail.json() as Record<string, unknown>)),
+    new Set(["data"]),
+  );
   assert.equal(detail.json().data.name, "Fiscal Redacted");
+  assert.deepEqual(
+    new Set(Object.keys(detail.json().data as Record<string, unknown>)),
+    new Set([
+      "id",
+      "tenantId",
+      "cuit",
+      "name",
+      "status",
+      "taxCondition",
+      "createdAt",
+      "updatedAt",
+      "createdBy",
+      "updatedBy",
+    ]),
+  );
   assert.equal("legalAddress" in detail.json().data, false);
   assert.equal("fiscalAddress" in detail.json().data, false);
   assert.equal("activityCode" in detail.json().data, false);
@@ -432,21 +607,13 @@ test("PATCH /v1/fiscal-entities requires valid If-Match and rejects stale revisi
     authorization: `Bearer ${container.demoAccessToken}`,
     "x-tenant-id": tenantId,
   };
-
-  const created = await app.inject({
-    method: "POST",
+  const list = await app.inject({
+    method: "GET",
     url: "/v1/fiscal-entities",
     headers,
-    payload: {
-      name: "Fiscal Dos",
-      cuit: "27-12345678-0",
-      taxCondition: "RI",
-      legalAddress: "Dir vieja",
-      fiscalAddress: "Fiscal vieja",
-    },
   });
-  assert.equal(created.statusCode, 201);
-  const entityId = created.json().data.id;
+  assert.equal(list.statusCode, 200);
+  const entityId = list.json().data[0].id;
 
   const missingIfMatch = await app.inject({
     method: "PATCH",
@@ -455,6 +622,13 @@ test("PATCH /v1/fiscal-entities requires valid If-Match and rejects stale revisi
     payload: { name: "Nope" },
   });
   assert.equal(missingIfMatch.statusCode, 400);
+  assert.deepEqual(
+    new Set(Object.keys(missingIfMatch.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(missingIfMatch.json().type, "bad-request");
+  assert.equal(missingIfMatch.json().title, "Missing If-Match header");
+  assert.equal(missingIfMatch.json().status, 400);
 
   const detail = await app.inject({
     method: "GET",
@@ -488,6 +662,12 @@ test("PATCH /v1/fiscal-entities requires valid If-Match and rejects stale revisi
     payload: { name: "Stale" },
   });
   assert.equal(stalePatch.statusCode, 409);
+  assert.deepEqual(
+    new Set(Object.keys(stalePatch.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(stalePatch.json().type, "conflict");
+  assert.equal(stalePatch.json().status, 409);
 
   await app.close();
 });
@@ -526,6 +706,13 @@ test("PATCH /v1/fiscal-entities sensitive changes require reason and recent step
     payload: { legalAddress: "Nueva 123" },
   });
   assert.equal(missingReason.statusCode, 400);
+  assert.deepEqual(
+    new Set(Object.keys(missingReason.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(missingReason.json().type, "bad-request");
+  assert.equal(missingReason.json().title, "Missing reason for sensitive fiscal change");
+  assert.equal(missingReason.json().status, 400);
 
   const missingStepUp = await app.inject({
     method: "PATCH",
@@ -534,7 +721,13 @@ test("PATCH /v1/fiscal-entities sensitive changes require reason and recent step
     payload: { legalAddress: "Nueva 123", reason: "Cambio de domicilio fiscal" },
   });
   assert.equal(missingStepUp.statusCode, 403);
+  assert.deepEqual(
+    new Set(Object.keys(missingStepUp.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
   assert.equal(missingStepUp.json().type, "step-up-required");
+  assert.equal(missingStepUp.json().title, "Step-up required");
+  assert.equal(missingStepUp.json().status, 403);
 
   const nameOnly = await app.inject({
     method: "PATCH",
@@ -543,6 +736,12 @@ test("PATCH /v1/fiscal-entities sensitive changes require reason and recent step
     payload: { name: "Fiscal Solo Nombre" },
   });
   assert.equal(nameOnly.statusCode, 200);
+  assert.deepEqual(
+    new Set(Object.keys(nameOnly.json() as Record<string, unknown>)),
+    new Set(["data"]),
+  );
+  assert.equal(nameOnly.json().data.name, "Fiscal Solo Nombre");
+  assert.equal(nameOnly.json().data.legalAddress, "Antes 123");
 
   await app.close();
 });
@@ -555,14 +754,13 @@ test("GET and PATCH /v1/fiscal-entities hide cross-tenant resources as 404", asy
     authorization: `Bearer ${ownerContainer.demoAccessToken}`,
     "x-tenant-id": tenantId,
   };
-
-  const created = await app.inject({
-    method: "POST",
+  const ownerList = await app.inject({
+    method: "GET",
     url: "/v1/fiscal-entities",
     headers: ownerHeaders,
-    payload: { name: "Fiscal Tres", cuit: "30-12345678-1", taxCondition: "RI", legalAddress: "Calle 3" },
   });
-  const entityId = created.json().data.id;
+  assert.equal(ownerList.statusCode, 200);
+  const entityId = ownerList.json().data[0].id;
   const now = new Date();
   const otherTenantId = randomUUID();
   await ownerContainer.tenants.save({
@@ -611,6 +809,13 @@ test("GET and PATCH /v1/fiscal-entities hide cross-tenant resources as 404", asy
     headers: { authorization: `Bearer ${otherToken}`, "x-tenant-id": otherTenantId },
   });
   assert.equal(hiddenGet.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(hiddenGet.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(hiddenGet.json().type, "not-found");
+  assert.equal(hiddenGet.json().title, "FiscalEntity not found");
+  assert.equal(hiddenGet.json().status, 404);
 
   const hiddenPatch = await app.inject({
     method: "PATCH",
@@ -623,6 +828,13 @@ test("GET and PATCH /v1/fiscal-entities hide cross-tenant resources as 404", asy
     payload: { name: "Hidden" },
   });
   assert.equal(hiddenPatch.statusCode, 404);
+  assert.deepEqual(
+    new Set(Object.keys(hiddenPatch.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(hiddenPatch.json().type, "not-found");
+  assert.equal(hiddenPatch.json().title, "FiscalEntity not found");
+  assert.equal(hiddenPatch.json().status, 404);
 
   await app.close();
 });
@@ -643,7 +855,30 @@ test("GET /v1/tables includes a derived status", async () => {
     },
   });
   assert.equal(response.statusCode, 200);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["data", "meta"]),
+  );
+  assert.deepEqual(
+    new Set(Object.keys(response.json().data[0] as Record<string, unknown>)),
+    new Set([
+      "id",
+      "tenantId",
+      "branchId",
+      "salonId",
+      "number",
+      "capacity",
+      "createdAt",
+      "updatedAt",
+      "status",
+    ]),
+  );
   assert.equal(response.json().data[0].status, "AVAILABLE");
+  assert.deepEqual(
+    new Set(Object.keys(response.json().meta as Record<string, unknown>)),
+    new Set(["total", "limit", "offset"]),
+  );
+  assert.equal(response.json().meta.total, 1);
   await app.close();
 });
 
@@ -661,6 +896,11 @@ test("GET /v1/tables as EMPLOYEE succeeds (SPEC-012: EMPLOYEE may read tables)",
     headers: { authorization: `Bearer ${token}`, "x-tenant-id": tenantId },
   });
   assert.equal(response.statusCode, 200);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["data", "meta"]),
+  );
+  assert.equal(response.json().data[0].status, "AVAILABLE");
   await app.close();
 });
 
@@ -674,6 +914,25 @@ test("POST /v1/tenants provisions a Tenant with an OWNER membership for the call
     payload: { name: "Second Restaurant Group" },
   });
   assert.equal(response.statusCode, 201);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["data"]),
+  );
+  assert.deepEqual(
+    new Set(Object.keys(response.json().data as Record<string, unknown>)),
+    new Set([
+      "id",
+      "name",
+      "status",
+      "defaultLocale",
+      "defaultCurrency",
+      "defaultTimezone",
+      "createdAt",
+      "updatedAt",
+      "createdBy",
+      "updatedBy",
+    ]),
+  );
   const tenantId = response.json().data.id;
 
   const meResponse = await app.inject({
@@ -683,6 +942,11 @@ test("POST /v1/tenants provisions a Tenant with an OWNER membership for the call
   });
   const tenantIds = meResponse.json().tenants.map((t: { id: string }) => t.id);
   assert.ok(tenantIds.includes(tenantId));
+  const createdTenant = meResponse
+    .json()
+    .tenants.find((t: { id: string }) => t.id === tenantId);
+  assert.ok(createdTenant);
+  assert.deepEqual(createdTenant.branches, []);
   await app.close();
 });
 
@@ -700,6 +964,13 @@ test("PATCH /v1/tenants/:id for a tenant outside the caller's membership returns
     payload: { name: "Hijack Attempt" },
   });
   assert.equal(response.statusCode, 403);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(response.json().type, "insufficient-scope");
+  assert.equal(response.json().title, "Insufficient scope");
+  assert.equal(response.json().status, 403);
   await app.close();
 });
 

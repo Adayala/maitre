@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { Command, CommandStatus } from "../../lib/kitchen-types.js";
 import { formatElapsed, urgencyFor, type Urgency } from "./use-now.js";
 import type { CommandAction } from "./use-command-action.js";
@@ -48,6 +49,7 @@ interface CommandCardProps {
   currentUserId: string | null;
   now: number;
   pending: boolean;
+  pendingLabel?: string;
   isNew: boolean;
   deniedActions?: Partial<Record<CommandAction, true>>;
   onAction: (commandId: string, action: CommandAction, reason?: string) => void;
@@ -58,10 +60,13 @@ export function CommandCard({
   currentUserId,
   now,
   pending,
+  pendingLabel,
   isNew,
   deniedActions,
   onAction,
 }: CommandCardProps) {
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
   const receivedMs = new Date(command.receivedAt).getTime();
   const elapsedMs = now - receivedMs;
   const urgency: Urgency = urgencyFor(elapsedMs);
@@ -72,13 +77,31 @@ export function CommandCard({
   const ownedByOther = Boolean(
     command.ownerActorRef && command.ownerActorRef !== currentUserId,
   );
+  const lockedByOtherOwner = ownedByOther && status !== "COMPLETED" && status !== "CANCELLED";
+  const flowHint = lockedByOtherOwner
+    ? { label: "Bloqueada", tone: "blocked" as const }
+    : ownedByMe
+      ? { label: "Tuya", tone: "mine" as const }
+      : status === "RECEIVED"
+        ? { label: "Tomable", tone: "claimable" as const }
+        : status === "ON_HOLD"
+          ? { label: "Retomar", tone: "hold" as const }
+          : status === "READY"
+            ? { label: "Despachar", tone: "ready" as const }
+            : null;
 
-  const actions = primaryActionsFor(status).filter((action) => !deniedActions?.[action.action]);
-  const canCancel = status !== "READY" && !deniedActions?.cancel; // keep the destructive tap away from the hand-off moment
+  const actions = lockedByOtherOwner
+    ? []
+    : primaryActionsFor(status).filter((action) => !deniedActions?.[action.action]);
+  const canCancel =
+    !lockedByOtherOwner && status !== "READY" && !deniedActions?.cancel; // keep the destructive tap away from the hand-off moment
 
-  function handleCancel() {
-    const reason = window.prompt("Motivo de la cancelación:");
-    if (reason && reason.trim()) onAction(command.id, "cancel", reason.trim());
+  function submitCancel() {
+    const reason = cancelReason.trim();
+    if (!reason) return;
+    onAction(command.id, "cancel", reason);
+    setCancelReason("");
+    setCancelOpen(false);
   }
 
   return (
@@ -145,18 +168,72 @@ export function CommandCard({
       )}
 
       <footer className="card-foot">
-        {(ownedByMe || ownedByOther) && (
-          <span className={`owner ${ownedByMe ? "owner--me" : "owner--other"}`}>
-            {ownedByMe ? "Vos" : `Otro cocinero`}
-          </span>
+        {(ownedByMe || ownedByOther || flowHint) && (
+          <div className="card-meta">
+            {(ownedByMe || ownedByOther) && (
+              <span className={`owner ${ownedByMe ? "owner--me" : "owner--other"}`}>
+                {ownedByMe ? "Vos" : `Otro cocinero`}
+              </span>
+            )}
+            {flowHint && (
+              <span className={`flow-hint flow-hint--${flowHint.tone}`}>{flowHint.label}</span>
+            )}
+          </div>
+        )}
+        {lockedByOtherOwner && (
+          <p className="card-lock-note">
+            Esta comanda está en manos de otro cocinero. Desde esta pantalla queda en solo lectura.
+          </p>
+        )}
+        {pending && pendingLabel && (
+          <p className="card-pending-note" role="status" aria-live="polite">
+            {pendingLabel}
+          </p>
+        )}
+        {cancelOpen && canCancel && (
+          <div className="cancel-box" role="group" aria-label="Motivo de cancelación">
+            <label className="cancel-box__label" htmlFor={`cancel-reason-${command.id}`}>
+              Motivo obligatorio
+            </label>
+            <textarea
+              id={`cancel-reason-${command.id}`}
+              className="cancel-box__input"
+              value={cancelReason}
+              onChange={(event) => setCancelReason(event.target.value)}
+              placeholder="Ej: faltante de insumo, producto agotado, error de carga…"
+              rows={3}
+              disabled={pending}
+            />
+            <div className="cancel-box__actions">
+              <button
+                type="button"
+                className="btn btn--ghost"
+                onClick={() => {
+                  setCancelOpen(false);
+                  setCancelReason("");
+                }}
+                disabled={pending}
+              >
+                Volver
+              </button>
+              <button
+                type="button"
+                className="btn btn--danger-ghost"
+                onClick={submitCancel}
+                disabled={pending || !cancelReason.trim()}
+              >
+                Confirmar cancelación
+              </button>
+            </div>
+          </div>
         )}
         <div className="card-actions">
-          {canCancel && (
+          {canCancel && !cancelOpen && (
             <button
               type="button"
               className="btn btn--danger-ghost"
               disabled={pending}
-              onClick={handleCancel}
+              onClick={() => setCancelOpen(true)}
             >
               Cancelar
             </button>

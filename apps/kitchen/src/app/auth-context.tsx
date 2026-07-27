@@ -1,10 +1,8 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase, isSupabaseConfigured } from "../lib/supabase.js";
 
-// Dual-mode auth, copied from apps/web (SPEC-023): a real Supabase session when
-// configured, or a fixture bearer token pasted on the login screen. A kitchen
-// tablet typically stays signed in for a whole shift, so the fixture token is
-// persisted in sessionStorage under a kitchen-scoped key.
+// Supabase-first auth for the kitchen app. Fixture tokens remain available
+// only as a local fallback when the build has no Supabase config.
 interface AuthState {
   accessToken: string | null;
   email: string | null;
@@ -20,12 +18,15 @@ const FIXTURE_TOKEN_KEY = "maitre.kitchen.fixtureAccessToken";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [accessToken, setAccessToken] = useState<string | null>(
-    () => sessionStorage.getItem(FIXTURE_TOKEN_KEY),
+    () => (isSupabaseConfigured ? null : sessionStorage.getItem(FIXTURE_TOKEN_KEY)),
   );
   const [email, setEmail] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (isSupabaseConfigured) {
+      sessionStorage.removeItem(FIXTURE_TOKEN_KEY);
+    }
     if (!supabase) {
       setIsLoading(false);
       return;
@@ -40,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
       setAccessToken(session?.access_token ?? null);
       setEmail(session?.user.email ?? null);
+      setIsLoading(false);
     });
     return () => subscription.subscription.unsubscribe();
   }, []);
@@ -51,9 +53,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   function signInWithToken(token: string) {
+    if (isSupabaseConfigured) {
+      throw new Error("Este build usa Supabase Auth; no acepta fixture tokens.");
+    }
     sessionStorage.setItem(FIXTURE_TOKEN_KEY, token);
     setAccessToken(token);
     setEmail(null);
+    setIsLoading(false);
   }
 
   async function signOut() {

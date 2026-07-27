@@ -168,6 +168,29 @@ export const ROLE_REGISTRY: Readonly<Record<string, Role>> = Object.freeze({
       "discount:manage",
       "cash:report_read",
       "cash:report_export",
+      // SPEC-137..156 §Fiscal RBAC — NOTE: there is NO formal RBAC spec number in
+      // the 137-156 range (no "rbac-fiscal" spec exists), so these invoice:* /
+      // fiscal-*:* / invoice-template:* / tax-rate:* / invoice-export:*
+      // permissions are invented following the established resource:action
+      // convention, exactly as prior domains mapped dotted spec names. ADMIN gets
+      // the full canonical set including platform-level tax-rate:manage and
+      // certificate management. WALKING SKELETON — the ARCA authorization behind
+      // invoice:issue is entirely SIMULATED (fake CAE), never a real emission.
+      "invoice:read",
+      "invoice:create",
+      "invoice:issue",
+      "invoice:credit",
+      "invoice:void",
+      "fiscal-pos:manage",
+      "fiscal-printer:read",
+      "fiscal-printer:manage",
+      "fiscal-certificate:read",
+      "fiscal-certificate:manage",
+      "invoice-template:read",
+      "invoice-template:manage",
+      "tax-rate:read",
+      "tax-rate:manage",
+      "invoice-export:manage",
     ],
   },
   role_manager: {
@@ -287,6 +310,23 @@ export const ROLE_REGISTRY: Readonly<Record<string, Role>> = Object.freeze({
       "discount:manage",
       "cash:report_read",
       "cash:report_export",
+      // SPEC-137..156 §Fiscal RBAC (no formal spec — see the ADMIN note above).
+      // MANAGER operates the fiscal surface (invoices, exports, printer/template
+      // config, POS config) and reads tax rates/certificates, but the
+      // platform-level tax-rate:manage and certificate management stay ADMIN-tier.
+      "invoice:read",
+      "invoice:create",
+      "invoice:issue",
+      "invoice:credit",
+      "invoice:void",
+      "fiscal-pos:manage",
+      "fiscal-printer:read",
+      "fiscal-printer:manage",
+      "fiscal-certificate:read",
+      "invoice-template:read",
+      "invoice-template:manage",
+      "tax-rate:read",
+      "invoice-export:manage",
     ],
   },
   role_employee: {

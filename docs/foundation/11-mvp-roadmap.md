@@ -17,7 +17,7 @@ Demostrar que un tenant puede contratar servicios, configurar una sucursal y com
 
 ## Fase 1 — Plataforma fundacional
 
-**App:** Maitre Dash (web)
+**App:** Maitre Dash (no táctil primero)
 
 - Tenant, marca, entidad fiscal y sucursal.
 - Usuarios, roles y auditoría.
@@ -27,11 +27,11 @@ Demostrar que un tenant puede contratar servicios, configurar una sucursal y com
 
 ## Fase 2 — Operación mínima
 
-**Apps:** Maitre Floor (tablet), Maitre Kitchen (tablet)
+**Apps:** Maitre Floor (táctil), Maitre Kitchen (táctil)
 
 - Abrir jornada de servicio, plazas y asignaciones.
 - Registrar llegada, visita y ocupación de mesas.
-- Mozo toma pedido (Floor, tablet): QR Menu integrado.
+- Mozo toma pedido (Floor, touch-first): QR Menu integrado.
 - Pedido se envía como comanda a Kitchen.
 - Cocina recibe, cambia estado (listo, entregado).
 - Precuenta y cuenta básica desde Floor.
@@ -39,7 +39,7 @@ Demostrar que un tenant puede contratar servicios, configurar una sucursal y com
 
 ## Fase 3 — Adquisición y autoservicio
 
-**App:** Maitre Guest (celular, web)
+**App:** Maitre Guest (táctil, mobile-first)
 
 - Reservas remotas desde Guest (mobile-first).
 - Confirmación y recordatorio.
@@ -51,7 +51,7 @@ Demostrar que un tenant puede contratar servicios, configurar una sucursal y com
 
 ## Fase 4 — Dinero y fiscalidad
 
-**App:** Maitre Cash (web, tablet)
+**App:** Maitre Cash (táctil primero, no táctil opcional)
 
 - Caja y sesiones desde Cash.
 - Pagos parciales y división de cuenta.
@@ -63,7 +63,7 @@ Demostrar que un tenant puede contratar servicios, configurar una sucursal y com
 
 ## Fase 5 — Integración y reputación
 
-**App:** Maitre Connect (web), Maitre Dash (extensión)
+**App:** Maitre Connect (no táctil), Maitre Dash (extensión)
 
 - Maitre Connect: gestión de conectores, webhooks, OAuth.
 - Google Business Profile: sincronización de reseñas.

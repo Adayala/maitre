@@ -2,10 +2,10 @@ import { useState, type FormEvent } from "react";
 import { Navigate, useSearchParams } from "react-router-dom";
 import { useAuth, isSupabaseConfigured } from "../../app/auth-context.js";
 
-// SPEC-023 — login happens via the identity provider's SDK; this screen
-// never touches passwords beyond forwarding them to supabase-js directly.
-// A fixture-token field is offered only when Supabase Auth isn't
-// configured (AUTH_DRIVER=fixture, local/demo backend).
+// SPEC-023 — login happens via the identity provider's SDK; this screen never
+// touches passwords beyond forwarding them to supabase-js directly. A
+// fixture-token field is offered only when Supabase Auth isn't configured in
+// the local build.
 export function LoginPage() {
   const { accessToken, signInWithPassword, signInWithToken } = useAuth();
   const [searchParams] = useSearchParams();
@@ -72,7 +72,7 @@ export function LoginPage() {
         <div>
           <p>
             Supabase Auth no está configurado en este build (falta VITE_SUPABASE_URL). Pegá un
-            access token válido (por ejemplo, el token de demo del backend) para continuar.
+            access token válido del backend local para continuar.
           </p>
           <label htmlFor="fixture-token">Access token</label>
           <input

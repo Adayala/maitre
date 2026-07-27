@@ -2,6 +2,7 @@ import type { MeContextResponse } from "@maitre/contracts";
 import { isUserEligibleForSession, userAuthenticatedEvent } from "@maitre/identity";
 import { isTenantOperable } from "@maitre/organization";
 import type { Container } from "./container.js";
+import { resolveDomainUser } from "./resolve-domain-user.js";
 
 export class AuthenticationRequiredError extends Error {}
 export class SessionExpiredError extends Error {}
@@ -29,10 +30,7 @@ export async function resolveMeContext(
     throw new AuthenticationRequiredError();
   }
 
-  const user = await container.users.findByExternalIdentity(
-    principal.provider,
-    principal.subject,
-  );
+  const user = await resolveDomainUser(container, principal);
   if (!user || !isUserEligibleForSession(user)) {
     throw new IdentityNotEnabledError();
   }

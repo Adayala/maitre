@@ -25,6 +25,7 @@ import { registerCheckRoutes } from "./routes/checks.js";
 import { registerPaymentRoutes } from "./routes/payments.js";
 import { registerServicePeriodRoutes } from "./routes/service-periods.js";
 import { registerReservationRoutes } from "./routes/reservations.js";
+import { registerCustomerReservationRoutes } from "./routes/customer-reservations.js";
 import { registerGuestRoutes } from "./routes/guests.js";
 import { registerWaitlistRoutes } from "./routes/waitlist.js";
 import { registerAvailabilityRoutes } from "./routes/availability.js";
@@ -87,6 +88,7 @@ export async function buildApp(container?: Container): Promise<FastifyInstance> 
   await registerPaymentRoutes(app, resolvedContainer);
   await registerServicePeriodRoutes(app, resolvedContainer);
   await registerReservationRoutes(app, resolvedContainer);
+  await registerCustomerReservationRoutes(app, resolvedContainer);
   await registerGuestRoutes(app, resolvedContainer);
   await registerWaitlistRoutes(app, resolvedContainer);
   await registerAvailabilityRoutes(app, resolvedContainer);
