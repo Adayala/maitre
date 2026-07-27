@@ -20,12 +20,15 @@ const ORDER_STATUS_LABEL: Record<Order["status"], string> = {
   CANCELLED: "Cancelado",
 };
 
+type VisitFocusSection = "check" | "orders" | "actions";
+
 export function VisitPage({ visitId }: { visitId: string }) {
   const api = useApi();
   const qc = useQueryClient();
   const { push, resetToFloor } = useNav();
   const now = useNow();
   const [flashMessage, setFlashMessage] = useState<string | null>(null);
+  const [focusSection, setFocusSection] = useState<VisitFocusSection | null>(null);
 
   const visitQ = useQuery({
     queryKey: ["visit", visitId],
@@ -131,8 +134,25 @@ export function VisitPage({ visitId }: { visitId: string }) {
 
   const draftOrder = orders.find((o) => o.status === "DRAFT");
   const activeOrders = orders.filter((o) => o.status !== "CANCELLED");
+  const prioritizedOrders = activeOrders
+    .slice()
+    .sort((a, b) => {
+      const score = (order: Order) => {
+        if (order.status === "DRAFT") return 0;
+        if (order.items.some((item) => item.status === "READY")) return 1;
+        if (order.status === "PARTIALLY_DELIVERED") return 2;
+        if (order.status === "IN_PREP") return 3;
+        if (order.status === "SUBMITTED") return 4;
+        if (order.status === "DELIVERED") return 5;
+        return 6;
+      };
+      const diff = score(a) - score(b);
+      if (diff !== 0) return diff;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
   const readyItems = activeOrders.flatMap((order) => order.items).filter((item) => item.status === "READY").length;
   const deliveredItems = activeOrders.flatMap((order) => order.items).filter((item) => item.status === "DELIVERED").length;
+  const paymentRequested = check?.status === "PAYMENT_PENDING";
 
   const canRequestPayment =
     check != null && check.status === "OPEN" && check.totals.balance > 0;
@@ -156,6 +176,14 @@ export function VisitPage({ visitId }: { visitId: string }) {
         : null;
 
   const tableLabel = visit ? tableSummary(visit) : "Mesa";
+  const visitPriority = getVisitPriority({
+    draftOrder: Boolean(draftOrder),
+    readyItems,
+    paymentRequested,
+    canRequestPayment,
+    canClose,
+    checkStatus: check?.status ?? null,
+  });
 
   return (
     <div className="screen">
@@ -188,6 +216,20 @@ export function VisitPage({ visitId }: { visitId: string }) {
             </div>
           )}
 
+          <div className={`waiter-banner waiter-banner--${visitPriority.tone}`}>
+            <div className="waiter-banner-copy">
+              <strong>{visitPriority.title}</strong>
+              <span>{visitPriority.message}</span>
+            </div>
+            <button
+              type="button"
+              className="btn btn--ghost btn--sm"
+              onClick={() => setFocusSection(visitPriority.section)}
+            >
+              {visitPriority.cta}
+            </button>
+          </div>
+
           <section className="waiter-kpi-strip">
             <article className="waiter-kpi-card">
               <span>Pedidos</span>
@@ -205,7 +247,7 @@ export function VisitPage({ visitId }: { visitId: string }) {
 
           {/* Check summary */}
           {check ? (
-            <section className="check-card">
+            <section className={`check-card${focusSection === "check" ? " check-card--focus" : ""}`}>
               <div className="check-card-head">
                 <span className="check-card-label">Cuenta</span>
                 <CheckStatusBadge status={check.status} />
@@ -224,9 +266,14 @@ export function VisitPage({ visitId }: { visitId: string }) {
                 <span>Saldo</span>
                 <span>{formatMoney(check.totals.balance, check.currency)}</span>
               </div>
+              {paymentRequested ? (
+                <p className="waiter-section-hint">Caja ya fue avisada. Esperá confirmación de pago para poder cerrar.</p>
+              ) : check.totals.balance > 0 ? (
+                <p className="waiter-section-hint">Si la mesa pide pagar, avisá a caja desde el dock inferior.</p>
+              ) : null}
             </section>
           ) : (
-            <section className="check-card check-card--empty">
+            <section className={`check-card check-card--empty${focusSection === "check" ? " check-card--focus" : ""}`}>
               <span className="check-card-label">Cuenta</span>
               <p className="muted">Todavía no se abrió la cuenta.</p>
             </section>
@@ -234,15 +281,25 @@ export function VisitPage({ visitId }: { visitId: string }) {
 
           {/* Orders */}
           <h2 className="section-title">Pedidos</h2>
-          {activeOrders.length === 0 ? (
+          <p className="waiter-list-hint">Se muestran primero los pedidos que el mozo puede resolver ahora.</p>
+          {prioritizedOrders.length === 0 ? (
             <div className="empty-inline">
               <span aria-hidden="true">🧾</span>
               <p>Sin pedidos. Tocá “Nuevo pedido” para empezar.</p>
             </div>
           ) : (
-            <div className="order-list">
-              {activeOrders.map((order) => (
-                <article key={order.id} className={`order-card order-card--${order.status.toLowerCase()}`}>
+            <div className={`order-list${focusSection === "orders" ? " order-list--focus" : ""}`}>
+              {prioritizedOrders.map((order) => (
+                <article
+                  key={order.id}
+                  className={`order-card order-card--${order.status.toLowerCase()}${
+                    order.status === "DRAFT"
+                      ? " order-card--draft-focus"
+                      : order.items.some((item) => item.status === "READY")
+                        ? " order-card--ready-focus"
+                        : ""
+                  }`}
+                >
                   <div className="order-card-head">
                     <span className={`order-pill order-pill--${order.status.toLowerCase()}`}>
                       {ORDER_STATUS_LABEL[order.status]}
@@ -251,6 +308,12 @@ export function VisitPage({ visitId }: { visitId: string }) {
                       {formatMoney(order.grandTotalMinorUnits, order.currency)}
                     </span>
                   </div>
+                  {order.status === "DRAFT" ? (
+                    <p className="waiter-section-hint">Borrador abierto: completalo y enviá a cocina.</p>
+                  ) : null}
+                  {order.items.some((item) => item.status === "READY") ? (
+                    <p className="waiter-section-hint">Hay ítems listos para entregar en mesa.</p>
+                  ) : null}
                   <ul className="order-items">
                     {order.items.map((item: OrderItem) => (
                       <OrderItemRow
@@ -283,7 +346,7 @@ export function VisitPage({ visitId }: { visitId: string }) {
       </main>
 
       {/* Thumb-reachable action dock */}
-      <div className="dock">
+      <div className={`dock${focusSection === "actions" ? " dock--focus" : ""}`}>
         {actionErrorMsg && (
           <p role="alert" className="dock-error">
             {actionErrorMsg}
@@ -335,4 +398,78 @@ function CheckStatusBadge({ status }: { status: Check["status"] }) {
   };
   const m = map[status];
   return <span className={`check-badge check-badge--${m.cls}`}>{m.label}</span>;
+}
+
+function getVisitPriority({
+  draftOrder,
+  readyItems,
+  paymentRequested,
+  canRequestPayment,
+  canClose,
+  checkStatus,
+}: {
+  draftOrder: boolean;
+  readyItems: number;
+  paymentRequested: boolean;
+  canRequestPayment: boolean;
+  canClose: boolean;
+  checkStatus: Check["status"] | null;
+}) {
+  if (draftOrder) {
+    return {
+      tone: "warning" as const,
+      title: "Hay un pedido sin enviar",
+      message: "La mesa tiene un borrador abierto. Conviene retomarlo antes de seguir tomando otro pedido.",
+      cta: "Ir a pedidos",
+      section: "orders" as const,
+    };
+  }
+
+  if (readyItems > 0) {
+    return {
+      tone: "success" as const,
+      title: "Hay platos listos para salir",
+      message: `${readyItems} ítem${readyItems === 1 ? "" : "s"} esperan entrega en mesa.`,
+      cta: "Ver pedidos",
+      section: "orders" as const,
+    };
+  }
+
+  if (paymentRequested) {
+    return {
+      tone: "info" as const,
+      title: "Pago en curso",
+      message: "Caja ya fue notificada. Seguí el estado de la cuenta antes de cerrar la mesa.",
+      cta: "Ver cuenta",
+      section: "check" as const,
+    };
+  }
+
+  if (canClose && checkStatus != null) {
+    return {
+      tone: "success" as const,
+      title: "Mesa lista para cerrar",
+      message: "La cuenta ya no bloquea el cierre. Podés finalizar la visita desde las acciones.",
+      cta: "Ir a acciones",
+      section: "actions" as const,
+    };
+  }
+
+  if (canRequestPayment) {
+    return {
+      tone: "info" as const,
+      title: "Cuenta abierta",
+      message: "Si la mesa pide pagar, podés solicitar la cuenta a caja desde abajo.",
+      cta: "Ver cuenta",
+      section: "check" as const,
+    };
+  }
+
+  return {
+    tone: "info" as const,
+    title: "Mesa en seguimiento",
+    message: "La visita está en curso. Tomá pedidos, seguí cocina y cerrá cuando corresponda.",
+    cta: "Ir a acciones",
+    section: "actions" as const,
+  };
 }
