@@ -1,4 +1,9 @@
 import { Link, Navigate, useLocation } from "react-router-dom";
+import {
+  prefetchOnIntent,
+  preloadReservationCreationExperience,
+  preloadReservationManagementExperience,
+} from "../../lib/route-prefetch.js";
 
 interface ReservationDetail {
   id: string;
@@ -11,8 +16,11 @@ interface ReservationDetail {
 }
 
 export function CustomerReservationConfirmationPage() {
+  const reservePrefetchProps = prefetchOnIntent(preloadReservationCreationExperience);
+  const reservationsPrefetchProps = prefetchOnIntent(preloadReservationManagementExperience);
   const location = useLocation();
   const reservation = location.state as ReservationDetail | undefined;
+  const confirmationNextAction = getConfirmationNextAction(reservation?.status ?? "");
 
   if (!reservation) {
     return <Navigate to="/public/reservations/new" replace />;
@@ -23,10 +31,23 @@ export function CustomerReservationConfirmationPage() {
       <h1 id="customer-reservation-confirmation-heading">Reserva creada</h1>
       <p>Tu solicitud de reserva quedó creada correctamente.</p>
 
+      <article className="public-card public-info-card">
+        <strong>{confirmationNextAction.title}</strong>
+        <p>{confirmationNextAction.message}</p>
+        <div className="public-checklist">
+          {confirmationNextAction.steps.map((step) => (
+            <div key={step} className="public-check-item public-check-item--done">
+              <strong>✓</strong>
+              <span>{step}</span>
+            </div>
+          ))}
+        </div>
+      </article>
+
       <div className="public-card-grid">
         <article className="public-card">
           <h2>Estado</h2>
-          <p>{reservation.status}</p>
+          <p>{reservationStatusLabel(reservation.status)}</p>
         </article>
         <article className="public-card">
           <h2>Fecha y hora</h2>
@@ -50,16 +71,51 @@ export function CustomerReservationConfirmationPage() {
       ) : null}
 
       <div className="public-button-row">
-        <Link to="/public/reservations" className="public-secondary-cta">
+        <Link to="/public/reservations" className="public-secondary-cta" {...reservationsPrefetchProps}>
           Ver mis reservas
         </Link>
         <Link to="/public" className="public-secondary-cta">
           Volver al inicio
         </Link>
-        <Link to="/public/menu" className="public-cta">
+        <Link to="/public/menu" className="public-cta" {...reservePrefetchProps}>
           Seguir explorando
         </Link>
       </div>
     </section>
   );
+}
+
+function reservationStatusLabel(status: string) {
+  switch (status) {
+    case "PENDING":
+      return "Pendiente";
+    case "CONFIRMED":
+      return "Confirmada";
+    case "SEATED":
+      return "Sentada";
+    case "COMPLETED":
+      return "Completada";
+    case "CANCELLED":
+      return "Cancelada";
+    case "NO_SHOW":
+      return "No-show";
+    default:
+      return status;
+  }
+}
+
+function getConfirmationNextAction(status: string) {
+  if (status === "CONFIRMED") {
+    return {
+      title: "La reserva ya quedó confirmada",
+      message: "Ahora conviene revisar el detalle, guardar la información y seguir el estado desde Mis reservas.",
+      steps: ["Guardá fecha y hora", "Revisá el detalle de la reserva", "Volvé a Mis reservas para seguimiento"],
+    };
+  }
+
+  return {
+    title: "La reserva quedó creada y en seguimiento",
+    message: "Dependiendo del flujo del local, puede requerir confirmación posterior. Desde Mis reservas vas a poder ver cambios o cancelarla.",
+    steps: ["Verificá fecha, cantidad y notas", "Entrá a Mis reservas para seguir el estado", "Si hace falta, creá otra reserva"],
+  };
 }

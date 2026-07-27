@@ -21,6 +21,9 @@ interface ProfileDefinition {
   type: "internal" | "public";
   badge: string;
   description: string;
+  primarySurface: string;
+  interactionMode: string;
+  focusSummary: string;
   modules: ProfileModule[];
   notes?: string[];
 }
@@ -32,6 +35,9 @@ const PROFILE_DEFINITIONS: ProfileDefinition[] = [
     type: "internal",
     badge: "Control total",
     description: "Visión completa del negocio y autoridad total sobre configuración, operación y reporting.",
+    primarySurface: "Backoffice web",
+    interactionMode: "No táctil / escritorio",
+    focusSummary: "Decisiones, estructura y lectura transversal del negocio.",
     modules: [
       { name: "Organización", capabilities: ["Crear tenants, marcas y sucursales", "Gestionar usuarios y permisos"] },
       { name: "Operación", capabilities: ["Ver y operar floor, reservas, cocina y caja", "Acceder auditoría y dashboard"] },
@@ -44,6 +50,9 @@ const PROFILE_DEFINITIONS: ProfileDefinition[] = [
     type: "internal",
     badge: "Administración",
     description: "Administra estructura, usuarios, catálogo y casi toda la operación diaria.",
+    primarySurface: "Backoffice web",
+    interactionMode: "No táctil / escritorio",
+    focusSummary: "Configuración diaria, usuarios y soporte operativo del tenant.",
     modules: [
       { name: "Organización", capabilities: ["Gestionar marcas, sucursales, salones y mesas", "Administrar usuarios, membresías y suscripciones"] },
       { name: "Operación", capabilities: ["Operar floor, reservas, ordering, cocina y caja", "Leer auditoría y métricas"] },
@@ -56,6 +65,9 @@ const PROFILE_DEFINITIONS: ProfileDefinition[] = [
     type: "internal",
     badge: "Supervisión",
     description: "Supervisa la operación, corrige excepciones y coordina equipos sin administrar el tenant.",
+    primarySurface: "Web / tablet",
+    interactionMode: "Mixto",
+    focusSummary: "Supervisión operativa, autorizaciones y corrección de excepciones.",
     modules: [
       { name: "Floor & reservas", capabilities: ["Supervisar seating, waitlist y service periods", "Autorizar correcciones operativas"] },
       { name: "Cocina & caja", capabilities: ["Gestionar excepciones de cocina y reconciliaciones", "Aprobar ajustes y descuentos"] },
@@ -68,6 +80,9 @@ const PROFILE_DEFINITIONS: ProfileDefinition[] = [
     type: "internal",
     badge: "Front of house",
     description: "Coordina el salón: seating, reservas, waitlist y el enlace entre piso y cocina.",
+    primarySurface: "Tablet táctil",
+    interactionMode: "Táctil",
+    focusSummary: "Seating, reservas, waitlist y coordinación de sala.",
     modules: [
       { name: "Floor", capabilities: ["Abrir, mover y cerrar visitas", "Gestionar ocupación y estado de mesas"] },
       { name: "Reservas", capabilities: ["Crear, confirmar, sentar y cancelar reservas", "Gestionar waitlist y prioridades"] },
@@ -80,6 +95,9 @@ const PROFILE_DEFINITIONS: ProfileDefinition[] = [
     type: "internal",
     badge: "Servicio",
     description: "Opera las mesas asignadas: toma pedidos, acompaña reservas sentadas y entrega órdenes.",
+    primarySurface: "Mobile táctil",
+    interactionMode: "Táctil",
+    focusSummary: "Mesas, pedidos y seguimiento de servicio en piso.",
     modules: [
       { name: "Floor", capabilities: ["Abrir, mover y cerrar visitas", "Leer mesa, cuenta y estado operativo"] },
       { name: "Ordering", capabilities: ["Crear, enviar, modificar y cancelar pedidos", "Marcar entrega al cliente"] },
@@ -92,6 +110,9 @@ const PROFILE_DEFINITIONS: ProfileDefinition[] = [
     type: "internal",
     badge: "Cobro",
     description: "Se enfoca en caja, cobros y conciliación operativa básica del turno.",
+    primarySurface: "Tablet / web táctil",
+    interactionMode: "Táctil",
+    focusSummary: "Cobro, caja y conciliación del turno.",
     modules: [
       { name: "Caja", capabilities: ["Abrir/cerrar sesión", "Registrar movimientos y conteos"] },
       { name: "Pagos", capabilities: ["Crear, capturar y refund pagos", "Liquidar checks"] },
@@ -104,6 +125,9 @@ const PROFILE_DEFINITIONS: ProfileDefinition[] = [
     type: "internal",
     badge: "Producción",
     description: "Trabaja la cola de producción y mueve los comandos por su ciclo de preparación.",
+    primarySurface: "KDS tablet / monitor",
+    interactionMode: "Táctil",
+    focusSummary: "Producción, prioridad de cola y handoff.",
     modules: [
       { name: "Kitchen", capabilities: ["Claim/start/hold/ready/handoff de comandos", "Leer cola y estaciones asignadas"] },
       { name: "Ordering", capabilities: ["Leer órdenes relevantes para producción", "Actualizar líneas en preparación/listas"] },
@@ -117,6 +141,9 @@ const PROFILE_DEFINITIONS: ProfileDefinition[] = [
     badge: "Consulta pública",
     description:
       "Perfil externo de consulta. No es un rol interno RBAC: representa la experiencia pública/anónima del comensal antes de autenticarse.",
+    primarySurface: "Web pública / mobile",
+    interactionMode: "Self-service",
+    focusSummary: "Discovery, reserva y seguimiento personal.",
     modules: [
       { name: "Experiencia pública", capabilities: ["Ver menú publicado", "Consultar promociones y sucursales visibles sin login"] },
       { name: "Discovery", capabilities: ["Consultar disponibilidad resumida si habilitamos surface pública", "Iniciar flujo de reserva"] },
@@ -172,6 +199,21 @@ export function ProfilesPage() {
             <h2>{selectedProfile.label}</h2>
             <p>{selectedProfile.description}</p>
           </header>
+
+          <section className="profile-module-grid" aria-label="Resumen del perfil">
+            <article className="profile-card">
+              <h3>Superficie principal</h3>
+              <p>{selectedProfile.primarySurface}</p>
+            </article>
+            <article className="profile-card">
+              <h3>Modo de interacción</h3>
+              <p>{selectedProfile.interactionMode}</p>
+            </article>
+            <article className="profile-card">
+              <h3>Foco principal</h3>
+              <p>{selectedProfile.focusSummary}</p>
+            </article>
+          </section>
 
           <div className="profile-module-grid">
             {selectedProfile.modules.map((module) => (

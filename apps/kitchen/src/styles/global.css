@@ -1515,6 +1515,35 @@ h3 {
   font-weight: 600;
   margin: 0 0 0.5rem;
 }
+
+.alerts-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+
+.alerts-summary-card {
+  display: grid;
+  gap: 0.18rem;
+  padding: 0.65rem 0.7rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.alerts-summary-card span {
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.alerts-summary-card strong {
+  font-size: 1.15rem;
+}
+
 .alerts-empty {
   color: var(--muted);
   margin: 0.5rem 0;
@@ -1570,6 +1599,12 @@ h3 {
   font-weight: 700;
   color: var(--muted);
 }
+
+.alert-opened {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
 .alert-actions {
   display: flex;
   gap: 0.4rem;

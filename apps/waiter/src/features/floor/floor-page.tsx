@@ -37,6 +37,14 @@ interface FloorData {
   counts: Record<string, number>;
 }
 
+interface FloorPriority {
+  tone: "success" | "warning" | "info";
+  title: string;
+  message: string;
+  cta: string;
+  onAction: () => void;
+}
+
 const STATUS_META: Record<TableStatusValue, { label: string; cls: string; icon: string }> = {
   AVAILABLE: { label: "Libre", cls: "s-available", icon: "○" },
   OCCUPIED: { label: "Ocupada", cls: "s-occupied", icon: "●" },
@@ -110,6 +118,10 @@ export function FloorPage() {
 
   const isEmpty = !query.isLoading && (query.data?.groups.length ?? 0) === 0;
   const counts = query.data?.counts;
+  const payingCount = counts?.["PAYING"] ?? 0;
+  const occupiedCount = counts?.["OCCUPIED"] ?? 0;
+  const reservedCount = counts?.["RESERVED"] ?? 0;
+  const availableCount = counts?.["AVAILABLE"] ?? 0;
 
   function handleTap(table: FloorTable) {
     if (table.status === "AVAILABLE") {
@@ -134,6 +146,15 @@ export function FloorPage() {
       }))
       .filter((group) => group.tables.length > 0);
   }, [query.data, statusFilter]);
+
+  const floorPriority = getFloorPriority({
+    payingCount,
+    occupiedCount,
+    reservedCount,
+    availableCount,
+    statusFilter,
+    setStatusFilter,
+  });
 
   return (
     <div className="screen">
@@ -162,6 +183,45 @@ export function FloorPage() {
           emptyTitle="No hay mesas"
           emptyMessage="Todavía no hay mesas con actividad en esta sucursal."
         >
+          {floorPriority ? (
+            <div className={`waiter-banner waiter-banner--${floorPriority.tone}`}>
+              <div className="waiter-banner-copy">
+                <strong>{floorPriority.title}</strong>
+                <span>{floorPriority.message}</span>
+              </div>
+              <button type="button" className="btn btn--ghost btn--sm" onClick={floorPriority.onAction}>
+                {floorPriority.cta}
+              </button>
+            </div>
+          ) : null}
+
+          <section className="waiter-kpi-strip" aria-label="Resumen operativo del salón">
+            <button
+              type="button"
+              className="waiter-kpi-card"
+              onClick={() => setStatusFilter((current) => (current === "PAYING" ? "ALL" : "PAYING"))}
+            >
+              <span>Pagando</span>
+              <strong>{payingCount}</strong>
+            </button>
+            <button
+              type="button"
+              className="waiter-kpi-card"
+              onClick={() => setStatusFilter((current) => (current === "OCCUPIED" ? "ALL" : "OCCUPIED"))}
+            >
+              <span>Ocupadas</span>
+              <strong>{occupiedCount}</strong>
+            </button>
+            <button
+              type="button"
+              className="waiter-kpi-card"
+              onClick={() => setStatusFilter((current) => (current === "AVAILABLE" ? "ALL" : "AVAILABLE"))}
+            >
+              <span>Libres</span>
+              <strong>{availableCount}</strong>
+            </button>
+          </section>
+
           {query.data?.limited && (
             <p className="floor-note">
               Mostrando solo mesas con actividad. Para ver todo el salón se necesita permiso de
@@ -241,4 +301,62 @@ function tallyCounts(groups: FloorGroup[]): Record<string, number> {
   const counts: Record<string, number> = {};
   for (const g of groups) for (const t of g.tables) counts[t.status] = (counts[t.status] ?? 0) + 1;
   return counts;
+}
+
+function getFloorPriority({
+  payingCount,
+  occupiedCount,
+  reservedCount,
+  availableCount,
+  statusFilter,
+  setStatusFilter,
+}: {
+  payingCount: number;
+  occupiedCount: number;
+  reservedCount: number;
+  availableCount: number;
+  statusFilter: TableStatusValue | "ALL";
+  setStatusFilter: React.Dispatch<React.SetStateAction<TableStatusValue | "ALL">>;
+}): FloorPriority | null {
+  if (payingCount > 0) {
+    return {
+      tone: "warning",
+      title: `${payingCount} mesa${payingCount === 1 ? "" : "s"} cobrando ahora`,
+      message: "Conviene resolver primero las mesas en pago para liberar rotación y evitar esperas.",
+      cta: statusFilter === "PAYING" ? "Ver todas" : "Ir a pagando",
+      onAction: () => setStatusFilter((current) => (current === "PAYING" ? "ALL" : "PAYING")),
+    };
+  }
+
+  if (occupiedCount > 0) {
+    return {
+      tone: "info",
+      title: `${occupiedCount} mesa${occupiedCount === 1 ? "" : "s"} en servicio`,
+      message: "Revisá rápido las ocupadas para seguir pedidos, entregas o próximos cierres.",
+      cta: statusFilter === "OCCUPIED" ? "Ver todas" : "Ir a ocupadas",
+      onAction: () => setStatusFilter((current) => (current === "OCCUPIED" ? "ALL" : "OCCUPIED")),
+    };
+  }
+
+  if (reservedCount > 0) {
+    return {
+      tone: "info",
+      title: `${reservedCount} mesa${reservedCount === 1 ? "" : "s"} reservada${reservedCount === 1 ? "" : "s"}`,
+      message: "Chequeá preparación de mesas reservadas para anticiparte a próximas llegadas.",
+      cta: statusFilter === "RESERVED" ? "Ver todas" : "Ir a reservadas",
+      onAction: () => setStatusFilter((current) => (current === "RESERVED" ? "ALL" : "RESERVED")),
+    };
+  }
+
+  if (availableCount > 0) {
+    return {
+      tone: "success",
+      title: `${availableCount} mesa${availableCount === 1 ? "" : "s"} libre${availableCount === 1 ? "" : "s"}`,
+      message: "Hay capacidad para sentar una nueva visita enseguida si entra un grupo.",
+      cta: statusFilter === "AVAILABLE" ? "Ver todas" : "Ir a libres",
+      onAction: () => setStatusFilter((current) => (current === "AVAILABLE" ? "ALL" : "AVAILABLE")),
+    };
+  }
+
+  return null;
 }

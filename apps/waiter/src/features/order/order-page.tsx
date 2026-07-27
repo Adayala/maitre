@@ -23,6 +23,8 @@ interface MenuData {
   categories: Category[];
 }
 
+type OrderFocusSection = "menu" | "cart";
+
 export function OrderPage({ visitId, orderId }: { visitId: string; orderId: string }) {
   const api = useApi();
   const qc = useQueryClient();
@@ -33,6 +35,7 @@ export function OrderPage({ visitId, orderId }: { visitId: string; orderId: stri
   const [addProduct, setAddProduct] = useState<Product | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [focusSection, setFocusSection] = useState<OrderFocusSection | null>(null);
 
   // Resolve brand → default menu → categories. Needs branch/menu read; a plain
   // waiter token may lack branch:read, which surfaces as a clear error state.
@@ -75,6 +78,7 @@ export function OrderPage({ visitId, orderId }: { visitId: string; orderId: stri
     [order],
   );
   const cartCount = cartItems.reduce((s, i) => s + i.quantity, 0);
+  const searchActive = searchTerm.trim().length > 0;
 
   function invalidateOrder() {
     void qc.invalidateQueries({ queryKey: ["order", orderId] });
@@ -110,6 +114,11 @@ export function OrderPage({ visitId, orderId }: { visitId: string; orderId: stri
       : submit.error instanceof Error
         ? submit.error.message
         : null;
+  const orderPriority = getOrderPriority({
+    cartCount,
+    searchActive,
+    resultCount: products.length,
+  });
 
   return (
     <div className="screen">
@@ -143,6 +152,20 @@ export function OrderPage({ visitId, orderId }: { visitId: string; orderId: stri
       )}
 
       <main className="screen-body screen-body--with-dock">
+        <div className={`waiter-banner waiter-banner--${orderPriority.tone}`}>
+          <div className="waiter-banner-copy">
+            <strong>{orderPriority.title}</strong>
+            <span>{orderPriority.message}</span>
+          </div>
+          <button
+            type="button"
+            className="btn btn--ghost btn--sm"
+            onClick={() => setFocusSection(orderPriority.section)}
+          >
+            {orderPriority.cta}
+          </button>
+        </div>
+
         <StateView
           isLoading={menuQ.isLoading}
           error={(menuQ.error as Error) ?? null}
@@ -159,10 +182,19 @@ export function OrderPage({ visitId, orderId }: { visitId: string; orderId: stri
             isEmpty={!productsQ.isLoading && products.length === 0}
             loadingLabel="Cargando platos…"
             emptyIcon="🍽️"
-            emptyTitle="Sin platos"
-            emptyMessage="Esta categoría no tiene platos disponibles."
+            emptyTitle={searchActive ? "Sin resultados" : "Sin platos"}
+            emptyMessage={
+              searchActive
+                ? "No encontramos platos con esa búsqueda dentro de esta categoría."
+                : "Esta categoría no tiene platos disponibles."
+            }
           >
-            <ul className="product-list">
+            <div className="waiter-list-hint">
+              {searchActive
+                ? `${products.length} resultado${products.length === 1 ? "" : "s"} para “${searchTerm.trim()}”.`
+                : "Elegí platos del menú y revisá el pedido antes de enviarlo a cocina."}
+            </div>
+            <ul className={`product-list${focusSection === "menu" ? " product-list--focus" : ""}`}>
               {products.map((p) => {
                 const available = p.status === "AVAILABLE";
                 return (
@@ -198,17 +230,27 @@ export function OrderPage({ visitId, orderId }: { visitId: string; orderId: stri
       </main>
 
       {/* Cart dock */}
-      <div className="dock dock--cart">
+      <div className={`dock dock--cart${focusSection === "cart" || cartCount > 0 ? " dock--focus" : ""}`}>
         {submitError && (
           <p role="alert" className="dock-error">
             {submitError}
           </p>
         )}
+        <p className="dock-hint">
+          {cartCount === 0
+            ? "Armá el pedido tocando platos del menú."
+            : "Revisá cantidades y subtotal antes de enviar a cocina."}
+        </p>
         <div className="cart-dock-row">
           <button
             type="button"
             className="cart-summary"
-            onClick={() => cartCount > 0 && setCartOpen(true)}
+            onClick={() => {
+              if (cartCount > 0) {
+                setFocusSection("cart");
+                setCartOpen(true);
+              }
+            }}
             disabled={cartCount === 0}
           >
             <span className="cart-count">{cartCount}</span>
@@ -240,6 +282,7 @@ export function OrderPage({ visitId, orderId }: { visitId: string; orderId: stri
           onAdded={() => {
             setAddProduct(null);
             invalidateOrder();
+            setFocusSection("cart");
           }}
         />
       )}
@@ -254,4 +297,42 @@ export function OrderPage({ visitId, orderId }: { visitId: string; orderId: stri
       )}
     </div>
   );
+}
+
+function getOrderPriority({
+  cartCount,
+  searchActive,
+  resultCount,
+}: {
+  cartCount: number;
+  searchActive: boolean;
+  resultCount: number;
+}) {
+  if (cartCount > 0) {
+    return {
+      tone: "success" as const,
+      title: "Pedido en armado",
+      message: `Ya hay ${cartCount} ítem${cartCount === 1 ? "" : "s"} cargado${cartCount === 1 ? "" : "s"}. Revisalo antes de enviar.`,
+      cta: "Ver pedido",
+      section: "cart" as const,
+    };
+  }
+
+  if (searchActive && resultCount === 0) {
+    return {
+      tone: "warning" as const,
+      title: "Sin coincidencias",
+      message: "Probá cambiar la búsqueda o navegar otra categoría para seguir armando el pedido.",
+      cta: "Ver menú",
+      section: "menu" as const,
+    };
+  }
+
+  return {
+    tone: "info" as const,
+    title: "Listo para tomar pedido",
+    message: "Buscá platos por categoría o por texto y cargalos al carrito para enviarlos a cocina.",
+    cta: "Ver menú",
+    section: "menu" as const,
+  };
 }

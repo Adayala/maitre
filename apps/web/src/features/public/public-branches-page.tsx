@@ -1,5 +1,9 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import {
+  prefetchOnIntent,
+  preloadReservationCreationExperience,
+} from "../../lib/route-prefetch.js";
 const PUBLIC_MENU_TOKEN = "demo-qr-menu-token";
 
 interface PublicBranchPayload {
@@ -16,6 +20,7 @@ interface PublicBranchPayload {
 }
 
 export function PublicBranchesPage() {
+  const reservePrefetchProps = prefetchOnIntent(preloadReservationCreationExperience);
   const branchesQuery = useQuery({
     queryKey: ["public-branches-live", PUBLIC_MENU_TOKEN],
     queryFn: async () => {
@@ -30,6 +35,17 @@ export function PublicBranchesPage() {
       <h1 id="public-branches-heading">Sucursales</h1>
       <p>Listado público de sucursales conectado a la surface pública real del backend.</p>
 
+      <article className="public-card public-info-card">
+        <strong>Qué resuelve esta pantalla</strong>
+        <p>
+          Antes de reservar, el cliente puede validar en qué sede quiere continuar y por qué canal conviene seguir.
+        </p>
+        <div className="public-detail-list">
+          <span><strong>Objetivo:</strong> elegir sede antes de reservar</span>
+          <span><strong>Siguiente paso:</strong> revisar disponibilidad o pasar a reserva</span>
+        </div>
+      </article>
+
       {branchesQuery.isLoading ? (
         <p role="status">Cargando sucursales…</p>
       ) : branchesQuery.error ? (
@@ -40,19 +56,77 @@ export function PublicBranchesPage() {
         <div className="public-card-grid">
           {branchesQuery.data?.data.branch ? (
             <article className="public-card">
-              <h2>{branchesQuery.data.data.branch.name}</h2>
-              <p>Código: {branchesQuery.data.data.branch.code}</p>
-              <p>Zona horaria: {branchesQuery.data.data.branch.timezone}</p>
-              {branchesQuery.data.data.branch.contactEmail ? <p>Email: {branchesQuery.data.data.branch.contactEmail}</p> : null}
-              {branchesQuery.data.data.branch.contactPhone ? <p>Teléfono: {branchesQuery.data.data.branch.contactPhone}</p> : null}
+              <div className="public-route-meta">
+                <span className="public-route-badge">Sucursal visible</span>
+                <h2>{branchesQuery.data.data.branch.name}</h2>
+              </div>
+              <div className="public-checklist">
+                <div className="public-check-item public-check-item--done">
+                  <strong>✓</strong>
+                  <span>Ya encontraste una sede visible para continuar.</span>
+                </div>
+                <div className="public-check-item">
+                  <strong>→</strong>
+                  <span>Ahora conviene validar horario o pasar directo a la reserva.</span>
+                </div>
+              </div>
+              <div className="public-detail-list">
+                <span>
+                  <strong>Código:</strong> {branchesQuery.data.data.branch.code}
+                </span>
+                <span>
+                  <strong>Zona horaria:</strong> {branchesQuery.data.data.branch.timezone}
+                </span>
+                {branchesQuery.data.data.branch.contactEmail ? (
+                  <span>
+                    <strong>Email:</strong> {branchesQuery.data.data.branch.contactEmail}
+                  </span>
+                ) : null}
+                {branchesQuery.data.data.branch.contactPhone ? (
+                  <span>
+                    <strong>Teléfono:</strong> {branchesQuery.data.data.branch.contactPhone}
+                  </span>
+                ) : null}
+              </div>
+              <div className="public-button-row">
+                <Link to="/public/availability" className="public-secondary-cta">
+                  Consultar disponibilidad
+                </Link>
+                <Link to="/public/reservations/new" className="public-cta" {...reservePrefetchProps}>
+                  Reservar en esta sede
+                </Link>
+              </div>
             </article>
           ) : null}
         </div>
       )}
 
-      <Link to="/public/availability" className="public-secondary-cta">
-        Consultar disponibilidad
-      </Link>
+      <article className="public-card">
+        <h2>Recorrido desde sucursales</h2>
+        <div className="public-checklist">
+          <div className="public-check-item public-check-item--done">
+            <strong>1</strong>
+            <span>Elegí la sede que mejor te sirve.</span>
+          </div>
+          <div className="public-check-item">
+            <strong>2</strong>
+            <span>Consultá disponibilidad pública si todavía dudás del horario.</span>
+          </div>
+          <div className="public-check-item">
+            <strong>3</strong>
+            <span>Pasá a reserva autenticada cuando ya tengas una decisión.</span>
+          </div>
+        </div>
+      </article>
+
+      <div className="public-button-row">
+        <Link to="/public/availability" className="public-secondary-cta">
+          Consultar disponibilidad
+        </Link>
+        <Link to="/public/menu" className="public-secondary-cta">
+          Ver menú
+        </Link>
+      </div>
     </section>
   );
 }

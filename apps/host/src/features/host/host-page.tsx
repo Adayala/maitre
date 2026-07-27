@@ -514,12 +514,20 @@ export function HostPage() {
 
         <section className="cashier-kpi-strip">
           <article className="cashier-kpi-card">
-            <span>Reservas</span>
-            <strong>{reservationsQuery.data?.data.length ?? "—"}</strong>
+            <span>Llegan pronto</span>
+            <strong>{arrivingSoonReservations.length}</strong>
           </article>
           <article className="cashier-kpi-card">
-            <span>Waitlist</span>
-            <strong>{waitlistQuery.data?.data.length ?? "—"}</strong>
+            <span>Pendientes</span>
+            <strong>{pendingReservations.length}</strong>
+          </article>
+          <article className="cashier-kpi-card">
+            <span>Waitlist sentable</span>
+            <strong>{seatableWaitlistCount}</strong>
+          </article>
+          <article className="cashier-kpi-card">
+            <span>Notificados</span>
+            <strong>{notifiedEntries.length}</strong>
           </article>
           <article className="cashier-kpi-card">
             <span>Mesas libres</span>
@@ -542,15 +550,26 @@ export function HostPage() {
             </div>
             {arrivingSoonReservations.length > 0 ? (
               <div className="host-arrivals-list">
-                {arrivingSoonReservations.slice(0, 4).map((reservation) => (
-                  <article key={reservation.id} className="host-arrival-card">
+                {arrivingSoonReservations.slice(0, 4).map((reservation) => {
+                  const minutesUntil = Math.round((Date.parse(reservation.startAt) - now) / 60000);
+                  const arrivalTone =
+                    reservation.status === "PENDING"
+                      ? "pending"
+                      : minutesUntil <= 0
+                        ? "ready"
+                        : minutesUntil <= 20
+                          ? "soon"
+                          : "scheduled";
+                  return (
+                  <article key={reservation.id} className={`host-arrival-card host-arrival-card--${arrivalTone}`}>
                     <div className="host-arrival-main">
-                      <strong>{formatDateTime(reservation.startAt)}</strong>
+                      <strong>{formatReservationHeading(reservation, guestById.get(reservation.guestId ?? "") ?? null)}</strong>
+                      <p>{formatDateTime(reservation.startAt)} · {formatArrivalTiming(minutesUntil)}</p>
                       <p>{reservation.partySize} pax · {reservation.durationMinutes} min</p>
                       <p>{reservation.tableIds?.length ? `Mesas: ${reservation.tableIds.join(", ")}` : "Sin mesa asignada"}</p>
                     </div>
                     <div className="host-arrival-actions">
-                      <span className={`host-status host-status--${reservation.status.toLowerCase()}`}>{reservation.status}</span>
+                      <span className={`host-status host-status--${reservation.status.toLowerCase()}`}>{reservationStatusLabel(reservation.status)}</span>
                       {reservation.status === "PENDING" ? (
                         <button
                           type="button"
@@ -571,7 +590,7 @@ export function HostPage() {
                       ) : null}
                     </div>
                   </article>
-                ))}
+                )})}
               </div>
             ) : (
               <div className="host-empty-note">
@@ -1253,6 +1272,33 @@ function formatDateTime(value: string) {
 function formatReservationHeading(reservation: ReservationListItem, guest: GuestProfile | null) {
   const guestLabel = guest?.displayName?.trim() || reservation.guestId?.slice(0, 8) || "Sin huésped";
   return `${guestLabel} · ${reservation.partySize} pax`;
+}
+
+function formatArrivalTiming(minutesUntil: number) {
+  if (minutesUntil <= 0) return `llegando ahora · ${Math.abs(minutesUntil)} min ${minutesUntil === 0 ? "de horario" : "tarde"}`;
+  if (minutesUntil <= 20) return `llega en ${minutesUntil} min`;
+  return `llega en ${minutesUntil} min`;
+}
+
+function reservationStatusLabel(status: ReservationListItem["status"]) {
+  switch (status) {
+    case "PENDING":
+      return "Pendiente";
+    case "CONFIRMED":
+      return "Confirmada";
+    case "SEATED":
+      return "Sentada";
+    case "COMPLETED":
+      return "Completada";
+    case "CANCELLED":
+      return "Cancelada";
+    case "NO_SHOW":
+      return "No-show";
+    case "EXPIRED":
+      return "Expirada";
+    default:
+      return status;
+  }
 }
 
 function formatWaitlistHeading(entry: WaitlistEntry, guest: GuestProfile | null) {

@@ -27,6 +27,7 @@ const RUSH_PREF_KEY = "maitre.kitchen.rushMode";
 
 type FilterKey = "ALL" | CommandStatus;
 type QuickView = "NONE" | "LATE" | "READY" | "MINE" | "NEW";
+type FocusTone = "late" | "ready" | "new";
 
 const FILTERS: Array<{ key: FilterKey; label: string }> = [
   { key: "ALL", label: "Todas" },
@@ -64,6 +65,15 @@ interface LateNotice {
 interface ActionSuccess {
   message: string;
   at: number;
+}
+
+interface OperationalFocus {
+  tone: FocusTone;
+  eyebrow: string;
+  title: string;
+  message: string;
+  actionLabel: string;
+  onAction: () => void;
 }
 
 const ACTION_PENDING_LABEL: Record<CommandAction, string> = {
@@ -421,36 +431,28 @@ export function KdsPage() {
           commands: visibleCommands.filter((command) => command.status === section.key),
         })).filter((section) => section.commands.length > 0)
       : [];
+  const receivedCount = commands.filter((command) => command.status === "RECEIVED").length;
+  const claimedCount = commands.filter((command) => command.status === "CLAIMED").length;
+  const inProgressCount = commands.filter((command) => command.status === "IN_PROGRESS").length;
+  const onHoldCount = commands.filter((command) => command.status === "ON_HOLD").length;
   const lateCount = commands.filter((command) => urgencyFor(now - new Date(command.receivedAt).getTime()) === "late").length;
   const readyCount = commands.filter((command) => command.status === "READY").length;
   const mineCount = commands.filter((command) => command.ownerActorRef === me?.user.id).length;
   const newCount = commands.filter((command) => newArrivalAt[command.id] !== undefined).length;
-  const rushPriority =
-    lateCount > 0
-      ? {
-          tone: "late" as const,
-          title: `${lateCount} atrasada${lateCount === 1 ? "" : "s"}`,
-          message: "Priorizá tarjetas en rojo antes de seguir tomando carga nueva.",
-          actionLabel: quickView === "LATE" ? "Ver cola completa" : "Ir a atrasadas",
-          onAction: () => setQuickView((current) => (current === "LATE" ? "NONE" : "LATE")),
-        }
-      : readyCount > 0
-        ? {
-            tone: "ready" as const,
-            title: `${readyCount} lista${readyCount === 1 ? "" : "s"} para salir`,
-            message: "Conviene destrabar handoff para liberar espacio de producción.",
-            actionLabel: quickView === "READY" ? "Ver cola completa" : "Ir a listas",
-            onAction: () => setQuickView((current) => (current === "READY" ? "NONE" : "READY")),
-          }
-        : newCount > 0
-          ? {
-              tone: "new" as const,
-              title: `${newCount} ingreso${newCount === 1 ? "" : "s"} reciente${newCount === 1 ? "" : "s"}`,
-              message: "Revisá rápido lo nuevo para repartir carga sin atrasarte.",
-              actionLabel: quickView === "NEW" ? "Ver cola completa" : "Ir a recién",
-              onAction: () => setQuickView((current) => (current === "NEW" ? "NONE" : "NEW")),
-            }
-          : null;
+  const operationalFocus = getOperationalFocus({
+    lateCount,
+    readyCount,
+    receivedCount,
+    claimedCount,
+    inProgressCount,
+    onHoldCount,
+    mineCount,
+    newCount,
+    quickView,
+    activeFilter,
+    setQuickView,
+    setActiveFilter,
+  });
   const quickViewLabel =
     quickView === "LATE"
       ? "Atrasadas"
@@ -738,15 +740,15 @@ export function KdsPage() {
             <span>Cards compactas para meter más comandas en pantalla durante hora pico.</span>
           </section>
         )}
-        {rushMode && rushPriority && (
-          <section className={`rush-priority rush-priority--${rushPriority.tone}`} aria-label="Prioridad actual">
+        {operationalFocus && (
+          <section className={`rush-priority rush-priority--${operationalFocus.tone}`} aria-label="Prioridad actual">
             <div className="rush-priority__copy">
-              <span className="rush-priority__eyebrow">Prioridad actual</span>
-              <strong>{rushPriority.title}</strong>
-              <span>{rushPriority.message}</span>
+              <span className="rush-priority__eyebrow">{operationalFocus.eyebrow}</span>
+              <strong>{operationalFocus.title}</strong>
+              <span>{operationalFocus.message}</span>
             </div>
-            <button type="button" className="btn btn--ghost btn--sm" onClick={rushPriority.onAction}>
-              {rushPriority.actionLabel}
+            <button type="button" className="btn btn--ghost btn--sm" onClick={operationalFocus.onAction}>
+              {operationalFocus.actionLabel}
             </button>
           </section>
         )}
@@ -795,6 +797,22 @@ export function KdsPage() {
           <div className="summary-card">
             <span className="summary-label">Pendientes</span>
             <strong className="summary-value">{commands.length}</strong>
+          </div>
+          <div className="summary-card">
+            <span className="summary-label">Nuevas</span>
+            <strong className="summary-value">{receivedCount}</strong>
+          </div>
+          <div className="summary-card">
+            <span className="summary-label">Tomadas</span>
+            <strong className="summary-value">{claimedCount}</strong>
+          </div>
+          <div className="summary-card">
+            <span className="summary-label">Preparando</span>
+            <strong className="summary-value">{inProgressCount}</strong>
+          </div>
+          <div className="summary-card">
+            <span className="summary-label">Pausadas</span>
+            <strong className="summary-value">{onHoldCount}</strong>
           </div>
           <div className="summary-card">
             <span className="summary-label">Listas</span>
@@ -985,4 +1003,109 @@ export function KdsPage() {
       )}
     </div>
   );
+}
+
+function getOperationalFocus({
+  lateCount,
+  readyCount,
+  receivedCount,
+  claimedCount,
+  inProgressCount,
+  onHoldCount,
+  mineCount,
+  newCount,
+  quickView,
+  activeFilter,
+  setQuickView,
+  setActiveFilter,
+}: {
+  lateCount: number;
+  readyCount: number;
+  receivedCount: number;
+  claimedCount: number;
+  inProgressCount: number;
+  onHoldCount: number;
+  mineCount: number;
+  newCount: number;
+  quickView: QuickView;
+  activeFilter: FilterKey;
+  setQuickView: React.Dispatch<React.SetStateAction<QuickView>>;
+  setActiveFilter: React.Dispatch<React.SetStateAction<FilterKey>>;
+}): OperationalFocus | null {
+  if (lateCount > 0) {
+    return {
+      tone: "late",
+      eyebrow: "Prioridad actual",
+      title: `${lateCount} atrasada${lateCount === 1 ? "" : "s"}`,
+      message: "Priorizá las tarjetas en rojo antes de seguir tomando carga nueva.",
+      actionLabel: quickView === "LATE" ? "Ver cola completa" : "Ir a atrasadas",
+      onAction: () => setQuickView((current) => (current === "LATE" ? "NONE" : "LATE")),
+    };
+  }
+
+  if (readyCount > 0) {
+    return {
+      tone: "ready",
+      eyebrow: "Próximo destrabe",
+      title: `${readyCount} lista${readyCount === 1 ? "" : "s"} para salir`,
+      message: "Destrabar handoff libera espacio y evita que se acumule producción terminada.",
+      actionLabel: quickView === "READY" ? "Ver cola completa" : "Ir a listas",
+      onAction: () => setQuickView((current) => (current === "READY" ? "NONE" : "READY")),
+    };
+  }
+
+  if (claimedCount > 0) {
+    return {
+      tone: "new",
+      eyebrow: "Próximo frente",
+      title: `${claimedCount} tomada${claimedCount === 1 ? "" : "s"} sin empezar`,
+      message: "Conviene empujar las comandas ya tomadas hacia preparación activa para sostener el flujo.",
+      actionLabel: activeFilter === "CLAIMED" ? "Ver todas" : "Ir a tomadas",
+      onAction: () => {
+        setQuickView("NONE");
+        setActiveFilter((current) => (current === "CLAIMED" ? "ALL" : "CLAIMED"));
+      },
+    };
+  }
+
+  if (receivedCount > 0 || newCount > 0) {
+    return {
+      tone: "new",
+      eyebrow: "Ingreso reciente",
+      title: `${receivedCount} nueva${receivedCount === 1 ? "" : "s"} pendiente${receivedCount === 1 ? "" : "s"} de toma`,
+      message: "Revisá rápido lo nuevo para repartir carga antes de que empiece a atrasarse.",
+      actionLabel: activeFilter === "RECEIVED" ? "Ver todas" : "Ir a nuevas",
+      onAction: () => {
+        setQuickView("NONE");
+        setActiveFilter((current) => (current === "RECEIVED" ? "ALL" : "RECEIVED"));
+      },
+    };
+  }
+
+  if (onHoldCount > 0) {
+    return {
+      tone: "new",
+      eyebrow: "Seguimiento",
+      title: `${onHoldCount} pausada${onHoldCount === 1 ? "" : "s"} para retomar`,
+      message: "Chequeá si ya se resolvió el bloqueo para no dejar comandas dormidas más tiempo del necesario.",
+      actionLabel: activeFilter === "ON_HOLD" ? "Ver todas" : "Ir a pausadas",
+      onAction: () => {
+        setQuickView("NONE");
+        setActiveFilter((current) => (current === "ON_HOLD" ? "ALL" : "ON_HOLD"));
+      },
+    };
+  }
+
+  if (mineCount > 0 || inProgressCount > 0) {
+    return {
+      tone: "ready",
+      eyebrow: "Seguimiento personal",
+      title: `${mineCount} comanda${mineCount === 1 ? "" : "s"} tuya${mineCount === 1 ? "" : "s"} en seguimiento`,
+      message: "Podés entrar por tu vista propia para concentrarte en lo que ya tomaste.",
+      actionLabel: quickView === "MINE" ? "Ver cola completa" : "Ir a mías",
+      onAction: () => setQuickView((current) => (current === "MINE" ? "NONE" : "MINE")),
+    };
+  }
+
+  return null;
 }

@@ -199,6 +199,29 @@ p {
   border-color: color-mix(in srgb, var(--success) 40%, transparent);
 }
 
+.waiter-banner--warning {
+  background: color-mix(in srgb, #f59e0b 18%, var(--surface));
+  border-color: color-mix(in srgb, #f59e0b 40%, transparent);
+}
+
+.waiter-banner--info {
+  background: color-mix(in srgb, var(--primary) 18%, var(--surface));
+  border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+}
+
+.waiter-banner-copy {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.waiter-banner-copy strong {
+  font-size: 0.98rem;
+}
+
+.waiter-banner-copy span {
+  color: var(--muted);
+}
+
 .waiter-kpi-strip {
   display: grid;
   gap: 1px;
@@ -657,6 +680,11 @@ p {
 .check-card--empty {
   gap: 0.35rem;
 }
+
+.check-card--focus {
+  border-color: color-mix(in srgb, var(--primary) 75%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 20%, transparent), var(--shadow);
+}
 .check-card-head {
   display: flex;
   align-items: center;
@@ -732,17 +760,42 @@ p {
   font-size: 2rem;
 }
 
+.waiter-list-hint,
+.waiter-section-hint {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.waiter-list-hint {
+  margin-bottom: 0.75rem;
+}
+
 .order-list {
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
 }
+
+.order-list--focus {
+  padding: 0.2rem;
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--primary) 7%, transparent);
+}
+
 .order-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 0.9rem 1rem;
   box-shadow: var(--shadow);
+}
+
+.order-card--draft-focus {
+  border-color: color-mix(in srgb, var(--paying) 65%, transparent);
+}
+
+.order-card--ready-focus {
+  border-color: color-mix(in srgb, var(--available) 65%, transparent);
 }
 .order-card-head {
   display: flex;
@@ -909,6 +962,11 @@ p {
   text-align: center;
 }
 
+.dock--focus {
+  border-top-color: color-mix(in srgb, var(--primary) 65%, transparent);
+  box-shadow: 0 -2px 0 color-mix(in srgb, var(--primary) 20%, transparent), var(--dock-shadow);
+}
+
 /* ---------- Order-taking ---------------------------------------------- */
 .cat-strip {
   position: sticky;
@@ -950,6 +1008,13 @@ p {
   flex-direction: column;
   gap: 0.6rem;
 }
+
+.product-list--focus {
+  padding: 0.2rem;
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--primary) 7%, transparent);
+}
+
 .product-row {
   display: flex;
   align-items: stretch;
@@ -1115,6 +1180,13 @@ p {
   margin-top: 0.25rem;
   font-weight: 600;
 }
+
+.sheet-hint {
+  margin-top: 0.55rem;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
 .sheet-allergens {
   margin-top: 0.6rem;
   font-size: 0.85rem;
@@ -1235,6 +1307,20 @@ p {
   color: var(--muted);
 }
 
+.sheet-total-row {
+  margin-top: 1rem;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--border);
+}
+
+.sheet-total-row strong {
+  font-size: 1.2rem;
+}
+
 /* Cart sheet */
 .cart-list {
   list-style: none;
@@ -1300,9 +1386,17 @@ p {
   align-items: baseline;
   justify-content: space-between;
 }
+.cart-foot-total--compact {
+  display: none;
+}
 .cart-foot-total strong {
   font-size: 1.5rem;
   font-weight: 800;
+}
+
+.cart-foot-note {
+  color: var(--muted);
+  font-size: 0.9rem;
 }
 
 /* ---------- State views ----------------------------------------------- */
