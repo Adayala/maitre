@@ -765,6 +765,16 @@ export function HostPage() {
                         minutesUntil >= 0 &&
                         minutesUntil <= 90 &&
                         (reservation.status === "PENDING" || reservation.status === "CONFIRMED");
+                      const candidateTables = availableTables
+                        .filter((table) => table.capacity >= reservation.partySize)
+                        .slice()
+                        .sort((a, b) => {
+                          const overfillA = a.capacity - reservation.partySize;
+                          const overfillB = b.capacity - reservation.partySize;
+                          if (overfillA !== overfillB) return overfillA - overfillB;
+                          return a.salonName.localeCompare(b.salonName) || a.number.localeCompare(b.number);
+                        });
+                      const bestFitTable = candidateTables[0] ?? null;
                       const reservationFlowHint =
                         reservation.status === "PENDING" && isSoon
                           ? { label: minutesUntil <= 15 ? "Confirmar ya" : "Confirmar hoy", tone: "pending" as const }
@@ -800,6 +810,13 @@ export function HostPage() {
                             </div>
                             <div className="host-reservation-meta">
                               <span>Mesas: {reservation.tableIds?.length ? reservation.tableIds.join(", ") : "sin asignar"}</span>
+                              {reservation.status === "CONFIRMED" && !reservation.tableIds?.length ? (
+                                <span>
+                                  {bestFitTable
+                                    ? `Mejor mesa libre: ${bestFitTable.name?.trim() || `Mesa ${bestFitTable.number}`} · ${bestFitTable.salonName} · ${bestFitTable.capacity} pax`
+                                    : "Sin mesa libre sugerida ahora mismo"}
+                                </span>
+                              ) : null}
                               <span>{reservation.notes?.trim() || "Sin notas operativas"}</span>
                             </div>
                           </div>
