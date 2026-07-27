@@ -1,4 +1,8 @@
 import { Link } from "react-router-dom";
+import {
+  prefetchOnIntent,
+  preloadReservationCreationExperience,
+} from "../../lib/route-prefetch.js";
 
 const PUBLIC_PROMOTIONS = [
   {
@@ -31,6 +35,7 @@ const PUBLIC_PROMOTIONS = [
 ];
 
 export function PublicPromotionsPage() {
+  const reservePrefetchProps = prefetchOnIntent(preloadReservationCreationExperience);
   const promotionJourney = [
     "Descubrí una promo o propuesta pública.",
     "Chequeá si te conviene por sede, horario o tipo de visita.",
@@ -77,7 +82,11 @@ export function PublicPromotionsPage() {
                 <strong>Alcance:</strong> {promotion.scope}
               </span>
             </div>
-            <Link to={promotion.to} className="public-secondary-cta">
+            <Link
+              to={promotion.to}
+              className="public-secondary-cta"
+              {...(promotion.to === "/public/reservations/new" ? reservePrefetchProps : {})}
+            >
               {promotion.cta}
             </Link>
           </article>
@@ -85,7 +94,7 @@ export function PublicPromotionsPage() {
       </div>
 
       <div className="public-button-row">
-        <Link to="/public/reservations/new" className="public-cta">
+        <Link to="/public/reservations/new" className="public-cta" {...reservePrefetchProps}>
           Reservar con promoción
         </Link>
         <Link to="/public/menu" className="public-secondary-cta">

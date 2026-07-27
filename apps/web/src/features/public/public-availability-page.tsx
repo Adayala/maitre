@@ -1,6 +1,11 @@
 import { Link } from "react-router-dom";
+import {
+  prefetchOnIntent,
+  preloadReservationCreationExperience,
+} from "../../lib/route-prefetch.js";
 
 export function PublicAvailabilityPage() {
+  const reservePrefetchProps = prefetchOnIntent(preloadReservationCreationExperience);
   const nextSteps = [
     "Elegí primero una sucursal si todavía no la definiste.",
     "Si ya sabés cuándo querés ir, avanzá a reserva para validar capacidad real.",
@@ -56,7 +61,7 @@ export function PublicAvailabilityPage() {
       </article>
 
       <div className="public-button-row">
-        <Link to="/public/reservations/new" className="public-cta">
+        <Link to="/public/reservations/new" className="public-cta" {...reservePrefetchProps}>
           Continuar con reserva
         </Link>
         <Link to="/public/branches" className="public-secondary-cta">

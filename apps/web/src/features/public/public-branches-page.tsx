@@ -1,5 +1,9 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import {
+  prefetchOnIntent,
+  preloadReservationCreationExperience,
+} from "../../lib/route-prefetch.js";
 const PUBLIC_MENU_TOKEN = "demo-qr-menu-token";
 
 interface PublicBranchPayload {
@@ -16,6 +20,7 @@ interface PublicBranchPayload {
 }
 
 export function PublicBranchesPage() {
+  const reservePrefetchProps = prefetchOnIntent(preloadReservationCreationExperience);
   const branchesQuery = useQuery({
     queryKey: ["public-branches-live", PUBLIC_MENU_TOKEN],
     queryFn: async () => {
@@ -87,7 +92,7 @@ export function PublicBranchesPage() {
                 <Link to="/public/availability" className="public-secondary-cta">
                   Consultar disponibilidad
                 </Link>
-                <Link to="/public/reservations/new" className="public-cta">
+                <Link to="/public/reservations/new" className="public-cta" {...reservePrefetchProps}>
                   Reservar en esta sede
                 </Link>
               </div>

@@ -1,6 +1,13 @@
 import { Link } from "react-router-dom";
+import {
+  prefetchOnIntent,
+  preloadReservationCreationExperience,
+  preloadReservationManagementExperience,
+} from "../../lib/route-prefetch.js";
 
 export function PublicHomePage() {
+  const reservePrefetchProps = prefetchOnIntent(preloadReservationCreationExperience);
+  const reservationsPrefetchProps = prefetchOnIntent(preloadReservationManagementExperience);
   const journeySteps = [
     { label: "Explorar", value: "Menú, promos y sucursales" },
     { label: "Evaluar", value: "Disponibilidad y sede" },
@@ -62,7 +69,7 @@ export function PublicHomePage() {
           <Link to="/public/menu" className="public-cta">
             Ver menú
           </Link>
-          <Link to="/public/reservations/new" className="public-secondary-cta">
+          <Link to="/public/reservations/new" className="public-secondary-cta" {...reservePrefetchProps}>
             Reservar
           </Link>
         </div>
@@ -115,7 +122,12 @@ export function PublicHomePage() {
         </p>
         <div className="public-route-grid">
           {authenticatedRoutes.map((route) => (
-            <Link key={route.to} to={route.to} className="public-route-card public-route-card--accent">
+            <Link
+              key={route.to}
+              to={route.to}
+              className="public-route-card public-route-card--accent"
+              {...(route.to.endsWith("/new") ? reservePrefetchProps : reservationsPrefetchProps)}
+            >
               <div className="public-route-meta">
                 <span className="public-route-badge public-route-badge--accent">Requiere login</span>
                 <h3>{route.title}</h3>

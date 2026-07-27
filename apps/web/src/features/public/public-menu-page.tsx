@@ -1,5 +1,9 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import {
+  prefetchOnIntent,
+  preloadReservationCreationExperience,
+} from "../../lib/route-prefetch.js";
 const PUBLIC_MENU_TOKEN = "demo-qr-menu-token";
 
 interface PublicMenuPayload {
@@ -22,6 +26,7 @@ interface PublicMenuPayload {
 }
 
 export function PublicMenuPage() {
+  const reservePrefetchProps = prefetchOnIntent(preloadReservationCreationExperience);
   const menuQuery = useQuery({
     queryKey: ["public-menu-live", PUBLIC_MENU_TOKEN],
     queryFn: async () => {
@@ -126,7 +131,7 @@ export function PublicMenuPage() {
       )}
 
       <div className="public-button-row">
-        <Link to="/public/reservations/new" className="public-cta">
+        <Link to="/public/reservations/new" className="public-cta" {...reservePrefetchProps}>
           Reservar desde el menú
         </Link>
         <Link to="/public/branches" className="public-secondary-cta">
