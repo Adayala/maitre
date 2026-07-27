@@ -539,8 +539,14 @@ h3 {
   color: var(--muted);
   font-size: 0.9rem;
 }
-.kds-arrival-banner .btn {
+.kds-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   margin-left: auto;
+}
+.kds--rush .kds-banner-actions {
+  gap: 0.35rem;
 }
 
 .kds-late-banner {
@@ -553,9 +559,6 @@ h3 {
   background: color-mix(in srgb, var(--u-late) 14%, var(--surface));
   border: 1px solid color-mix(in srgb, var(--u-late) 58%, transparent);
   box-shadow: var(--shadow);
-}
-.kds-late-banner .btn {
-  margin-left: auto;
 }
 
 .kds-main {

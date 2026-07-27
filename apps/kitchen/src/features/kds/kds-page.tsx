@@ -672,13 +672,25 @@ export function KdsPage() {
               Revisá la cola de {selectedStation?.displayName?.toLowerCase() ?? "esta estación"}.
             </span>
           </div>
-          <button
-            type="button"
-            className="btn btn--ghost btn--sm"
-            onClick={() => setArrivalNotice(null)}
-          >
-            Ocultar
-          </button>
+          <div className="kds-banner-actions">
+            <button
+              type="button"
+              className="btn btn--ghost btn--sm"
+              onClick={() => {
+                setQuickView("NEW");
+                setArrivalNotice(null);
+              }}
+            >
+              Ver nuevas
+            </button>
+            <button
+              type="button"
+              className="btn btn--ghost btn--sm"
+              onClick={() => setArrivalNotice(null)}
+            >
+              Ocultar
+            </button>
+          </div>
         </div>
       )}
 
@@ -691,13 +703,25 @@ export function KdsPage() {
             </strong>
             <span>Chequeá rápido las tarjetas en rojo o usá el atajo “Atrasadas”.</span>
           </div>
-          <button
-            type="button"
-            className="btn btn--ghost btn--sm"
-            onClick={() => setLateNotice(null)}
-          >
-            Ocultar
-          </button>
+          <div className="kds-banner-actions">
+            <button
+              type="button"
+              className="btn btn--ghost btn--sm"
+              onClick={() => {
+                setQuickView("LATE");
+                setLateNotice(null);
+              }}
+            >
+              Ver atrasadas
+            </button>
+            <button
+              type="button"
+              className="btn btn--ghost btn--sm"
+              onClick={() => setLateNotice(null)}
+            >
+              Ocultar
+            </button>
+          </div>
         </div>
       )}
 
