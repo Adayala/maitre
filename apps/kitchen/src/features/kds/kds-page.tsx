@@ -26,7 +26,7 @@ const SOUND_PREF_KEY = "maitre.kitchen.soundEnabled";
 const RUSH_PREF_KEY = "maitre.kitchen.rushMode";
 
 type FilterKey = "ALL" | CommandStatus;
-type QuickView = "NONE" | "LATE" | "READY" | "MINE";
+type QuickView = "NONE" | "LATE" | "READY" | "MINE" | "NEW";
 
 const FILTERS: Array<{ key: FilterKey; label: string }> = [
   { key: "ALL", label: "Todas" },
@@ -403,6 +403,8 @@ export function KdsPage() {
         ? commands.filter((command) => command.status === "READY")
         : quickView === "MINE"
           ? commands.filter((command) => command.ownerActorRef === me?.user.id)
+          : quickView === "NEW"
+            ? commands.filter((command) => newArrivalAt[command.id] !== undefined)
         : commands;
   const visibleCommands =
     quickView === "NONE"
@@ -430,6 +432,8 @@ export function KdsPage() {
         ? "Listas"
         : quickView === "MINE"
           ? "Mis comandas"
+          : quickView === "NEW"
+            ? "Entraron recién"
           : null;
   const filterLabel = FILTERS.find((filter) => filter.key === activeFilter)?.label ?? "Todas";
   const activeViewLabel =
@@ -465,6 +469,8 @@ export function KdsPage() {
           ? "Todavía no hay platos listos para handoff desde esta estación."
           : quickView === "MINE"
             ? "Podés tomar una comanda nueva o volver a la vista completa para revisar toda la cola."
+            : quickView === "NEW"
+              ? "No hubo ingresos nuevos en los últimos segundos. Volvé a la vista completa para seguir el flujo general."
             : activeFilter === "RECEIVED"
               ? "No hay ingresos pendientes de tomar en este momento."
               : activeFilter === "CLAIMED"
@@ -485,6 +491,8 @@ export function KdsPage() {
           ? "🍽️"
           : quickView === "MINE"
             ? "🧑‍🍳"
+            : quickView === "NEW"
+              ? "✨"
             : activeFilter === "RECEIVED"
               ? "📭"
               : activeFilter === "CLAIMED"
@@ -681,22 +689,45 @@ export function KdsPage() {
           </section>
         )}
         <section className="kds-critical-bar" aria-label="Métricas críticas">
-          <div className="critical-pill">
+          <button
+            type="button"
+            className="critical-pill"
+            onClick={() => {
+              setQuickView("NONE");
+              setActiveFilter("ALL");
+            }}
+            aria-pressed={quickView === "NONE" && activeFilter === "ALL"}
+          >
             <span className="critical-pill__label">Pendientes</span>
             <strong className="critical-pill__value">{commands.length}</strong>
-          </div>
-          <div className="critical-pill critical-pill--ready">
+          </button>
+          <button
+            type="button"
+            className={`critical-pill critical-pill--ready ${quickView === "READY" ? "critical-pill--active" : ""}`}
+            onClick={() => setQuickView((current) => (current === "READY" ? "NONE" : "READY"))}
+            aria-pressed={quickView === "READY"}
+          >
             <span className="critical-pill__label">Listas</span>
             <strong className="critical-pill__value">{readyCount}</strong>
-          </div>
-          <div className="critical-pill critical-pill--late">
+          </button>
+          <button
+            type="button"
+            className={`critical-pill critical-pill--late ${quickView === "LATE" ? "critical-pill--active" : ""}`}
+            onClick={() => setQuickView((current) => (current === "LATE" ? "NONE" : "LATE"))}
+            aria-pressed={quickView === "LATE"}
+          >
             <span className="critical-pill__label">Atrasadas</span>
             <strong className="critical-pill__value">{lateCount}</strong>
-          </div>
-          <div className="critical-pill critical-pill--new">
+          </button>
+          <button
+            type="button"
+            className={`critical-pill critical-pill--new ${quickView === "NEW" ? "critical-pill--active" : ""}`}
+            onClick={() => setQuickView((current) => (current === "NEW" ? "NONE" : "NEW"))}
+            aria-pressed={quickView === "NEW"}
+          >
             <span className="critical-pill__label">Entraron recién</span>
             <strong className="critical-pill__value">{newCount}</strong>
-          </div>
+          </button>
         </section>
         <section className="kds-summary" aria-label="Resumen operativo">
           <div className="summary-card">
@@ -772,6 +803,15 @@ export function KdsPage() {
           >
             <span>Mías</span>
             <strong>{mineCount}</strong>
+          </button>
+          <button
+            type="button"
+            className={`quickview-chip ${quickView === "NEW" ? "quickview-chip--active" : ""}`}
+            onClick={() => setQuickView((current) => (current === "NEW" ? "NONE" : "NEW"))}
+            aria-pressed={quickView === "NEW"}
+          >
+            <span>Recién</span>
+            <strong>{newCount}</strong>
           </button>
           {quickView !== "NONE" && (
             <button

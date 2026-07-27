@@ -583,6 +583,7 @@ h3 {
 
 .critical-pill {
   flex: 0 0 auto;
+  appearance: none;
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
@@ -592,6 +593,8 @@ h3 {
   border: 1px solid var(--border);
   background: color-mix(in srgb, var(--surface) 94%, transparent);
   box-shadow: var(--shadow);
+  color: var(--text);
+  cursor: pointer;
 }
 
 .critical-pill__label {
@@ -619,6 +622,13 @@ h3 {
 .critical-pill--new {
   border-color: color-mix(in srgb, var(--u-warn) 52%, transparent);
   background: color-mix(in srgb, var(--u-warn) 8%, var(--surface));
+}
+
+.critical-pill--active {
+  box-shadow:
+    inset 0 0 0 2px color-mix(in srgb, var(--text) 15%, transparent),
+    var(--shadow);
+  transform: translateY(1px);
 }
 
 .kds--focus .kds-main {
