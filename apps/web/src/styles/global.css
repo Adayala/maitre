@@ -334,6 +334,67 @@ td {
   color: var(--color-fg-muted, inherit);
 }
 
+.public-checklist {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 0.35rem;
+}
+
+.public-check-item {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 0.65rem;
+  border: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-bg-soft, #f6f7f9) 70%, white);
+}
+
+.public-check-item strong {
+  color: var(--color-fg-muted, inherit);
+}
+
+.public-check-item--done {
+  border-color: color-mix(in srgb, var(--color-accent) 35%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent) 8%, white);
+}
+
+.public-check-item--done strong {
+  color: var(--color-accent);
+}
+
+.public-field-hint {
+  font-size: 0.85rem;
+  color: var(--color-fg-muted, inherit);
+  font-weight: 600;
+}
+
+.public-branch-picker {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.public-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.public-chip {
+  min-height: 2.5rem;
+  padding: 0 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-bg-soft, #f6f7f9) 75%, white);
+  color: inherit;
+  font: inherit;
+}
+
+.public-chip--active {
+  border-color: color-mix(in srgb, var(--color-accent) 45%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent) 12%, white);
+}
+
 .public-form {
   display: grid;
   gap: 1rem;
