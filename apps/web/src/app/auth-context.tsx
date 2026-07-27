@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { supabase, isSupabaseConfigured } from "../lib/supabase.js";
+import { useLocation } from "react-router-dom";
+import { getSupabaseClient, isSupabaseConfigured } from "../lib/supabase.js";
 
 interface AuthState {
   accessToken: string | null;
@@ -15,36 +16,76 @@ const AuthContext = createContext<AuthState | null>(null);
 const FIXTURE_TOKEN_KEY = "maitre.fixtureAccessToken";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const location = useLocation();
   const [accessToken, setAccessToken] = useState<string | null>(
     () => (isSupabaseConfigured ? null : sessionStorage.getItem(FIXTURE_TOKEN_KEY)),
   );
   const [email, setEmail] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [authHydrationState, setAuthHydrationState] = useState<"idle" | "loading" | "ready">(
+    isSupabaseConfigured ? "idle" : "ready",
+  );
+  const shouldHydrateAuth = requiresSessionBootstrap(location.pathname);
+  const isLoading = shouldHydrateAuth && authHydrationState !== "ready";
 
   useEffect(() => {
     if (isSupabaseConfigured) {
       sessionStorage.removeItem(FIXTURE_TOKEN_KEY);
     }
-    if (!supabase) {
-      setIsLoading(false);
-      return;
-    }
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) {
-        setAccessToken(data.session.access_token);
-        setEmail(data.session.user.email ?? null);
-      }
-      setIsLoading(false);
-    });
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
-      setAccessToken(session?.access_token ?? null);
-      setEmail(session?.user.email ?? null);
-      setIsLoading(false);
-    });
-    return () => subscription.subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (!isSupabaseConfigured) {
+      setAuthHydrationState("ready");
+      return;
+    }
+
+    if (!shouldHydrateAuth || authHydrationState !== "idle") {
+      return;
+    }
+
+    let isActive = true;
+    let unsubscribe = () => {};
+
+    setAuthHydrationState("loading");
+
+    void getSupabaseClient()
+      .then(async (supabase) => {
+        if (!isActive || !supabase) {
+          if (isActive) setAuthHydrationState("ready");
+          return;
+        }
+
+        const { data } = await supabase.auth.getSession();
+        if (!isActive) return;
+
+        if (data.session) {
+          setAccessToken(data.session.access_token);
+          setEmail(data.session.user.email ?? null);
+        }
+
+        const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+          setAccessToken(session?.access_token ?? null);
+          setEmail(session?.user.email ?? null);
+          setAuthHydrationState("ready");
+        });
+
+        unsubscribe = () => subscription.subscription.unsubscribe();
+        setAuthHydrationState("ready");
+      })
+      .catch(() => {
+        if (isActive) {
+          setAuthHydrationState("ready");
+        }
+      });
+
+    return () => {
+      isActive = false;
+      unsubscribe();
+    };
+  }, [authHydrationState, shouldHydrateAuth]);
+
   async function signInWithPassword(signInEmail: string, password: string) {
+    const supabase = await getSupabaseClient();
     if (!supabase) throw new Error("Supabase Auth is not configured (VITE_SUPABASE_URL missing)");
     const { error } = await supabase.auth.signInWithPassword({ email: signInEmail, password });
     if (error) throw error;
@@ -57,13 +98,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     sessionStorage.setItem(FIXTURE_TOKEN_KEY, token);
     setAccessToken(token);
     setEmail(null);
-    setIsLoading(false);
+    setAuthHydrationState("ready");
   }
 
   async function signOut() {
     sessionStorage.removeItem(FIXTURE_TOKEN_KEY);
     setAccessToken(null);
     setEmail(null);
+    const supabase = await getSupabaseClient();
     if (supabase) await supabase.auth.signOut();
   }
 
@@ -74,6 +116,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       {children}
     </AuthContext.Provider>
   );
+}
+
+function requiresSessionBootstrap(pathname: string) {
+  if (pathname === "/login") return true;
+  if (!pathname.startsWith("/public")) return true;
+  if (pathname === "/public/reservations") return true;
+  if (pathname.startsWith("/public/reservations/")) return true;
+  return false;
 }
 
 export function useAuth(): AuthState {

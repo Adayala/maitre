@@ -52,9 +52,9 @@ const CustomerReservationDetailPage = lazyNamed(
 export function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TenantProvider>
-          <BrowserRouter>
+      <BrowserRouter>
+        <AuthProvider>
+          <TenantProvider>
             <a href="#main-content" className="skip-link">
               Saltar al contenido principal
             </a>
@@ -111,9 +111,9 @@ export function App() {
                 <Route path="profiles" element={withSuspense(<ProfilesPage />)} />
               </Route>
             </Routes>
-          </BrowserRouter>
-        </TenantProvider>
-      </AuthProvider>
+          </TenantProvider>
+        </AuthProvider>
+      </BrowserRouter>
     </QueryClientProvider>
   );
 }
