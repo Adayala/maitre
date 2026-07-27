@@ -517,11 +517,10 @@ body {
 }
 
 .host-table-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
+  display: grid;
+  gap: 0.18rem;
   padding: 0.55rem 0.75rem;
-  border-radius: 999px;
+  border-radius: 16px;
   border: 1px solid var(--border);
   background: var(--surface-3);
   font-size: 0.78rem;
@@ -534,6 +533,21 @@ body {
 .host-table-chip--active {
   border-color: color-mix(in srgb, var(--primary) 45%, transparent);
   background: color-mix(in srgb, var(--primary) 18%, var(--surface));
+}
+
+.host-table-chip--best {
+  border-color: color-mix(in srgb, var(--success) 45%, transparent);
+  background: color-mix(in srgb, var(--success) 10%, var(--surface-3));
+}
+
+.host-table-chip__name {
+  font-weight: 800;
+  color: var(--text);
+}
+
+.host-table-chip__meta {
+  color: var(--muted);
+  font-size: 0.72rem;
 }
 
 .host-table-grid {

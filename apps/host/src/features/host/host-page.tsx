@@ -952,7 +952,15 @@ export function HostPage() {
                 <div className="host-waitlist-list">
                   {sortedWaitlistEntries.map((entry) => {
                     const selected = waitlistSeatSelections[entry.id] ?? [];
-                    const entryTables = availableTables.filter((table) => table.capacity >= entry.partySize);
+                    const entryTables = availableTables
+                      .filter((table) => table.capacity >= entry.partySize)
+                      .slice()
+                      .sort((a, b) => {
+                        const overfillA = a.capacity - entry.partySize;
+                        const overfillB = b.capacity - entry.partySize;
+                        if (overfillA !== overfillB) return overfillA - overfillB;
+                        return a.salonName.localeCompare(b.salonName) || a.number.localeCompare(b.number);
+                      });
                     const waitedMinutes = Math.max(0, Math.round((Date.now() - Date.parse(entry.createdAt)) / 60000));
                     const quotedMinutes = entry.quotedMinutes ?? 0;
                     const overdue = quotedMinutes > 0 && waitedMinutes > quotedMinutes;
@@ -992,8 +1000,11 @@ export function HostPage() {
                           </div>
                           {(entry.status === "WAITING" || entry.status === "NOTIFIED") ? (
                             <div className="host-table-picker">
-                              {entryTables.map((table) => (
-                                <label key={table.id} className={`host-table-chip ${selected.includes(table.id) ? "host-table-chip--active" : ""}`}>
+                              {entryTables.map((table, index) => (
+                                <label
+                                  key={table.id}
+                                  className={`host-table-chip ${selected.includes(table.id) ? "host-table-chip--active" : ""} ${index === 0 ? "host-table-chip--best" : ""}`}
+                                >
                                   <input
                                     type="checkbox"
                                     checked={selected.includes(table.id)}
@@ -1006,7 +1017,11 @@ export function HostPage() {
                                       }))
                                     }
                                   />
-                                  {table.name?.trim() || `Mesa ${table.number}`} · {table.salonName}
+                                  <span className="host-table-chip__name">{table.name?.trim() || `Mesa ${table.number}`}</span>
+                                  <span className="host-table-chip__meta">
+                                    {table.salonName} · {table.capacity} pax
+                                    {index === 0 ? " · mejor fit" : ""}
+                                  </span>
                                 </label>
                               ))}
                               {entryTables.length === 0 ? (
