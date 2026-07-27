@@ -9,6 +9,13 @@ interface ApiData<T> {
   data: T;
 }
 
+interface GuestProfile {
+  id: string;
+  displayName: string;
+  email?: string | null;
+  phone?: string | null;
+}
+
 interface ReservationListItem {
   id: string;
   branchId: string;
@@ -100,9 +107,15 @@ export function HostPage() {
   const [newReservationPartySize, setNewReservationPartySize] = useState("2");
   const [newReservationStartAt, setNewReservationStartAt] = useState(defaultDateTimeLocal());
   const [newReservationDurationMinutes, setNewReservationDurationMinutes] = useState("90");
+  const [newReservationGuestName, setNewReservationGuestName] = useState("");
+  const [newReservationGuestEmail, setNewReservationGuestEmail] = useState("");
+  const [newReservationGuestPhone, setNewReservationGuestPhone] = useState("");
   const [newReservationNotes, setNewReservationNotes] = useState("");
   const [newWaitlistPartySize, setNewWaitlistPartySize] = useState("2");
   const [newWaitlistQuotedMinutes, setNewWaitlistQuotedMinutes] = useState("20");
+  const [newWaitlistGuestName, setNewWaitlistGuestName] = useState("");
+  const [newWaitlistGuestEmail, setNewWaitlistGuestEmail] = useState("");
+  const [newWaitlistGuestPhone, setNewWaitlistGuestPhone] = useState("");
   const [newWaitlistNotes, setNewWaitlistNotes] = useState("");
   const [waitlistSeatSelections, setWaitlistSeatSelections] = useState<Record<string, string[]>>({});
   const [lastActionMessage, setLastActionMessage] = useState<string | null>(null);
@@ -167,6 +180,35 @@ export function HostPage() {
     () => (salonDetailsQuery.data ?? []).flatMap((salon) => salon.tables.map((table) => ({ ...table, salonName: salon.name }))),
     [salonDetailsQuery.data],
   );
+  const guestIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          [...(reservationsQuery.data?.data ?? []), ...(waitlistQuery.data?.data ?? [])]
+            .map((item) => item.guestId)
+            .filter((value): value is string => typeof value === "string" && value.length > 0),
+        ),
+      ),
+    [reservationsQuery.data, waitlistQuery.data],
+  );
+  const guestsQuery = useQuery({
+    queryKey: ["host-guests", selectedBranchId, guestIds.join(",")],
+    enabled: Boolean(selectedBranchId) && guestIds.length > 0,
+    queryFn: async () => {
+      const entries = await Promise.all(
+        guestIds.map(async (guestId) => {
+          try {
+            const response = await api<ApiData<GuestProfile>>(`/v1/guests/${guestId}`);
+            return [guestId, response.data] as const;
+          } catch {
+            return [guestId, null] as const;
+          }
+        }),
+      );
+      return new Map(entries);
+    },
+  });
+  const guestById = useMemo(() => guestsQuery.data ?? new Map<string, GuestProfile | null>(), [guestsQuery.data]);
 
   const tableStatusById = useMemo(
     () => new Map((tableStatusesQuery.data?.data ?? []).map((status) => [status.tableId, status])),
@@ -238,22 +280,62 @@ export function HostPage() {
       queryClient.invalidateQueries({ queryKey: ["host-waitlist"] }),
       queryClient.invalidateQueries({ queryKey: ["host-availability"] }),
       queryClient.invalidateQueries({ queryKey: ["host-table-statuses"] }),
+      queryClient.invalidateQueries({ queryKey: ["host-guests"] }),
     ]);
   };
 
+  async function ensureGuest(input: { displayName: string; email?: string; phone?: string }) {
+    const displayName = input.displayName.trim();
+    const email = input.email?.trim() || undefined;
+    const phone = input.phone?.trim() || undefined;
+    if (!displayName) return null;
+
+    if (email || phone) {
+      const lookup = await api<ApiData<GuestProfile | null>>("/v1/guests/lookup", {
+        method: "POST",
+        body: {
+          ...(email ? { email } : {}),
+          ...(phone ? { phone } : {}),
+        },
+      });
+      if (lookup.data) return lookup.data;
+    }
+
+    const created = await api<ApiData<GuestProfile>>("/v1/guests", {
+      method: "POST",
+      body: {
+        displayName,
+        ...(email ? { email } : {}),
+        ...(phone ? { phone } : {}),
+        consentGiven: false,
+      },
+    });
+    return created.data;
+  }
+
   const createReservationMutation = useMutation({
-    mutationFn: () =>
-      api<ApiData<ReservationListItem>>(`/v1/branches/${selectedBranchId}/reservations`, {
+    mutationFn: async () => {
+      const guest = await ensureGuest({
+        displayName: newReservationGuestName,
+        email: newReservationGuestEmail,
+        phone: newReservationGuestPhone,
+      });
+      return api<ApiData<ReservationListItem>>(`/v1/branches/${selectedBranchId}/reservations`, {
         method: "POST",
         body: {
           partySize: Number(newReservationPartySize),
           startAt: new Date(newReservationStartAt).toISOString(),
           durationMinutes: Number(newReservationDurationMinutes),
           source: "HOST_APP",
+          ...(guest ? { guestId: guest.id } : {}),
           ...(newReservationNotes.trim() ? { notes: newReservationNotes.trim() } : {}),
         },
-      }),
+      });
+    },
     onSuccess: async () => {
+      setNewReservationGuestName("");
+      setNewReservationGuestEmail("");
+      setNewReservationGuestPhone("");
       setNewReservationNotes("");
       setLastActionMessage("Reserva creada.");
       await refreshAll();
@@ -261,16 +343,26 @@ export function HostPage() {
   });
 
   const createWaitlistMutation = useMutation({
-    mutationFn: () =>
-      api<ApiData<WaitlistEntry>>(`/v1/branches/${selectedBranchId}/waitlist-entries`, {
+    mutationFn: async () => {
+      const guest = await ensureGuest({
+        displayName: newWaitlistGuestName,
+        email: newWaitlistGuestEmail,
+        phone: newWaitlistGuestPhone,
+      });
+      return api<ApiData<WaitlistEntry>>(`/v1/branches/${selectedBranchId}/waitlist-entries`, {
         method: "POST",
         body: {
           partySize: Number(newWaitlistPartySize),
           quotedMinutes: Number(newWaitlistQuotedMinutes),
+          ...(guest ? { guestId: guest.id } : {}),
           ...(newWaitlistNotes.trim() ? { notes: newWaitlistNotes.trim() } : {}),
         },
-      }),
+      });
+    },
     onSuccess: async () => {
+      setNewWaitlistGuestName("");
+      setNewWaitlistGuestEmail("");
+      setNewWaitlistGuestPhone("");
       setNewWaitlistNotes("");
       setLastActionMessage("Grupo agregado a lista de espera.");
       await refreshAll();
@@ -511,9 +603,24 @@ export function HostPage() {
                 }}
               >
                 <label>
+                  Nombre del huésped
+                  <input value={newReservationGuestName} onChange={(e) => setNewReservationGuestName(e.target.value)} placeholder="Nombre y apellido" />
+                </label>
+                <label>
+                  Email
+                  <input value={newReservationGuestEmail} onChange={(e) => setNewReservationGuestEmail(e.target.value)} inputMode="email" placeholder="opcional" />
+                </label>
+                <label>
+                  Teléfono
+                  <input value={newReservationGuestPhone} onChange={(e) => setNewReservationGuestPhone(e.target.value)} inputMode="tel" placeholder="opcional" />
+                </label>
+                <label>
                   Comensales
                   <input value={newReservationPartySize} onChange={(e) => setNewReservationPartySize(e.target.value)} inputMode="numeric" />
                 </label>
+                <div className="cashier-banner cashier-banner--info">
+                  <span>Recepción guarda el huésped para poder reencontrarlo luego en reservas y waitlist.</span>
+                </div>
                 <label>
                   Inicio
                   <input type="datetime-local" value={newReservationStartAt} onChange={(e) => setNewReservationStartAt(e.target.value)} />
@@ -526,7 +633,7 @@ export function HostPage() {
                   Notas
                   <input value={newReservationNotes} onChange={(e) => setNewReservationNotes(e.target.value)} placeholder="Cumpleaños, silla alta, etc." />
                 </label>
-                <button type="submit" className="btn btn--primary btn--xl" disabled={createReservationMutation.isPending}>
+                <button type="submit" className="btn btn--primary btn--xl" disabled={createReservationMutation.isPending || !newReservationGuestName.trim()}>
                   {createReservationMutation.isPending ? "Creando…" : "Crear reserva"}
                 </button>
                 {createReservationMutation.error ? (
@@ -584,7 +691,7 @@ export function HostPage() {
                           <div className="host-reservation-main">
                             <div className="host-reservation-head">
                               <div className="host-reservation-title">
-                                <strong>{formatReservationHeading(reservation)}</strong>
+                                <strong>{formatReservationHeading(reservation, guestById.get(reservation.guestId ?? "") ?? null)}</strong>
                                 <span>{formatDateTime(reservation.startAt)} · {reservation.durationMinutes} min</span>
                               </div>
                               <div className="host-reservation-flags">
@@ -679,6 +786,18 @@ export function HostPage() {
                 }}
               >
                 <label>
+                  Nombre del huésped
+                  <input value={newWaitlistGuestName} onChange={(e) => setNewWaitlistGuestName(e.target.value)} placeholder="Walk-in / apellido" />
+                </label>
+                <label>
+                  Email
+                  <input value={newWaitlistGuestEmail} onChange={(e) => setNewWaitlistGuestEmail(e.target.value)} inputMode="email" placeholder="opcional" />
+                </label>
+                <label>
+                  Teléfono
+                  <input value={newWaitlistGuestPhone} onChange={(e) => setNewWaitlistGuestPhone(e.target.value)} inputMode="tel" placeholder="opcional" />
+                </label>
+                <label>
                   Comensales
                   <input value={newWaitlistPartySize} onChange={(e) => setNewWaitlistPartySize(e.target.value)} inputMode="numeric" />
                 </label>
@@ -690,7 +809,7 @@ export function HostPage() {
                   Notas
                   <input value={newWaitlistNotes} onChange={(e) => setNewWaitlistNotes(e.target.value)} placeholder="Preferencia, cochecito, etc." />
                 </label>
-                <button type="submit" className="btn btn--primary btn--xl" disabled={createWaitlistMutation.isPending}>
+                <button type="submit" className="btn btn--primary btn--xl" disabled={createWaitlistMutation.isPending || !newWaitlistGuestName.trim()}>
                   {createWaitlistMutation.isPending ? "Agregando…" : "Agregar a espera"}
                 </button>
                 {createWaitlistMutation.error ? (
@@ -750,7 +869,7 @@ export function HostPage() {
                         <div className="host-waitlist-main">
                           <div className="host-waitlist-head">
                             <div className="host-waitlist-title">
-                              <strong>{entry.partySize} pax · {entry.id.slice(0, 8)}</strong>
+                              <strong>{formatWaitlistHeading(entry, guestById.get(entry.guestId ?? "") ?? null)}</strong>
                               <span>{formatWaitlistTiming(waitedMinutes, quotedMinutes)}</span>
                             </div>
                             <div className="host-waitlist-flags">
@@ -949,8 +1068,14 @@ function formatDateTime(value: string) {
   });
 }
 
-function formatReservationHeading(reservation: ReservationListItem) {
-  return `${reservation.partySize} pax · ${reservation.id.slice(0, 8)}`;
+function formatReservationHeading(reservation: ReservationListItem, guest: GuestProfile | null) {
+  const guestLabel = guest?.displayName?.trim() || reservation.guestId?.slice(0, 8) || "Sin huésped";
+  return `${guestLabel} · ${reservation.partySize} pax`;
+}
+
+function formatWaitlistHeading(entry: WaitlistEntry, guest: GuestProfile | null) {
+  const guestLabel = guest?.displayName?.trim() || entry.guestId?.slice(0, 8) || "Walk-in";
+  return `${guestLabel} · ${entry.partySize} pax`;
 }
 
 function formatWaitlistTiming(waitedMinutes: number, quotedMinutes: number) {

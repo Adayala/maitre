@@ -80,7 +80,7 @@ export function CustomerPage() {
   const { me, tenants, isLoading, error, selectedTenantId, selectedBranchId, selectTenant, selectBranch } = useSession();
 
   const [tab, setTab] = useState<CustomerTab>("discover");
-  const [fixtureToken, setFixtureToken] = useState("demo-token");
+  const [fixtureToken, setFixtureToken] = useState("");
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState<string | null>(null);
@@ -134,14 +134,14 @@ export function CustomerPage() {
 
   const createReservationMutation = useMutation({
     mutationFn: () =>
-      api<ReservationResponse>(`/v1/branches/${selectedBranchId}/reservations`, {
+      api<ReservationResponse>("/v1/my/reservations", {
         method: "POST",
         body: {
+          branchId: selectedBranchId,
           partySize: Number(partySize),
           startAt: new Date(startAt).toISOString(),
           durationMinutes: Number(durationMinutes),
           ...(notes.trim() ? { notes: notes.trim() } : {}),
-          source: "CUSTOMER_APP",
         },
       }),
     onSuccess: async () => {
@@ -153,7 +153,7 @@ export function CustomerPage() {
 
   const cancelReservationMutation = useMutation({
     mutationFn: (reservationId: string) =>
-      api<ReservationResponse>(`/v1/reservations/${reservationId}/cancel`, {
+      api<ReservationResponse>(`/v1/my/reservations/${reservationId}/cancel`, {
         method: "POST",
         body: { reasonCode: "GUEST_REQUEST" },
       }),
@@ -294,19 +294,26 @@ export function CustomerPage() {
                     </label>
                     <button type="submit" className="btn btn--primary btn--xl">Ingresar</button>
                   </form>
-                ) : null}
-                <div className="cashier-form">
-                  <label>
-                    Token fixture
-                    <input value={fixtureToken} onChange={(e) => setFixtureToken(e.target.value)} />
-                  </label>
-                  <button type="button" className="btn btn--primary btn--xl" onClick={() => signInWithToken(fixtureToken.trim())}>
-                    Continuar
-                  </button>
-                  <button type="button" className="btn btn--ghost btn--xl" onClick={() => signInWithToken("demo-token")}>
-                    Entrar con demo-token
-                  </button>
-                </div>
+                ) : (
+                  <div className="cashier-form">
+                    <label>
+                      Token local
+                      <input
+                        value={fixtureToken}
+                        onChange={(e) => setFixtureToken(e.target.value)}
+                        placeholder="Bearer token"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      className="btn btn--primary btn--xl"
+                      onClick={() => signInWithToken(fixtureToken.trim())}
+                      disabled={!fixtureToken.trim()}
+                    >
+                      Continuar
+                    </button>
+                  </div>
+                )}
                 {loginError ? <p className="login-error">{loginError}</p> : null}
               </>
             ) : (
