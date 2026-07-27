@@ -514,12 +514,20 @@ export function HostPage() {
 
         <section className="cashier-kpi-strip">
           <article className="cashier-kpi-card">
-            <span>Reservas</span>
-            <strong>{reservationsQuery.data?.data.length ?? "—"}</strong>
+            <span>Llegan pronto</span>
+            <strong>{arrivingSoonReservations.length}</strong>
           </article>
           <article className="cashier-kpi-card">
-            <span>Waitlist</span>
-            <strong>{waitlistQuery.data?.data.length ?? "—"}</strong>
+            <span>Pendientes</span>
+            <strong>{pendingReservations.length}</strong>
+          </article>
+          <article className="cashier-kpi-card">
+            <span>Waitlist sentable</span>
+            <strong>{seatableWaitlistCount}</strong>
+          </article>
+          <article className="cashier-kpi-card">
+            <span>Notificados</span>
+            <strong>{notifiedEntries.length}</strong>
           </article>
           <article className="cashier-kpi-card">
             <span>Mesas libres</span>
