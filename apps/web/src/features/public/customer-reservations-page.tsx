@@ -3,6 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../app/auth-context.js";
 import { useTenantContext } from "../../app/tenant-context.js";
 import { apiRequest } from "../../lib/api-client.js";
+import {
+  prefetchOnIntent,
+  preloadReservationCreationExperience,
+  preloadReservationManagementExperience,
+} from "../../lib/route-prefetch.js";
 
 interface ReservationListItem {
   id: string;
@@ -19,6 +24,8 @@ interface ReservationListResponse {
 }
 
 export function CustomerReservationsPage() {
+  const reservePrefetchProps = prefetchOnIntent(preloadReservationCreationExperience);
+  const detailPrefetchProps = prefetchOnIntent(preloadReservationManagementExperience);
   const { accessToken } = useAuth();
   const { me, selectedTenantId } = useTenantContext();
   const selectedTenant = me?.tenants.find((tenant) => tenant.id === selectedTenantId) ?? null;
@@ -95,7 +102,7 @@ export function CustomerReservationsPage() {
       {!reservationsQuery.isLoading && !reservationsQuery.error && reservationsQuery.data?.length === 0 ? (
         <div className="public-card">
           <p>Todavía no hay reservas para este contexto.</p>
-          <Link to="/public/reservations/new" className="public-cta">
+          <Link to="/public/reservations/new" className="public-cta" {...reservePrefetchProps}>
             Crear una reserva
           </Link>
         </div>
@@ -132,6 +139,7 @@ export function CustomerReservationsPage() {
                       <Link
                         to={`/public/reservations/${reservation.id}`}
                         className="public-secondary-cta"
+                        {...detailPrefetchProps}
                       >
                         Ver detalle
                       </Link>
@@ -170,6 +178,7 @@ export function CustomerReservationsPage() {
                       <Link
                         to={`/public/reservations/${reservation.id}`}
                         className="public-secondary-cta"
+                        {...detailPrefetchProps}
                       >
                         Ver detalle
                       </Link>

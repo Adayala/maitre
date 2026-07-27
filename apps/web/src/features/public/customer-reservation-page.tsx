@@ -4,6 +4,11 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../app/auth-context.js";
 import { useTenantContext } from "../../app/tenant-context.js";
 import { apiRequest } from "../../lib/api-client.js";
+import {
+  prefetchOnIntent,
+  preloadReservationCreationExperience,
+  preloadReservationManagementExperience,
+} from "../../lib/route-prefetch.js";
 
 const PARTY_SIZE_PRESETS = ["1", "2", "4", "6", "8"];
 const DURATION_PRESETS = ["60", "90", "120"];
@@ -33,6 +38,8 @@ interface AvailabilityResponse {
 }
 
 export function CustomerReservationPage() {
+  const creationPrefetchProps = prefetchOnIntent(preloadReservationCreationExperience);
+  const reservationsPrefetchProps = prefetchOnIntent(preloadReservationManagementExperience);
   const navigate = useNavigate();
   const { accessToken } = useAuth();
   const { me, selectedTenantId, selectTenant, isLoading } = useTenantContext();
@@ -361,6 +368,7 @@ export function CustomerReservationPage() {
           <button
             type="submit"
             className="public-button-primary"
+            {...creationPrefetchProps}
             disabled={
               createReservationMutation.isPending ||
               !canCheckAvailability ||
@@ -369,6 +377,14 @@ export function CustomerReservationPage() {
             }
           >
             {createReservationMutation.isPending ? "Creando reserva…" : "Crear reserva"}
+          </button>
+          <button
+            type="button"
+            className="public-secondary-cta"
+            {...reservationsPrefetchProps}
+            onClick={() => navigate("/public/reservations")}
+          >
+            Ver mis reservas
           </button>
         </div>
       </form>

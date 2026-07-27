@@ -3,6 +3,11 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../app/auth-context.js";
 import { useTenantContext } from "../../app/tenant-context.js";
 import { apiRequest } from "../../lib/api-client.js";
+import {
+  prefetchOnIntent,
+  preloadReservationCreationExperience,
+  preloadReservationManagementExperience,
+} from "../../lib/route-prefetch.js";
 
 interface ReservationDetail {
   data: {
@@ -18,6 +23,8 @@ interface ReservationDetail {
 }
 
 export function CustomerReservationDetailPage() {
+  const reservePrefetchProps = prefetchOnIntent(preloadReservationCreationExperience);
+  const reservationsPrefetchProps = prefetchOnIntent(preloadReservationManagementExperience);
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -58,7 +65,7 @@ export function CustomerReservationDetailPage() {
   return (
     <section className="public-page" aria-labelledby="customer-reservation-detail-heading">
       <div className="public-button-row">
-        <Link to="/public/reservations" className="public-secondary-cta">
+        <Link to="/public/reservations" className="public-secondary-cta" {...reservationsPrefetchProps}>
           Volver a mis reservas
         </Link>
       </div>
@@ -117,7 +124,7 @@ export function CustomerReservationDetailPage() {
           ) : null}
 
           <div className="public-button-row">
-            <Link to="/public/reservations/new" className="public-secondary-cta">
+            <Link to="/public/reservations/new" className="public-secondary-cta" {...reservePrefetchProps}>
               Crear otra
             </Link>
             {reservation.status === "PENDING" || reservation.status === "CONFIRMED" ? (
@@ -133,6 +140,7 @@ export function CustomerReservationDetailPage() {
             <button
               type="button"
               className="public-button-primary"
+              {...reservationsPrefetchProps}
               onClick={() => navigate("/public/reservations")}
             >
               Ver todas

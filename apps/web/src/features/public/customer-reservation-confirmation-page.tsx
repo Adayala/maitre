@@ -1,4 +1,9 @@
 import { Link, Navigate, useLocation } from "react-router-dom";
+import {
+  prefetchOnIntent,
+  preloadReservationCreationExperience,
+  preloadReservationManagementExperience,
+} from "../../lib/route-prefetch.js";
 
 interface ReservationDetail {
   id: string;
@@ -11,6 +16,8 @@ interface ReservationDetail {
 }
 
 export function CustomerReservationConfirmationPage() {
+  const reservePrefetchProps = prefetchOnIntent(preloadReservationCreationExperience);
+  const reservationsPrefetchProps = prefetchOnIntent(preloadReservationManagementExperience);
   const location = useLocation();
   const reservation = location.state as ReservationDetail | undefined;
   const confirmationNextAction = getConfirmationNextAction(reservation?.status ?? "");
@@ -64,13 +71,13 @@ export function CustomerReservationConfirmationPage() {
       ) : null}
 
       <div className="public-button-row">
-        <Link to="/public/reservations" className="public-secondary-cta">
+        <Link to="/public/reservations" className="public-secondary-cta" {...reservationsPrefetchProps}>
           Ver mis reservas
         </Link>
         <Link to="/public" className="public-secondary-cta">
           Volver al inicio
         </Link>
-        <Link to="/public/menu" className="public-cta">
+        <Link to="/public/menu" className="public-cta" {...reservePrefetchProps}>
           Seguir explorando
         </Link>
       </div>

@@ -1,8 +1,8 @@
-import type { AnchorHTMLAttributes } from "react";
+import type { HTMLAttributes } from "react";
 import { getSupabaseClient } from "./supabase.js";
 
 type PrefetchIntentHandlers = Pick<
-  AnchorHTMLAttributes<HTMLAnchorElement>,
+  HTMLAttributes<HTMLElement>,
   "onMouseEnter" | "onFocus" | "onTouchStart"
 >;
 
