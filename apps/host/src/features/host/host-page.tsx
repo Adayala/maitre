@@ -181,6 +181,56 @@ export function HostPage() {
       }),
     [allTables, tableStatusById],
   );
+  const sortedReservations = useMemo(
+    () =>
+      (reservationsQuery.data?.data ?? [])
+        .slice()
+        .sort((a, b) => Date.parse(a.startAt) - Date.parse(b.startAt)),
+    [reservationsQuery.data],
+  );
+  const pendingReservations = useMemo(
+    () => sortedReservations.filter((reservation) => reservation.status === "PENDING"),
+    [sortedReservations],
+  );
+  const confirmedReservations = useMemo(
+    () => sortedReservations.filter((reservation) => reservation.status === "CONFIRMED"),
+    [sortedReservations],
+  );
+  const arrivingSoonReservations = useMemo(() => {
+    const now = Date.now();
+    const soonWindowEnd = now + 90 * 60 * 1000;
+    return sortedReservations.filter((reservation) => {
+      const startAt = Date.parse(reservation.startAt);
+      return (
+        startAt >= now &&
+        startAt <= soonWindowEnd &&
+        (reservation.status === "PENDING" || reservation.status === "CONFIRMED")
+      );
+    });
+  }, [sortedReservations]);
+  const waitingEntries = useMemo(
+    () => (waitlistQuery.data?.data ?? []).filter((entry) => entry.status === "WAITING" || entry.status === "NOTIFIED"),
+    [waitlistQuery.data],
+  );
+  const sortedWaitlistEntries = useMemo(
+    () =>
+      (waitlistQuery.data?.data ?? [])
+        .slice()
+        .sort((a, b) => waitlistPriority(a.status) - waitlistPriority(b.status) || Date.parse(a.createdAt) - Date.parse(b.createdAt)),
+    [waitlistQuery.data],
+  );
+  const notifiedEntries = useMemo(
+    () => sortedWaitlistEntries.filter((entry) => entry.status === "NOTIFIED"),
+    [sortedWaitlistEntries],
+  );
+  const seatableWaitlistCount = useMemo(
+    () =>
+      sortedWaitlistEntries.filter((entry) =>
+        (entry.status === "WAITING" || entry.status === "NOTIFIED") &&
+        availableTables.some((table) => table.capacity >= entry.partySize),
+      ).length,
+    [sortedWaitlistEntries, availableTables],
+  );
 
   const refreshAll = async () => {
     await Promise.all([
@@ -279,6 +329,110 @@ export function HostPage() {
           <article className="cashier-kpi-card">
             <span>Disponibilidad</span>
             <strong>{availabilityQuery.data?.data.available ? "Sí" : "No"}</strong>
+          </article>
+        </section>
+
+        <section className="host-launchpad">
+          <article className="cashier-card">
+            <div className="cashier-card-head">
+              <div>
+                <h2 className="owner-card-title">Próximas llegadas</h2>
+                <p className="owner-card-copy">Lo que llega dentro de los próximos 90 minutos.</p>
+              </div>
+              <span className="host-count-pill">{arrivingSoonReservations.length}</span>
+            </div>
+            {arrivingSoonReservations.length > 0 ? (
+              <div className="host-arrivals-list">
+                {arrivingSoonReservations.slice(0, 4).map((reservation) => (
+                  <article key={reservation.id} className="host-arrival-card">
+                    <div className="host-arrival-main">
+                      <strong>{formatDateTime(reservation.startAt)}</strong>
+                      <p>{reservation.partySize} pax · {reservation.durationMinutes} min</p>
+                      <p>{reservation.tableIds?.length ? `Mesas: ${reservation.tableIds.join(", ")}` : "Sin mesa asignada"}</p>
+                    </div>
+                    <div className="host-arrival-actions">
+                      <span className={`host-status host-status--${reservation.status.toLowerCase()}`}>{reservation.status}</span>
+                      {reservation.status === "PENDING" ? (
+                        <button
+                          type="button"
+                          className="btn btn--ghost btn--sm"
+                          onClick={() => void hostCommand.mutateAsync({ path: `/v1/reservations/${reservation.id}/confirm` })}
+                        >
+                          Confirmar
+                        </button>
+                      ) : null}
+                      {reservation.status === "CONFIRMED" ? (
+                        <button
+                          type="button"
+                          className="btn btn--primary btn--sm"
+                          onClick={() => void hostCommand.mutateAsync({ path: `/v1/reservations/${reservation.id}/seat` })}
+                        >
+                          Sentar
+                        </button>
+                      ) : null}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="host-empty-note">
+                <strong>Sin llegadas inmediatas.</strong>
+                <span>No hay reservas pendientes o confirmadas en la próxima hora y media.</span>
+              </div>
+            )}
+          </article>
+
+          <article className="cashier-card">
+            <div className="cashier-card-head">
+              <div>
+                <h2 className="owner-card-title">Acciones rápidas</h2>
+                <p className="owner-card-copy">Atajos para entrar directo a la cola que importa ahora.</p>
+              </div>
+            </div>
+            <div className="host-quick-grid">
+              <button
+                type="button"
+                className="host-quick-card"
+                onClick={() => {
+                  setTab("reservations");
+                  setReservationStatus("PENDING");
+                }}
+              >
+                <span>Pendientes</span>
+                <strong>{pendingReservations.length}</strong>
+                <p>Reservas para confirmar</p>
+              </button>
+              <button
+                type="button"
+                className="host-quick-card"
+                onClick={() => {
+                  setTab("reservations");
+                  setReservationStatus("CONFIRMED");
+                }}
+              >
+                <span>Confirmadas</span>
+                <strong>{confirmedReservations.length}</strong>
+                <p>Listas para sentar</p>
+              </button>
+              <button
+                type="button"
+                className="host-quick-card"
+                onClick={() => setTab("waitlist")}
+              >
+                <span>Waitlist</span>
+                <strong>{waitingEntries.length}</strong>
+                <p>Grupos esperando o notificados</p>
+              </button>
+              <button
+                type="button"
+                className="host-quick-card"
+                onClick={() => setTab("availability")}
+              >
+                <span>Disponibilidad</span>
+                <strong>{availableTables.length}</strong>
+                <p>Mesas libres para reubicar rápido</p>
+              </button>
+            </div>
           </article>
         </section>
 
@@ -411,59 +565,97 @@ export function HostPage() {
                 emptyMessage="No hay reservas para este filtro."
                 onRetry={() => void reservationsQuery.refetch()}
               >
-                <div className="owner-checklist">
-                  {(reservationsQuery.data?.data ?? []).map((reservation) => (
-                    <article key={reservation.id} className="owner-check">
-                      <div className="owner-list-main">
-                        <strong>{formatReservationHeading(reservation)}</strong>
-                        <p>{formatDateTime(reservation.startAt)} · {reservation.durationMinutes} min</p>
-                        <p>Mesas: {reservation.tableIds?.length ? reservation.tableIds.join(", ") : "sin asignar"}</p>
-                      </div>
-                      <div className="host-actions">
-                        <span className={`host-status host-status--${reservation.status.toLowerCase()}`}>{reservation.status}</span>
-                        <div className="cashier-quick-actions">
-                          {reservation.status === "PENDING" ? (
-                            <button type="button" className="btn btn--ghost" onClick={() => void hostCommand.mutateAsync({ path: `/v1/reservations/${reservation.id}/confirm` })}>
-                              Confirmar
-                            </button>
-                          ) : null}
-                          {reservation.status === "CONFIRMED" ? (
-                            <button type="button" className="btn btn--primary" onClick={() => void hostCommand.mutateAsync({ path: `/v1/reservations/${reservation.id}/seat` })}>
-                              Sentar
-                            </button>
-                          ) : null}
-                          {(reservation.status === "PENDING" || reservation.status === "CONFIRMED") ? (
-                            <>
+                <div className="host-reservation-list">
+                  {(reservationsQuery.data?.data ?? [])
+                    .slice()
+                    .sort((a, b) => Date.parse(a.startAt) - Date.parse(b.startAt))
+                    .map((reservation) => {
+                      const startAtMs = Date.parse(reservation.startAt);
+                      const minutesUntil = Math.round((startAtMs - Date.now()) / 60000);
+                      const isSoon =
+                        minutesUntil >= 0 &&
+                        minutesUntil <= 90 &&
+                        (reservation.status === "PENDING" || reservation.status === "CONFIRMED");
+                      return (
+                        <article
+                          key={reservation.id}
+                          className={`host-reservation-card ${isSoon ? "host-reservation-card--soon" : ""}`}
+                        >
+                          <div className="host-reservation-main">
+                            <div className="host-reservation-head">
+                              <div className="host-reservation-title">
+                                <strong>{formatReservationHeading(reservation)}</strong>
+                                <span>{formatDateTime(reservation.startAt)} · {reservation.durationMinutes} min</span>
+                              </div>
+                              <div className="host-reservation-flags">
+                                <span className={`host-status host-status--${reservation.status.toLowerCase()}`}>{reservation.status}</span>
+                                {isSoon ? (
+                                  <span className="host-status host-status--soon">
+                                    {minutesUntil <= 0 ? "Ahora" : `${minutesUntil} min`}
+                                  </span>
+                                ) : null}
+                              </div>
+                            </div>
+                            <div className="host-reservation-meta">
+                              <span>Mesas: {reservation.tableIds?.length ? reservation.tableIds.join(", ") : "sin asignar"}</span>
+                              <span>{reservation.notes?.trim() || "Sin notas operativas"}</span>
+                            </div>
+                          </div>
+                          <div className="host-reservation-actions">
+                            {reservation.status === "PENDING" ? (
                               <button
                                 type="button"
                                 className="btn btn--ghost"
                                 onClick={() =>
-                                  void hostCommand.mutateAsync({
-                                    path: `/v1/reservations/${reservation.id}/cancel`,
-                                    body: { reasonCode: "HOST_CANCELLED" },
-                                  })
+                                  void hostCommand.mutateAsync({ path: `/v1/reservations/${reservation.id}/confirm` })
                                 }
                               >
-                                Cancelar
+                                Confirmar
                               </button>
+                            ) : null}
+                            {reservation.status === "CONFIRMED" ? (
                               <button
                                 type="button"
-                                className="btn btn--ghost"
+                                className="btn btn--primary"
                                 onClick={() =>
-                                  void hostCommand.mutateAsync({
-                                    path: `/v1/reservations/${reservation.id}/no-show`,
-                                    body: { reason: "Guest no-show" },
-                                  })
+                                  void hostCommand.mutateAsync({ path: `/v1/reservations/${reservation.id}/seat` })
                                 }
                               >
-                                No-show
+                                Sentar
                               </button>
-                            </>
-                          ) : null}
-                        </div>
-                      </div>
-                    </article>
-                  ))}
+                            ) : null}
+                            {(reservation.status === "PENDING" || reservation.status === "CONFIRMED") ? (
+                              <>
+                                <button
+                                  type="button"
+                                  className="btn btn--ghost"
+                                  onClick={() =>
+                                    void hostCommand.mutateAsync({
+                                      path: `/v1/reservations/${reservation.id}/cancel`,
+                                      body: { reasonCode: "HOST_CANCELLED" },
+                                    })
+                                  }
+                                >
+                                  Cancelar
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn btn--ghost"
+                                  onClick={() =>
+                                    void hostCommand.mutateAsync({
+                                      path: `/v1/reservations/${reservation.id}/no-show`,
+                                      body: { reason: "Guest no-show" },
+                                    })
+                                  }
+                                >
+                                  No-show
+                                </button>
+                              </>
+                            ) : null}
+                          </div>
+                        </article>
+                      );
+                    })}
                 </div>
               </StateView>
             </section>
@@ -516,6 +708,20 @@ export function HostPage() {
                   <p className="owner-card-copy">Notificá, priorizá o sentá con una mesa libre.</p>
                 </div>
               </div>
+              <section className="host-waitlist-summary" aria-label="Resumen de waitlist">
+                <article className="host-waitlist-kpi">
+                  <span>Esperando</span>
+                  <strong>{waitingEntries.filter((entry) => entry.status === "WAITING").length}</strong>
+                </article>
+                <article className="host-waitlist-kpi">
+                  <span>Notificados</span>
+                  <strong>{notifiedEntries.length}</strong>
+                </article>
+                <article className="host-waitlist-kpi">
+                  <span>Sentables ahora</span>
+                  <strong>{seatableWaitlistCount}</strong>
+                </article>
+              </section>
               <StateView
                 isLoading={waitlistQuery.isLoading || salonDetailsQuery.isLoading || tableStatusesQuery.isLoading}
                 error={(waitlistQuery.error as Error) ?? (salonDetailsQuery.error as Error) ?? (tableStatusesQuery.error as Error) ?? null}
@@ -529,16 +735,34 @@ export function HostPage() {
                   void tableStatusesQuery.refetch();
                 }}
               >
-                <div className="owner-checklist">
-                  {(waitlistQuery.data?.data ?? []).map((entry) => {
+                <div className="host-waitlist-list">
+                  {sortedWaitlistEntries.map((entry) => {
                     const selected = waitlistSeatSelections[entry.id] ?? [];
                     const entryTables = availableTables.filter((table) => table.capacity >= entry.partySize);
+                    const waitedMinutes = Math.max(0, Math.round((Date.now() - Date.parse(entry.createdAt)) / 60000));
+                    const quotedMinutes = entry.quotedMinutes ?? 0;
+                    const overdue = quotedMinutes > 0 && waitedMinutes > quotedMinutes;
                     return (
-                      <article key={entry.id} className="owner-check owner-check--incomplete">
-                        <div className="owner-list-main">
-                          <strong>{entry.partySize} pax · {entry.id.slice(0, 8)}</strong>
-                          <p>Estado: {entry.status} · Espera prometida: {entry.quotedMinutes ?? 0} min</p>
-                          <p>{entry.notes?.trim() || "Sin notas"}</p>
+                      <article
+                        key={entry.id}
+                        className={`host-waitlist-card host-waitlist-card--${entry.status.toLowerCase()} ${overdue ? "host-waitlist-card--overdue" : ""}`}
+                      >
+                        <div className="host-waitlist-main">
+                          <div className="host-waitlist-head">
+                            <div className="host-waitlist-title">
+                              <strong>{entry.partySize} pax · {entry.id.slice(0, 8)}</strong>
+                              <span>{formatWaitlistTiming(waitedMinutes, quotedMinutes)}</span>
+                            </div>
+                            <div className="host-waitlist-flags">
+                              <span className={`host-status host-status--${entry.status.toLowerCase()}`}>{entry.status}</span>
+                              {overdue ? <span className="host-status host-status--soon">Demorado</span> : null}
+                            </div>
+                          </div>
+                          <div className="host-waitlist-meta">
+                            <span>Promesa: {quotedMinutes} min</span>
+                            <span>{entryTables.length > 0 ? `${entryTables.length} mesas candidatas` : "Sin mesa disponible ahora"}</span>
+                            <span>{entry.notes?.trim() || "Sin notas"}</span>
+                          </div>
                           {(entry.status === "WAITING" || entry.status === "NOTIFIED") ? (
                             <div className="host-table-picker">
                               {entryTables.map((table) => (
@@ -566,8 +790,7 @@ export function HostPage() {
                             </div>
                           ) : null}
                         </div>
-                        <div className="host-actions">
-                          <span className={`host-status host-status--${entry.status.toLowerCase()}`}>{entry.status}</span>
+                        <div className="host-waitlist-actions">
                           <div className="cashier-quick-actions">
                             {entry.status === "WAITING" ? (
                               <>
@@ -730,6 +953,16 @@ function formatReservationHeading(reservation: ReservationListItem) {
   return `${reservation.partySize} pax · ${reservation.id.slice(0, 8)}`;
 }
 
+function formatWaitlistTiming(waitedMinutes: number, quotedMinutes: number) {
+  if (quotedMinutes > 0 && waitedMinutes > quotedMinutes) {
+    return `${waitedMinutes} min esperando · +${waitedMinutes - quotedMinutes} sobre promesa`;
+  }
+  if (quotedMinutes > 0) {
+    return `${waitedMinutes} min esperando · promesa ${quotedMinutes} min`;
+  }
+  return `${waitedMinutes} min esperando`;
+}
+
 function toErrorMessage(error: unknown) {
   if (error instanceof Error) return error.message;
   return "Ocurrió un error.";
@@ -744,4 +977,21 @@ function labelForHostCommand(path: string) {
   if (path.endsWith("/expire")) return "Entrada expirada.";
   if (path.endsWith("/priority-overrides")) return "Prioridad actualizada.";
   return "Acción ejecutada.";
+}
+
+function waitlistPriority(status: WaitlistEntry["status"]) {
+  switch (status) {
+    case "NOTIFIED":
+      return 0;
+    case "WAITING":
+      return 1;
+    case "SEATED":
+      return 2;
+    case "CANCELLED":
+      return 3;
+    case "EXPIRED":
+      return 4;
+    default:
+      return 9;
+  }
 }

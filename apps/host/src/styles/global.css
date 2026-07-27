@@ -400,6 +400,71 @@ body {
   background: color-mix(in srgb, var(--danger) 18%, var(--surface));
 }
 
+.host-status--soon {
+  background: color-mix(in srgb, #f59e0b 18%, var(--surface));
+  border-color: color-mix(in srgb, #f59e0b 45%, transparent);
+}
+
+.host-reservation-list {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.host-reservation-card {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.host-reservation-card--soon {
+  border-color: color-mix(in srgb, #f59e0b 48%, transparent);
+  background: color-mix(in srgb, #f59e0b 9%, var(--surface-2));
+}
+
+.host-reservation-main {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.host-reservation-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.host-reservation-title {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.host-reservation-title span {
+  color: var(--muted);
+}
+
+.host-reservation-flags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+
+.host-reservation-meta {
+  display: grid;
+  gap: 0.2rem;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.host-reservation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
 .host-table-picker {
   display: flex;
   flex-wrap: wrap;
@@ -467,6 +532,197 @@ body {
   border-color: color-mix(in srgb, var(--danger) 45%, transparent);
 }
 
+.host-launchpad {
+  display: grid;
+  gap: 1rem;
+}
+
+.host-count-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.2rem;
+  height: 2.2rem;
+  padding: 0 0.7rem;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-weight: 900;
+}
+
+.host-arrivals-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.host-arrival-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.9rem;
+  padding: 0.95rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.host-arrival-main {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.host-arrival-main p {
+  color: var(--muted);
+}
+
+.host-arrival-actions {
+  display: grid;
+  justify-items: end;
+  gap: 0.5rem;
+}
+
+.host-empty-note {
+  display: grid;
+  gap: 0.25rem;
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--border);
+  background: var(--surface-2);
+}
+
+.host-empty-note span {
+  color: var(--muted);
+}
+
+.host-quick-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.host-quick-card {
+  display: grid;
+  gap: 0.25rem;
+  text-align: left;
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.host-quick-card:hover {
+  border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+}
+
+.host-quick-card span {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.host-quick-card strong {
+  font-size: 1.6rem;
+  letter-spacing: -0.03em;
+}
+
+.host-quick-card p {
+  color: var(--muted);
+}
+
+.host-waitlist-summary {
+  display: grid;
+  gap: 1px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.host-waitlist-kpi {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.9rem 1rem;
+  background: var(--surface-2);
+}
+
+.host-waitlist-kpi span {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.host-waitlist-kpi strong {
+  font-size: 1.2rem;
+}
+
+.host-waitlist-list {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.host-waitlist-card {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.host-waitlist-card--waiting {
+  border-color: color-mix(in srgb, #f59e0b 42%, transparent);
+}
+
+.host-waitlist-card--notified {
+  border-color: color-mix(in srgb, var(--primary) 42%, transparent);
+}
+
+.host-waitlist-card--overdue {
+  background: color-mix(in srgb, #f59e0b 10%, var(--surface-2));
+}
+
+.host-waitlist-main {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.host-waitlist-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.host-waitlist-title {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.host-waitlist-title span {
+  color: var(--muted);
+}
+
+.host-waitlist-flags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+
+.host-waitlist-meta {
+  display: grid;
+  gap: 0.2rem;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.host-waitlist-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .seg-btn {
   min-height: 42px;
   padding: 0.65rem 0.95rem;
@@ -483,6 +739,10 @@ body {
 }
 
 @media (min-width: 900px) {
+  .host-launchpad {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  }
+
   .owner-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
