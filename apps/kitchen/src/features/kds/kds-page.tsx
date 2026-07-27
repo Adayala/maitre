@@ -20,10 +20,13 @@ import { urgencyFor, useNow } from "./use-now.js";
 // (documented future enhancement). 4s balances freshness against load.
 const QUEUE_POLL_MS = 4000;
 const NEW_BADGE_MS = 20_000;
+const RECENT_DONE_MS = 8 * 60_000;
+const ACTION_SUCCESS_MS = 4_000;
 const SOUND_PREF_KEY = "maitre.kitchen.soundEnabled";
+const RUSH_PREF_KEY = "maitre.kitchen.rushMode";
 
 type FilterKey = "ALL" | CommandStatus;
-type QuickView = "NONE" | "LATE" | "READY";
+type QuickView = "NONE" | "LATE" | "READY" | "MINE";
 
 const FILTERS: Array<{ key: FilterKey; label: string }> = [
   { key: "ALL", label: "Todas" },
@@ -58,10 +61,51 @@ interface LateNotice {
   at: number;
 }
 
+interface ActionSuccess {
+  message: string;
+  at: number;
+}
+
+const ACTION_PENDING_LABEL: Record<CommandAction, string> = {
+  claim: "Tomando comanda…",
+  release: "Soltando comanda…",
+  start: "Iniciando preparación…",
+  hold: "Pausando comanda…",
+  resume: "Retomando comanda…",
+  "mark-ready": "Marcando comanda lista…",
+  "complete-handoff": "Confirmando handoff…",
+  cancel: "Cancelando comanda…",
+};
+
+const ACTION_SUCCESS_LABEL: Record<CommandAction, string> = {
+  claim: "Comanda tomada",
+  release: "Comanda liberada",
+  start: "Preparación iniciada",
+  hold: "Comanda pausada",
+  resume: "Preparación retomada",
+  "mark-ready": "Comanda marcada lista",
+  "complete-handoff": "Handoff confirmado",
+  cancel: "Comanda cancelada",
+};
+
 function readSoundPreference(): boolean {
   if (typeof window === "undefined") return true;
   const stored = window.localStorage.getItem(SOUND_PREF_KEY);
   return stored !== "0";
+}
+
+function readRushPreference(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.localStorage.getItem(RUSH_PREF_KEY) === "1";
+}
+
+function formatRecentAge(elapsedMs: number): string {
+  const totalSeconds = Math.max(0, Math.floor(elapsedMs / 1000));
+  if (totalSeconds < 60) return `hace ${totalSeconds}s`;
+  const minutes = Math.floor(totalSeconds / 60);
+  if (minutes < 60) return `hace ${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  return `hace ${hours} h`;
 }
 
 function playTone(pulses: number, mode: "arrival" | "late") {
@@ -128,11 +172,16 @@ export function KdsPage() {
   const [lateNotice, setLateNotice] = useState<LateNotice | null>(null);
   const [soundEnabled, setSoundEnabled] = useState<boolean>(() => readSoundPreference());
   const [focusMode, setFocusMode] = useState(false);
-  const [rushMode, setRushMode] = useState(false);
+  const [rushMode, setRushMode] = useState<boolean>(() => readRushPreference());
   const [deniedActions, setDeniedActions] = useState<Partial<Record<CommandAction, true>>>({});
+  const [pendingActions, setPendingActions] = useState<Partial<Record<string, CommandAction>>>({});
+  const [actionSuccess, setActionSuccess] = useState<ActionSuccess | null>(null);
   const prevRef = useRef<Map<string, Command>>(new Map());
   const initializedRef = useRef(false);
   const lateIdsRef = useRef<Set<string>>(new Set());
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const menuToggleRef = useRef<HTMLButtonElement | null>(null);
+  const firstMenuItemRef = useRef<HTMLButtonElement | null>(null);
 
   const stationId = selectedStation?.id ?? null;
   const queryKey = ["production-queue", selectedTenantId, stationId];
@@ -147,6 +196,20 @@ export function KdsPage() {
     enabled: Boolean(accessToken && selectedTenantId && stationId),
     refetchInterval: QUEUE_POLL_MS,
   });
+
+  useEffect(() => {
+    setDeniedActions({});
+    setPendingActions({});
+    setActionSuccess(null);
+    setActionError(null);
+    setRecent([]);
+    setNewArrivalAt({});
+    setArrivalNotice(null);
+    setLateNotice(null);
+    prevRef.current = new Map();
+    initializedRef.current = false;
+    lateIdsRef.current = new Set();
+  }, [selectedTenantId, stationId]);
 
   // The API pre-orders commands (priority DESC, receivedAt ASC); trust it.
   const commands = data?.data.commands ?? [];
@@ -240,9 +303,24 @@ export function KdsPage() {
   }, [lateNotice, now]);
 
   useEffect(() => {
+    setRecent((current) => current.filter((item) => now - item.at < RECENT_DONE_MS));
+  }, [now]);
+
+  useEffect(() => {
+    if (!actionSuccess) return;
+    if (now - actionSuccess.at < ACTION_SUCCESS_MS) return;
+    setActionSuccess((current) => (current?.at === actionSuccess.at ? null : current));
+  }, [actionSuccess, now]);
+
+  useEffect(() => {
     if (typeof window === "undefined") return;
     window.localStorage.setItem(SOUND_PREF_KEY, soundEnabled ? "1" : "0");
   }, [soundEnabled]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(RUSH_PREF_KEY, rushMode ? "1" : "0");
+  }, [rushMode]);
 
   useEffect(() => {
     if (typeof document === "undefined") return;
@@ -252,13 +330,50 @@ export function KdsPage() {
     return () => document.removeEventListener("fullscreenchange", syncFullscreen);
   }, []);
 
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    firstMenuItemRef.current?.focus();
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!menuRef.current?.contains(event.target as Node)) {
+        setMenuOpen(false);
+        menuToggleRef.current?.focus();
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+        menuToggleRef.current?.focus();
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [menuOpen]);
+
   const action = useCommandAction(queryKey);
 
   function runAction(commandId: string, act: CommandAction, reason?: string) {
+    const commandName =
+      commands.find((command) => command.id === commandId)?.payload.displayName ?? "la comanda";
     setActionError(null);
+    setActionSuccess(null);
+    setPendingActions((current) => ({ ...current, [commandId]: act }));
     action.mutate(
       { commandId, action: act, ...(reason !== undefined ? { reason } : {}) },
       {
+        onSuccess: () => {
+          setActionSuccess({
+            message: `${ACTION_SUCCESS_LABEL[act]} · ${commandName}`,
+            at: Date.now(),
+          });
+        },
         onError: (err) => {
           if (err instanceof ApiError && err.status === 403) {
             setDeniedActions((current) => ({ ...current, [act]: true }));
@@ -266,6 +381,13 @@ export function KdsPage() {
             return;
           }
           setActionError(err.message);
+        },
+        onSettled: () => {
+          setPendingActions((current) => {
+            const next = { ...current };
+            delete next[commandId];
+            return next;
+          });
         },
       },
     );
@@ -279,6 +401,8 @@ export function KdsPage() {
         )
       : quickView === "READY"
         ? commands.filter((command) => command.status === "READY")
+        : quickView === "MINE"
+          ? commands.filter((command) => command.ownerActorRef === me?.user.id)
         : commands;
   const visibleCommands =
     quickView === "NONE"
@@ -299,6 +423,91 @@ export function KdsPage() {
   const readyCount = commands.filter((command) => command.status === "READY").length;
   const mineCount = commands.filter((command) => command.ownerActorRef === me?.user.id).length;
   const newCount = commands.filter((command) => newArrivalAt[command.id] !== undefined).length;
+  const quickViewLabel =
+    quickView === "LATE"
+      ? "Atrasadas"
+      : quickView === "READY"
+        ? "Listas"
+        : quickView === "MINE"
+          ? "Mis comandas"
+          : null;
+  const filterLabel = FILTERS.find((filter) => filter.key === activeFilter)?.label ?? "Todas";
+  const activeViewLabel =
+    quickViewLabel && activeFilter !== "ALL"
+      ? `${quickViewLabel} · ${filterLabel}`
+      : quickViewLabel ?? (activeFilter !== "ALL" ? filterLabel : null);
+  const emptyTitle =
+    commands.length === 0
+      ? "Todo al día"
+      : quickView === "LATE"
+        ? "Sin atrasadas en esta vista"
+        : quickView === "READY"
+          ? "Nada lista para salir"
+          : quickView === "MINE"
+            ? "No tenés comandas tomadas"
+            : activeFilter === "RECEIVED"
+              ? "No entraron comandas nuevas"
+              : activeFilter === "CLAIMED"
+                ? "No hay comandas tomadas"
+                : activeFilter === "IN_PROGRESS"
+                  ? "No hay comandas en preparación"
+                  : activeFilter === "ON_HOLD"
+                    ? "No hay comandas en pausa"
+                    : activeFilter === "READY"
+                      ? "No hay comandas listas"
+                      : "Nada en esta vista";
+  const emptyMessage =
+    commands.length === 0
+      ? "No hay comandas pendientes en esta estación. Buen trabajo. 👏"
+      : quickView === "LATE"
+        ? "La cola está controlada. Volvé a la vista completa para seguir monitoreando el resto."
+        : quickView === "READY"
+          ? "Todavía no hay platos listos para handoff desde esta estación."
+          : quickView === "MINE"
+            ? "Podés tomar una comanda nueva o volver a la vista completa para revisar toda la cola."
+            : activeFilter === "RECEIVED"
+              ? "No hay ingresos pendientes de tomar en este momento."
+              : activeFilter === "CLAIMED"
+                ? "Nadie dejó comandas tomadas sin empezar."
+                : activeFilter === "IN_PROGRESS"
+                  ? "Ahora mismo no hay producción activa en esta vista."
+                  : activeFilter === "ON_HOLD"
+                    ? "No quedaron comandas pausadas para retomar."
+                    : activeFilter === "READY"
+                      ? "Todavía no hay preparación terminada para entregar."
+                      : "Probá con otro estado o salí del atajo operativo para seguir monitoreando la cola.";
+  const emptyIcon =
+    commands.length === 0
+      ? "✅"
+      : quickView === "LATE"
+        ? "🟢"
+        : quickView === "READY"
+          ? "🍽️"
+          : quickView === "MINE"
+            ? "🧑‍🍳"
+            : activeFilter === "RECEIVED"
+              ? "📭"
+              : activeFilter === "CLAIMED"
+                ? "🤝"
+                : activeFilter === "IN_PROGRESS"
+                  ? "🔥"
+                  : activeFilter === "ON_HOLD"
+                    ? "⏸️"
+                    : activeFilter === "READY"
+                      ? "🍽️"
+                      : "✅";
+  const emptyActionLabel =
+    quickView !== "NONE"
+      ? "Ver cola completa"
+      : activeFilter !== "ALL"
+        ? "Ver todas"
+        : undefined;
+  const handleEmptyAction =
+    quickView !== "NONE"
+      ? () => setQuickView("NONE")
+      : activeFilter !== "ALL"
+        ? () => setActiveFilter("ALL")
+        : undefined;
 
   return (
     <div className={`kds ${focusMode ? "kds--focus" : ""} ${rushMode ? "kds--rush" : ""}`}>
@@ -349,23 +558,26 @@ export function KdsPage() {
             <span>{rushMode ? "Rush on" : "Rush off"}</span>
           </button>
           {branchId && <AlertsBanner branchId={branchId} />}
-          <div className="kds-menu-wrap">
+          <div className="kds-menu-wrap" ref={menuRef}>
             <button
+              ref={menuToggleRef}
               type="button"
               className="btn btn--icon"
               aria-label="Ajustes"
               aria-expanded={menuOpen}
+              aria-haspopup="menu"
+              aria-controls="kds-settings-menu"
               onClick={() => setMenuOpen((o) => !o)}
             >
               ⚙️
             </button>
             {menuOpen && (
-              <div className="kds-menu" role="menu">
+              <div id="kds-settings-menu" className="kds-menu" role="menu">
                 <div className="kds-menu-user">{me?.user.displayName}</div>
-                <button type="button" className="kds-menu-item" onClick={() => { setMenuOpen(false); clearStation(); }}>
+                <button ref={firstMenuItemRef} type="button" className="kds-menu-item" onClick={() => { setMenuOpen(false); clearStation(); }}>
                   Cambiar estación
                 </button>
-                <button type="button" className="kds-menu-item" onClick={() => refetch()}>
+                <button type="button" className="kds-menu-item" onClick={() => { setMenuOpen(false); void refetch(); }}>
                   Actualizar ahora
                 </button>
                 <button
@@ -388,7 +600,7 @@ export function KdsPage() {
                 >
                   {rushMode ? "Desactivar vista rush" : "Activar vista rush"}
                 </button>
-                <button type="button" className="kds-menu-item kds-menu-item--danger" onClick={() => signOut()}>
+                <button type="button" className="kds-menu-item kds-menu-item--danger" onClick={() => { setMenuOpen(false); void signOut(); }}>
                   Cerrar sesión
                 </button>
               </div>
@@ -402,6 +614,15 @@ export function KdsPage() {
           {actionError}
           <button type="button" className="btn btn--ghost btn--sm" onClick={() => setActionError(null)}>
             Cerrar
+          </button>
+        </div>
+      )}
+
+      {actionSuccess && (
+        <div className="kds-action-success" role="status" aria-live="polite">
+          {actionSuccess.message}
+          <button type="button" className="btn btn--ghost btn--sm" onClick={() => setActionSuccess(null)}>
+            Ocultar
           </button>
         </div>
       )}
@@ -543,6 +764,15 @@ export function KdsPage() {
             <span>Listas</span>
             <strong>{readyCount}</strong>
           </button>
+          <button
+            type="button"
+            className={`quickview-chip ${quickView === "MINE" ? "quickview-chip--active" : ""}`}
+            onClick={() => setQuickView((current) => (current === "MINE" ? "NONE" : "MINE"))}
+            aria-pressed={quickView === "MINE"}
+          >
+            <span>Mías</span>
+            <strong>{mineCount}</strong>
+          </button>
           {quickView !== "NONE" && (
             <button
               type="button"
@@ -554,17 +784,26 @@ export function KdsPage() {
           )}
         </section>
 
+        {activeViewLabel && (
+          <section className="kds-view-hint" aria-label="Vista activa">
+            <span className="kds-view-hint__label">Viendo</span>
+            <strong>{activeViewLabel}</strong>
+            <span>
+              {visibleCommands.length} comanda{visibleCommands.length === 1 ? "" : "s"}
+            </span>
+          </section>
+        )}
+
         <StateView
           isLoading={isLoading}
           error={error as Error | null}
           isEmpty={visibleCommands.length === 0}
           loadingLabel="Cargando comandas…"
-          emptyTitle={commands.length === 0 ? "Todo al día" : "Nada en esta vista"}
-          emptyMessage={
-            commands.length === 0
-              ? "No hay comandas pendientes en esta estación. Buen trabajo. 👏"
-              : "Probá con otro estado o salí del atajo operativo para seguir monitoreando la cola."
-          }
+          emptyTitle={emptyTitle}
+          emptyMessage={emptyMessage}
+          emptyIcon={emptyIcon}
+          emptyActionLabel={emptyActionLabel}
+          onEmptyAction={handleEmptyAction}
           onRetry={() => refetch()}
         >
           {activeFilter === "ALL" && quickView !== "READY" ? (
@@ -587,7 +826,12 @@ export function KdsPage() {
                         command={command}
                         currentUserId={me?.user.id ?? null}
                         now={now}
-                        pending={action.isPending}
+                        pending={pendingActions[command.id] !== undefined}
+                        pendingLabel={
+                          pendingActions[command.id]
+                            ? ACTION_PENDING_LABEL[pendingActions[command.id]!]
+                            : undefined
+                        }
                         isNew={newArrivalAt[command.id] !== undefined}
                         deniedActions={deniedActions}
                         onAction={runAction}
@@ -605,7 +849,12 @@ export function KdsPage() {
                   command={command}
                   currentUserId={me?.user.id ?? null}
                   now={now}
-                  pending={action.isPending}
+                  pending={pendingActions[command.id] !== undefined}
+                  pendingLabel={
+                    pendingActions[command.id]
+                      ? ACTION_PENDING_LABEL[pendingActions[command.id]!]
+                      : undefined
+                  }
                   isNew={newArrivalAt[command.id] !== undefined}
                   deniedActions={deniedActions}
                   onAction={runAction}
@@ -622,10 +871,14 @@ export function KdsPage() {
           <ul className="recent-list">
             {recent.map((r) => (
               <li key={`${r.id}-${r.at}`} className="recent-item">
-                ✓ {r.name}
+                <span className="recent-item__name">✓ {r.name}</span>
+                <span className="recent-item__age">{formatRecentAge(now - r.at)}</span>
               </li>
             ))}
           </ul>
+          <button type="button" className="recent-clear" onClick={() => setRecent([])}>
+            Limpiar
+          </button>
         </footer>
       )}
     </div>

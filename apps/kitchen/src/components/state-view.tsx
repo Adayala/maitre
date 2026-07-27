@@ -11,6 +11,8 @@ interface StateViewProps {
   emptyTitle?: string;
   emptyMessage?: string;
   emptyIcon?: string;
+  emptyActionLabel?: string;
+  onEmptyAction?: () => void;
   onRetry?: () => void;
   children: ReactNode;
 }
@@ -23,6 +25,8 @@ export function StateView({
   emptyTitle,
   emptyMessage,
   emptyIcon,
+  emptyActionLabel,
+  onEmptyAction,
   onRetry,
   children,
 }: StateViewProps) {
@@ -57,6 +61,11 @@ export function StateView({
         </span>
         <h2>{emptyTitle ?? "Todo al día"}</h2>
         <p>{emptyMessage ?? "No hay comandas pendientes en esta estación."}</p>
+        {onEmptyAction && emptyActionLabel && (
+          <button type="button" className="btn btn--ghost" onClick={onEmptyAction}>
+            {emptyActionLabel}
+          </button>
+        )}
       </div>
     );
   }

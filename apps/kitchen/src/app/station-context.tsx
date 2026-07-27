@@ -41,6 +41,8 @@ export function StationProvider({ children }: { children: ReactNode }) {
   });
 
   const stations = (data?.data ?? []).filter((s) => s.status === "ACTIVE");
+  const resolvedStationId =
+    selectedStationId ?? (stations.length === 1 ? stations[0]!.id : null);
 
   // Drop a stale selection if the persisted station is not in the current
   // branch's active list (e.g. the branch was switched, or it was deactivated).
@@ -49,6 +51,16 @@ export function StationProvider({ children }: { children: ReactNode }) {
     if (selectedStationId && !stations.some((s) => s.id === selectedStationId)) {
       localStorage.removeItem(STATION_KEY);
       setSelectedStationId(null);
+    }
+  }, [data, selectedStationId, stations]);
+
+  // Keep the kiosk "sticky" even when the station was auto-resolved because
+  // there is only one active option in the branch.
+  useEffect(() => {
+    if (!data) return;
+    if (!selectedStationId && stations.length === 1) {
+      localStorage.setItem(STATION_KEY, stations[0]!.id);
+      setSelectedStationId(stations[0]!.id);
     }
   }, [data, selectedStationId, stations]);
 
@@ -62,7 +74,7 @@ export function StationProvider({ children }: { children: ReactNode }) {
     setSelectedStationId(null);
   }
 
-  const selectedStation = stations.find((s) => s.id === selectedStationId) ?? null;
+  const selectedStation = stations.find((s) => s.id === resolvedStationId) ?? null;
 
   return (
     <StationContext.Provider
@@ -70,7 +82,7 @@ export function StationProvider({ children }: { children: ReactNode }) {
         stations,
         isLoading,
         ...(error ? { error: error as Error } : {}),
-        selectedStationId: selectedStation ? selectedStationId : null,
+        selectedStationId: selectedStation ? resolvedStationId : null,
         selectedStation,
         selectStation,
         clearStation,
