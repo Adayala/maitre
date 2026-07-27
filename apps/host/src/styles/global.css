@@ -1321,9 +1321,57 @@ p {
   color: var(--available);
   border-color: color-mix(in srgb, var(--available) 50%, transparent);
 }
+.setup-panel {
+  display: grid;
+  gap: 0.45rem;
+  margin-bottom: 1rem;
+  padding: 1rem 1.1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.setup-panel strong,
+.setup-panel p {
+  margin: 0;
+}
+.setup-eyebrow {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  font-weight: 800;
+}
+.setup-checklist {
+  display: grid;
+  gap: 0.55rem;
+  margin-bottom: 1rem;
+}
+.setup-check {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.setup-check strong {
+  color: var(--muted);
+}
+.setup-check--done {
+  border-color: color-mix(in srgb, var(--success) 45%, transparent);
+  background: color-mix(in srgb, var(--success) 12%, var(--surface-2));
+}
+.setup-check--done strong {
+  color: color-mix(in srgb, var(--success) 88%, white);
+}
 .setup-q {
   font-size: 1.2rem;
   margin-bottom: 1rem;
+}
+.setup-hint {
+  margin: -0.45rem 0 1rem;
+  color: var(--muted);
 }
 .setup-options {
   display: flex;
