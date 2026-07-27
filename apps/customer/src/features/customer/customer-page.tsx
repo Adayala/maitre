@@ -6,6 +6,8 @@ import { useApi } from "../../app/use-api.js";
 import { StateView } from "../../components/state-view.js";
 
 const PUBLIC_MENU_TOKEN = "demo-qr-menu-token";
+const PARTY_SIZE_PRESETS = ["1", "2", "4", "6", "8"];
+const DURATION_PRESETS = ["60", "90", "120"];
 
 interface PublicMenuPayload {
   data: {
@@ -62,6 +64,15 @@ interface AvailabilityResponse {
 
 type CustomerTab = "discover" | "menu" | "branches" | "reserve" | "mine";
 
+interface TimePreset {
+  label: string;
+  value: string;
+}
+
+type TimePresetConfig =
+  | { label: string; hoursOffset: number }
+  | { label: string; dayOffset?: number; fixedHour: number; fixedMinute: number };
+
 export function CustomerPage() {
   const queryClient = useQueryClient();
   const api = useApi();
@@ -81,6 +92,7 @@ export function CustomerPage() {
 
   const selectedTenant = tenants.find((tenant) => tenant.id === selectedTenantId) ?? null;
   const branches = selectedTenant?.branches ?? [];
+  const selectedBranch = branches.find((branch) => branch.id === selectedBranchId) ?? null;
 
   const menuQuery = useQuery({
     queryKey: ["customer-public-menu", PUBLIC_MENU_TOKEN],
@@ -152,6 +164,48 @@ export function CustomerPage() {
   });
 
   const nextBranches = useMemo(() => branches, [branches]);
+  const sortedReservations = useMemo(
+    () =>
+      (reservationsQuery.data?.data ?? [])
+        .slice()
+        .sort((a, b) => Date.parse(a.startAt) - Date.parse(b.startAt)),
+    [reservationsQuery.data],
+  );
+  const upcomingReservations = useMemo(
+    () =>
+      sortedReservations.filter(
+        (reservation) =>
+          Date.parse(reservation.startAt) >= Date.now() &&
+          reservation.status !== "CANCELLED" &&
+          reservation.status !== "NO_SHOW",
+      ),
+    [sortedReservations],
+  );
+  const pastReservations = useMemo(
+    () =>
+      sortedReservations
+        .filter(
+          (reservation) =>
+            Date.parse(reservation.startAt) < Date.now() ||
+            reservation.status === "CANCELLED" ||
+            reservation.status === "NO_SHOW",
+        )
+        .reverse(),
+    [sortedReservations],
+  );
+  const timePresets = useMemo(() => buildTimePresets(), []);
+  const nextReservation = useMemo(
+    () => upcomingReservations[0] ?? null,
+    [upcomingReservations],
+  );
+  const reservationChecklist = [
+    { label: "Sesión iniciada", done: Boolean(accessToken) },
+    { label: "Tenant elegido", done: Boolean(selectedTenantId) },
+    { label: "Sucursal elegida", done: Boolean(selectedBranchId) },
+    { label: "Horario cargado", done: Boolean(startAt) },
+  ];
+  const reservationReady = reservationChecklist.every((step) => step.done);
+  const reservationPending = reservationChecklist.filter((step) => !step.done).map((step) => step.label);
 
   async function handlePasswordLogin(event: FormEvent) {
     event.preventDefault();
@@ -163,6 +217,11 @@ export function CustomerPage() {
     }
   }
 
+  function handleChooseBranch(branchId: string, nextTab: CustomerTab = "reserve") {
+    selectBranch(branchId);
+    setTab(nextTab);
+  }
+
   return (
     <main className="customer-app">
       <section className="customer-shell">
@@ -172,6 +231,24 @@ export function CustomerPage() {
           <p>
             Discovery público primero; reserva y seguimiento cuando la persona decide identificarse.
           </p>
+          <div className="customer-journey-strip">
+            <div className="customer-journey-pill">
+              <span>Explorar</span>
+              <strong>Sin login</strong>
+            </div>
+            <div className={`customer-journey-pill ${accessToken ? "customer-journey-pill--done" : ""}`}>
+              <span>Acceso</span>
+              <strong>{accessToken ? "Activo" : "Pendiente"}</strong>
+            </div>
+            <div className={`customer-journey-pill ${selectedBranchId ? "customer-journey-pill--done" : ""}`}>
+              <span>Sucursal</span>
+              <strong>{selectedBranch?.name ?? "Elegir"}</strong>
+            </div>
+            <div className={`customer-journey-pill ${nextReservation ? "customer-journey-pill--done" : ""}`}>
+              <span>Próxima reserva</span>
+              <strong>{nextReservation ? new Date(nextReservation.startAt).toLocaleDateString("es-AR") : "Ninguna"}</strong>
+            </div>
+          </div>
           <div className="cashier-segmented">
             <button type="button" className={`seg-btn ${tab === "discover" ? "seg-btn--active" : ""}`} onClick={() => setTab("discover")}>
               Inicio
@@ -274,6 +351,24 @@ export function CustomerPage() {
                     </select>
                   </label>
                 </div>
+                {selectedTenantId && nextBranches.length > 0 ? (
+                  <div className="customer-branch-picker">
+                    <span className="customer-preset-label">Elegí sucursal rápido</span>
+                    <div className="customer-branch-list">
+                      {nextBranches.map((branch) => (
+                        <button
+                          key={branch.id}
+                          type="button"
+                          className={`customer-branch-card ${selectedBranchId === branch.id ? "customer-branch-card--active" : ""}`}
+                          onClick={() => selectBranch(branch.id)}
+                        >
+                          <strong>{branch.name}</strong>
+                          <span>{branch.code}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
               </StateView>
             </article>
           ) : null}
@@ -290,6 +385,26 @@ export function CustomerPage() {
                 <button type="button" className="btn btn--primary" onClick={() => setTab("menu")}>Ver menú</button>
                 <button type="button" className="btn btn--ghost" onClick={() => setTab("branches")}>Ver sucursales</button>
                 <button type="button" className="btn btn--ghost" onClick={() => setTab("reserve")}>Reservar</button>
+              </div>
+            </article>
+            <article className="cashier-card">
+              <h2 className="owner-card-title">Tu recorrido</h2>
+              <div className="customer-path-grid">
+                <button type="button" className="customer-path-card" onClick={() => setTab("menu")}>
+                  <span className="customer-path-step">1. Explorá</span>
+                  <strong>Menú y propuesta</strong>
+                  <p>Entrás sin cuenta para ver carta, categorías y precios.</p>
+                </button>
+                <button type="button" className="customer-path-card" onClick={() => setTab("branches")}>
+                  <span className="customer-path-step">2. Elegí</span>
+                  <strong>Sucursal</strong>
+                  <p>Definí dónde querés ir antes de consultar disponibilidad real.</p>
+                </button>
+                <button type="button" className="customer-path-card" onClick={() => setTab(accessToken ? "reserve" : "mine")}>
+                  <span className="customer-path-step">3. Reservá</span>
+                  <strong>{accessToken ? "Continuar reserva" : "Identificate"}</strong>
+                  <p>{accessToken ? "Ya podés cargar fecha, horario y cantidad." : "Necesitás sesión para reservar y seguir tu historial."}</p>
+                </button>
               </div>
             </article>
           </section>
@@ -328,14 +443,67 @@ export function CustomerPage() {
             <article className="cashier-card">
               <h2 className="owner-card-title">Sucursales</h2>
               <StateView isLoading={branchesQuery.isLoading} error={(branchesQuery.error as Error) ?? null} onRetry={() => void branchesQuery.refetch()}>
-                {branchesQuery.data ? (
-                  <div className="owner-link-card">
-                    <strong>{branchesQuery.data.data.branch.name}</strong>
-                    <span>{branchesQuery.data.data.branch.code} · {branchesQuery.data.data.branch.timezone}</span>
-                    {branchesQuery.data.data.branch.contactEmail ? <span>{branchesQuery.data.data.branch.contactEmail}</span> : null}
-                    {branchesQuery.data.data.branch.contactPhone ? <span>{branchesQuery.data.data.branch.contactPhone}</span> : null}
-                  </div>
-                ) : null}
+                <div className="customer-branch-stack">
+                  {branchesQuery.data ? (
+                    <div className="owner-link-card">
+                      <strong>{branchesQuery.data.data.branch.name}</strong>
+                      <span>{branchesQuery.data.data.branch.code} · {branchesQuery.data.data.branch.timezone}</span>
+                      {branchesQuery.data.data.branch.contactEmail ? <span>{branchesQuery.data.data.branch.contactEmail}</span> : null}
+                      {branchesQuery.data.data.branch.contactPhone ? <span>{branchesQuery.data.data.branch.contactPhone}</span> : null}
+                    </div>
+                  ) : null}
+
+                  {accessToken ? (
+                    selectedTenantId ? (
+                      nextBranches.length > 0 ? (
+                        <div className="customer-branch-picker">
+                          <span className="customer-preset-label">Sucursales disponibles para reservar</span>
+                          <div className="customer-branch-list">
+                            {nextBranches.map((branch) => (
+                              <article
+                                key={branch.id}
+                                className={`customer-branch-card customer-branch-card--article ${selectedBranchId === branch.id ? "customer-branch-card--active" : ""}`}
+                              >
+                                <div className="customer-branch-card__copy">
+                                  <strong>{branch.name}</strong>
+                                  <span>{branch.code}</span>
+                                </div>
+                                <div className="customer-branch-card__actions">
+                                  <button
+                                    type="button"
+                                    className="btn btn--ghost"
+                                    onClick={() => selectBranch(branch.id)}
+                                  >
+                                    {selectedBranchId === branch.id ? "Elegida" : "Elegir"}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="btn btn--primary"
+                                    onClick={() => handleChooseBranch(branch.id)}
+                                  >
+                                    Reservar acá
+                                  </button>
+                                </div>
+                              </article>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="cashier-banner cashier-banner--info">
+                          <span>No hay sucursales visibles para el tenant elegido.</span>
+                        </div>
+                      )
+                    ) : (
+                      <div className="cashier-banner cashier-banner--info">
+                        <span>Elegí un tenant para ver y seleccionar sucursales reservables.</span>
+                      </div>
+                    )
+                  ) : (
+                    <div className="cashier-banner cashier-banner--info">
+                      <span>Podés explorar la sucursal pública sin login; para elegir una sucursal reservable, iniciá sesión.</span>
+                    </div>
+                  )}
+                </div>
               </StateView>
             </article>
           </section>
@@ -343,6 +511,25 @@ export function CustomerPage() {
 
         {tab === "reserve" ? (
           <section className="customer-grid">
+            <article className="cashier-card">
+              <h2 className="owner-card-title">Qué falta para reservar</h2>
+              <div className="customer-checklist">
+                {reservationChecklist.map((step) => (
+                  <div key={step.label} className={`customer-check ${step.done ? "customer-check--done" : ""}`}>
+                    <strong>{step.done ? "✓" : "•"}</strong>
+                    <span>{step.label}</span>
+                  </div>
+                ))}
+              </div>
+              <div className={`cashier-banner ${reservationReady ? "cashier-banner--success" : "cashier-banner--info"}`}>
+                <span>
+                  {reservationReady
+                    ? `Todo listo para reservar en ${selectedBranch?.name ?? "la sucursal elegida"}.`
+                    : `Todavía falta: ${reservationPending.join(", ")}.`}
+                </span>
+              </div>
+            </article>
+
             <article className="cashier-card">
               <h2 className="owner-card-title">Nueva reserva</h2>
               {!accessToken ? (
@@ -361,14 +548,59 @@ export function CustomerPage() {
                     Comensales
                     <input value={partySize} onChange={(e) => setPartySize(e.target.value)} inputMode="numeric" />
                   </label>
+                  <div className="customer-preset-group">
+                    <span className="customer-preset-label">Atajos de comensales</span>
+                    <div className="customer-preset-row">
+                      {PARTY_SIZE_PRESETS.map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          className={`customer-preset-chip ${partySize === preset ? "customer-preset-chip--active" : ""}`}
+                          onClick={() => setPartySize(preset)}
+                        >
+                          {preset} pax
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   <label>
                     Fecha y hora
                     <input type="datetime-local" value={startAt} onChange={(e) => setStartAt(e.target.value)} />
                   </label>
+                  <div className="customer-preset-group">
+                    <span className="customer-preset-label">Horarios habituales</span>
+                    <div className="customer-preset-row">
+                      {timePresets.map((preset) => (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          className={`customer-preset-chip ${startAt === preset.value ? "customer-preset-chip--active" : ""}`}
+                          onClick={() => setStartAt(preset.value)}
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   <label>
                     Duración (min)
                     <input value={durationMinutes} onChange={(e) => setDurationMinutes(e.target.value)} inputMode="numeric" />
                   </label>
+                  <div className="customer-preset-group">
+                    <span className="customer-preset-label">Duración sugerida</span>
+                    <div className="customer-preset-row">
+                      {DURATION_PRESETS.map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          className={`customer-preset-chip ${durationMinutes === preset ? "customer-preset-chip--active" : ""}`}
+                          onClick={() => setDurationMinutes(preset)}
+                        >
+                          {preset} min
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   <label>
                     Notas
                     <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Alergias, silla alta, cumpleaños..." />
@@ -420,6 +652,17 @@ export function CustomerPage() {
 
         {tab === "mine" ? (
           <section className="customer-grid">
+            {accessToken && nextReservation ? (
+              <article className="cashier-card cashier-card--hero">
+                <h2 className="owner-card-title">Próxima reserva</h2>
+                <p className="owner-card-copy">
+                  {new Date(nextReservation.startAt).toLocaleString("es-AR")} · {nextReservation.partySize} pax · {nextReservation.durationMinutes} min
+                </p>
+                <div className="cashier-banner cashier-banner--info">
+                  <span>Estado actual: {nextReservation.status}</span>
+                </div>
+              </article>
+            ) : null}
             <article className="cashier-card">
               <h2 className="owner-card-title">Mis reservas</h2>
               {!accessToken ? (
@@ -436,29 +679,77 @@ export function CustomerPage() {
                   emptyMessage="Todavía no tenés reservas cargadas."
                   onRetry={() => void reservationsQuery.refetch()}
                 >
-                  <div className="owner-checklist">
-                    {(reservationsQuery.data?.data ?? [])
-                      .slice()
-                      .sort((a, b) => Date.parse(b.startAt) - Date.parse(a.startAt))
-                      .map((reservation) => (
-                        <article key={reservation.id} className="owner-check">
-                          <div className="owner-list-main">
-                            <strong>{new Date(reservation.startAt).toLocaleString("es-AR")}</strong>
-                            <p>{reservation.partySize} pax · {reservation.durationMinutes} min</p>
-                            <p>Estado: {reservation.status}</p>
+                  <div className="customer-reservations-layout">
+                    <section className="customer-reservation-section">
+                      <div className="customer-reservation-section__head">
+                        <h3>Próximas</h3>
+                        <span>{upcomingReservations.length}</span>
+                      </div>
+                      <div className="customer-reservation-list">
+                        {upcomingReservations.length === 0 ? (
+                          <div className="customer-reservation-empty">
+                            <strong>No tenés reservas próximas.</strong>
+                            <span>Cuando cargues una reserva futura, va a aparecer destacada acá.</span>
                           </div>
-                          {(reservation.status === "PENDING" || reservation.status === "CONFIRMED") ? (
-                            <button
-                              type="button"
-                              className="btn btn--ghost"
-                              disabled={cancelReservationMutation.isPending}
-                              onClick={() => void cancelReservationMutation.mutateAsync(reservation.id)}
-                            >
-                              Cancelar
-                            </button>
-                          ) : null}
-                        </article>
-                      ))}
+                        ) : (
+                          upcomingReservations.map((reservation) => (
+                            <article key={reservation.id} className="customer-reservation-card customer-reservation-card--upcoming">
+                              <div className="customer-reservation-card__main">
+                                <div className="customer-reservation-card__top">
+                                  <strong>{new Date(reservation.startAt).toLocaleString("es-AR")}</strong>
+                                  <span className={`customer-status-pill customer-status-pill--${reservation.status.toLowerCase()}`}>
+                                    {reservationStatusLabel(reservation.status)}
+                                  </span>
+                                </div>
+                                <p>{reservation.partySize} pax · {reservation.durationMinutes} min</p>
+                                <p>Sucursal: {reservation.branchId.slice(0, 8)}</p>
+                                {reservation.notes ? <p>Notas: {reservation.notes}</p> : null}
+                              </div>
+                              {(reservation.status === "PENDING" || reservation.status === "CONFIRMED") ? (
+                                <button
+                                  type="button"
+                                  className="btn btn--ghost"
+                                  disabled={cancelReservationMutation.isPending}
+                                  onClick={() => void cancelReservationMutation.mutateAsync(reservation.id)}
+                                >
+                                  {cancelReservationMutation.isPending ? "Cancelando…" : "Cancelar"}
+                                </button>
+                              ) : null}
+                            </article>
+                          ))
+                        )}
+                      </div>
+                    </section>
+
+                    <section className="customer-reservation-section">
+                      <div className="customer-reservation-section__head">
+                        <h3>Historial</h3>
+                        <span>{pastReservations.length}</span>
+                      </div>
+                      <div className="customer-reservation-list">
+                        {pastReservations.length === 0 ? (
+                          <div className="customer-reservation-empty">
+                            <strong>Sin historial todavía.</strong>
+                            <span>Tus reservas pasadas o canceladas se van a ver en esta sección.</span>
+                          </div>
+                        ) : (
+                          pastReservations.map((reservation) => (
+                            <article key={reservation.id} className="customer-reservation-card customer-reservation-card--history">
+                              <div className="customer-reservation-card__main">
+                                <div className="customer-reservation-card__top">
+                                  <strong>{new Date(reservation.startAt).toLocaleString("es-AR")}</strong>
+                                  <span className={`customer-status-pill customer-status-pill--${reservation.status.toLowerCase()}`}>
+                                    {reservationStatusLabel(reservation.status)}
+                                  </span>
+                                </div>
+                                <p>{reservation.partySize} pax · {reservation.durationMinutes} min</p>
+                                <p>Sucursal: {reservation.branchId.slice(0, 8)}</p>
+                              </div>
+                            </article>
+                          ))
+                        )}
+                      </div>
+                    </section>
                   </div>
                 </StateView>
               )}
@@ -473,6 +764,50 @@ export function CustomerPage() {
 function defaultDateTimeLocal() {
   const date = new Date(Date.now() + 60 * 60 * 1000);
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}T${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+}
+
+function buildTimePresets(): TimePreset[] {
+  const now = new Date();
+  const presets: TimePresetConfig[] = [
+    { label: "En 1 h", hoursOffset: 1 },
+    { label: "Hoy 20:30", fixedHour: 20, fixedMinute: 30 },
+    { label: "Hoy 22:00", fixedHour: 22, fixedMinute: 0 },
+    { label: "Mañana 13:00", dayOffset: 1, fixedHour: 13, fixedMinute: 0 },
+    { label: "Mañana 21:00", dayOffset: 1, fixedHour: 21, fixedMinute: 0 },
+  ];
+
+  return presets.map((preset) => {
+    const date = new Date(now);
+    if ("hoursOffset" in preset) {
+      date.setHours(date.getHours() + preset.hoursOffset, 0, 0, 0);
+    } else {
+      date.setDate(date.getDate() + (preset.dayOffset ?? 0));
+      date.setHours(preset.fixedHour, preset.fixedMinute, 0, 0);
+    }
+    return {
+      label: preset.label,
+      value: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}T${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`,
+    };
+  });
+}
+
+function reservationStatusLabel(status: string) {
+  switch (status) {
+    case "PENDING":
+      return "Pendiente";
+    case "CONFIRMED":
+      return "Confirmada";
+    case "SEATED":
+      return "Sentados";
+    case "COMPLETED":
+      return "Completada";
+    case "CANCELLED":
+      return "Cancelada";
+    case "NO_SHOW":
+      return "No show";
+    default:
+      return status;
+  }
 }
 
 function toErrorMessage(error: unknown) {

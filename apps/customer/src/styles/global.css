@@ -76,6 +76,327 @@ body {
   padding: 1rem;
 }
 
+.customer-shell {
+  display: grid;
+  gap: 1rem;
+}
+
+.customer-hero {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.customer-eyebrow {
+  margin: 0;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.customer-journey-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.65rem;
+}
+
+.customer-journey-pill {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.customer-journey-pill span {
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.customer-journey-pill strong {
+  font-size: 1rem;
+}
+
+.customer-journey-pill--done {
+  border-color: color-mix(in srgb, var(--success) 42%, transparent);
+  background: color-mix(in srgb, var(--success) 10%, var(--surface));
+}
+
+.customer-path-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.customer-path-card {
+  display: grid;
+  gap: 0.3rem;
+  text-align: left;
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.customer-path-card:hover {
+  border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+}
+
+.customer-path-step {
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.customer-path-card p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.customer-checklist {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.customer-check {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.customer-check strong {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4rem;
+  color: var(--muted);
+}
+
+.customer-check--done {
+  border-color: color-mix(in srgb, var(--success) 40%, transparent);
+  background: color-mix(in srgb, var(--success) 10%, var(--surface-2));
+}
+
+.customer-check--done strong {
+  color: var(--success);
+}
+
+.customer-preset-group {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.customer-preset-label {
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.customer-preset-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.customer-preset-chip {
+  min-height: 42px;
+  padding: 0 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.customer-preset-chip--active {
+  border-color: color-mix(in srgb, var(--primary) 48%, transparent);
+  background: color-mix(in srgb, var(--primary) 16%, var(--surface-2));
+}
+
+.customer-branch-stack,
+.customer-branch-picker {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.customer-branch-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.customer-branch-card {
+  display: grid;
+  gap: 0.25rem;
+  text-align: left;
+  padding: 0.95rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.customer-branch-card span {
+  color: var(--muted);
+}
+
+.customer-branch-card--active {
+  border-color: color-mix(in srgb, var(--primary) 48%, transparent);
+  background: color-mix(in srgb, var(--primary) 12%, var(--surface-2));
+}
+
+.customer-branch-card--article {
+  gap: 0.75rem;
+}
+
+.customer-branch-card__copy {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.customer-branch-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.customer-reservations-layout {
+  display: grid;
+  gap: 1rem;
+}
+
+.customer-reservation-section {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.customer-reservation-section__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.customer-reservation-section__head h3 {
+  margin: 0;
+}
+
+.customer-reservation-section__head span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 0.6rem;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.customer-reservation-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.customer-reservation-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.9rem;
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.customer-reservation-card--upcoming {
+  border-color: color-mix(in srgb, var(--primary) 35%, transparent);
+}
+
+.customer-reservation-card--history {
+  opacity: 0.92;
+}
+
+.customer-reservation-card__main {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.customer-reservation-card__main p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.customer-reservation-card__top {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.customer-status-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.9rem;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid var(--border);
+}
+
+.customer-status-pill--pending {
+  background: color-mix(in srgb, #f59e0b 18%, var(--surface));
+  border-color: color-mix(in srgb, #f59e0b 40%, transparent);
+}
+
+.customer-status-pill--confirmed,
+.customer-status-pill--seated {
+  background: color-mix(in srgb, var(--success) 18%, var(--surface));
+  border-color: color-mix(in srgb, var(--success) 40%, transparent);
+}
+
+.customer-status-pill--completed {
+  background: color-mix(in srgb, var(--primary) 18%, var(--surface));
+  border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+}
+
+.customer-status-pill--cancelled,
+.customer-status-pill--no_show {
+  background: color-mix(in srgb, var(--danger) 18%, var(--surface));
+  border-color: color-mix(in srgb, var(--danger) 40%, transparent);
+}
+
+.customer-reservation-empty {
+  display: grid;
+  gap: 0.25rem;
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--border);
+  background: var(--surface-2);
+}
+
+.customer-reservation-empty span {
+  color: var(--muted);
+}
+
 .cashier-grid {
   display: grid;
   gap: 1rem;
