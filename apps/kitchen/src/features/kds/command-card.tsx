@@ -78,6 +78,17 @@ export function CommandCard({
     command.ownerActorRef && command.ownerActorRef !== currentUserId,
   );
   const lockedByOtherOwner = ownedByOther && status !== "COMPLETED" && status !== "CANCELLED";
+  const flowHint = lockedByOtherOwner
+    ? { label: "Bloqueada", tone: "blocked" as const }
+    : ownedByMe
+      ? { label: "Tuya", tone: "mine" as const }
+      : status === "RECEIVED"
+        ? { label: "Tomable", tone: "claimable" as const }
+        : status === "ON_HOLD"
+          ? { label: "Retomar", tone: "hold" as const }
+          : status === "READY"
+            ? { label: "Despachar", tone: "ready" as const }
+            : null;
 
   const actions = lockedByOtherOwner
     ? []
@@ -157,10 +168,17 @@ export function CommandCard({
       )}
 
       <footer className="card-foot">
-        {(ownedByMe || ownedByOther) && (
-          <span className={`owner ${ownedByMe ? "owner--me" : "owner--other"}`}>
-            {ownedByMe ? "Vos" : `Otro cocinero`}
-          </span>
+        {(ownedByMe || ownedByOther || flowHint) && (
+          <div className="card-meta">
+            {(ownedByMe || ownedByOther) && (
+              <span className={`owner ${ownedByMe ? "owner--me" : "owner--other"}`}>
+                {ownedByMe ? "Vos" : `Otro cocinero`}
+              </span>
+            )}
+            {flowHint && (
+              <span className={`flow-hint flow-hint--${flowHint.tone}`}>{flowHint.label}</span>
+            )}
+          </div>
         )}
         {lockedByOtherOwner && (
           <p className="card-lock-note">

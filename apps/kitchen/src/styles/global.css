@@ -1360,11 +1360,54 @@ h3 {
   font-size: 0.82rem;
   font-weight: 700;
 }
+.card-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
 .owner--me {
   color: var(--ready);
 }
 .owner--other {
   color: var(--muted);
+}
+.flow-hint {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border: 1px solid var(--border);
+}
+.flow-hint--claimable {
+  color: var(--received);
+  border-color: color-mix(in srgb, var(--received) 48%, transparent);
+  background: color-mix(in srgb, var(--received) 10%, var(--surface));
+}
+.flow-hint--mine {
+  color: var(--ready);
+  border-color: color-mix(in srgb, var(--ready) 48%, transparent);
+  background: color-mix(in srgb, var(--ready) 10%, var(--surface));
+}
+.flow-hint--blocked {
+  color: var(--muted);
+  border-color: color-mix(in srgb, var(--hold) 48%, transparent);
+  background: color-mix(in srgb, var(--hold) 10%, var(--surface));
+}
+.flow-hint--hold {
+  color: var(--claimed);
+  border-color: color-mix(in srgb, var(--claimed) 48%, transparent);
+  background: color-mix(in srgb, var(--claimed) 10%, var(--surface));
+}
+.flow-hint--ready {
+  color: var(--ready);
+  border-color: color-mix(in srgb, var(--ready) 50%, transparent);
+  background: color-mix(in srgb, var(--ready) 12%, var(--surface));
 }
 .card-lock-note {
   margin: 0;
@@ -1391,6 +1434,17 @@ h3 {
 .kds--rush .card-pending-note {
   padding: 0.5rem 0.55rem;
   font-size: 0.84rem;
+}
+.kds--rush .card-meta {
+  gap: 0.35rem;
+}
+.kds--rush .owner {
+  font-size: 0.76rem;
+}
+.kds--rush .flow-hint {
+  min-height: 21px;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.66rem;
 }
 
 .card-actions {
