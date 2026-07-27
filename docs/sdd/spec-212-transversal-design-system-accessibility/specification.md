@@ -2,6 +2,20 @@
 
 ## 1. Arquitectura del sistema de diseño
 
+```mermaid
+graph TB
+    TOKENS["Design tokens"]
+    PRIMITIVES["Primitivas UI"]
+    PATTERNS["Patrones de interacción"]
+    FEATURES["Features por app"]
+    APPS["Aplicaciones por rol"]
+
+    TOKENS --> PRIMITIVES
+    PRIMITIVES --> PATTERNS
+    PATTERNS --> FEATURES
+    FEATURES --> APPS
+```
+
 ```text
 Design tokens
   └── Primitives
@@ -16,6 +30,8 @@ Design tokens
 - Una feature no puede incorporarse a `packages/ui` hasta demostrar reutilización real o representar una primitiva transversal.
 
 I0 implementa únicamente el inventario de [i0-component-scope.md](i0-component-scope.md). Los patrones de otras superficies permanecen diseño futuro y no crean componentes vacíos.
+
+> Vista relacionada: [Foundation 18 — Architecture, Components & Design Views](../../foundation/18-architecture-components-design-views.md)
 
 ## 2. Tokens
 

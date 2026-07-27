@@ -76,6 +76,21 @@ export class SupabaseUserRepository implements UserRepositoryPort {
     return data ? fromRow(data as UserRow) : null;
   }
 
+  async findByEmail(email: string): Promise<User | null> {
+    const normalized = email.trim().toLowerCase();
+    const { data, error } = await this.client
+      .from(TABLE)
+      .select("*")
+      .ilike("email", normalized)
+      .limit(2);
+    if (error) throw error;
+    if (!data || data.length === 0) return null;
+    if (data.length > 1) {
+      throw new Error(`Multiple users found for email ${normalized}`);
+    }
+    return fromRow(data[0] as UserRow);
+  }
+
   async save(user: User): Promise<void> {
     const { error } = await this.client.from(TABLE).upsert(toRow(user));
     if (error) throw error;

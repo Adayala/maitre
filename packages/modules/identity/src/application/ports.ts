@@ -17,12 +17,14 @@ export interface SessionVerificationPort {
 
 export interface UserRepositoryPort {
   findByExternalIdentity(provider: string, subject: string): Promise<User | null>;
+  findByEmail(email: string): Promise<User | null>;
   findById(id: string): Promise<User | null>;
   save(user: User): Promise<void>;
 }
 
 export interface MembershipRepositoryPort {
   listActiveByUser(userId: string): Promise<Membership[]>;
+  listByUser(userId: string): Promise<Membership[]>;
   findActiveByUserAndTenant(userId: string, tenantId: string): Promise<Membership | null>;
   listByTenant(tenantId: string): Promise<Membership[]>;
   findById(tenantId: string, id: string): Promise<Membership | null>;

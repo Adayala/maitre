@@ -14,7 +14,23 @@ export class InMemoryUserRepository implements UserRepositoryPort {
     return this.byId.get(id) ?? null;
   }
 
+  async findByEmail(email: string): Promise<User | null> {
+    const normalized = email.trim().toLowerCase();
+    for (const user of this.byId.values()) {
+      if ((user.email ?? "").trim().toLowerCase() === normalized) {
+        return user;
+      }
+    }
+    return null;
+  }
+
   async save(user: User): Promise<void> {
+    const existing = this.byId.get(user.id);
+    if (existing) {
+      this.byExternalIdentity.delete(
+        externalIdentityKey(existing.identityProvider, existing.externalIdentityId),
+      );
+    }
     this.byId.set(user.id, user);
     this.byExternalIdentity.set(
       externalIdentityKey(user.identityProvider, user.externalIdentityId),

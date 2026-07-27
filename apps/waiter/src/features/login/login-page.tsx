@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from "react";
 import { useAuth, isSupabaseConfigured } from "../../app/auth-context.js";
 
-// Login for the waiter app. Same dual-mode pattern as apps/web / apps/kitchen —
-// Supabase password sign-in when configured, otherwise a pasted fixture token.
+// Login for the waiter app. Supabase is the normal path; fixture-token access
+// remains only for local fallback builds without Supabase config.
 export function LoginPage() {
   const { signInWithPassword, signInWithToken } = useAuth();
   const [email, setEmail] = useState("");
@@ -70,7 +70,7 @@ export function LoginPage() {
           <div className="login-fixture">
             <p>
               Supabase Auth no está configurado en este build. Pegá un access token válido (por
-              ejemplo, el token de demo del backend) para continuar.
+              ejemplo, un bearer token emitido por el backend local) para continuar.
             </p>
             <label htmlFor="fixture-token">Access token</label>
             <input
@@ -78,7 +78,7 @@ export function LoginPage() {
               type="text"
               value={fixtureToken}
               onChange={(e) => setFixtureToken(e.target.value)}
-              placeholder="demo-token"
+              placeholder="Bearer token"
             />
             <button
               type="button"

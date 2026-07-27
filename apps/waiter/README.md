@@ -43,19 +43,21 @@ Point it at the API and choose an auth mode via `.env` (see `.env.example`):
 
 ```
 VITE_API_URL=http://localhost:3001
-VITE_SUPABASE_URL=            # empty → fixture-token login (paste e.g. "demo-token")
+VITE_SUPABASE_URL=            # set for real auth; empty only for local fixture fallback
 VITE_SUPABASE_PUBLISHABLE_KEY=
 ```
 
-With the API booted as `PERSISTENCE_DRIVER=memory AUTH_DRIVER=fixture`, log in
-with the demo fixture token `demo-token`.
+If the API detects `SUPABASE_URL` + (`SUPABASE_SECRET_KEY` or `SUPABASE_SERVICE_ROLE_KEY`), it now uses
+Supabase persistence by default and `AUTH_DRIVER=supabase` unless you override
+it. For the local fallback backend, boot the API with
+`PERSISTENCE_DRIVER=memory AUTH_DRIVER=fixture`.
 
 ## Auth & context
 
-Reuses the dual-mode auth pattern from `apps/web` / `apps/kitchen`: a real
-Supabase session when configured, otherwise a pasted fixture bearer token. After
-login, a sticky tenant + branch selection (`/v1/me/context`) scopes the app;
-both auto-resolve when there is only one option.
+Uses Supabase Auth as the normal path. The pasted bearer token flow exists only
+as a local fallback when the build has no Supabase configuration. After login,
+a sticky tenant + branch selection (`/v1/me/context`) scopes the app; both
+auto-resolve when there is only one option.
 
 ## Permissions & known gaps
 
@@ -65,7 +67,7 @@ that role does **not** have by default:
 - **Full table grid** needs `salon:read` + `table:read`; a plain waiter token
   lacks them, so the app falls back to the **table-status projection**, which
   only lists tables that currently have visit activity. With an
-  admin/manager/owner token (e.g. the `demo-token`) the complete salon grid
+  admin/manager/owner token the complete salon grid
   renders.
 - **Menu browsing** resolves the brand via `GET /v1/branches/:id` (`branch:read`).
   A waiter token without it surfaces a clear error on the order screen. Resolving

@@ -16,12 +16,15 @@ const FIXTURE_TOKEN_KEY = "maitre.fixtureAccessToken";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [accessToken, setAccessToken] = useState<string | null>(
-    () => sessionStorage.getItem(FIXTURE_TOKEN_KEY),
+    () => (isSupabaseConfigured ? null : sessionStorage.getItem(FIXTURE_TOKEN_KEY)),
   );
   const [email, setEmail] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (isSupabaseConfigured) {
+      sessionStorage.removeItem(FIXTURE_TOKEN_KEY);
+    }
     if (!supabase) {
       setIsLoading(false);
       return;
@@ -36,6 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
       setAccessToken(session?.access_token ?? null);
       setEmail(session?.user.email ?? null);
+      setIsLoading(false);
     });
     return () => subscription.subscription.unsubscribe();
   }, []);
@@ -47,9 +51,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   function signInWithToken(token: string) {
+    if (isSupabaseConfigured) {
+      throw new Error("This build uses Supabase Auth and does not accept fixture tokens.");
+    }
     sessionStorage.setItem(FIXTURE_TOKEN_KEY, token);
     setAccessToken(token);
     setEmail(null);
+    setIsLoading(false);
   }
 
   async function signOut() {

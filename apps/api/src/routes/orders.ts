@@ -291,7 +291,7 @@ export async function registerOrderRoutes(app: FastifyInstance, container: Conta
         const ctx = await requireTenantContext(container, req);
         const order = await container.orders.findById(ctx.tenantId, req.params.id);
         if (!order) return sendProblem(reply, correlationId, notFound("Order"));
-        const item = order.items.find((i) => i.id === req.params.itemId);
+        const item = order.items.find((i: { id: string; status: string }) => i.id === req.params.itemId);
         // Cancelling an already-prepared/ready item needs the elevated grant.
         const needsPrepared = item?.status === "READY" || item?.status === "IN_PREP";
         requirePermission(ctx, needsPrepared ? "order:cancel_prepared" : "order:cancel");

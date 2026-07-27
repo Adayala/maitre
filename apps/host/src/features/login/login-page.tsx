@@ -86,14 +86,14 @@ export function LoginPage() {
           </form>
         ) : (
           <div className="login-fixture">
-            <p>Pegá un access token válido para entrar al panel owner.</p>
+            <p>Este build local no tiene Supabase Auth. Pegá un access token válido para entrar al panel owner.</p>
             <label htmlFor="fixture-token">Access token</label>
             <input
               id="fixture-token"
               type="text"
               value={fixtureToken}
               onChange={(e) => setFixtureToken(e.target.value)}
-              placeholder="demo-token"
+              placeholder="Bearer token"
             />
             <button
               type="button"
@@ -106,21 +106,6 @@ export function LoginPage() {
           </div>
         )}
 
-        <div className="login-fixture">
-          <p>Acceso rápido de desarrollo para destrabar la prueba local.</p>
-          <div className="cashier-action-row">
-            <button
-              type="button"
-              className="btn btn--ghost btn--xl"
-              onClick={() => {
-                setError(null);
-                signInWithToken("demo-token");
-              }}
-            >
-              Entrar con demo-token
-            </button>
-          </div>
-        </div>
       </div>
     </main>
   );

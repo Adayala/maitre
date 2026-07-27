@@ -49,25 +49,29 @@ variance are legible at a glance. Currency defaults to `ARS`
 # from the repo root — install the workspace (apps/* is auto-globbed)
 npm install
 
-# start the API with the fast in-memory + fixture-token backend
+# start the API; with Supabase env vars present it auto-selects the real
+# Supabase-backed runtime, otherwise it falls back to memory + fixture auth
+npm run dev --workspace apps/api
+
+# explicit local fallback backend, if you want in-memory + fixture auth
 PERSISTENCE_DRIVER=memory AUTH_DRIVER=fixture npm run dev --workspace apps/api
 
 # start this app (dev server on :5174)
 npm run dev --workspace apps/cashier
 ```
 
-Copy `.env.example` to `.env` and set `VITE_API_URL` to the API origin. Leave the
-Supabase vars empty to use the fixture-token login (the demo backend token is
-`demo-token`).
+Copy `.env.example` to `.env` and set `VITE_API_URL` to the API origin. Set the
+Supabase vars for real auth; leave them empty only for the local fallback
+backend.
 
 Build / type-check: `npm run build --workspace apps/cashier`.
 
 ## Auth & context
 
-Reuses the dual-mode auth pattern from `apps/web`: a real Supabase session when
-configured, otherwise a pasted fixture bearer token. After login, a sticky
-tenant + branch + register selection scopes the app; each level auto-resolves
-when there is only one option.
+Uses Supabase Auth as the normal path. The pasted bearer token flow exists only
+as a local fallback when the build has no Supabase configuration. After login,
+a sticky tenant + branch + register selection scopes the app; each level
+auto-resolves when there is only one option.
 
 ## Deferred / future enhancements
 

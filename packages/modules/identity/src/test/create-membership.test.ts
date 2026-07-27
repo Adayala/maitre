@@ -9,6 +9,9 @@ class FakeMembershipRepository implements MembershipRepositoryPort {
   async listActiveByUser(userId: string) {
     return this.items.filter((m) => m.userId === userId && m.status === "ACTIVE");
   }
+  async listByUser(userId: string) {
+    return this.items.filter((m) => m.userId === userId);
+  }
   async findActiveByUserAndTenant(userId: string, tenantId: string) {
     return (
       this.items.find(
@@ -23,7 +26,9 @@ class FakeMembershipRepository implements MembershipRepositoryPort {
     return this.items.find((m) => m.tenantId === tenantId && m.id === id) ?? null;
   }
   async save(membership: Membership) {
-    this.items.push(membership);
+    const index = this.items.findIndex((item) => item.id === membership.id);
+    if (index >= 0) this.items[index] = membership;
+    else this.items.push(membership);
   }
 }
 

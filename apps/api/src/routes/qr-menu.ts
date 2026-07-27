@@ -53,6 +53,21 @@ async function buildMenuPayload(container: Container, tenantId: string, menuId: 
   };
 }
 
+async function buildPublicBranchPayload(container: Container, tenantId: string, branchId: string) {
+  const branch = await container.branches.findById(tenantId, branchId);
+  if (!branch) return null;
+  return {
+    branch: {
+      id: branch.id,
+      name: branch.name,
+      code: branch.code,
+      timezone: branch.timezone,
+      contactEmail: branch.contactEmail ?? null,
+      contactPhone: branch.contactPhone ?? null,
+    },
+  };
+}
+
 export async function registerQrMenuRoutes(app: FastifyInstance, container: Container): Promise<void> {
   // POST /v1/qr-menu-tokens — authenticated issue.
   app.post("/v1/qr-menu-tokens", async (req, reply) => {
@@ -101,6 +116,28 @@ export async function registerQrMenuRoutes(app: FastifyInstance, container: Cont
     } catch (err) {
       // Anti-enumeration: any resolution failure is an indistinguishable 404.
       if (err instanceof CapabilityNotResolvableError) return sendProblem(reply, correlationId, notFound("Menu"));
+      return sendProblem(reply, correlationId, err);
+    }
+  });
+
+  // GET /public/branches/:token — PUBLIC, unauthenticated branch discovery
+  // scoped by the same MENU_READ capability. This keeps discovery opaque and
+  // avoids exposing branch IDs directly while the broader public catalog is
+  // still token-scoped.
+  app.get<{ Params: { token: string } }>("/public/branches/:token", async (req, reply) => {
+    const correlationId = randomUUID();
+    try {
+      const token = await resolveCapabilityToken(
+        { capabilityTokens: container.capabilityTokens },
+        req.params.token,
+        "MENU_READ",
+      );
+      if (!token.branchId) return sendProblem(reply, correlationId, notFound("Branch"));
+      const payload = await buildPublicBranchPayload(container, token.tenantId, token.branchId);
+      if (!payload) return sendProblem(reply, correlationId, notFound("Branch"));
+      return { data: payload };
+    } catch (err) {
+      if (err instanceof CapabilityNotResolvableError) return sendProblem(reply, correlationId, notFound("Branch"));
       return sendProblem(reply, correlationId, err);
     }
   });

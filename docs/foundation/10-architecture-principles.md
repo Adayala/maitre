@@ -7,7 +7,7 @@ Soportar una plataforma SaaS modular sin confundir límites comerciales, límite
 ## Planos lógicos
 
 ```mermaid
-flowchart TD
+graph TD
     CP[Control Plane] --> OP[Dominios operativos]
     CP --> EX[Experiencia]
     OP --> EV[Eventos]
@@ -15,6 +15,30 @@ flowchart TD
     IH[Integration Hub] --> OP
     IH --> EX
     EV --> AN[Analítica e IA]
+```
+
+## Lógica de dominio vs unidades de despliegue
+
+```mermaid
+graph LR
+    subgraph LOGIC [Lógica del producto]
+        DOM["Dominios y casos de uso"]
+        CONTRACTS["Contratos y eventos"]
+    end
+
+    subgraph DEPLOY [Unidades de despliegue]
+        WEB["Apps web por rol"]
+        API["API / webhooks"]
+        WORKERS["Workers / procesos futuros"]
+    end
+
+    DOM --> CONTRACTS
+    CONTRACTS --> WEB
+    CONTRACTS --> API
+    CONTRACTS --> WORKERS
+    DOM -. no depende de plataforma .-> WEB
+    DOM -. no depende de plataforma .-> API
+    DOM -. no depende de plataforma .-> WORKERS
 ```
 
 ## Control Plane
@@ -158,3 +182,7 @@ Registrar:
 - Colas y reintentos.
 - Latencia de cocina y pagos.
 - Auditoría de decisiones de IA.
+
+## Vistas complementarias
+
+Para una lectura visual consolidada del estado actual del repositorio, apps por rol, componentes de frontend y target del sistema de diseño, ver [18-architecture-components-design-views.md](18-architecture-components-design-views.md).

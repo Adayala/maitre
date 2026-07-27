@@ -79,6 +79,15 @@ export class SupabaseMembershipRepository implements MembershipRepositoryPort {
     return (data as unknown as MembershipRow[]).map(fromRow);
   }
 
+  async listByUser(userId: string): Promise<Membership[]> {
+    const { data, error } = await this.client
+      .from(TABLE)
+      .select(SELECT_WITH_CHILDREN)
+      .eq("user_id", userId);
+    if (error) throw error;
+    return (data as unknown as MembershipRow[]).map(fromRow);
+  }
+
   async findActiveByUserAndTenant(
     userId: string,
     tenantId: string,

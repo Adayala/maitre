@@ -36,7 +36,26 @@ test("GET /v1/brands/:brandId/menus lists the seeded menu", async () => {
     },
   });
   assert.equal(response.statusCode, 200);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["data"]),
+  );
   assert.equal(response.json().data.length, 1);
+  assert.deepEqual(
+    new Set(Object.keys(response.json().data[0] as Record<string, unknown>)),
+    new Set([
+      "id",
+      "tenantId",
+      "brandId",
+      "name",
+      "slug",
+      "status",
+      "isDefault",
+      "displayOrder",
+      "createdAt",
+      "updatedAt",
+    ]),
+  );
   assert.equal(response.json().data[0].name, "Menú Principal");
   await app.close();
 });
@@ -75,6 +94,16 @@ test("POST /v1/brands/:brandId/menus with a duplicate name/slug returns 409", as
     payload: { name: "Menú Principal" },
   });
   assert.equal(response.statusCode, 409);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["type", "title", "status", "correlationId"]),
+  );
+  assert.equal(response.json().type, "conflict");
+  assert.equal(
+    response.json().title,
+    `Menu slug "menu-principal" already exists for brand ${brandId}`,
+  );
+  assert.equal(response.json().status, 409);
   await app.close();
 });
 
@@ -103,7 +132,42 @@ test("GET /v1/menus/:id returns the menu with its categories embedded", async ()
     },
   });
   assert.equal(response.statusCode, 200);
+  assert.deepEqual(
+    new Set(Object.keys(response.json() as Record<string, unknown>)),
+    new Set(["data"]),
+  );
+  assert.deepEqual(
+    new Set(Object.keys(response.json().data as Record<string, unknown>)),
+    new Set([
+      "id",
+      "tenantId",
+      "brandId",
+      "name",
+      "slug",
+      "status",
+      "isDefault",
+      "displayOrder",
+      "createdAt",
+      "updatedAt",
+      "categories",
+    ]),
+  );
   assert.equal(response.json().data.categories.length, 1);
+  assert.deepEqual(
+    new Set(Object.keys(response.json().data.categories[0] as Record<string, unknown>)),
+    new Set([
+      "id",
+      "tenantId",
+      "brandId",
+      "menuId",
+      "name",
+      "slug",
+      "displayOrder",
+      "status",
+      "createdAt",
+      "updatedAt",
+    ]),
+  );
   assert.equal(response.json().data.categories[0].name, "Entradas");
   await app.close();
 });
@@ -204,6 +268,25 @@ test("POST /v1/categories/:categoryId/products creates a product", async () => {
     payload: { name: "Provoleta", priceMinorUnits: 450000, currency: "ARS" },
   });
   assert.equal(response.statusCode, 201);
+  assert.deepEqual(
+    new Set(Object.keys(response.json().data as Record<string, unknown>)),
+    new Set([
+      "id",
+      "tenantId",
+      "categoryId",
+      "name",
+      "slug",
+      "priceMinorUnits",
+      "currency",
+      "status",
+      "allergens",
+      "displayOrder",
+      "createdAt",
+      "updatedAt",
+      "createdBy",
+      "updatedBy",
+    ]),
+  );
   assert.equal(response.json().data.status, "AVAILABLE");
   await app.close();
 });
@@ -254,6 +337,23 @@ test("PATCH /v1/products/:id updates the price", async () => {
     payload: { priceMinorUnits: 400000 },
   });
   assert.equal(response.statusCode, 200);
+  assert.deepEqual(
+    new Set(Object.keys(response.json().data as Record<string, unknown>)),
+    new Set([
+      "id",
+      "tenantId",
+      "categoryId",
+      "name",
+      "slug",
+      "priceMinorUnits",
+      "currency",
+      "status",
+      "allergens",
+      "displayOrder",
+      "createdAt",
+      "updatedAt",
+    ]),
+  );
   assert.equal(response.json().data.priceMinorUnits, 400000);
   await app.close();
 });

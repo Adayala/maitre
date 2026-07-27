@@ -2,47 +2,73 @@
 
 ## Principio
 
-Maitre es una suite de aplicaciones especializadas por rol y dispositivo. Todas convergen en una plataforma de datos y eventos compartidos. **Mobile-first** en experiencia del cliente y operador; web como extensión.
+Maitre es una suite de aplicaciones especializadas por rol y **modo de interacción**. Todas
+convergen en una plataforma de datos y eventos compartidos. El eje principal no es sólo
+`web/mobile`, sino **táctil vs no táctil**:
+
+- **táctil** para operación del restaurante y experiencia del cliente;
+- **no táctil** para administración, análisis y configuración profunda.
+
+La experiencia del cliente y de la operación es **touch-first**; web con teclado/mouse actúa como
+extensión de backoffice.
 
 ## Aplicaciones
 
 | App | Dispositivo principal | Usuario | Contexto | Prioridad |
 | --- | --- | --- | --- | --- |
-| **Maitre Guest** | Celular, tableta | Comensal | Reserva remota, menú QR, cuenta digital | MVP Fase 3 |
-| **Maitre Floor** | Tablet, celular | Mozo, maître, encargado | Toma de pedidos, movimientos en salón, asignaciones | MVP Fase 2 |
-| **Maitre Kitchen** | Tablet | Cocina, barra, pasante | Recepción de comandas, producción, despacho | MVP Fase 2 |
-| **Maitre Cash** | Computadora, tablet | Cajero | Caja, pagos, arqueo, cierre | MVP Fase 4 |
-| **Maitre Dash** | Computadora, tablet | Dueño, gerente de operaciones | Dashboard, reportes, decisiones | MVP Fase 1 |
-| **Maitre Connect** | Computadora | Admin técnico | Integraciones, conectores, webhooks | MVP Fase 5 |
+| **Maitre Guest** | Táctil | Comensal | Reserva remota, menú QR, cuenta digital | MVP Fase 3 |
+| **Maitre Floor** | Táctil | Mozo, maître, encargado | Toma de pedidos, movimientos en salón, asignaciones | MVP Fase 2 |
+| **Maitre Kitchen** | Táctil | Cocina, barra, pasante | Recepción de comandas, producción, despacho | MVP Fase 2 |
+| **Maitre Cash** | Táctil primero, no táctil opcional | Cajero | Caja, pagos, arqueo, cierre | MVP Fase 4 |
+| **Maitre Dash** | No táctil primero | Dueño, gerente de operaciones | Dashboard, reportes, decisiones | MVP Fase 1 |
+| **Maitre Connect** | No táctil | Admin técnico | Integraciones, conectores, webhooks | MVP Fase 5 |
 
-## Matriz dispositivo × rol
+## Matriz interacción × rol
 
 ```text
-                    Celular   Tablet    Computadora
-Comensal            Guest ✓   Guest ✓   Dash (limitado)
-Mozo                Floor ✓   Floor ✓   —
-Maître/Encargado    Floor ✓   Floor ✓   Dash
-Cocina              —         Kitchen ✓ —
-Barra               —         Kitchen ✓ —
-Cajero              —         Cash ✓    Cash ✓
-Dueño/Gerente       Dash ✓    Dash ✓    Dash ✓
-Admin               —         —         Connect ✓
+                    Táctil                     No táctil
+Comensal            Guest                      —
+Mozo                Floor                      —
+Maître/Encargado    Floor                      Dash (secundario)
+Cocina              Kitchen                    —
+Barra               Kitchen                    —
+Cajero              Cash                       Cash (secundario)
+Dueño/Gerente       Dash (secundario)          Dash
+Admin técnico       —                          Connect
 ```
+
+### Dispositivos táctiles típicos
+
+- teléfono;
+- tablet;
+- monitor táctil de caja;
+- pantalla táctil de cocina;
+- TV o monitor operativo con interacción touch, si el setup lo usa.
+
+### Dispositivos no táctiles típicos
+
+- notebook;
+- desktop;
+- monitor con teclado/mouse;
+- estación administrativa de backoffice.
 
 ## Principios de diseño
 
-### 1. Mobile-first
+### 1. Touch-first para operación
 
-- **Guest:** Celular es primario. Experiencia completa en 5.5"–6.5".
-- **Floor:** Tablet es primario (7"–10"). Celular como fallback de emergencia.
-- **Kitchen:** Tablet optimizada para visibilidad y velocidad. Sin distracciones.
-- **Computadora:** Extensión para análisis y administración, no operación real-time.
+- **Guest:** táctil primario. Celular es el caso más frecuente.
+- **Floor:** táctil primario. Tablet es preferida; celular como fallback.
+- **Kitchen:** táctil primario. Tablet o monitor táctil optimizado para visibilidad y velocidad.
+- **Cash:** táctil primario en operación de caja; no táctil permitido como extensión.
+- **Computadora/no táctil:** extensión para análisis, administración y configuración, no operación
+  real-time principal del salón.
 
-### 2. Responsive, no adaptativo
+### 2. Responsive por modo de interacción
 
-- Una app para todos los tamaños.
-- Layouts fluidos, no breakpoints discretos.
-- Touch-first, mouse como secundario.
+- Una app por dominio puede rendir en varios tamaños.
+- Layouts fluidos, no breakpoints discretos rígidos.
+- En apps operativas, touch-first y mouse/teclado como secundarios.
+- En Dash/Connect, teclado/mouse-first y touch como soporte.
 
 ### 3. Offline-capable
 
@@ -214,28 +240,29 @@ Las reglas normativas de captura local, sincronización, conflictos y seguridad 
 
 ## Acceso y seguridad
 
-- **Guest:** Sin autenticación (acceso por QR de mesa o link público).
-- **Floor, Kitchen, Cash:** Autenticación por usuario + branch scope.
-- **Dash:** Autenticación + role-based access.
-- **Connect:** OAuth2 + API keys por conector.
+- **Guest:** acceso público o autenticado según flujo, siempre táctil por default.
+- **Floor, Kitchen, Cash:** autenticación por usuario + branch scope; diseño táctil obligatorio para
+  operación.
+- **Dash:** autenticación + role-based access; no táctil primero.
+- **Connect:** OAuth2 + API keys por conector; no táctil.
 
 Todo cambio requiere tenant + sucursal en headers. Auditoría de usuario, hora y acción.
 
 ## Roadmap de apps
 
 ```
-Phase 1: Dash (web)
-Phase 2: Floor (tablet), Kitchen (tablet)
-Phase 3: Guest (celular/web)
-Phase 4: Cash (web, tablet nativa si se justifica)
-Phase 5: Connect (web)
-Phase 6+: Apps nativas (iOS/Android) si volumen lo justifica
+Phase 1: Dash (no táctil)
+Phase 2: Floor (táctil), Kitchen (táctil)
+Phase 3: Guest (táctil, mobile-first)
+Phase 4: Cash (táctil primero, no táctil complementario)
+Phase 5: Connect (no táctil)
+Phase 6+: Apps nativas dedicadas si el volumen/dispositivo lo justifican
 ```
 
 ## Prioridad de optimización
 
-1. **Guest.celular:** Conversión de pedido remoto.
-2. **Floor.tablet:** Velocidad de toma de pedido.
-3. **Kitchen.tablet:** Visibilidad y rapidez.
-4. **Dash.web:** Completitud de reportes.
-5. **Cash.web:** Integración con medios de pago.
+1. **Guest.táctil:** Conversión de reserva/pedido remoto.
+2. **Floor.táctil:** Velocidad de toma de pedido.
+3. **Kitchen.táctil:** Visibilidad y rapidez.
+4. **Dash.no táctil:** Completitud de reportes.
+5. **Cash.táctil:** Integración con medios de pago.
