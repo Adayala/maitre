@@ -279,6 +279,16 @@ export function HostPage() {
     () => (waitlistQuery.data?.data ?? []).filter((entry) => entry.status === "WAITING" || entry.status === "NOTIFIED"),
     [waitlistQuery.data],
   );
+  const overdueWaitlistEntries = useMemo(
+    () =>
+      waitingEntries.filter((entry) => {
+        const quotedMinutes = entry.quotedMinutes ?? 0;
+        if (quotedMinutes <= 0) return false;
+        const waitedMinutes = Math.max(0, Math.round((now - Date.parse(entry.createdAt)) / 60000));
+        return waitedMinutes > quotedMinutes;
+      }),
+    [now, waitingEntries],
+  );
   const sortedWaitlistEntries = useMemo(
     () =>
       (waitlistQuery.data?.data ?? [])
@@ -384,12 +394,80 @@ export function HostPage() {
   ];
   const reservationDraftReady = reservationDraftChecklist.every((step) => step.done);
   const reservationDraftMissing = reservationDraftChecklist.filter((step) => !step.done).map((step) => step.label);
+  const waitlistDraftChecklist = [
+    { label: "Huésped identificado", done: Boolean(newWaitlistGuestName.trim()) },
+    { label: "Cantidad definida", done: Number(newWaitlistPartySize) > 0 },
+    { label: "Promesa informada", done: Number(newWaitlistQuotedMinutes) >= 0 },
+  ];
+  const waitlistDraftReady = waitlistDraftChecklist.every((step) => step.done);
+  const waitlistDraftMissing = waitlistDraftChecklist.filter((step) => !step.done).map((step) => step.label);
   const availabilityActionPlan = [
     { label: "Cantidad cargada", done: Number(availabilityPartySize) > 0 },
     { label: "Horario cargado", done: Boolean(availabilityStartAt) },
     { label: "Duración cargada", done: Number(availabilityDurationMinutes) > 0 },
     { label: "Mesas sugeridas", done: (availabilityQuery.data?.data.freeTableIds.length ?? 0) > 0 },
   ];
+  const reservationFocusPlan =
+    pendingReservations.length > 0
+      ? {
+          title: "Primero conviene limpiar pendientes",
+          message: "Todavía hay reservas sin confirmar; eso impacta directo sobre llegadas, seating y expectativa del cliente.",
+          primaryLabel: "Ver pendientes",
+          onPrimary: () => setReservationStatus("PENDING"),
+          secondaryLabel: confirmedSoonReservations.length > 0 ? "Ver confirmadas próximas" : null,
+          onSecondary: confirmedSoonReservations.length > 0 ? () => setReservationStatus("CONFIRMED") : null,
+        }
+      : confirmedSoonReservations.length > 0
+        ? {
+            title: "El foco ya pasó a preparar seating",
+            message: "Las próximas reservas confirmadas necesitan mesa o seguimiento de arribo.",
+            primaryLabel: "Ver confirmadas",
+            onPrimary: () => setReservationStatus("CONFIRMED"),
+            secondaryLabel: null,
+            onSecondary: null,
+          }
+        : {
+            title: "La cola de reservas está estable",
+            message: "Podés usar este bloque para cargar una nueva reserva o revisar casos puntuales del día.",
+            primaryLabel: "Ver todas",
+            onPrimary: () => setReservationStatus("ALL"),
+            secondaryLabel: null,
+            onSecondary: null,
+          };
+  const waitlistFocusPlan =
+    seatableWaitlistCount > 0
+      ? {
+          title: "Hay grupos que ya se pueden sentar",
+          message: "Conviene asignar mesa ahora para bajar fricción en puerta y liberar presión sobre recepción.",
+        }
+      : overdueWaitlistEntries.length > 0
+        ? {
+            title: "Hay demoras vencidas para resolver",
+            message: "Si no hay mesa todavía, la prioridad pasa a reestimar o notificar para sostener expectativa.",
+          }
+        : notifiedEntries.length > 0
+          ? {
+              title: "Hay grupos notificados esperando arribo",
+              message: "Mantené visible esta cola para sentar rápido apenas lleguen o liberar la mesa si no se presentan.",
+            }
+          : {
+              title: "La waitlist está bajo control",
+              message: "Podés usar este bloque para registrar walk-ins y mantener una promesa clara.",
+            };
+  const availabilityFocusPlan = availabilityQuery.data
+    ? availabilityQuery.data.data.available
+      ? {
+          title: "Hay lugar para prometer ese horario",
+          message: "Si el huésped ya decidió, el siguiente paso natural es copiar el chequeo y crear la reserva.",
+        }
+      : {
+          title: "Ese horario hoy no cierra",
+          message: "Conviene ajustar hora, duración o cantidad antes de prometer algo en recepción.",
+        }
+    : {
+        title: "Cargá un escenario para consultar",
+        message: "Completá cantidad, hora y duración para validar si la operación realmente soporta la promesa.",
+      };
 
   const refreshAll = async () => {
     await Promise.all([
@@ -771,6 +849,20 @@ export function HostPage() {
                 </div>
               </div>
               <div className="host-form-panel">
+                <strong>{reservationFocusPlan.title}</strong>
+                <p className="host-card-copy">{reservationFocusPlan.message}</p>
+                <div className="cashier-quick-actions">
+                  <button type="button" className="btn btn--ghost" onClick={reservationFocusPlan.onPrimary}>
+                    {reservationFocusPlan.primaryLabel}
+                  </button>
+                  {reservationFocusPlan.secondaryLabel && reservationFocusPlan.onSecondary ? (
+                    <button type="button" className="btn btn--ghost" onClick={reservationFocusPlan.onSecondary}>
+                      {reservationFocusPlan.secondaryLabel}
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+              <div className="host-form-panel">
                 <strong>Checklist de alta</strong>
                 <div className="host-checklist">
                   {reservationDraftChecklist.map((step) => (
@@ -1044,6 +1136,25 @@ export function HostPage() {
                   <p className="host-card-copy">Alta rápida para recepción walk-in.</p>
                 </div>
               </div>
+              <div className="host-form-panel">
+                <strong>{waitlistFocusPlan.title}</strong>
+                <p className="host-card-copy">{waitlistFocusPlan.message}</p>
+                <div className="host-checklist">
+                  {waitlistDraftChecklist.map((step) => (
+                    <div key={step.label} className={`host-check ${step.done ? "host-check--done" : ""}`}>
+                      <strong>{step.done ? "✓" : "•"}</strong>
+                      <span>{step.label}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className={`cashier-banner ${waitlistDraftReady ? "cashier-banner--success" : "cashier-banner--info"}`}>
+                  <span>
+                    {waitlistDraftReady
+                      ? "La espera ya tiene los datos mínimos para cargarse."
+                      : `Todavía falta: ${waitlistDraftMissing.join(", ")}.`}
+                  </span>
+                </div>
+              </div>
               <form
                 className="cashier-form"
                 onSubmit={(event) => {
@@ -1277,6 +1388,18 @@ export function HostPage() {
                 <div>
                   <h2 className="host-card-title">Chequeo de disponibilidad</h2>
                   <p className="host-card-copy">Consulta live para una fecha y cantidad de cubiertos.</p>
+                </div>
+              </div>
+              <div className="host-form-panel">
+                <strong>{availabilityFocusPlan.title}</strong>
+                <p className="host-card-copy">{availabilityFocusPlan.message}</p>
+                <div className="cashier-quick-actions">
+                  <button type="button" className="btn btn--ghost" onClick={() => setAvailabilityStartAt(defaultDateTimeLocal())}>
+                    Resetear horario
+                  </button>
+                  <button type="button" className="btn btn--ghost" onClick={() => setAvailabilityPartySize("2")}>
+                    Volver a 2 pax
+                  </button>
                 </div>
               </div>
               <div className="host-form-panel">
