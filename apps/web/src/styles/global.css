@@ -117,6 +117,26 @@ button {
   color: #c0392b;
 }
 
+.auth-provider-button {
+  min-height: 2.75rem;
+  font-weight: 700;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+  opacity: 0.75;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  border-top: 1px solid var(--color-border);
+}
+
 .dash-shell {
   display: grid;
   grid-template-columns: 14rem 1fr;
@@ -189,6 +209,35 @@ td {
   text-align: left;
   padding: 0.5rem;
   border-bottom: 1px solid var(--color-border);
+}
+
+.user-management-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.8rem;
+  align-items: end;
+}
+
+.user-management-form label {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.user-management-form input,
+.user-management-form select,
+.user-table-actions select {
+  min-height: 2.65rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  background: var(--color-bg);
+  color: var(--color-fg);
+}
+
+.user-table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .kpi-grid {

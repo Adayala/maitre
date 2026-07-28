@@ -4,6 +4,8 @@ import { z } from "zod";
 import {
   createUser,
   inviteMembership,
+  assertMembershipInvariants,
+  canTransitionMembership,
   MembershipInvariantError,
   type Membership,
   type User,
@@ -27,7 +29,8 @@ const inviteUserBodySchema = z.object({
 
 const patchUserBodySchema = z.object({
   name: z.string().trim().min(1).max(100).optional(),
-  status: z.enum(["ACTIVE", "SUSPENDED", "DEACTIVATED"]).optional(),
+  membershipStatus: z.enum(["ACTIVE", "SUSPENDED", "REVOKED"]).optional(),
+  roleIds: z.array(z.string()).min(1).optional(),
 });
 
 interface UserListItem {
@@ -134,24 +137,43 @@ export async function registerUserRoutes(
 
       const user = await container.users.findById(req.params.id);
       if (!user) return sendProblem(reply, correlationId, notFound("User"));
-      const membership = await container.memberships.findActiveByUserAndTenant(
-        user.id,
-        ctx.tenantId,
-      );
+      const membership = (await container.memberships.listByTenant(ctx.tenantId))
+        .find((item) => item.userId === user.id);
       if (!membership) return sendProblem(reply, correlationId, notFound("User"));
 
       const body = omitUndefined(patchUserBodySchema.parse(req.body));
+      if (
+        body.membershipStatus !== undefined &&
+        body.membershipStatus !== membership.status &&
+        !canTransitionMembership(membership.status, body.membershipStatus)
+      ) {
+        throw new MembershipInvariantError(
+          `Membership cannot transition from ${membership.status} to ${body.membershipStatus}`,
+        );
+      }
       const updated: User = {
         ...user,
         ...(body.name !== undefined ? { displayName: body.name } : {}),
-        ...(body.status !== undefined ? { status: body.status } : {}),
         updatedAt: new Date(),
       };
+      const now = new Date();
+      const updatedMembership: Membership = {
+        ...membership,
+        ...(body.roleIds !== undefined ? { roleIds: body.roleIds } : {}),
+        ...(body.membershipStatus !== undefined ? { status: body.membershipStatus } : {}),
+        ...(body.membershipStatus === "ACTIVE" ? { activatedAt: now } : {}),
+        ...(body.membershipStatus === "SUSPENDED" ? { suspendedAt: now } : {}),
+        ...(body.membershipStatus === "REVOKED" ? { revokedAt: now } : {}),
+        updatedAt: now,
+        updatedBy: ctx.userId,
+      };
+      assertMembershipInvariants(updatedMembership);
       await container.users.save(updated);
+      await container.memberships.save(updatedMembership);
 
-      return { data: toListItem(updated, membership) };
+      return { data: toListItem(updated, updatedMembership) };
     } catch (err) {
-      if (err instanceof z.ZodError) {
+      if (err instanceof z.ZodError || err instanceof MembershipInvariantError) {
         return sendProblem(reply, correlationId, badRequest(err.message));
       }
       return sendProblem(reply, correlationId, err);

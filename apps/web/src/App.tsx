@@ -1,5 +1,5 @@
 import { Suspense, lazy, type ComponentType, type ReactNode } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "./app/auth-context.js";
 import { TenantProvider } from "./app/tenant-context.js";
@@ -17,7 +17,6 @@ const UsersPage = lazyNamed(() => import("./features/users/users-page.js"), "Use
 const SubscriptionPage = lazyNamed(() => import("./features/subscription/subscription-page.js"), "SubscriptionPage");
 const AuditLogsPage = lazyNamed(() => import("./features/audit/audit-logs-page.js"), "AuditLogsPage");
 const SettingsPage = lazyNamed(() => import("./features/settings/settings-page.js"), "SettingsPage");
-const ProfilesPage = lazyNamed(() => import("./features/profiles/profiles-page.js"), "ProfilesPage");
 const PublicHomePage = lazyNamed(() => import("./features/public/public-home-page.js"), "PublicHomePage");
 const PublicMenuPage = lazyNamed(() => import("./features/public/public-menu-page.js"), "PublicMenuPage");
 const PublicBranchesPage = lazyNamed(
@@ -108,7 +107,7 @@ export function App() {
                 <Route path="subscription" element={withSuspense(<SubscriptionPage />)} />
                 <Route path="audit" element={withSuspense(<AuditLogsPage />)} />
                 <Route path="settings" element={withSuspense(<SettingsPage />)} />
-                <Route path="profiles" element={withSuspense(<ProfilesPage />)} />
+                <Route path="profiles" element={<Navigate to="/users" replace />} />
               </Route>
             </Routes>
           </TenantProvider>

@@ -7,6 +7,7 @@ interface AuthState {
   email: string | null;
   isLoading: boolean;
   signInWithPassword: (email: string, password: string) => Promise<void>;
+  signInWithGoogle: (next?: string) => Promise<void>;
   signInWithToken: (token: string) => void;
   signOut: () => Promise<void>;
 }
@@ -91,6 +92,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
   }
 
+  async function signInWithGoogle(next = "/") {
+    const supabase = await getSupabaseClient();
+    if (!supabase) throw new Error("Supabase Auth no está configurado");
+    const callback = new URL("/login", window.location.origin);
+    callback.searchParams.set("next", next.startsWith("/") ? next : "/");
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: callback.toString() },
+    });
+    if (error) throw error;
+  }
+
   function signInWithToken(token: string) {
     if (isSupabaseConfigured) {
       throw new Error("This build uses Supabase Auth and does not accept fixture tokens.");
@@ -111,7 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ accessToken, email, isLoading, signInWithPassword, signInWithToken, signOut }}
+      value={{ accessToken, email, isLoading, signInWithPassword, signInWithGoogle, signInWithToken, signOut }}
     >
       {children}
     </AuthContext.Provider>

@@ -32,6 +32,10 @@ interface SupabaseAuthClient {
     email: string;
     password: string;
   }) => Promise<{ error: Error | null }>;
+  signInWithOAuth: (options: {
+    provider: "google";
+    options: { redirectTo: string };
+  }) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 
