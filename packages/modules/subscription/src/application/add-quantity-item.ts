@@ -67,7 +67,7 @@ export async function addQuantityItem(
   if (requiresScopeRef(catalogItem) && !input.scopeRefId) {
     throw new MissingScopeRefError(input.catalogItemCode);
   }
-  if (!Number.isFinite(input.quantity) || input.quantity <= 0) {
+  if (!Number.isInteger(input.quantity) || !Number.isFinite(input.quantity) || input.quantity <= 0) {
     throw new InvalidQuantityForServiceError(input.catalogItemCode);
   }
 

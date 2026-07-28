@@ -96,6 +96,24 @@ test("addQuantityItem rejects a non-positive quantity for a QUANTITY catalog ite
   );
 });
 
+test("addQuantityItem rejects a non-integer quantity for a QUANTITY catalog item", async () => {
+  const { subscriptions, subscriptionItems, entitlements, catalog, outbox, subscription } =
+    await deps();
+
+  await assert.rejects(
+    addQuantityItem(
+      { subscriptions, subscriptionItems, entitlements, catalog, outbox, now: () => now },
+      {
+        subscriptionId: subscription.id,
+        catalogItemCode: "SEATS",
+        quantity: 1.5,
+        scopeRefId: "branch-palermo",
+      },
+    ),
+    InvalidQuantityForServiceError,
+  );
+});
+
 test("addQuantityItem rejects an unknown or inactive catalog item code", async () => {
   const { subscriptions, subscriptionItems, entitlements, catalog, outbox, subscription } =
     await deps();
@@ -197,6 +215,29 @@ test("updateQuantity rejects a non-positive quantity", async () => {
     updateQuantity(
       { subscriptions, subscriptionItems, entitlements, catalog, now: () => now },
       { subscriptionId: subscription.id, itemId: item.id, quantity: 0 },
+    ),
+    InvalidQuantityForServiceError,
+  );
+});
+
+test("updateQuantity rejects a non-integer quantity", async () => {
+  const { subscriptions, subscriptionItems, entitlements, catalog, outbox, subscription } =
+    await deps();
+
+  const item = await addQuantityItem(
+    { subscriptions, subscriptionItems, entitlements, catalog, outbox, now: () => now },
+    {
+      subscriptionId: subscription.id,
+      catalogItemCode: "SEATS",
+      quantity: 12,
+      scopeRefId: "branch-palermo",
+    },
+  );
+
+  await assert.rejects(
+    updateQuantity(
+      { subscriptions, subscriptionItems, entitlements, catalog, now: () => now },
+      { subscriptionId: subscription.id, itemId: item.id, quantity: 1.5 },
     ),
     InvalidQuantityForServiceError,
   );

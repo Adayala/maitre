@@ -33,7 +33,7 @@ export async function updateQuantity(
   if (!subscription || !isSubscriptionOperable(subscription)) {
     throw new SubscriptionNotOperableError(input.subscriptionId);
   }
-  if (!Number.isFinite(input.quantity) || input.quantity <= 0) {
+  if (!Number.isInteger(input.quantity) || !Number.isFinite(input.quantity) || input.quantity <= 0) {
     throw new InvalidQuantityForServiceError(input.itemId);
   }
 
