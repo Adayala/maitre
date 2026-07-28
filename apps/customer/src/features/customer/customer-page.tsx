@@ -87,6 +87,7 @@ export function CustomerPage() {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const submitTimerRef = useRef<number | null>(null);
+  const accessCardRef = useRef<HTMLElement | null>(null);
   const [partySize, setPartySize] = useState("2");
   const [startAt, setStartAt] = useState(defaultDateTimeLocal());
   const [durationMinutes, setDurationMinutes] = useState("90");
@@ -125,7 +126,17 @@ export function CustomerPage() {
   });
 
   const canCheckAvailability =
-    Boolean(accessToken && selectedTenantId && selectedBranchId && startAt && Number(partySize) > 0 && Number(durationMinutes) > 0);
+    Boolean(accessToken && selectedTenantId && selectedBranchId && startAt && !Number.isNaN(Date.parse(startAt)) && Number(partySize) > 0 && Number(durationMinutes) > 0);
+  const hasValidPartySize = Number.isFinite(Number(partySize)) && Number(partySize) > 0;
+  const hasValidDuration = Number.isFinite(Number(durationMinutes)) && Number(durationMinutes) > 0;
+  const hasValidStartAt = startAt.trim().length > 0 && !Number.isNaN(Date.parse(startAt));
+  const reservationFormIssues = [
+    ...(!hasValidPartySize ? ["Indicá una cantidad de personas mayor a 0"] : []),
+    ...(!hasValidStartAt ? ["Elegí una fecha y hora válidas"] : []),
+    ...(!hasValidDuration ? ["Indicá una duración mayor a 0 minutos"] : []),
+  ];
+  const canSubmitReservation =
+    Boolean(selectedTenantId && selectedBranchId && hasValidPartySize && hasValidDuration && hasValidStartAt);
 
   const availabilityQuery = useQuery({
     queryKey: ["customer-availability", selectedTenantId, selectedBranchId, partySize, startAt, durationMinutes],
@@ -212,7 +223,7 @@ export function CustomerPage() {
   );
   const reservationChecklist = [
     { label: "Sesión iniciada", done: Boolean(accessToken) },
-    { label: "Tenant elegido", done: Boolean(selectedTenantId) },
+    { label: "Restaurante elegido", done: Boolean(selectedTenantId) },
     { label: "Sucursal elegida", done: Boolean(selectedBranchId) },
     { label: "Horario cargado", done: Boolean(startAt) },
   ];
@@ -372,6 +383,12 @@ export function CustomerPage() {
         },
       ];
 
+  function scrollToAccessCard() {
+    window.requestAnimationFrame(() => {
+      accessCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+
   async function handlePasswordLogin(event: FormEvent) {
     event.preventDefault();
     setLoginError(null);
@@ -484,7 +501,7 @@ export function CustomerPage() {
         ) : null}
 
         <section className="customer-grid">
-          <article className="cashier-card">
+          <article ref={accessCardRef} className="cashier-card">
             <h2 className="owner-card-title">Tu cuenta</h2>
             <p className="owner-card-copy">
               Podés descubrir menú y sucursales sin cuenta. La sesión aparece recién cuando querés reservar o seguir tu historial.
@@ -886,7 +903,7 @@ export function CustomerPage() {
               <div className={`cashier-banner ${reservePriority.tone === "success" ? "cashier-banner--success" : reservePriority.tone === "warning" ? "cashier-banner--warning" : "cashier-banner--info"}`}>
                 <span>{reservePriority.message}</span>
               </div>
-              <h2 className="owner-card-title">Qué falta para reservar</h2>
+              <h2 className="owner-card-title">Preparar reserva</h2>
               <div className="customer-checklist">
                 {reservationChecklist.map((step) => (
                   <div key={step.label} className={`customer-check ${step.done ? "customer-check--done" : ""}`}>
@@ -898,10 +915,26 @@ export function CustomerPage() {
               <div className={`cashier-banner ${reservationReady ? "cashier-banner--success" : "cashier-banner--info"}`}>
                 <span>
                   {reservationReady
-                    ? `Todo listo para reservar en ${selectedBranch?.name ?? "la sucursal elegida"}.`
-                    : `Todavía falta: ${reservationPending.join(", ")}.`}
+                    ? `Ya podés confirmar una reserva en ${selectedBranch?.name ?? "la sucursal elegida"}.`
+                    : `Antes de confirmar, te falta resolver: ${reservationPending.join(", ")}.`}
                 </span>
               </div>
+              {!accessToken || !selectedTenantId || !selectedBranchId ? (
+                <div className="cashier-quick-actions">
+                  {!accessToken ? (
+                    <button type="button" className="btn btn--primary" onClick={scrollToAccessCard}>
+                      Ir al ingreso
+                    </button>
+                  ) : (
+                    <button type="button" className="btn btn--primary" onClick={() => setTab("branches")}>
+                      Elegir sucursal
+                    </button>
+                  )}
+                  <button type="button" className="btn btn--ghost" onClick={() => setTab("menu")}>
+                    Ver menú
+                  </button>
+                </div>
+              ) : null}
             </article>
 
             <article className="cashier-card">
@@ -934,92 +967,123 @@ export function CustomerPage() {
                   </div>
                 </>
               ) : (
-                <form
-                  className="cashier-form"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    void createReservationMutation.mutateAsync();
-                  }}
-                >
-                  {!selectedTenantId || !selectedBranchId ? (
-                    <div className="cashier-banner cashier-banner--info">
-                      <span>Antes de confirmar, definí restaurante y sucursal para operar con contexto real.</span>
+                <>
+                  <div className="owner-links">
+                    <div className="owner-link-card">
+                      <strong>Restaurante</strong>
+                      <span>{selectedTenant?.name ?? "Todavía no elegido"}</span>
                     </div>
-                  ) : null}
-                  <label>
-                    Comensales
-                    <input value={partySize} onChange={(e) => setPartySize(e.target.value)} inputMode="numeric" />
-                  </label>
-                  <div className="customer-preset-group">
-                    <span className="customer-preset-label">Atajos de comensales</span>
-                    <div className="customer-preset-row">
-                      {PARTY_SIZE_PRESETS.map((preset) => (
-                        <button
-                          key={preset}
-                          type="button"
-                          className={`customer-preset-chip ${partySize === preset ? "customer-preset-chip--active" : ""}`}
-                          onClick={() => setPartySize(preset)}
-                        >
-                          {preset} pax
-                        </button>
-                      ))}
+                    <div className="owner-link-card">
+                      <strong>Sucursal</strong>
+                      <span>{selectedBranch?.name ?? "Todavía no elegida"}</span>
+                    </div>
+                    <div className="owner-link-card">
+                      <strong>Próximo horario</strong>
+                      <span>{new Date(startAt).toLocaleString("es-AR")}</span>
                     </div>
                   </div>
-                  <label>
-                    Fecha y hora
-                    <input type="datetime-local" value={startAt} onChange={(e) => setStartAt(e.target.value)} />
-                  </label>
-                  <div className="customer-preset-group">
-                    <span className="customer-preset-label">Horarios habituales</span>
-                    <div className="customer-preset-row">
-                      {timePresets.map((preset) => (
-                        <button
-                          key={preset.label}
-                          type="button"
-                          className={`customer-preset-chip ${startAt === preset.value ? "customer-preset-chip--active" : ""}`}
-                          onClick={() => setStartAt(preset.value)}
-                        >
-                          {preset.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <label>
-                    Duración (min)
-                    <input value={durationMinutes} onChange={(e) => setDurationMinutes(e.target.value)} inputMode="numeric" />
-                  </label>
-                  <div className="customer-preset-group">
-                    <span className="customer-preset-label">Duración sugerida</span>
-                    <div className="customer-preset-row">
-                      {DURATION_PRESETS.map((preset) => (
-                        <button
-                          key={preset}
-                          type="button"
-                          className={`customer-preset-chip ${durationMinutes === preset ? "customer-preset-chip--active" : ""}`}
-                          onClick={() => setDurationMinutes(preset)}
-                        >
-                          {preset} min
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <label>
-                    Notas
-                    <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Alergias, silla alta, cumpleaños..." />
-                  </label>
-                  <button
-                    type="submit"
-                    className="btn btn--primary btn--xl"
-                    disabled={!selectedTenantId || !selectedBranchId || createReservationMutation.isPending}
+                  <form
+                    className="cashier-form"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      void createReservationMutation.mutateAsync();
+                    }}
                   >
-                    {createReservationMutation.isPending ? "Creando…" : "Reservar"}
-                  </button>
-                  {createReservationMutation.error ? (
-                    <div className="cashier-banner cashier-banner--warning">
-                      <span>{toErrorMessage(createReservationMutation.error)}</span>
+                    {!selectedTenantId || !selectedBranchId ? (
+                      <div className="cashier-banner cashier-banner--info">
+                        <span>Antes de confirmar, elegí restaurante y sucursal para reservar con contexto real.</span>
+                      </div>
+                    ) : null}
+                    {reservationFormIssues.length > 0 ? (
+                      <div className="cashier-banner cashier-banner--warning">
+                        <span>{reservationFormIssues.join(" · ")}.</span>
+                      </div>
+                    ) : null}
+                    {canCheckAvailability && availabilityQuery.data?.data.available === false ? (
+                      <div className="cashier-banner cashier-banner--warning">
+                        <span>Ese horario no tiene lugar disponible ahora. Probá cambiando hora o duración antes de confirmar.</span>
+                      </div>
+                    ) : null}
+                    {canCheckAvailability && availabilityQuery.data?.data.available === true ? (
+                      <div className="cashier-banner cashier-banner--success">
+                        <span>Buenísimo: ya encontramos disponibilidad para este plan.</span>
+                      </div>
+                    ) : null}
+                    <label>
+                      Cantidad de personas
+                      <input type="number" min="1" step="1" value={partySize} onChange={(e) => setPartySize(e.target.value)} inputMode="numeric" />
+                    </label>
+                    <div className="customer-preset-group">
+                      <span className="customer-preset-label">Atajos de cantidad</span>
+                      <div className="customer-preset-row">
+                        {PARTY_SIZE_PRESETS.map((preset) => (
+                          <button
+                            key={preset}
+                            type="button"
+                            className={`customer-preset-chip ${partySize === preset ? "customer-preset-chip--active" : ""}`}
+                            onClick={() => setPartySize(preset)}
+                          >
+                            {preset} pax
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  ) : null}
-                </form>
+                    <label>
+                      Fecha y hora
+                      <input type="datetime-local" value={startAt} onChange={(e) => setStartAt(e.target.value)} />
+                    </label>
+                    <div className="customer-preset-group">
+                      <span className="customer-preset-label">Horarios sugeridos</span>
+                      <div className="customer-preset-row">
+                        {timePresets.map((preset) => (
+                          <button
+                            key={preset.label}
+                            type="button"
+                            className={`customer-preset-chip ${startAt === preset.value ? "customer-preset-chip--active" : ""}`}
+                            onClick={() => setStartAt(preset.value)}
+                          >
+                            {preset.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <label>
+                      Duración estimada (min)
+                      <input type="number" min="1" step="1" value={durationMinutes} onChange={(e) => setDurationMinutes(e.target.value)} inputMode="numeric" />
+                    </label>
+                    <div className="customer-preset-group">
+                      <span className="customer-preset-label">Duraciones sugeridas</span>
+                      <div className="customer-preset-row">
+                        {DURATION_PRESETS.map((preset) => (
+                          <button
+                            key={preset}
+                            type="button"
+                            className={`customer-preset-chip ${durationMinutes === preset ? "customer-preset-chip--active" : ""}`}
+                            onClick={() => setDurationMinutes(preset)}
+                          >
+                            {preset} min
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <label>
+                      Notas para el local
+                      <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Alergias, silla alta, cumpleaños o algo a tener en cuenta..." />
+                    </label>
+                    <button
+                      type="submit"
+                      className="btn btn--primary btn--xl"
+                      disabled={!canSubmitReservation || createReservationMutation.isPending}
+                    >
+                      {createReservationMutation.isPending ? "Creando…" : "Confirmar reserva"}
+                    </button>
+                    {createReservationMutation.error ? (
+                      <div className="cashier-banner cashier-banner--warning">
+                        <span>{toErrorMessage(createReservationMutation.error)}</span>
+                      </div>
+                    ) : null}
+                  </form>
+                </>
               )}
             </article>
 
@@ -1029,14 +1093,47 @@ export function CustomerPage() {
                 <div className="cashier-banner cashier-banner--info">
                   <span>Iniciá sesión y elegí restaurante y sucursal para consultar disponibilidad real.</span>
                 </div>
+              ) : !selectedTenantId || !selectedBranchId ? (
+                <>
+                  <div className="cashier-banner cashier-banner--info">
+                    <span>Primero elegí restaurante y sucursal. Después te mostramos disponibilidad real para el horario que cargues.</span>
+                  </div>
+                  <div className="cashier-quick-actions">
+                    <button type="button" className="btn btn--primary" onClick={() => setTab("branches")}>
+                      Elegir sucursal
+                    </button>
+                    <button type="button" className="btn btn--ghost" onClick={() => setTab("menu")}>
+                      Ver menú
+                    </button>
+                  </div>
+                </>
               ) : (
                 <StateView isLoading={availabilityQuery.isLoading} error={(availabilityQuery.error as Error) ?? null} onRetry={() => void availabilityQuery.refetch()}>
                   {availabilityQuery.data ? (
                     <>
                       <div className={`cashier-banner ${availabilityQuery.data.data.available ? "cashier-banner--success" : "cashier-banner--warning"}`}>
-                        <span>{availabilityQuery.data.data.available ? "Hay disponibilidad." : "No hay disponibilidad para ese horario."}</span>
+                        <span>
+                          {availabilityQuery.data.data.available
+                            ? `Hay disponibilidad para ${partySize} personas por ${durationMinutes} minutos.`
+                            : "No hay disponibilidad para ese horario."}
+                        </span>
+                      </div>
+                      <p className="owner-card-copy">
+                        Consulta actual: {new Date(availabilityQuery.data.data.startAt).toLocaleString("es-AR")} en {selectedBranch?.name ?? "la sucursal elegida"}.
+                      </p>
+                      <div className="cashier-quick-actions">
+                        <button type="button" className="btn btn--ghost" onClick={() => void availabilityQuery.refetch()}>
+                          Actualizar disponibilidad
+                        </button>
+                        <button type="button" className="btn btn--ghost" onClick={() => setTab("branches")}>
+                          Cambiar sucursal
+                        </button>
                       </div>
                       <div className="owner-links">
+                        <div className="owner-link-card">
+                          <strong>Mesas libres</strong>
+                          <span>{availabilityQuery.data.data.freeTableIds.length}</span>
+                        </div>
                         {availabilityQuery.data.data.freeTableIds.map((tableId) => (
                           <div key={tableId} className="owner-link-card">
                             <strong>Mesa disponible</strong>
@@ -1044,8 +1141,21 @@ export function CustomerPage() {
                           </div>
                         ))}
                       </div>
+                      {!availabilityQuery.data.data.available ? (
+                        <div className="cashier-banner cashier-banner--info">
+                          <span>Probá otro horario, otra duración o una sucursal distinta para encontrar lugar.</span>
+                        </div>
+                      ) : null}
                     </>
-                  ) : null}
+                  ) : (
+                    <div className="cashier-banner cashier-banner--info">
+                      <span>
+                        {reservationFormIssues.length > 0
+                          ? "Completá personas, horario y duración con valores válidos para consultar disponibilidad."
+                          : "Completá personas, horario y duración para consultar disponibilidad."}
+                      </span>
+                    </div>
+                  )}
                 </StateView>
               )}
             </article>
@@ -1058,11 +1168,11 @@ export function CustomerPage() {
               <article className="cashier-kpi-strip">
                 <div className="cashier-kpi-card">
                   <span>Cuenta</span>
-                  <strong>{email ?? "Sesión activa"}</strong>
+                  <strong>{email ?? "Cuenta activa"}</strong>
                 </div>
                 <div className="cashier-kpi-card">
-                  <span>Sucursal elegida</span>
-                  <strong>{selectedBranch?.name ?? "Sin definir"}</strong>
+                  <span>Sucursal seleccionada</span>
+                  <strong>{selectedBranch?.name ?? "Sin elegir"}</strong>
                 </div>
                 <div className="cashier-kpi-card">
                   <span>Próximas</span>
@@ -1114,7 +1224,7 @@ export function CustomerPage() {
             ) : null}
             {accessToken && !nextReservation ? (
               <article className="cashier-card cashier-card--hero">
-                <h2 className="owner-card-title">Todavía no tenés una próxima reserva</h2>
+                <h2 className="owner-card-title">Todavía no tenés una reserva próxima</h2>
                 <p className="owner-card-copy">{customerNextAction.detail}</p>
                 <div className="cashier-quick-actions">
                   <button type="button" className="btn btn--primary" onClick={() => setTab(customerNextAction.nextTab)}>
@@ -1127,7 +1237,7 @@ export function CustomerPage() {
               </article>
             ) : null}
             <article className="cashier-card">
-              <h2 className="owner-card-title">Atajos para seguir</h2>
+              <h2 className="owner-card-title">Qué querés hacer ahora</h2>
               <div className="customer-path-grid">
                 {mineDecisionRoutes.map((route) => (
                   <button key={route.title} type="button" className="customer-path-card" onClick={route.onClick}>
@@ -1143,11 +1253,11 @@ export function CustomerPage() {
               {!accessToken ? (
                 <>
                   <div className="cashier-banner cashier-banner--info">
-                    <span>Iniciá sesión para ver tus reservas.</span>
+                    <span>Ingresá a tu cuenta para ver y gestionar tus reservas.</span>
                   </div>
                   <div className="cashier-quick-actions">
-                    <button type="button" className="btn btn--primary" onClick={() => setTab("mine")}>
-                      Ir a acceso
+                    <button type="button" className="btn btn--primary" onClick={scrollToAccessCard}>
+                      Ir al ingreso
                     </button>
                     <button type="button" className="btn btn--ghost" onClick={() => setTab("discover")}>
                       Volver al inicio
@@ -1161,7 +1271,7 @@ export function CustomerPage() {
                   isEmpty={(reservationsQuery.data?.data.length ?? 0) === 0}
                   emptyIcon="📖"
                   emptyTitle="Sin reservas"
-                  emptyMessage="Todavía no tenés reservas cargadas."
+                  emptyMessage="Todavía no registrás reservas en esta cuenta."
                   onRetry={() => void reservationsQuery.refetch()}
                 >
                   <div className="customer-reservations-layout">
@@ -1174,7 +1284,7 @@ export function CustomerPage() {
                         {upcomingReservations.length === 0 ? (
                           <div className="customer-reservation-empty">
                             <strong>No tenés reservas próximas.</strong>
-                            <span>Cuando cargues una reserva futura, va a aparecer destacada acá.</span>
+                            <span>Cuando hagas una reserva futura, la vas a ver destacada acá.</span>
                           </div>
                         ) : (
                           upcomingReservations.map((reservation) => (
@@ -1188,7 +1298,7 @@ export function CustomerPage() {
                                 </div>
                                 <p>{reservation.partySize} pax · {reservation.durationMinutes} min</p>
                                 <p>Sucursal: {branchNameById.get(reservation.branchId) ?? reservation.branchId.slice(0, 8)}</p>
-                                {reservation.notes ? <p>Notas: {reservation.notes}</p> : null}
+                                {reservation.notes ? <p>Notas para el local: {reservation.notes}</p> : null}
                               </div>
                               {(reservation.status === "PENDING" || reservation.status === "CONFIRMED") ? (
                                 <button
@@ -1215,7 +1325,7 @@ export function CustomerPage() {
                         {pastReservations.length === 0 ? (
                           <div className="customer-reservation-empty">
                             <strong>Sin historial todavía.</strong>
-                            <span>Tus reservas pasadas o canceladas se van a ver en esta sección.</span>
+                            <span>Tus visitas pasadas o reservas canceladas van a aparecer en esta sección.</span>
                           </div>
                         ) : (
                           pastReservations.map((reservation) => (
@@ -1373,8 +1483,8 @@ function getCustomerNextAction({
     return {
       tone: "info" as const,
       title: "Explorá sin cuenta y reservá cuando quieras",
-      detail: "Podés ver menú y sucursales sin cuenta. Cuando decidas reservar o seguir tu historial, iniciá sesión.",
-      ctaLabel: "Ir a acceso",
+      detail: "Podés mirar el menú y las sucursales sin cuenta. Cuando quieras reservar o revisar tu historial, ingresá a tu cuenta.",
+      ctaLabel: "Ingresar",
       nextTab: "mine" as CustomerTab,
     };
   }
@@ -1383,7 +1493,7 @@ function getCustomerNextAction({
     return {
       tone: "success" as const,
       title: "Ya tenés una próxima reserva",
-      detail: "Tu próxima visita ya está cargada. Desde Mis reservas podés revisar estado, sucursal y, si hace falta, crear otra.",
+      detail: "Tu próxima visita ya está agendada. Desde Mis reservas podés revisar el estado, la sucursal y, si hace falta, crear otra.",
       ctaLabel: "Ver mis reservas",
       nextTab: "mine" as CustomerTab,
     };
@@ -1393,7 +1503,7 @@ function getCustomerNextAction({
     return {
       tone: "info" as const,
       title: "Elegí primero el restaurante",
-      detail: "Seleccioná el restaurante para habilitar las sucursales disponibles y pasar al flujo real de reserva.",
+      detail: "Seleccioná el restaurante para ver sus sucursales y pasar a la reserva.",
       ctaLabel: "Ver sucursales",
       nextTab: "branches" as CustomerTab,
     };
@@ -1403,7 +1513,7 @@ function getCustomerNextAction({
     return {
       tone: "info" as const,
       title: "Definí una sucursal",
-      detail: "Con una sucursal elegida ya podemos consultar disponibilidad real y encaminar la reserva.",
+      detail: "Cuando elijas una sucursal, ya vas a poder consultar disponibilidad y seguir con la reserva.",
       ctaLabel: "Elegir sucursal",
       nextTab: "branches" as CustomerTab,
     };
@@ -1412,7 +1522,7 @@ function getCustomerNextAction({
   return {
     tone: "success" as const,
     title: "Ya podés avanzar con la reserva",
-    detail: `Tenés ${selectedBranch.name} elegida. El siguiente paso es cargar horario, cantidad de comensales y confirmar.`,
+    detail: `Ya elegiste ${selectedBranch.name}. El siguiente paso es cargar horario, cantidad de personas y confirmar.`,
     ctaLabel: "Ir a reservar",
     nextTab: "reserve" as CustomerTab,
   };
@@ -1433,14 +1543,14 @@ function getCustomerReserveActionPlan({
 }) {
   return {
     message: !accessToken
-      ? "Primero resolvé el acceso y después completá el contexto de la reserva."
+      ? "Primero ingresá a tu cuenta y después completá los datos de la reserva."
       : availability === false
-        ? "Recalculá el plan de visita antes de confirmar: el horario actual no tiene lugar."
+        ? "Cambiá el plan de visita antes de confirmar: el horario actual no tiene lugar."
         : availability === true
           ? `La visita para ${selectedBranch?.name ?? "la sucursal elegida"} ya está lista para confirmarse.`
-          : "Completá los datos mínimos y después revisá disponibilidad real antes de reservar.",
+          : "Completá los datos básicos y después revisá disponibilidad antes de reservar.",
     steps: [
-      { label: "Sesión activa", done: accessToken },
+      { label: "Cuenta activa", done: accessToken },
       { label: "Restaurante definido", done: Boolean(selectedTenantId) },
       { label: "Sucursal definida", done: Boolean(selectedBranch) },
       { label: "Horario cargado", done: Boolean(startAt) },
@@ -1464,8 +1574,8 @@ function getCustomerReservationFollowUp({
       title: nextReservation.status === "PENDING" ? "Tu próxima reserva todavía está pendiente" : "Ya tenés una próxima reserva activa",
       message:
         nextReservation.status === "PENDING"
-          ? "Conviene revisar el estado antes de la visita y conservar fecha, sucursal y notas."
-          : "Podés usar esta vista para seguir la próxima visita y decidir si necesitás crear otra.",
+          ? "Conviene revisar el estado antes de la visita y tener a mano fecha, sucursal y notas."
+          : "Podés usar esta vista para seguir tu próxima visita y decidir si necesitás crear otra.",
       steps: [
         { label: "Próxima reserva visible", done: upcomingCount > 0 },
         { label: "Historial disponible", done: historyCount > 0 },
@@ -1477,7 +1587,7 @@ function getCustomerReservationFollowUp({
   return {
     tone: "info" as const,
     title: "No tenés una próxima reserva cargada",
-    message: "Podés seguir explorando o volver a Reservar para planificar una nueva visita.",
+    message: "Podés seguir explorando o volver a Reservar para planificar tu próxima salida.",
     steps: [
       { label: "Próxima reserva visible", done: false },
       { label: "Historial disponible", done: historyCount > 0 },
@@ -1500,12 +1610,12 @@ function getCustomerBrowseNextStep({
   if (!accessToken) {
     return {
       tone: "info" as const,
-      title: source === "menu" ? "Después del menú, resolvé el acceso" : "Para operar sobre una sucursal, iniciá sesión",
+      title: source === "menu" ? "Después del menú, ingresá a tu cuenta" : "Para reservar en una sucursal, ingresá a tu cuenta",
       detail:
         source === "menu"
-          ? "Ya podés explorar la propuesta. Cuando decidas avanzar con una reserva, necesitás identificarte."
-          : "Podés mirar la sede públicamente, pero para elegirla y reservar hace falta una sesión activa.",
-      ctaLabel: "Ir a acceso",
+          ? "Ya podés explorar la propuesta. Cuando decidas avanzar con una reserva, necesitás ingresar."
+          : "Podés mirar la sucursal públicamente, pero para elegirla y reservar necesitás una cuenta activa.",
+      ctaLabel: "Ingresar",
       nextTab: "mine" as CustomerTab,
     };
   }
@@ -1516,8 +1626,8 @@ function getCustomerBrowseNextStep({
       title: "Definí la sucursal para continuar",
       detail:
         source === "menu"
-          ? "Ya viste la propuesta gastronómica. El siguiente paso es elegir en qué sede querés vivirla."
-          : "Cuando elijas una sede, ya podés pasar a disponibilidad y reserva real.",
+          ? "Ya viste la propuesta gastronómica. El siguiente paso es elegir en qué sucursal querés vivirla."
+          : "Cuando elijas una sucursal, ya podés pasar a disponibilidad y reserva.",
       ctaLabel: "Elegir sucursal",
       nextTab: "branches" as CustomerTab,
     };
@@ -1528,8 +1638,8 @@ function getCustomerBrowseNextStep({
     title: `Ya tenés ${selectedBranch.name} seleccionada`,
     detail:
       source === "menu"
-        ? "Con menú visto y sucursal definida, el paso natural es cargar fecha, horario y cantidad."
-        : "La sede ya está elegida. Ahora podés pasar directo al flujo de reserva real.",
+        ? "Con el menú visto y la sucursal definida, el paso natural es cargar fecha, horario y cantidad."
+        : "La sucursal ya está elegida. Ahora podés pasar directo a la reserva.",
     ctaLabel: "Continuar reserva",
     nextTab: "reserve" as CustomerTab,
   };
