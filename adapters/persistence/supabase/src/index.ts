@@ -1,6 +1,7 @@
 export * from "./client.js";
 export * from "./tenant-repository.js";
 export * from "./brand-repository.js";
+export * from "./brand-presentation-repository.js";
 export * from "./fiscal-entity-repository.js";
 export * from "./branch-repository.js";
 export * from "./salon-repository.js";

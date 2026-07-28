@@ -4,6 +4,7 @@ import type { Brand } from "../domain/brand.js";
 import type { FiscalEntity } from "../domain/fiscal-entity.js";
 import type { Salon } from "../domain/salon.js";
 import type { Table } from "../domain/table.js";
+import type { BrandAsset, BrandPresentation } from "../domain/brand-presentation.js";
 
 // SPEC-210 — application ports, implemented by adapters/persistence/*
 export interface TenantRepositoryPort {
@@ -23,6 +24,28 @@ export interface BrandRepositoryPort {
   findBySlug(tenantId: string, slug: string): Promise<Brand | null>;
   listByTenant(tenantId: string): Promise<Brand[]>;
   save(brand: Brand): Promise<void>;
+}
+
+export interface BrandPresentationRepositoryPort {
+  findById(tenantId: string, id: string): Promise<BrandPresentation | null>;
+  findDraft(tenantId: string, brandId: string): Promise<BrandPresentation | null>;
+  findPublished(tenantId: string, brandId: string): Promise<BrandPresentation | null>;
+  listByBrand(tenantId: string, brandId: string): Promise<BrandPresentation[]>;
+  nextRevision(tenantId: string, brandId: string): Promise<number>;
+  save(presentation: BrandPresentation): Promise<void>;
+}
+
+export interface BrandAssetRepositoryPort {
+  findById(tenantId: string, brandId: string, id: string): Promise<BrandAsset | null>;
+  listByBrand(tenantId: string, brandId: string): Promise<BrandAsset[]>;
+  save(asset: BrandAsset): Promise<void>;
+}
+
+export interface BrandAssetStoragePort {
+  put(path: string, bytes: Uint8Array, mimeType: string): Promise<void>;
+  get(path: string): Promise<{ bytes: Uint8Array; mimeType: string } | null>;
+  remove(path: string): Promise<void>;
+  publicUrl(path: string): string;
 }
 
 export interface FiscalEntityRepositoryPort {

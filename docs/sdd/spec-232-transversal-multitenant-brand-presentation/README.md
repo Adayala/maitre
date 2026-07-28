@@ -10,7 +10,7 @@ Dash representen la marca efectiva del tenant sin estilos o assets codificados p
 | ID | SPEC-232 |
 | Tipo | Transversal |
 | Dominio | Organization / UX |
-| Estado | IN_PROGRESS |
+| Estado | IMPLEMENTED_PENDING_REMOTE_MIGRATION |
 | Prioridad | P0 |
 
 ## Documentos

@@ -2,6 +2,9 @@ import {
   InMemoryTenantRepository,
   InMemoryBranchRepository,
   InMemoryBrandRepository,
+  InMemoryBrandPresentationRepository,
+  InMemoryBrandAssetRepository,
+  InMemoryBrandAssetStorage,
   InMemoryFiscalEntityRepository,
   InMemorySalonRepository,
   InMemoryTableRepository,
@@ -53,6 +56,9 @@ import {
   createSupabaseClient,
   SupabaseTenantRepository,
   SupabaseBrandRepository,
+  SupabaseBrandPresentationRepository,
+  SupabaseBrandAssetRepository,
+  SupabaseBrandAssetStorage,
   SupabaseFiscalEntityRepository,
   SupabaseBranchRepository,
   SupabaseSalonRepository,
@@ -116,6 +122,10 @@ import {
   createFiscalEntity,
   type TenantRepositoryPort,
   type BrandRepositoryPort,
+  type BrandPresentationRepositoryPort,
+  type BrandAssetRepositoryPort,
+  type BrandAssetStoragePort,
+  type BrandPresentation,
   type FiscalEntityRepositoryPort,
   type BranchRepositoryPort,
   type SalonRepositoryPort,
@@ -238,6 +248,9 @@ export interface Container {
   tenants: TenantRepositoryPort;
   branches: BranchRepositoryPort;
   brands: BrandRepositoryPort;
+  brandPresentations: BrandPresentationRepositoryPort;
+  brandAssets: BrandAssetRepositoryPort;
+  brandAssetStorage: BrandAssetStoragePort;
   fiscalEntities: FiscalEntityRepositoryPort;
   salons: SalonRepositoryPort;
   tables: TableRepositoryPort;
@@ -304,6 +317,7 @@ export interface Container {
 // missing) instead of minting a fresh Tenant on every process boot.
 const DEMO_TENANT_ID = "00000000-0000-0000-0000-000000000001";
 const DEMO_BRAND_ID = "00000000-0000-0000-0000-000000000002";
+const DEMO_PRESENTATION_ID = "00000000-0000-0000-0000-000000000020";
 const DEMO_BRANCH_ID = "00000000-0000-0000-0000-000000000003";
 const DEMO_SALON_ID = "00000000-0000-0000-0000-000000000004";
 const DEMO_TABLE_ID = "00000000-0000-0000-0000-000000000005";
@@ -592,6 +606,9 @@ interface Repositories {
   tenants: TenantRepositoryPort;
   branches: BranchRepositoryPort;
   brands: BrandRepositoryPort;
+  brandPresentations: BrandPresentationRepositoryPort;
+  brandAssets: BrandAssetRepositoryPort;
+  brandAssetStorage: BrandAssetStoragePort;
   fiscalEntities: FiscalEntityRepositoryPort;
   salons: SalonRepositoryPort;
   tables: TableRepositoryPort;
@@ -678,6 +695,9 @@ function buildRepositories(): Repositories {
       tenants: new SupabaseTenantRepository(client),
       branches: new SupabaseBranchRepository(client),
       brands: new SupabaseBrandRepository(client),
+      brandPresentations: new SupabaseBrandPresentationRepository(client),
+      brandAssets: new SupabaseBrandAssetRepository(client),
+      brandAssetStorage: new SupabaseBrandAssetStorage(client),
       fiscalEntities: new SupabaseFiscalEntityRepository(client),
       salons: new SupabaseSalonRepository(client),
       tables: new SupabaseTableRepository(client),
@@ -739,6 +759,9 @@ function buildRepositories(): Repositories {
     tenants: new InMemoryTenantRepository(),
     branches: new InMemoryBranchRepository(),
     brands: new InMemoryBrandRepository(),
+    brandPresentations: new InMemoryBrandPresentationRepository(),
+    brandAssets: new InMemoryBrandAssetRepository(),
+    brandAssetStorage: new InMemoryBrandAssetStorage(),
     fiscalEntities: new InMemoryFiscalEntityRepository(),
     salons: new InMemorySalonRepository(),
     tables: new InMemoryTableRepository(),
@@ -830,6 +853,85 @@ async function ensureSeed(repos: Repositories): Promise<void> {
         config: { language: "es", currency: tenant.defaultCurrency },
       },
     );
+  }
+
+  const demoAssets = [
+    { id: "00000000-0000-0000-0000-000000000021", kind: "LOGO" as const, file: "logo.svg", mimeType: "image/svg+xml", width: 640, height: 180 },
+    { id: "00000000-0000-0000-0000-000000000022", kind: "LOGO_DARK" as const, file: "logo-dark.svg", mimeType: "image/svg+xml", width: 640, height: 180 },
+    { id: "00000000-0000-0000-0000-000000000023", kind: "FAVICON" as const, file: "favicon.svg", mimeType: "image/svg+xml", width: 128, height: 128 },
+    { id: "00000000-0000-0000-0000-000000000024", kind: "HERO" as const, file: "hero.png", mimeType: "image/png", width: 1664, height: 936 },
+  ];
+  for (const definition of demoAssets) {
+    if (await repos.brandAssets.findById(tenant.id, brand.id, definition.id)) continue;
+    const bytes = await readFile(new URL(`../../assets/demo-brand/${definition.file}`, import.meta.url));
+    const storagePath = `tenants/${tenant.id}/brands/${brand.id}/${definition.kind.toLowerCase()}/${definition.id}/${definition.file}`;
+    await repos.brandAssetStorage.put(storagePath, bytes, definition.mimeType);
+    await repos.brandAssets.save({
+      id: definition.id, tenantId: tenant.id, brandId: brand.id, kind: definition.kind,
+      storageBucket: "brand-assets", storagePath,
+      publicUrl: `/public/tenants/${tenant.id}/brands/${brand.id}/assets/${definition.id}`,
+      mimeType: definition.mimeType, sizeBytes: bytes.byteLength,
+      checksum: createHash("sha256").update(bytes).digest("hex"),
+      width: definition.width, height: definition.height, status: "READY",
+      createdAt: now, createdBy: DEMO_USER_ID,
+    });
+  }
+
+  if (!(await repos.brandPresentations.findPublished(tenant.id, brand.id))) {
+    const presentation: BrandPresentation = {
+      id: DEMO_PRESENTATION_ID,
+      tenantId: tenant.id,
+      brandId: brand.id,
+      revision: 1,
+      status: "PUBLISHED",
+      document: {
+        schemaVersion: 1,
+        identity: {
+          displayName: "Casa Maitre",
+          shortName: "Casa Maitre",
+          tagline: "Cocina porteña, servicio contemporáneo",
+        },
+        assets: {
+          logo: { assetId: demoAssets[0]!.id, kind: "LOGO", url: `/public/tenants/${tenant.id}/brands/${brand.id}/assets/${demoAssets[0]!.id}`, mimeType: "image/svg+xml", checksum: "demo-logo-v1", width: 640, height: 180 },
+          logoDark: { assetId: demoAssets[1]!.id, kind: "LOGO_DARK", url: `/public/tenants/${tenant.id}/brands/${brand.id}/assets/${demoAssets[1]!.id}`, mimeType: "image/svg+xml", checksum: "demo-logo-dark-v1", width: 640, height: 180 },
+          favicon: { assetId: demoAssets[2]!.id, kind: "FAVICON", url: `/public/tenants/${tenant.id}/brands/${brand.id}/assets/${demoAssets[2]!.id}`, mimeType: "image/svg+xml", checksum: "demo-favicon-v1", width: 128, height: 128 },
+          hero: { assetId: demoAssets[3]!.id, kind: "HERO", url: `/public/tenants/${tenant.id}/brands/${brand.id}/assets/${demoAssets[3]!.id}`, mimeType: "image/png", checksum: "demo-hero-v1", width: 1664, height: 936 },
+        },
+        colors: {
+          primary: "#A63D2F",
+          secondary: "#24352E",
+          accent: "#D49A4A",
+          canvas: "#F7F1E7",
+          surface: "#FFFDF8",
+          text: "#211D19",
+          mutedText: "#655E56",
+          border: "#D9CDBD",
+        },
+        typography: {
+          heading: { family: "Georgia", fallback: "Georgia, serif", weights: [400, 700] },
+          body: { family: "Inter", fallback: "system-ui, sans-serif", weights: [400, 600, 700] },
+          numeric: { family: "Inter", fallback: "ui-monospace, monospace", weights: [600, 700] },
+          scale: "comfortable",
+        },
+        shape: { radius: "medium", elevation: "subtle" },
+        templates: {
+          PUBLIC_HOME: { templateId: "image-led", variant: "warm" },
+          MENU: { templateId: "visual", variant: "editorial" },
+          RESERVATION: { templateId: "guided" },
+          WAITER: { templateId: "comfortable" },
+          HOST: { templateId: "floor-first" },
+          KITCHEN: { templateId: "high-contrast" },
+          CASHIER: { templateId: "compact" },
+          DASH: { templateId: "standard" },
+        },
+        content: { locale: "es-AR" },
+      },
+      createdAt: now,
+      createdBy: DEMO_USER_ID,
+      publishedAt: now,
+      publishedBy: DEMO_USER_ID,
+    };
+    await repos.brandPresentations.save(presentation);
   }
 
   let branch = await repos.branches.findById(tenant.id, DEMO_BRANCH_ID);
@@ -1488,3 +1590,5 @@ export async function buildContainer(): Promise<Container> {
     demoQrMenuToken: DEMO_QR_MENU_TOKEN,
   };
 }
+import { createHash } from "node:crypto";
+import { readFile } from "node:fs/promises";

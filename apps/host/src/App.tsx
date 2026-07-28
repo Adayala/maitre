@@ -5,6 +5,7 @@ import { LoginPage } from "./features/login/login-page.js";
 import { SetupPage } from "./features/setup/setup-page.js";
 import { HostPage } from "./features/host/host-page.js";
 import { apiRequest } from "./lib/api-client.js";
+import { BrandPresentationProvider } from "../../../packages/brand-presentation/src/index.js";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -45,6 +46,12 @@ function Gate() {
   );
 }
 
+function BrandTheme({ children }: { children: React.ReactNode }) {
+  const { accessToken } = useAuth();
+  const { selectedTenantId, selectedBranchId } = useSession();
+  return <BrandPresentationProvider apiUrl={import.meta.env["VITE_API_URL"] ?? "http://localhost:3001"} accessToken={accessToken} tenantId={selectedTenantId} branchId={selectedBranchId} surface="HOST">{children}</BrandPresentationProvider>;
+}
+
 interface SubscriptionAccess {
   data: { services: Array<{ code: string; quantity: number; scopeRefId: string | null }> };
 }
@@ -63,7 +70,7 @@ export function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <SessionProvider>
-          <Gate />
+          <BrandTheme><Gate /></BrandTheme>
         </SessionProvider>
       </AuthProvider>
     </QueryClientProvider>

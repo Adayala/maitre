@@ -5,6 +5,7 @@ import { registerHealthRoutes } from "./routes/health.js";
 import { registerMeRoutes } from "./routes/me.js";
 import { registerTenantRoutes } from "./routes/tenants.js";
 import { registerBrandRoutes } from "./routes/brands.js";
+import { registerBrandPresentationRoutes } from "./routes/brand-presentations.js";
 import { registerFiscalEntityRoutes } from "./routes/fiscal-entities.js";
 import { registerBranchRoutes } from "./routes/branches.js";
 import { registerSalonRoutes } from "./routes/salons.js";
@@ -68,6 +69,7 @@ export async function buildApp(container?: Container): Promise<FastifyInstance> 
   await registerMeRoutes(app, resolvedContainer);
   await registerTenantRoutes(app, resolvedContainer);
   await registerBrandRoutes(app, resolvedContainer);
+  await registerBrandPresentationRoutes(app, resolvedContainer);
   await registerFiscalEntityRoutes(app, resolvedContainer);
   await registerBranchRoutes(app, resolvedContainer);
   await registerSalonRoutes(app, resolvedContainer);

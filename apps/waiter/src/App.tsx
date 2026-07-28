@@ -8,6 +8,7 @@ import { FloorPage } from "./features/floor/floor-page.js";
 import { VisitPage } from "./features/visit/visit-page.js";
 import { OrderPage } from "./features/order/order-page.js";
 import { apiRequest } from "./lib/api-client.js";
+import { BrandPresentationProvider } from "../../../packages/brand-presentation/src/index.js";
 
 // The waiter app gates on auth → device context (tenant/branch) → the floor.
 // A short polling refetch keeps the floor/visit reasonably live without a
@@ -65,6 +66,12 @@ function Gate() {
   );
 }
 
+function BrandTheme({ children }: { children: React.ReactNode }) {
+  const { accessToken } = useAuth();
+  const { selectedTenantId, selectedBranchId } = useSession();
+  return <BrandPresentationProvider apiUrl={import.meta.env["VITE_API_URL"] ?? "http://localhost:3001"} accessToken={accessToken} tenantId={selectedTenantId} branchId={selectedBranchId} surface="WAITER">{children}</BrandPresentationProvider>;
+}
+
 interface SubscriptionAccess {
   data: { services: Array<{ code: string; quantity: number; scopeRefId: string | null }> };
 }
@@ -81,7 +88,7 @@ export function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <SessionProvider>
-          <Gate />
+          <BrandTheme><Gate /></BrandTheme>
         </SessionProvider>
       </AuthProvider>
     </QueryClientProvider>
