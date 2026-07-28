@@ -241,15 +241,15 @@ td {
 }
 
 .overview-priority--success {
-  background: color-mix(in srgb, #2fa86b 12%, white);
+  background: color-mix(in srgb, var(--color-bg) 88%, #2fa86b 12%);
 }
 
 .overview-priority--warning {
-  background: color-mix(in srgb, #f59e0b 14%, white);
+  background: color-mix(in srgb, var(--color-bg) 86%, #f59e0b 14%);
 }
 
 .overview-priority--info {
-  background: color-mix(in srgb, var(--color-accent) 10%, white);
+  background: color-mix(in srgb, var(--color-bg) 90%, var(--color-accent) 10%);
 }
 
 .overview-priority__copy {
@@ -430,7 +430,7 @@ td {
   padding: 0.85rem 0.95rem;
   border-radius: 0.75rem;
   border: 1px solid var(--color-border);
-  background: color-mix(in srgb, var(--color-bg-soft, #f6f7f9) 75%, white);
+  background: color-mix(in srgb, var(--color-bg) 96%, var(--color-accent) 4%);
 }
 
 .public-journey-pill span {
@@ -466,12 +466,12 @@ td {
   border: 1px solid var(--color-border);
   text-decoration: none;
   color: inherit;
-  background: color-mix(in srgb, var(--color-bg-soft, #f6f7f9) 65%, white);
+  background: color-mix(in srgb, var(--color-bg) 96%, var(--color-accent) 4%);
 }
 
 .public-route-card--accent {
   border-color: color-mix(in srgb, var(--color-accent) 35%, var(--color-border));
-  background: color-mix(in srgb, var(--color-accent) 8%, white);
+  background: color-mix(in srgb, var(--color-bg) 92%, var(--color-accent) 8%);
 }
 
 .public-route-meta {
@@ -515,7 +515,7 @@ td {
 .public-info-card {
   display: grid;
   gap: 0.65rem;
-  background: color-mix(in srgb, var(--color-accent) 6%, white);
+  background: color-mix(in srgb, var(--color-bg) 94%, var(--color-accent) 6%);
 }
 
 .public-detail-list {
@@ -537,7 +537,8 @@ td {
   padding: 0.75rem 0.85rem;
   border-radius: 0.65rem;
   border: 1px solid var(--color-border);
-  background: color-mix(in srgb, var(--color-bg-soft, #f6f7f9) 70%, white);
+  background: color-mix(in srgb, var(--color-bg) 96%, var(--color-accent) 4%);
+  color: var(--color-fg);
 }
 
 .public-check-item strong {
@@ -546,7 +547,7 @@ td {
 
 .public-check-item--done {
   border-color: color-mix(in srgb, var(--color-accent) 35%, var(--color-border));
-  background: color-mix(in srgb, var(--color-accent) 8%, white);
+  background: color-mix(in srgb, var(--color-bg) 92%, var(--color-accent) 8%);
 }
 
 .public-check-item--done strong {
@@ -575,14 +576,14 @@ td {
   padding: 0 0.85rem;
   border-radius: 999px;
   border: 1px solid var(--color-border);
-  background: color-mix(in srgb, var(--color-bg-soft, #f6f7f9) 75%, white);
+  background: color-mix(in srgb, var(--color-bg) 96%, var(--color-accent) 4%);
   color: inherit;
   font: inherit;
 }
 
 .public-chip--active {
   border-color: color-mix(in srgb, var(--color-accent) 45%, var(--color-border));
-  background: color-mix(in srgb, var(--color-accent) 12%, white);
+  background: color-mix(in srgb, var(--color-bg) 88%, var(--color-accent) 12%);
 }
 
 .public-form {
@@ -688,7 +689,7 @@ td {
   height: 2rem;
   padding: 0 0.65rem;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--color-border) 55%, white);
+  background: color-mix(in srgb, var(--color-bg) 55%, var(--color-border) 45%);
   font-weight: 700;
 }
 
@@ -705,7 +706,7 @@ td {
   padding: 1rem;
   border-radius: 0.75rem;
   border: 1px solid var(--color-border);
-  background: color-mix(in srgb, var(--color-bg-soft, #f6f7f9) 65%, white);
+  background: color-mix(in srgb, var(--color-bg) 96%, var(--color-accent) 4%);
 }
 
 .public-reservation-card--upcoming {
@@ -742,21 +743,21 @@ td {
 }
 
 .public-status-pill--pending {
-  background: color-mix(in srgb, #f59e0b 14%, white);
+  background: color-mix(in srgb, var(--color-bg) 86%, #f59e0b 14%);
 }
 
 .public-status-pill--confirmed,
 .public-status-pill--seated {
-  background: color-mix(in srgb, var(--color-accent) 12%, white);
+  background: color-mix(in srgb, var(--color-bg) 88%, var(--color-accent) 12%);
 }
 
 .public-status-pill--completed {
-  background: color-mix(in srgb, #2fa86b 14%, white);
+  background: color-mix(in srgb, var(--color-bg) 86%, #2fa86b 14%);
 }
 
 .public-status-pill--cancelled,
 .public-status-pill--no_show {
-  background: color-mix(in srgb, #c0392b 12%, white);
+  background: color-mix(in srgb, var(--color-bg) 88%, #c0392b 12%);
 }
 
 .public-reservation-empty {
