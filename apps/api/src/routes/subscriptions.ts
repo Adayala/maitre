@@ -43,6 +43,10 @@ const updateItemBodySchema = z.object({
   quantity: z.number().int().positive(),
 });
 
+const accessQuerySchema = z.object({
+  branchId: z.string().uuid().optional(),
+});
+
 export async function registerSubscriptionRoutes(
   app: FastifyInstance,
   container: Container,
@@ -192,6 +196,51 @@ export async function registerSubscriptionRoutes(
       return sendProblem(reply, correlationId, err);
     }
   });
+
+  app.get<{ Params: { tenantId: string }; Querystring: { branchId?: string } }>(
+    "/v1/subscriptions/:tenantId/access",
+    async (req, reply) => {
+      const correlationId = randomUUID();
+      try {
+        const ctx = await requireTenantContext(container, req);
+        if (ctx.tenantId !== req.params.tenantId) {
+          return sendProblem(reply, correlationId, notFound("Subscription"));
+        }
+        const query = accessQuerySchema.parse(req.query);
+        if (query.branchId) {
+          const branch = await container.branches.findById(ctx.tenantId, query.branchId);
+          if (!branch) return sendProblem(reply, correlationId, notFound("Branch"));
+        }
+        const subscription = await container.subscriptions.findByTenantId(ctx.tenantId);
+        if (!subscription) return sendProblem(reply, correlationId, notFound("Subscription"));
+        const items = await container.subscriptionItems.listBySubscription(subscription.id);
+        const services = items
+          .filter(
+            (item) =>
+              item.status === "ACTIVE" &&
+              (item.scopeRefId == null ||
+                (query.branchId !== undefined && item.scopeRefId === query.branchId)),
+          )
+          .map((item) => ({
+            code: item.catalogItemCode ?? item.serviceId,
+            quantity: item.quantity,
+            scopeRefId: item.scopeRefId ?? null,
+          }));
+        return {
+          data: {
+            tenantId: ctx.tenantId,
+            branchId: query.branchId ?? null,
+            services,
+          },
+        };
+      } catch (err) {
+        if (err instanceof z.ZodError) {
+          return sendProblem(reply, correlationId, badRequest(err.message));
+        }
+        return sendProblem(reply, correlationId, err);
+      }
+    },
+  );
 
   app.post<{ Params: { tenantId: string } }>(
     "/v1/subscriptions/:tenantId/items",

@@ -106,13 +106,17 @@ export async function registerQrMenuRoutes(app: FastifyInstance, container: Cont
         req.params.token,
         "MENU_READ",
       );
+      const services = await activeServiceCodes(container, token.tenantId, token.branchId ?? null);
+      if (!services.includes("QR_MENU")) {
+        return sendProblem(reply, correlationId, notFound("Menu"));
+      }
       const menu = await container.menus.findById(token.tenantId, token.resourceId);
       if (!menu) return sendProblem(reply, correlationId, notFound("Menu"));
       const payload = await buildMenuPayload(container, token.tenantId, token.resourceId);
       if (!payload) return sendProblem(reply, correlationId, notFound("Menu"));
       reply.header("etag", `"${menu.updatedAt.getTime()}"`);
       reply.header("cache-control", "private, max-age=30");
-      return { data: payload };
+      return { data: { ...payload, subscribedServices: services } };
     } catch (err) {
       // Anti-enumeration: any resolution failure is an indistinguishable 404.
       if (err instanceof CapabilityNotResolvableError) return sendProblem(reply, correlationId, notFound("Menu"));
@@ -135,10 +139,28 @@ export async function registerQrMenuRoutes(app: FastifyInstance, container: Cont
       if (!token.branchId) return sendProblem(reply, correlationId, notFound("Branch"));
       const payload = await buildPublicBranchPayload(container, token.tenantId, token.branchId);
       if (!payload) return sendProblem(reply, correlationId, notFound("Branch"));
-      return { data: payload };
+      const services = await activeServiceCodes(container, token.tenantId, token.branchId);
+      return { data: { ...payload, subscribedServices: services } };
     } catch (err) {
       if (err instanceof CapabilityNotResolvableError) return sendProblem(reply, correlationId, notFound("Branch"));
       return sendProblem(reply, correlationId, err);
     }
   });
+}
+
+async function activeServiceCodes(
+  container: Container,
+  tenantId: string,
+  branchId: string | null,
+): Promise<string[]> {
+  const subscription = await container.subscriptions.findByTenantId(tenantId);
+  if (!subscription) return [];
+  const items = await container.subscriptionItems.listBySubscription(subscription.id);
+  return items
+    .filter(
+      (item) =>
+        item.status === "ACTIVE" &&
+        (item.scopeRefId == null || (branchId !== null && item.scopeRefId === branchId)),
+    )
+    .map((item) => item.catalogItemCode ?? item.serviceId);
 }

@@ -1,7 +1,7 @@
 # Tasks — SPEC-231
 
-- [ ] Implementar hook y estado visual.
-- [ ] Integrar Host, Waiter, Kitchen y Cashier.
-- [ ] Integrar superficies de Customer.
-- [ ] Mostrar cantidades WAITERS/CASHIERS donde corresponda.
-- [ ] Ejecutar builds y smoke por app.
+- [x] Implementar consulta y estado visual.
+- [x] Integrar Host, Waiter, Kitchen y Cashier.
+- [x] Integrar superficies de Customer.
+- [x] Mostrar cantidades WAITERS/CASHIERS donde corresponda.
+- [x] Ejecutar builds por app y pruebas API focalizadas.

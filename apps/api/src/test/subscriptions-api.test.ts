@@ -595,6 +595,37 @@ test("GET /v1/subscription-packages returns ordered configured packages", async 
   await app.close();
 });
 
+test("GET subscription access returns tenant and selected-branch services with quantities", async () => {
+  const container = await buildContainer();
+  const tenantId = await getTenantId(container);
+  const app = await buildApp(container);
+  const branchId = "00000000-0000-0000-0000-000000000003";
+  const response = await app.inject({
+    method: "GET",
+    url: `/v1/subscriptions/${tenantId}/access?branchId=${branchId}`,
+    headers: {
+      authorization: `Bearer ${container.demoAccessToken}`,
+      "x-tenant-id": tenantId,
+    },
+  });
+  assert.equal(response.statusCode, 200);
+  const services = response.json().data.services as Array<{
+    code: string;
+    quantity: number;
+    scopeRefId: string | null;
+  }>;
+  assert.equal(services.find((service) => service.code === "BRANCHES")?.scopeRefId, null);
+  assert.equal(services.find((service) => service.code === "SEATS")?.quantity, 12);
+  assert.equal(
+    services.find((service) => service.code === "SEATS")?.scopeRefId,
+    branchId,
+  );
+  assert.ok(
+    services.every((service) => ["code", "quantity", "scopeRefId"].every((key) => key in service)),
+  );
+  await app.close();
+});
+
 test("POST /v1/subscriptions/:tenantId/items adds a QUANTITY item scoped to a branch", async () => {
   const container = await buildContainer();
   const tenantId = await getTenantId(container);

@@ -12,6 +12,7 @@ const DURATION_PRESETS = ["60", "90", "120"];
 interface PublicMenuPayload {
   data: {
     menu: { name: string; slug: string; asOf: string };
+    subscribedServices: string[];
     categories: Array<{
       name: string;
       products: Array<{ name: string; priceMinorUnits: number; currency: string }>;
@@ -29,6 +30,7 @@ interface PublicBranchPayload {
       contactEmail: string | null;
       contactPhone: string | null;
     };
+    subscribedServices: string[];
   };
 }
 
@@ -121,9 +123,12 @@ export function CustomerPage() {
       return (await response.json()) as PublicBranchPayload;
     },
   });
+  const subscribedServices = branchesQuery.data?.data.subscribedServices ?? [];
+  const canUseMenu = subscribedServices.includes("QR_MENU");
+  const canUseReservations = subscribedServices.includes("RESERVATIONS");
 
   const canCheckAvailability =
-    Boolean(accessToken && selectedTenantId && selectedBranchId && startAt && Number(partySize) > 0 && Number(durationMinutes) > 0);
+    Boolean(canUseReservations && accessToken && selectedTenantId && selectedBranchId && startAt && Number(partySize) > 0 && Number(durationMinutes) > 0);
 
   const availabilityQuery = useQuery({
     queryKey: ["customer-availability", selectedTenantId, selectedBranchId, partySize, startAt, durationMinutes],
@@ -138,7 +143,7 @@ export function CustomerPage() {
 
   const reservationsQuery = useQuery({
     queryKey: ["customer-my-reservations", selectedTenantId],
-    enabled: Boolean(accessToken && selectedTenantId),
+    enabled: Boolean(canUseReservations && accessToken && selectedTenantId),
     queryFn: () => api<ReservationListResponse>("/v1/my/reservations"),
   });
 
@@ -320,18 +325,24 @@ export function CustomerPage() {
             <button type="button" className={`seg-btn ${tab === "discover" ? "seg-btn--active" : ""}`} onClick={() => setTab("discover")}>
               Inicio
             </button>
-            <button type="button" className={`seg-btn ${tab === "menu" ? "seg-btn--active" : ""}`} onClick={() => setTab("menu")}>
-              Menú
-            </button>
+            {canUseMenu ? (
+              <button type="button" className={`seg-btn ${tab === "menu" ? "seg-btn--active" : ""}`} onClick={() => setTab("menu")}>
+                Menú
+              </button>
+            ) : null}
             <button type="button" className={`seg-btn ${tab === "branches" ? "seg-btn--active" : ""}`} onClick={() => setTab("branches")}>
               Sucursales
             </button>
-            <button type="button" className={`seg-btn ${tab === "reserve" ? "seg-btn--active" : ""}`} onClick={() => setTab("reserve")}>
-              Reservar
-            </button>
-            <button type="button" className={`seg-btn ${tab === "mine" ? "seg-btn--active" : ""}`} onClick={() => setTab("mine")}>
-              {accessToken ? "Mis reservas" : "Acceso"}
-            </button>
+            {canUseReservations ? (
+              <>
+                <button type="button" className={`seg-btn ${tab === "reserve" ? "seg-btn--active" : ""}`} onClick={() => setTab("reserve")}>
+                  Reservar
+                </button>
+                <button type="button" className={`seg-btn ${tab === "mine" ? "seg-btn--active" : ""}`} onClick={() => setTab("mine")}>
+                  {accessToken ? "Mis reservas" : "Acceso"}
+                </button>
+              </>
+            ) : null}
           </div>
         </section>
 
@@ -538,7 +549,7 @@ export function CustomerPage() {
           </section>
         ) : null}
 
-        {tab === "menu" ? (
+        {tab === "menu" && canUseMenu ? (
           <section className="customer-grid">
             <article className="cashier-card">
               <h2 className="owner-card-title">Menú público</h2>
@@ -665,7 +676,7 @@ export function CustomerPage() {
           </section>
         ) : null}
 
-        {tab === "reserve" ? (
+        {tab === "reserve" && canUseReservations ? (
           <section className="customer-grid">
             <article className="cashier-card">
               <div className={`cashier-banner ${reservePriority.tone === "success" ? "cashier-banner--success" : reservePriority.tone === "warning" ? "cashier-banner--warning" : "cashier-banner--info"}`}>
@@ -837,7 +848,7 @@ export function CustomerPage() {
           </section>
         ) : null}
 
-        {tab === "mine" ? (
+        {tab === "mine" && canUseReservations ? (
           <section className="customer-grid">
             {accessToken ? (
               <article className="cashier-kpi-strip">
