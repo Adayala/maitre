@@ -1,0 +1,104 @@
+import { defineConfig, devices } from "@playwright/test";
+
+const host = "127.0.0.1";
+const ports = {
+  api: 3101,
+  dash: 5273,
+  cash: 5274,
+  kitchen: 5275,
+  floor: 5276,
+  host: 5278,
+  guest: 5279,
+};
+
+export default defineConfig({
+  testDir: "./tests/e2e",
+  fullyParallel: true,
+  forbidOnly: Boolean(process.env["CI"]),
+  retries: 0,
+  workers: process.env["CI"] ? 1 : undefined,
+  reporter: process.env["CI"]
+    ? [["line"], ["junit", { outputFile: "test-results/e2e-junit.xml" }], ["html", { open: "never" }]]
+    : [["list"], ["html", { open: "never" }]],
+  use: {
+    trace: "retain-on-failure",
+    screenshot: "only-on-failure",
+    video: "off",
+    locale: "es-AR",
+    timezoneId: "America/Argentina/Buenos_Aires",
+  },
+  expect: { timeout: 10_000 },
+  webServer: [
+    {
+      name: "api",
+      command: `PORT=${ports.api} npm run start --workspace apps/api`,
+      url: `http://${host}:${ports.api}/health/ready`,
+      timeout: 30_000,
+      reuseExistingServer: false,
+      stdout: "pipe",
+      stderr: "pipe",
+    },
+    {
+      name: "dash",
+      command: `npm run preview --workspace apps/web -- --host ${host} --port ${ports.dash} --strictPort`,
+      url: `http://${host}:${ports.dash}/login`,
+      timeout: 30_000,
+      reuseExistingServer: false,
+    },
+    {
+      name: "cash",
+      command: `npm run preview --workspace apps/cashier -- --host ${host} --port ${ports.cash} --strictPort`,
+      url: `http://${host}:${ports.cash}`,
+      timeout: 30_000,
+      reuseExistingServer: false,
+    },
+    {
+      name: "kitchen",
+      command: `npm run preview --workspace apps/kitchen -- --host ${host} --port ${ports.kitchen} --strictPort`,
+      url: `http://${host}:${ports.kitchen}`,
+      timeout: 30_000,
+      reuseExistingServer: false,
+    },
+    {
+      name: "floor",
+      command: `npm run preview --workspace apps/waiter -- --host ${host} --port ${ports.floor} --strictPort`,
+      url: `http://${host}:${ports.floor}`,
+      timeout: 30_000,
+      reuseExistingServer: false,
+    },
+    {
+      name: "host",
+      command: `npm run preview --workspace apps/host -- --host ${host} --port ${ports.host} --strictPort`,
+      url: `http://${host}:${ports.host}`,
+      timeout: 30_000,
+      reuseExistingServer: false,
+    },
+    {
+      name: "guest",
+      command: `npm run preview --workspace apps/customer -- --host ${host} --port ${ports.guest} --strictPort`,
+      url: `http://${host}:${ports.guest}`,
+      timeout: 30_000,
+      reuseExistingServer: false,
+    },
+  ],
+  projects: [
+    appProject("dash", ports.dash, "Desktop Chrome"),
+    appProject("host", ports.host, "iPad (gen 7)"),
+    appProject("floor", ports.floor, "iPad (gen 7)"),
+    appProject("kitchen", ports.kitchen, "iPad (gen 7)"),
+    appProject("cash", ports.cash, "iPad (gen 7)"),
+    appProject("guest", ports.guest, "Pixel 7"),
+  ],
+});
+
+function appProject(name, port, deviceName) {
+  return {
+    name,
+    testMatch: new RegExp(`apps/${name}/.*\\.spec\\.ts`),
+    use: {
+      ...devices[deviceName],
+      browserName: "chromium",
+      baseURL: `http://${host}:${port}`,
+    },
+  };
+}

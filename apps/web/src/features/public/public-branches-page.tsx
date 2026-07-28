@@ -24,7 +24,8 @@ export function PublicBranchesPage() {
   const branchesQuery = useQuery({
     queryKey: ["public-branches-live", PUBLIC_MENU_TOKEN],
     queryFn: async () => {
-      const response = await fetch(`http://127.0.0.1:3001/public/branches/${PUBLIC_MENU_TOKEN}`);
+      const apiUrl = (import.meta.env["VITE_API_URL"] as string | undefined) ?? "http://localhost:3001";
+      const response = await fetch(`${apiUrl}/public/branches/${PUBLIC_MENU_TOKEN}`);
       if (!response.ok) throw new Error("No se pudieron cargar las sucursales públicas");
       return (await response.json()) as PublicBranchPayload;
     },
