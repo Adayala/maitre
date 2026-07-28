@@ -33,6 +33,7 @@ export function OverviewPage() {
     : [];
   const nextStep = data ? getOverviewNextStep(data.data) : null;
   const quickLinks = data ? getOverviewQuickLinks(data.data) : [];
+  const ownerControlFronts = data ? getOwnerControlFronts(data.data) : [];
 
   return (
     <section aria-labelledby="overview-heading" className="overview-page">
@@ -76,6 +77,25 @@ export function OverviewPage() {
                     <strong>{nextStep.label}</strong>
                     <p>{nextStep.detail}</p>
                   </Link>
+                </div>
+              </article>
+            ) : null}
+
+            {ownerControlFronts.length > 0 ? (
+              <article className="overview-card">
+                <h2>Frentes del owner</h2>
+                <div className="owner-stage-grid">
+                  {ownerControlFronts.map((front) => (
+                    <Link
+                      key={front.to}
+                      className={`owner-stage-card owner-stage-card--${front.tone}`}
+                      to={front.to}
+                    >
+                      <span>{front.label}</span>
+                      <strong>{front.title}</strong>
+                      <p>{front.detail}</p>
+                    </Link>
+                  ))}
                 </div>
               </article>
             ) : null}
@@ -273,4 +293,43 @@ function getOverviewQuickLinks(payload: OverviewResponse["data"]) {
   ];
 
   return links;
+}
+
+function getOwnerControlFronts(payload: OverviewResponse["data"]) {
+  return [
+    {
+      to: "/setup",
+      label: "Base",
+      title: payload.setup.status,
+      detail:
+        payload.setup.branchCount === 0
+          ? "Todavía falta estructura mínima para operar con sedes reales."
+          : "Revisá el checklist transversal antes de seguir expandiendo el tenant.",
+      tone: payload.setup.branchCount === 0 ? "warning" : "info",
+    },
+    {
+      to: "/users",
+      label: "Equipo",
+      title: "Gobernar accesos",
+      detail: "Validá quién administra el tenant y quién va a operar cada app.",
+      tone: "info",
+    },
+    {
+      to: "/profiles",
+      label: "Operación",
+      title: payload.operations.status === "UNAVAILABLE" ? "Perfiles por revisar" : "Apps en uso",
+      detail:
+        payload.operations.status === "UNAVAILABLE"
+          ? "Todavía no hay snapshot operativo; esta vista ayuda a entender qué superficies faltan habilitar."
+          : "Con operación visible, podés contrastar roles y apps del restaurante.",
+      tone: payload.operations.status === "UNAVAILABLE" ? "warning" : "success",
+    },
+    {
+      to: "/settings",
+      label: "Gobierno",
+      title: "Parámetros del tenant",
+      detail: "Ordená qué configuraciones siguen siendo conceptuales y cuáles ya impactan apps reales.",
+      tone: "info",
+    },
+  ] as const;
 }

@@ -1,4 +1,5 @@
 import { useTenantContext } from "../../app/tenant-context.js";
+import { Link } from "react-router-dom";
 
 // Minimal placeholder — SPEC-048 lists Settings as a screen but its content
 // (which tenant-level settings, exactly) isn't detailed in any spec yet.
@@ -11,24 +12,28 @@ export function SettingsPage() {
       description: "Nombre visible, estructura base y contexto general de operación.",
       status: tenant ? "Listo para revisar" : "Pendiente de contexto",
       nextView: "Overview / Setup",
+      to: "/setup",
     },
     {
       title: "Experiencia cliente",
       description: "Lo que después impacta menú público, promociones, reserva y seguimiento.",
       status: "A definir por módulo",
       nextView: "Customer / Public web",
+      to: "/profiles",
     },
     {
       title: "Operación interna",
       description: "Parámetros que afectan caja, cocina, floor y flujos del staff.",
       status: "Depende de features habilitadas",
       nextView: "Profiles / apps táctiles",
+      to: "/profiles",
     },
     {
       title: "Fiscal / suscripción",
       description: "Configuración comercial, límites y capacidades del tenant.",
       status: "Coordinar con billing y fiscal",
       nextView: "Subscription / fiscal",
+      to: "/subscription",
     },
   ];
   const checklist = [
@@ -45,18 +50,53 @@ export function SettingsPage() {
       eyebrow: "Base",
       label: "Overview / Setup",
       detail: "Validá estructura y pasos pendientes antes de editar parámetros finos.",
+      to: "/setup",
     },
     {
       eyebrow: "Equipo",
       label: "Profiles / Users",
       detail: "Revisá qué actores van a consumir estas configuraciones.",
+      to: "/users",
     },
     {
       eyebrow: "Comercial",
       label: "Subscription",
       detail: "Contrastá settings con capacidades contratadas del tenant.",
+      to: "/subscription",
     },
   ];
+  const settingsStageCards = [
+    {
+      label: "Contexto",
+      title: tenant ? "Tenant seleccionado" : "Falta elegir tenant",
+      detail: tenant
+        ? "Ya podés ordenar settings sobre una base real de operación."
+        : "Sin tenant activo, cualquier cambio de configuración pierde sentido práctico.",
+      tone: tenant ? "success" : "warning",
+      to: "/overview",
+    },
+    {
+      label: "Estructura",
+      title: "Base y marca operativa",
+      detail: "Primero conviene verificar setup, marcas y sucursales antes de afinar settings finos.",
+      tone: "info",
+      to: "/setup",
+    },
+    {
+      label: "Superficies",
+      title: "Apps y perfiles impactados",
+      detail: "Usá perfiles para entender dónde pega cada configuración del tenant.",
+      tone: "info",
+      to: "/profiles",
+    },
+    {
+      label: "Gobierno",
+      title: "Capacidades y límites",
+      detail: "El owner debería cruzar settings con servicios y capacidades contratadas.",
+      tone: "warning",
+      to: "/subscription",
+    },
+  ] as const;
 
   return (
     <section aria-labelledby="settings-heading" className="overview-page">
@@ -109,11 +149,24 @@ export function SettingsPage() {
       <article className="overview-card">
         <h2>Siguiente paso recomendado</h2>
         <div className="overview-link-grid">
-          <div className="overview-link-card overview-link-card--primary">
+          <Link className="overview-link-card overview-link-card--primary" to={nextStep.to}>
             <span>{nextStep.eyebrow}</span>
             <strong>{nextStep.label}</strong>
             <p>{nextStep.detail}</p>
-          </div>
+          </Link>
+        </div>
+      </article>
+
+      <article className="overview-card">
+        <h2>Frentes de configuración</h2>
+        <div className="owner-stage-grid">
+          {settingsStageCards.map((card) => (
+            <Link key={card.label} className={`owner-stage-card owner-stage-card--${card.tone}`} to={card.to}>
+              <span>{card.label}</span>
+              <strong>{card.title}</strong>
+              <p>{card.detail}</p>
+            </Link>
+          ))}
         </div>
       </article>
 
@@ -121,23 +174,23 @@ export function SettingsPage() {
         <h2>Atajos relacionados</h2>
         <div className="overview-link-grid">
           {settingsQuickLinks.map((link) => (
-            <div key={link.label} className="overview-link-card">
+            <Link key={link.label} className="overview-link-card" to={link.to}>
               <span>{link.eyebrow}</span>
               <strong>{link.label}</strong>
               <p>{link.detail}</p>
-            </div>
+            </Link>
           ))}
         </div>
       </article>
 
       <section className="profile-module-grid" aria-label="Áreas de configuración">
         {settingsAreas.map((area) => (
-          <article key={area.title} className="profile-card">
+          <Link key={area.title} className="profile-card owner-module-link" to={area.to}>
             <h2>{area.title}</h2>
             <p>{area.description}</p>
             <p className="profile-eyebrow">{area.status}</p>
             <p>{area.nextView}</p>
-          </article>
+          </Link>
         ))}
       </section>
     </section>
@@ -181,6 +234,7 @@ function getSettingsNextStep({ hasTenant }: { hasTenant: boolean }) {
       eyebrow: "Contexto",
       label: "Elegir tenant",
       detail: "Primero resolvé el tenant activo desde el selector superior para habilitar el resto del backoffice.",
+      to: "/overview",
     };
   }
 
@@ -188,5 +242,6 @@ function getSettingsNextStep({ hasTenant }: { hasTenant: boolean }) {
     eyebrow: "Gobierno del tenant",
     label: "Revisar setup y suscripción",
     detail: "Con el contexto listo, lo más útil es cruzar estructura base con capacidades comerciales antes de bajar a settings finos.",
+    to: "/setup",
   };
 }

@@ -1,5 +1,6 @@
 import { useTenantQuery } from "../../lib/use-tenant-query.js";
 import { StateView } from "../../components/state-view.js";
+import { Link } from "react-router-dom";
 
 interface UserListItem {
   id: string;
@@ -38,18 +39,60 @@ export function UsersPage() {
       eyebrow: "Perfiles",
       label: "Profiles",
       detail: "Cruzar el equipo actual con las superficies y roles operativos definidos para el tenant.",
+      to: "/profiles",
     },
     {
       eyebrow: "Estructura",
       label: "Branches",
       detail: "Verificar si ya existen las sedes donde este equipo va a operar.",
+      to: "/branches",
     },
     {
       eyebrow: "Gobierno",
       label: "Settings / Subscription",
       detail: "Alinear quién opera el tenant con capacidades y configuración activas.",
+      to: "/settings",
     },
   ];
+  const userStageCards = [
+    {
+      label: "Invitar",
+      title: users.length > 0 ? "Equipo cargado" : "Falta invitar equipo",
+      detail:
+        users.length > 0
+          ? "Ya existe una base de personas para el tenant."
+          : "El owner todavía necesita sumar las primeras personas clave.",
+      tone: users.length > 0 ? "success" : "warning",
+      to: "/users",
+    },
+    {
+      label: "Activar",
+      title: activeUsers.length > 0 ? `${activeUsers.length} activo(s)` : "Nadie operativo todavía",
+      detail:
+        activeUsers.length > 0
+          ? "Ya hay usuarios que pueden entrar al backoffice o a las apps."
+          : "Todavía falta que alguien complete activación para operar.",
+      tone: activeUsers.length > 0 ? "success" : "warning",
+      to: "/users",
+    },
+    {
+      label: "Asignar",
+      title: usersWithoutRoles.length > 0 ? `${usersWithoutRoles.length} sin rol` : "Roles cubiertos",
+      detail:
+        usersWithoutRoles.length > 0
+          ? "Conviene completar roles antes de desplegar apps por perfil."
+          : "La asignación de responsabilidades ya es consistente.",
+      tone: usersWithoutRoles.length > 0 ? "warning" : "success",
+      to: "/profiles",
+    },
+    {
+      label: "Distribuir",
+      title: "Perfiles y sucursales",
+      detail: "El siguiente control útil es validar cómo se reparte el equipo por app y sede.",
+      tone: "info",
+      to: "/branches",
+    },
+  ] as const;
 
   return (
     <section aria-labelledby="users-heading" className="overview-page">
@@ -110,11 +153,24 @@ export function UsersPage() {
             <article className="overview-card">
               <h2>Siguiente paso recomendado</h2>
               <div className="overview-link-grid">
-                <div className="overview-link-card overview-link-card--primary">
+                <Link className="overview-link-card overview-link-card--primary" to={nextStep.to}>
                   <span>{nextStep.eyebrow}</span>
                   <strong>{nextStep.label}</strong>
                   <p>{nextStep.detail}</p>
-                </div>
+                </Link>
+              </div>
+            </article>
+
+            <article className="overview-card">
+              <h2>Ciclo del equipo</h2>
+              <div className="owner-stage-grid">
+                {userStageCards.map((card) => (
+                  <Link key={card.label} className={`owner-stage-card owner-stage-card--${card.tone}`} to={card.to}>
+                    <span>{card.label}</span>
+                    <strong>{card.title}</strong>
+                    <p>{card.detail}</p>
+                  </Link>
+                ))}
               </div>
             </article>
 
@@ -139,11 +195,11 @@ export function UsersPage() {
               <h2>Atajos relacionados</h2>
               <div className="overview-link-grid">
                 {userQuickLinks.map((link) => (
-                  <div key={link.label} className="overview-link-card">
+                  <Link key={link.label} className="overview-link-card" to={link.to}>
                     <span>{link.eyebrow}</span>
                     <strong>{link.label}</strong>
                     <p>{link.detail}</p>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </article>
@@ -270,6 +326,7 @@ function getUsersNextStep({
       eyebrow: "Onboarding",
       label: "Invitar primer equipo",
       detail: "Antes de operar conviene cargar al menos las personas clave de owner/admin y los primeros perfiles operativos.",
+      to: "/profiles",
     };
   }
 
@@ -278,6 +335,7 @@ function getUsersNextStep({
       eyebrow: "Activación",
       label: "Conseguir primer usuario activo",
       detail: "El equipo existe, pero todavía falta que alguien complete activación para poder operar el tenant.",
+      to: "/users",
     };
   }
 
@@ -286,6 +344,7 @@ function getUsersNextStep({
       eyebrow: "RBAC operativo",
       label: "Asignar roles faltantes",
       detail: "Completá roles para evitar usuarios visibles sin superficie o responsabilidad clara dentro de las apps.",
+      to: "/profiles",
     };
   }
 
@@ -294,6 +353,7 @@ function getUsersNextStep({
       eyebrow: "Cierre de onboarding",
       label: "Completar invitaciones pendientes",
       detail: "Queda equipo por activar; conviene cerrar ese pendiente antes de considerar el tenant plenamente armado.",
+      to: "/users",
     };
   }
 
@@ -301,5 +361,6 @@ function getUsersNextStep({
     eyebrow: "Siguiente control",
     label: "Cruzar equipo con perfiles y sedes",
     detail: "Con el equipo visible y activo, el próximo paso útil es validar cómo se distribuye por app, perfil y sucursal.",
+    to: "/branches",
   };
 }
