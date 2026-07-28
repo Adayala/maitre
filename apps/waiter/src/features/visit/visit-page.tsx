@@ -194,6 +194,14 @@ export function VisitPage({ visitId }: { visitId: string }) {
     { label: "Mesa lista para cierre", done: canClose },
   ];
   const visitPending = visitChecklist.filter((step) => !step.done).map((step) => step.label);
+  const dockGuidance = getVisitDockGuidance({
+    draftOrder: Boolean(draftOrder),
+    readyItems,
+    paymentRequested,
+    canRequestPayment,
+    canClose,
+    closeHint,
+  });
   const visitFocusCards = [
     {
       label: "Cuenta",
@@ -302,18 +310,22 @@ export function VisitPage({ visitId }: { visitId: string }) {
           </div>
 
           <section className="waiter-kpi-strip">
-            <article className="waiter-kpi-card">
+            <button type="button" className={`waiter-kpi-card ${focusSection === "orders" ? "waiter-kpi-card--active" : ""}`} onClick={() => setFocusSection("orders")}>
               <span>Pedidos</span>
               <strong>{activeOrders.length}</strong>
-            </article>
-            <article className="waiter-kpi-card">
+            </button>
+            <button type="button" className={`waiter-kpi-card ${focusSection === "orders" ? "waiter-kpi-card--active" : ""}`} onClick={() => setFocusSection("orders")}>
               <span>Ítems listos</span>
               <strong>{readyItems}</strong>
-            </article>
-            <article className="waiter-kpi-card">
+            </button>
+            <button type="button" className={`waiter-kpi-card ${focusSection === "orders" ? "waiter-kpi-card--active" : ""}`} onClick={() => setFocusSection("orders")}>
               <span>Entregados</span>
               <strong>{deliveredItems}</strong>
-            </article>
+            </button>
+            <button type="button" className={`waiter-kpi-card ${focusSection === "check" ? "waiter-kpi-card--active" : ""}`} onClick={() => setFocusSection("check")}>
+              <span>Saldo</span>
+              <strong>{check ? formatMoney(check.totals.balance, check.currency) : "Sin cuenta"}</strong>
+            </button>
           </section>
 
           <section className="waiter-guidance" aria-label="Guía operativa de la mesa">
@@ -391,6 +403,18 @@ export function VisitPage({ visitId }: { visitId: string }) {
                   <span>{formatMoney(check.totals.paid, check.currency)}</span>
                 </div>
               )}
+              {check.paymentsSummary.count > 0 && (
+                <div className="check-line-row">
+                  <span>Pagos registrados</span>
+                  <span>{check.paymentsSummary.count}</span>
+                </div>
+              )}
+              {check.paymentsSummary.capturedCount > 0 && (
+                <div className="check-line-row">
+                  <span>Cobros confirmados</span>
+                  <span>{check.paymentsSummary.capturedCount}</span>
+                </div>
+              )}
               <div className="check-line-row check-line-row--balance">
                 <span>Saldo</span>
                 <span>{formatMoney(check.totals.balance, check.currency)}</span>
@@ -399,12 +423,15 @@ export function VisitPage({ visitId }: { visitId: string }) {
                 <p className="waiter-section-hint">Caja ya fue avisada. Esperá confirmación de pago para poder cerrar.</p>
               ) : check.totals.balance > 0 ? (
                 <p className="waiter-section-hint">Si la mesa pide pagar, avisá a caja desde el dock inferior.</p>
-              ) : null}
+              ) : (
+                <p className="waiter-section-hint">La cuenta ya no tiene saldo pendiente.</p>
+              )}
             </section>
           ) : (
             <section className={`check-card check-card--empty${focusSection === "check" ? " check-card--focus" : ""}`}>
               <span className="check-card-label">Cuenta</span>
               <p className="muted">Todavía no se abrió la cuenta.</p>
+              <p className="waiter-section-hint">Se abre automáticamente cuando la mesa avanza con el pedido.</p>
             </section>
           )}
 
@@ -481,7 +508,7 @@ export function VisitPage({ visitId }: { visitId: string }) {
             {actionErrorMsg}
           </p>
         )}
-        {closeHint && !canClose && <p className="dock-hint">{closeHint}</p>}
+        <p className="dock-hint">{dockGuidance}</p>
         <div className="dock-row">
           <button
             type="button"
@@ -601,4 +628,42 @@ function getVisitPriority({
     cta: "Ir a acciones",
     section: "actions" as const,
   };
+}
+
+function getVisitDockGuidance({
+  draftOrder,
+  readyItems,
+  paymentRequested,
+  canRequestPayment,
+  canClose,
+  closeHint,
+}: {
+  draftOrder: boolean;
+  readyItems: number;
+  paymentRequested: boolean;
+  canRequestPayment: boolean;
+  canClose: boolean;
+  closeHint?: string;
+}) {
+  if (draftOrder) {
+    return "Hay un borrador abierto: retomalo o completá el pedido antes de seguir con otra cosa.";
+  }
+
+  if (readyItems > 0) {
+    return `Hay ${readyItems} ítem${readyItems === 1 ? "" : "s"} listo${readyItems === 1 ? "" : "s"} para entregar en mesa.`;
+  }
+
+  if (paymentRequested) {
+    return "Caja ya fue avisada. Esperá la resolución del cobro antes de cerrar la mesa.";
+  }
+
+  if (canClose) {
+    return "La mesa ya quedó lista para cerrar si no queda nada pendiente.";
+  }
+
+  if (canRequestPayment) {
+    return "Si la mesa pidió pagar, este es el momento para solicitar la cuenta a caja.";
+  }
+
+  return closeHint ?? "Seguí pedidos, cocina y cuenta desde este dock según cómo avance la mesa.";
 }
