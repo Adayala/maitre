@@ -3,6 +3,7 @@ import { useTenantContext } from "../../app/tenant-context.js";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../lib/api-client.js";
 import { StateView } from "../../components/state-view.js";
+import { Link } from "react-router-dom";
 
 interface SubscriptionResponse {
   data: { planCode: string; status: string; currentPeriodEnd: string };
@@ -72,18 +73,28 @@ export function SubscriptionPage() {
       eyebrow: "Gobierno",
       label: "Overview / Settings",
       detail: "Cruzar el estado comercial con el contexto real del tenant y sus configuraciones activas.",
+      to: "/settings",
     },
     {
       eyebrow: "Estructura",
       label: "Branches / Users",
       detail: "Validar si el crecimiento del tenant explica la presión sobre límites y capacidades.",
+      to: "/branches",
     },
     {
       eyebrow: "Apps",
       label: "Profiles",
       detail: "Comparar qué superficies y perfiles van a consumir los servicios contratados.",
+      to: "/profiles",
     },
   ];
+  const subscriptionStageCards = subscription
+    ? getSubscriptionStageCards({
+        status: subscription.status,
+        alertCount: alertResources.length,
+        nearLimitCount: nearLimitResources.length,
+      })
+    : [];
 
   return (
     <section aria-labelledby="subscription-heading" className="overview-page">
@@ -148,11 +159,26 @@ export function SubscriptionPage() {
               <article className="overview-card">
                 <h2>Siguiente paso recomendado</h2>
                 <div className="overview-link-grid">
-                  <div className="overview-link-card overview-link-card--primary">
+                  <Link className="overview-link-card overview-link-card--primary" to={nextStep.to}>
                     <span>{nextStep.eyebrow}</span>
                     <strong>{nextStep.label}</strong>
                     <p>{nextStep.detail}</p>
-                  </div>
+                  </Link>
+                </div>
+              </article>
+            ) : null}
+
+            {subscriptionStageCards.length > 0 ? (
+              <article className="overview-card">
+                <h2>Ciclo comercial del tenant</h2>
+                <div className="owner-stage-grid">
+                  {subscriptionStageCards.map((card) => (
+                    <Link key={card.label} className={`owner-stage-card owner-stage-card--${card.tone}`} to={card.to}>
+                      <span>{card.label}</span>
+                      <strong>{card.title}</strong>
+                      <p>{card.detail}</p>
+                    </Link>
+                  ))}
                 </div>
               </article>
             ) : null}
@@ -183,11 +209,11 @@ export function SubscriptionPage() {
               <h2>Atajos relacionados</h2>
               <div className="overview-link-grid">
                 {quickLinks.map((link) => (
-                  <div key={link.label} className="overview-link-card">
+                  <Link key={link.label} className="overview-link-card" to={link.to}>
                     <span>{link.eyebrow}</span>
                     <strong>{link.label}</strong>
                     <p>{link.detail}</p>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </article>
@@ -277,6 +303,7 @@ function getSubscriptionNextStep({
       eyebrow: "Billing",
       label: "Revisar estado comercial",
       detail: "Antes de seguir expandiendo operación conviene normalizar el estado de la suscripción del tenant.",
+      to: "/settings",
     };
   }
 
@@ -285,6 +312,7 @@ function getSubscriptionNextStep({
       eyebrow: "Capacidad",
       label: "Resolver recursos críticos",
       detail: "Hay recursos al límite; revisá consumo real o ampliación antes de que afecte operación o setup.",
+      to: "/branches",
     };
   }
 
@@ -293,6 +321,7 @@ function getSubscriptionNextStep({
       eyebrow: "Crecimiento",
       label: "Monitorear recursos en expansión",
       detail: "Todavía hay margen, pero ya conviene revisar cómo está creciendo el tenant contra sus límites.",
+      to: "/overview",
     };
   }
 
@@ -300,7 +329,58 @@ function getSubscriptionNextStep({
     eyebrow: "Siguiente control",
     label: "Cruzar plan con uso operativo",
     detail: "Con la suscripción sana, el próximo paso útil es validar que capacidades y perfiles sigan alineados con el uso real.",
+    to: "/profiles",
   };
+}
+
+function getSubscriptionStageCards({
+  status,
+  alertCount,
+  nearLimitCount,
+}: {
+  status: string;
+  alertCount: number;
+  nearLimitCount: number;
+}) {
+  return [
+    {
+      label: "Estado",
+      title: status === "ACTIVE" ? "Suscripción activa" : `Estado ${status}`,
+      detail:
+        status === "ACTIVE"
+          ? "El tenant está comercialmente habilitado para seguir operando."
+          : "Conviene resolver el estado comercial antes de expandir más frentes.",
+      tone: status === "ACTIVE" ? "success" : "warning",
+      to: "/settings",
+    },
+    {
+      label: "Capacidad",
+      title: alertCount > 0 ? `${alertCount} recurso(s) crítico(s)` : "Sin recursos al límite",
+      detail:
+        alertCount > 0
+          ? "Hay límites duros alcanzados o excedidos; esto merece atención inmediata."
+          : "No aparecen bloqueos duros de capacidad en este momento.",
+      tone: alertCount > 0 ? "warning" : "success",
+      to: "/branches",
+    },
+    {
+      label: "Crecimiento",
+      title: nearLimitCount > 0 ? `${nearLimitCount} recurso(s) en expansión` : "Consumo con margen",
+      detail:
+        nearLimitCount > 0
+          ? "El tenant está creciendo y ya conviene mirar el uso antes del límite."
+          : "La presión de uso todavía no sugiere ajustes urgentes.",
+      tone: nearLimitCount > 0 ? "info" : "success",
+      to: "/overview",
+    },
+    {
+      label: "Impacto",
+      title: "Apps y perfiles afectados",
+      detail: "El siguiente control útil es revisar qué superficies consumen estas capacidades contratadas.",
+      tone: "info",
+      to: "/profiles",
+    },
+  ] as const;
 }
 
 function getResourceHealth(used: number, hardLimit: number) {
