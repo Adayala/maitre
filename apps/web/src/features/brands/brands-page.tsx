@@ -1,5 +1,6 @@
 import { useTenantQuery } from "../../lib/use-tenant-query.js";
 import { StateView } from "../../components/state-view.js";
+import { Link } from "react-router-dom";
 
 interface Brand {
   id: string;
@@ -34,18 +35,57 @@ export function BrandsPage() {
       eyebrow: "Sedes",
       label: "Branches",
       detail: "Cruzar si las marcas visibles ya tienen sucursales listas para operar o mostrarse al cliente.",
+      to: "/branches",
     },
     {
       eyebrow: "Experiencia",
       label: "Public web / Customer",
       detail: "Validar si la capa comercial ya alcanza para discovery, promociones y reservas.",
+      to: "/profiles",
     },
     {
       eyebrow: "Gobierno",
       label: "Settings / Subscription",
       detail: "Conectar marca visible con configuración del tenant y capacidades contratadas.",
+      to: "/settings",
     },
   ];
+  const brandStageCards = [
+    {
+      label: "Crear",
+      title: brands.length > 0 ? `${brands.length} marca(s) cargada(s)` : "Falta primera marca",
+      detail:
+        brands.length > 0
+          ? "La base comercial ya existe dentro del tenant."
+          : "El owner todavía necesita definir la marca que va a ordenar catálogo y experiencia.",
+      tone: brands.length > 0 ? "success" : "warning",
+      to: "/brands",
+    },
+    {
+      label: "Publicar",
+      title: activeBrands.length > 0 ? `${activeBrands.length} activa(s)` : "Nada visible todavía",
+      detail:
+        activeBrands.length > 0
+          ? "Ya hay al menos una referencia comercial lista para usarse."
+          : "Conviene habilitar una marca visible antes de seguir abriendo frentes.",
+      tone: activeBrands.length > 0 ? "success" : "warning",
+      to: "/brands",
+    },
+    {
+      label: "Conectar",
+      title: "Marcas con sedes",
+      detail: "El siguiente control útil es validar si cada marca visible ya aterriza en sucursales reales.",
+      tone: "info",
+      to: "/branches",
+    },
+    {
+      label: "Exponer",
+      title: "Experiencia pública",
+      detail: "Después conviene cruzar marcas con perfiles y experiencia cliente.",
+      tone: "info",
+      to: "/profiles",
+    },
+  ] as const;
 
   return (
     <section aria-labelledby="brands-heading" className="overview-page">
@@ -106,11 +146,24 @@ export function BrandsPage() {
             <article className="overview-card">
               <h2>Siguiente paso recomendado</h2>
               <div className="overview-link-grid">
-                <div className="overview-link-card overview-link-card--primary">
+                <Link className="overview-link-card overview-link-card--primary" to={nextStep.to}>
                   <span>{nextStep.eyebrow}</span>
                   <strong>{nextStep.label}</strong>
                   <p>{nextStep.detail}</p>
-                </div>
+                </Link>
+              </div>
+            </article>
+
+            <article className="overview-card">
+              <h2>Ciclo comercial</h2>
+              <div className="owner-stage-grid">
+                {brandStageCards.map((card) => (
+                  <Link key={card.label} className={`owner-stage-card owner-stage-card--${card.tone}`} to={card.to}>
+                    <span>{card.label}</span>
+                    <strong>{card.title}</strong>
+                    <p>{card.detail}</p>
+                  </Link>
+                ))}
               </div>
             </article>
 
@@ -134,11 +187,11 @@ export function BrandsPage() {
               <h2>Atajos relacionados</h2>
               <div className="overview-link-grid">
                 {brandQuickLinks.map((link) => (
-                  <div key={link.label} className="overview-link-card">
+                  <Link key={link.label} className="overview-link-card" to={link.to}>
                     <span>{link.eyebrow}</span>
                     <strong>{link.label}</strong>
                     <p>{link.detail}</p>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </article>
@@ -241,6 +294,7 @@ function getBrandsNextStep({
       eyebrow: "Capa comercial",
       label: "Crear primera marca",
       detail: "Sin una marca visible cuesta ordenar catálogo, sedes y experiencia pública del tenant.",
+      to: "/brands",
     };
   }
 
@@ -249,6 +303,7 @@ function getBrandsNextStep({
       eyebrow: "Publicación",
       label: "Habilitar una marca visible",
       detail: "La estructura comercial existe, pero todavía falta una marca plenamente utilizable como referencia pública.",
+      to: "/brands",
     };
   }
 
@@ -257,6 +312,7 @@ function getBrandsNextStep({
       eyebrow: "Normalización",
       label: "Revisar marcas pendientes",
       detail: "Conviene resolver estados incompletos antes de apoyarse en esas marcas para todos los frentes del tenant.",
+      to: "/brands",
     };
   }
 
@@ -264,5 +320,6 @@ function getBrandsNextStep({
     eyebrow: "Siguiente control",
     label: "Cruzar marca con sedes y experiencia",
     detail: "Con la base comercial lista, el próximo paso útil es validar cómo se proyecta en sucursales y superficies públicas.",
+    to: "/branches",
   };
 }
