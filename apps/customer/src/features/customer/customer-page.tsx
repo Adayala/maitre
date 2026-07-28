@@ -410,7 +410,7 @@ export function CustomerPage() {
     }, SUBMIT_FAILSAFE_MS);
     try {
       signInWithToken(fixtureToken.trim());
-      setFlashMessage("Acceso local resuelto. Continuá con la elección de sucursal.");
+      setFlashMessage("Acceso resuelto. Continuá con la elección de sucursal.");
       setTab(selectedBranchId ? "reserve" : "branches");
     } catch (err) {
       setLoginError(err instanceof Error ? err.message : "No se pudo iniciar sesión");
@@ -469,7 +469,7 @@ export function CustomerPage() {
               Reservar
             </button>
             <button type="button" className={`seg-btn ${tab === "mine" ? "seg-btn--active" : ""}`} onClick={() => setTab("mine")}>
-              {accessToken ? "Mis reservas" : "Acceso"}
+              {accessToken ? "Mis reservas" : "Ingresar"}
             </button>
           </div>
         </section>
@@ -485,7 +485,7 @@ export function CustomerPage() {
 
         <section className="customer-grid">
           <article className="cashier-card">
-            <h2 className="owner-card-title">Acceso</h2>
+            <h2 className="owner-card-title">Tu cuenta</h2>
             <p className="owner-card-copy">
               Podés descubrir menú y sucursales sin cuenta. La sesión aparece recién cuando querés reservar o seguir tu historial.
             </p>
@@ -509,7 +509,7 @@ export function CustomerPage() {
                 <p>Elegir restaurante, definir sucursal, reservar y revisar próximas visitas.</p>
                 <div className="customer-mode-card__actions">
                   <button type="button" className="btn btn--primary" onClick={() => setTab(accessToken ? "reserve" : "mine")}>
-                    {accessToken ? "Continuar reserva" : "Ir a acceso"}
+                    {accessToken ? "Continuar reserva" : "Ingresar"}
                   </button>
                   <button type="button" className="btn btn--ghost" onClick={() => setTab(accessToken ? "mine" : "discover")}>
                     {accessToken ? "Ver mis reservas" : "Volver al inicio"}
@@ -616,7 +616,7 @@ export function CustomerPage() {
                 <strong>{email ?? me?.user.displayName ?? "Sesión iniciada"}</strong>
                 <p>Ya podés reservar y ver tus reservas.</p>
                 <button type="button" className="btn btn--ghost" onClick={() => void signOut()}>
-                  Cerrar sesión
+                  Salir
                 </button>
               </div>
             )}
@@ -845,7 +845,7 @@ export function CustomerPage() {
                     )
                   ) : (
                     <div className="cashier-banner cashier-banner--info">
-                      <span>Podés explorar la sucursal pública sin cuenta; para elegir una sucursal reservable, iniciá sesión.</span>
+                      <span>Podés explorar esta sucursal sin cuenta; para elegir una sucursal reservable, iniciá sesión.</span>
                     </div>
                   )}
                 </div>
@@ -922,11 +922,11 @@ export function CustomerPage() {
               {!accessToken ? (
                 <>
                   <div className="cashier-banner cashier-banner--info">
-                    <span>Para reservar necesitás iniciar sesión.</span>
+                    <span>Para reservar necesitás ingresar a tu cuenta.</span>
                   </div>
                   <div className="cashier-quick-actions">
                     <button type="button" className="btn btn--primary" onClick={() => setTab("mine")}>
-                      Ir a acceso
+                      Ingresar
                     </button>
                     <button type="button" className="btn btn--ghost" onClick={() => setTab("menu")}>
                       Seguir explorando
@@ -1057,7 +1057,7 @@ export function CustomerPage() {
             {accessToken ? (
               <article className="cashier-kpi-strip">
                 <div className="cashier-kpi-card">
-                  <span>Acceso</span>
+                  <span>Cuenta</span>
                   <strong>{email ?? "Sesión activa"}</strong>
                 </div>
                 <div className="cashier-kpi-card">
