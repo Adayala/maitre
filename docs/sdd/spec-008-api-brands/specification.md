@@ -66,3 +66,5 @@ Response (204): No content
 
 `/brands` incluye alta de marca y edición de nombre/estado. El formulario permanece visible aunque
 la lista esté vacía y refresca el listado después de cada mutación exitosa.
+
+La misma superficie incorpora el editor y preview de `BrandPresentation` definido en SPEC-232.

@@ -73,6 +73,9 @@ Sin autenticación sólo se muestran datos públicos editoriales u operativos de
 - menú y promociones vigentes;
 - disponibilidad resumida, sin PII ni detalles internos de capacidad.
 
+Nombre, assets, tipografía, colores y template visual se obtienen exclusivamente del snapshot
+`BrandPresentation` publicado para el contexto público según SPEC-232.
+
 No se exponen IDs internos, PII, occupancy en tiempo real, mesas libres nominales, ni estados de
 reservas de terceros.
 

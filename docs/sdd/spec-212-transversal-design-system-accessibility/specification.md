@@ -47,6 +47,9 @@ Los tokens constituyen la fuente de verdad y se nombran por intención, no por v
 
 Los componentes no usan colores hexadecimales, sombras o `z-index` arbitrarios. Los temas sobrescriben tokens semánticos, no la estructura del componente.
 
+SPEC-232 define los tokens de marca publicados por tenant/brand y su aplicación multiapp. Los tokens
+de estado crítico, foco y contraste permanecen gobernados por este sistema de diseño.
+
 ## 3. Accesibilidad
 
 La conformidad objetivo es WCAG 2.2 nivel AA para flujos completos.
