@@ -1,5 +1,6 @@
 import { useTenantQuery } from "../../lib/use-tenant-query.js";
 import { StateView } from "../../components/state-view.js";
+import { Link } from "react-router-dom";
 
 interface SetupItem {
   status: "COMPLETE" | "INCOMPLETE" | "BLOCKED";
@@ -57,18 +58,27 @@ export function SetupPage() {
       eyebrow: "Base",
       label: "Overview / Branches",
       detail: "Cruzar el estado del setup con la estructura real de sedes y visibilidad operativa.",
+      to: "/branches",
     },
     {
       eyebrow: "Equipo",
       label: "Users / Profiles",
       detail: "Validar si el tenant ya tiene personas y perfiles para consumir lo que se configura.",
+      to: "/users",
     },
     {
       eyebrow: "Comercial",
       label: "Subscription / Settings",
       detail: "Revisar capacidades y dominios de configuración que pueden destrabar el onboarding.",
+      to: "/subscription",
     },
   ];
+  const setupStageCards = getSetupStageCards({
+    total: setupEntries.length,
+    complete: completedItems.length,
+    incomplete: incompleteItems.length,
+    blocked: blockedItems.length,
+  });
 
   return (
     <section aria-labelledby="setup-heading" className="overview-page">
@@ -127,11 +137,24 @@ export function SetupPage() {
             <article className="overview-card">
               <h2>Siguiente paso recomendado</h2>
               <div className="overview-link-grid">
-                <div className="overview-link-card overview-link-card--primary">
+                <Link className="overview-link-card overview-link-card--primary" to={nextStep.to}>
                   <span>{nextStep.eyebrow}</span>
                   <strong>{nextStep.label}</strong>
                   <p>{nextStep.detail}</p>
-                </div>
+                </Link>
+              </div>
+            </article>
+
+            <article className="overview-card">
+              <h2>Ciclo de onboarding</h2>
+              <div className="owner-stage-grid">
+                {setupStageCards.map((card) => (
+                  <Link key={card.label} className={`owner-stage-card owner-stage-card--${card.tone}`} to={card.to}>
+                    <span>{card.label}</span>
+                    <strong>{card.title}</strong>
+                    <p>{card.detail}</p>
+                  </Link>
+                ))}
               </div>
             </article>
 
@@ -139,14 +162,18 @@ export function SetupPage() {
               {setupEntries.map(([code, item]) => {
                 const status = describeSetupStatus(item.status);
                 return (
-                  <article key={code} className="profile-card">
+                  <Link
+                    key={code}
+                    className="profile-card owner-module-link"
+                    to={item.actionLink ?? defaultSetupRoute(code)}
+                  >
                     <p className="profile-eyebrow">{status.label}</p>
                     <h2>{LABELS[code] ?? code}</h2>
                     <p>
                       Progreso <strong>{item.count}</strong> de <strong>{item.required}</strong>
                     </p>
                     <p>{status.message}</p>
-                  </article>
+                  </Link>
                 );
               })}
             </section>
@@ -163,6 +190,9 @@ export function SetupPage() {
                     <span>
                       {item.count}/{item.required}
                     </span>
+                    <Link className="setup-item__link" to={item.actionLink ?? defaultSetupRoute(code)}>
+                      Ir
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -172,11 +202,11 @@ export function SetupPage() {
               <h2>Atajos relacionados</h2>
               <div className="overview-link-grid">
                 {setupQuickLinks.map((link) => (
-                  <div key={link.label} className="overview-link-card">
+                  <Link key={link.label} className="overview-link-card" to={link.to}>
                     <span>{link.eyebrow}</span>
                     <strong>{link.label}</strong>
                     <p>{link.detail}</p>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </article>
@@ -267,6 +297,7 @@ function getSetupNextStep({
       eyebrow: "Onboarding",
       label: "Cargar base mínima del tenant",
       detail: "Primero conviene materializar la estructura inicial para que el tenant deje de depender de configuración manual dispersa.",
+      to: "/overview",
     };
   }
 
@@ -275,6 +306,7 @@ function getSetupNextStep({
       eyebrow: "Desbloqueo",
       label: "Resolver pasos bloqueados",
       detail: "Los bloqueos activos hoy frenan el resto del onboarding, así que conviene atacarlos primero.",
+      to: "/settings",
     };
   }
 
@@ -283,6 +315,7 @@ function getSetupNextStep({
       eyebrow: "Cierre de base",
       label: "Completar setup pendiente",
       detail: `Ya hay ${complete} pasos resueltos, pero todavía faltan tramos de base antes de considerar al tenant listo para operar.`,
+      to: "/branches",
     };
   }
 
@@ -290,5 +323,80 @@ function getSetupNextStep({
     eyebrow: "Siguiente control",
     label: "Cruzar setup con operación real",
     detail: "Con la base completa, el próximo paso útil es validar cómo se refleja en usuarios, sedes y apps operativas.",
+    to: "/profiles",
   };
+}
+
+function getSetupStageCards({
+  total,
+  complete,
+  incomplete,
+  blocked,
+}: {
+  total: number;
+  complete: number;
+  incomplete: number;
+  blocked: number;
+}) {
+  return [
+    {
+      label: "Materializar",
+      title: total > 0 ? `${total} bloque(s) relevado(s)` : "Falta base inicial",
+      detail:
+        total > 0
+          ? "Ya existe una lectura estructurada del setup del tenant."
+          : "Sin setup visible, el owner todavía depende de contexto disperso.",
+      tone: total > 0 ? "success" : "warning",
+      to: "/overview",
+    },
+    {
+      label: "Destrabar",
+      title: blocked > 0 ? `${blocked} bloqueo(s) activo(s)` : "Sin bloqueos críticos",
+      detail:
+        blocked > 0
+          ? "Conviene resolver estos bloqueos primero para que el onboarding vuelva a avanzar."
+          : "No aparecen impedimentos estructurales en el setup base.",
+      tone: blocked > 0 ? "warning" : "success",
+      to: "/settings",
+    },
+    {
+      label: "Completar",
+      title: incomplete > 0 ? `${incomplete} pendiente(s)` : "Base completa",
+      detail:
+        incomplete > 0
+          ? `Ya hay ${complete} bloques resueltos, pero todavía faltan tramos de base.`
+          : "La estructura mínima visible ya quedó resuelta.",
+      tone: incomplete > 0 ? "info" : "success",
+      to: "/branches",
+    },
+    {
+      label: "Operar",
+      title: complete > 0 ? "Cruzar con operación real" : "Falta masa crítica",
+      detail:
+        complete > 0
+          ? "El siguiente control útil es validar usuarios, sedes y apps contra esta base."
+          : "Antes de pensar operación real, hace falta cerrar mejor el onboarding.",
+      tone: complete > 0 ? "info" : "warning",
+      to: "/profiles",
+    },
+  ] as const;
+}
+
+function defaultSetupRoute(code: string) {
+  switch (code) {
+    case "tenant":
+      return "/overview";
+    case "brands":
+      return "/brands";
+    case "branches":
+      return "/branches";
+    case "users":
+      return "/users";
+    case "menus":
+      return "/settings";
+    case "products":
+      return "/settings";
+    default:
+      return "/setup";
+  }
 }

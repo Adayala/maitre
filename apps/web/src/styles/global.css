@@ -397,6 +397,12 @@ td {
   border: 1px solid var(--color-border);
   border-radius: 0.25rem;
 }
+.setup-item__link {
+  margin-left: auto;
+  color: var(--color-accent);
+  text-decoration: none;
+  font-weight: 600;
+}
 .setup-item--complete {
   border-color: #2e7d32;
 }
