@@ -17,8 +17,14 @@ Este documento no reemplaza las specs normativas. Las conecta visualmente.
 - El flujo fiscal técnico ya fue validado end-to-end contra Supabase: create →
   validate → issue → QR. La autorización ARCA sigue simulada, no legalmente productiva.
 - La estrategia multiapp por rol ya existe en implementación: `web`, `customer`, `waiter`, `host`, `kitchen`, `cashier`, `api`.
-- La capa de diseño compartido todavía está más madura en spec que en código: hoy existen componentes y estilos por app, pero aún no hay `packages/ui` ni `packages/design-tokens`.
-- Faltaba una capa visual transversal que conectara arquitectura, UX operativa y composición del monorepo. Este documento cubre ese hueco.
+- La dirección visual por rol ya está materializada en las seis superficies frontend. Customer usa
+  presentación editorial de marca y las apps operativas incorporan una capa `modern.css` propia,
+  cargada después de los estilos históricos.
+- La semántica compartida sigue más madura en spec que en paquetes: aún no existen `packages/ui`
+  ni `packages/design-tokens`. La implementación actual prueba patrones y firmas visuales antes de
+  decidir qué merece extracción transversal.
+- SPEC-212 y este relevamiento conectan arquitectura, UX operativa, branding multi-tenant y
+  composición del monorepo sin exigir que todas las apps tengan la misma apariencia.
 
 ## Cobertura documental actual
 
@@ -26,11 +32,11 @@ Este documento no reemplaza las specs normativas. Las conecta visualmente.
 | --- | --- | --- |
 | Principios de arquitectura | [10-architecture-principles.md](10-architecture-principles.md) | Bien definido, pocas vistas integradas |
 | Monorepo y boundaries | [SPEC-209](../sdd/spec-209-transversal-monorepo-architecture/specification.md) | Bien definido, foco normativo |
-| Diseño y accesibilidad | [SPEC-212](../sdd/spec-212-transversal-design-system-accessibility/specification.md) | Bien definido, implementación parcial |
-| Apps y dispositivos | [15-applications-and-devices.md](../sdd/_guides/15-applications-and-devices.md) | Bien definido, faltaba cruce con código real |
+| Diseño y accesibilidad | [SPEC-212](../sdd/spec-212-transversal-design-system-accessibility/specification.md) | Dirección por rol implementada; paquetes y automatización pendientes |
+| Apps y dispositivos | [15-applications-and-devices.md](../sdd/_guides/15-applications-and-devices.md) | Definido y reflejado en las superficies actuales |
 | Stack técnico | [TECH_STACK.md](../sdd/TECH_STACK.md) | Claro, orientado a plataforma |
 
-## Estado operativo relevado el 27 de julio de 2026
+## Estado operativo relevado al 28 de julio de 2026
 
 | Área | Estado runtime validado | Nota |
 | --- | --- | --- |
@@ -39,6 +45,20 @@ Este documento no reemplaza las specs normativas. Las conecta visualmente.
 | Datos organization/floor/reservations/ordering/kitchen/cash | Presentes en Supabase | hay datos reales mínimos para prueba manual |
 | Fiscal | Operativo en modo simulado | schema aplicado, seed fiscal creado y emisión live `FACTURA_A` validada; ARCA real sigue pendiente |
 | Fallback memory/fixture | Sólo soporte local/test | no forma parte del runtime operativo principal |
+| Customer público | Desplegado | home editorial Casa Maitre, menú, sucursales, reserva y cuenta separados |
+| Apps por rol | Desplegadas | Waiter, Host, Kitchen, Cashier y Dash poseen identidad visual y URL independientes |
+| QA visual | Baseline manual ejecutado | builds TypeScript/Vite y capturas responsive validadas; regresión automatizada sigue pendiente |
+
+### Superficies productivas verificadas
+
+| App | URL | Dirección actual |
+| --- | --- | --- |
+| Customer | `https://maitre-customer.vercel.app` | editorial cálida, gobernada por `BrandPresentation` |
+| Waiter | `https://maitre-waiter.vercel.app` | brutalismo táctil, negro y lima |
+| Host | `https://maitre-host.vercel.app` | espacial y hospitalaria, violeta y coral |
+| Kitchen | `https://maitre-kitchen.vercel.app` | industrial de alta visibilidad, negro y amarillo |
+| Cashier | `https://maitre-cashier.vercel.app` | libro mayor contemporáneo, petróleo y menta |
+| Dash | `https://maitre-dash.vercel.app` | editorial de control, marfil, tinta y azul |
 
 ## Vista 1 — Plataforma operativa completa
 
@@ -232,6 +252,8 @@ graph TB
         HEADER["AppHeader"]
         STATE["StateView"]
         FEATURE["feature pages"]
+        LEGACY_CSS["styles/global.css"]
+        ROLE_CSS["styles/modern.css"]
     end
 
     AUTH_CTX --> SESSION_CTX
@@ -240,12 +262,19 @@ graph TB
     API_CLIENT --> FEATURE
     HEADER --> FEATURE
     STATE --> FEATURE
+    LEGACY_CSS --> FEATURE
+    ROLE_CSS --> FEATURE
 ```
 
 ### Lectura del relevamiento
 
 - El patrón de app shell está bastante consolidado.
 - La reutilización real hoy es **por copia convergente**, no por paquete compartido.
+- Waiter, Host, Kitchen, Cashier y Dash cargan una capa visual final `modern.css` para aislar la
+  identidad del rol de las reglas históricas y del branding inline. Customer conserva su capa
+  editorial específica y consume `BrandPresentation`.
+- Los tokens de marca identifican al tenant; foco, contraste, urgencia y estados operativos pueden
+  fijar tokens gobernados por SPEC-212 cuando su significado no debe variar por marca.
 - Esto confirma que `packages/ui` y `packages/design-tokens` siguen siendo una **siguiente extracción razonable**, no un prerrequisito para seguir iterando producto.
 
 ## Vista 7 — Diseño: estado actual vs estado objetivo
@@ -254,6 +283,8 @@ graph TB
 graph LR
     subgraph TODAY [Estado actual]
         APP_STYLES["styles/global.css por app"]
+        ROLE_STYLES["styles/modern.css por rol operativo"]
+        BRAND_PRESENTATION["BrandPresentation por tenant"]
         APP_COMPONENTS["componentes base por app"]
         APP_PATTERNS["patrones repetidos por rol"]
     end
@@ -265,6 +296,8 @@ graph LR
     end
 
     APP_STYLES -. extraer .-> TOKENS
+    ROLE_STYLES -. consolidar semántica .-> TOKENS
+    BRAND_PRESENTATION -. consumir contrato .-> TOKENS
     APP_COMPONENTS -. extraer .-> UI
     APP_PATTERNS -. estabilizar .-> FEATURES
 ```
@@ -326,18 +359,23 @@ graph LR
 | Tema | Definición spec | Implementación actual | Gap principal |
 | --- | --- | --- | --- |
 | Multiapp por rol | Alta | Alta | Consolidar ownership y navegación cruzada |
-| Monorepo por módulos | Alta | Alta | Documentación visual faltante |
+| Monorepo por módulos | Alta | Alta | Mantener vistas sincronizadas con nuevas apps/paquetes |
 | UI compartida | Alta | Media/Baja | Extraer de apps a paquetes |
-| Design tokens | Alta | Baja | Hoy viven distribuidos en CSS por app |
-| Device strategy touch/non-touch | Alta | Media | Falta reflejarlo como sistema visual unificado |
-| Arquitectura visual para onboarding | Media | Baja | Se cubre con este documento |
+| Design tokens | Alta | Media | Tokens probados en CSS por rol; falta paquete compartido |
+| Device strategy touch/non-touch | Alta | Alta | Materializada en jerarquía, densidad y contraste por app |
+| Identidad visual por rol | Alta | Alta | Automatizar regresión y pruebas de accesibilidad |
+| Branding multi-tenant | Alta | Alta | Mantener separación entre marca y estados operativos |
+| Arquitectura visual para onboarding | Alta | Media/Alta | Foundation 18 y SPEC-212 cubren el mapa; faltan artefactos ejecutables |
 
 ## Recomendaciones de continuidad
 
 1. Usar este documento como mapa de onboarding técnico y de producto.
 2. Mantener [10-architecture-principles.md](10-architecture-principles.md), [SPEC-209](../sdd/spec-209-transversal-monorepo-architecture/specification.md) y [SPEC-212](../sdd/spec-212-transversal-design-system-accessibility/specification.md) como fuentes normativas.
 3. Extraer a `packages/ui` y `packages/design-tokens` sólo cuando el patrón ya esté probado en al menos dos apps.
-4. Volver a actualizar estas vistas cada vez que cambie una de estas piezas:
+4. Reducir progresivamente reglas históricas de `global.css` a medida que los patrones de
+   `modern.css` demuestren estabilidad, sin hacer una migración visual masiva sin tests.
+5. Incorporar screenshots de regresión y axe/teclado en CI antes de considerar completa SPEC-212.
+6. Volver a actualizar estas vistas cada vez que cambie una de estas piezas:
    - una nueva app por rol;
    - una extracción a paquete compartido;
    - un cambio de despliegue;

@@ -30,6 +30,17 @@ Contrato transversal para una experiencia React.js consistente, accesible, rápi
 | Regresión visual | Screenshots de Playwright en CI, sin Chromatic |
 | Idioma inicial | Español de Argentina, textos externalizados |
 
+## Estado incremental — 28 de julio de 2026
+
+- Las seis superficies ya tienen una dirección visual explícita y diferenciada por rol.
+- Customer consume la presentación pública del tenant; las apps operativas preservan tokens
+  críticos de foco, contraste y estado por encima de variaciones de marca.
+- Waiter, Host, Kitchen, Cashier y Dash cargan una capa final `styles/modern.css`.
+- Los builds Vite/TypeScript y una revisión visual manual responsive fueron completados y las
+  superficies están desplegadas en Vercel.
+- Permanecen pendientes la extracción a `packages/design-tokens`/`packages/ui`, axe-core,
+  screenshots automatizados y el cierre formal de ADR-004/SPK-05.
+
 ## Documentos
 
 - [Contrato](contract.md)
