@@ -217,6 +217,44 @@ export function VisitPage({ visitId }: { visitId: string }) {
       onClick: () => setFocusSection("actions"),
     },
   ];
+  const visitStageCards = [
+    {
+      label: "Pedido",
+      title: draftOrder ? "Hay borrador pendiente" : readyItems > 0 ? "Hay platos para entregar" : "Pedido en seguimiento",
+      detail: draftOrder
+        ? "Conviene completar y enviar el borrador antes de seguir agregando cosas."
+        : readyItems > 0
+          ? "La cocina ya liberó ítems; este es el siguiente paso más útil en mesa."
+          : "No bloquea nada inmediato, pero seguí el ritmo del servicio.",
+      tone: draftOrder ? "warning" : readyItems > 0 ? "success" : "info",
+      active: focusSection === "orders",
+      onClick: () => setFocusSection("orders" as const),
+    },
+    {
+      label: "Cuenta",
+      title: paymentRequested ? "Caja ya fue avisada" : canRequestPayment ? "Se puede pedir la cuenta" : check ? "Cuenta todavía en curso" : "La cuenta se abrirá con el pedido",
+      detail: paymentRequested
+        ? "Esperá confirmación de pago antes de pensar en cerrar la mesa."
+        : canRequestPayment
+          ? "Si la mesa ya pidió pagar, podés dispararlo desde el dock."
+          : check
+            ? "Todavía no conviene cerrar: seguí servicio o esperá la resolución del cobro."
+            : "Cuando el servicio avance, el flujo abrirá la cuenta automáticamente.",
+      tone: paymentRequested ? "info" : canRequestPayment ? "success" : "warning",
+      active: focusSection === "check",
+      onClick: () => setFocusSection("check" as const),
+    },
+    {
+      label: "Cierre",
+      title: canClose ? "Mesa lista para cerrar" : "Cierre todavía bloqueado",
+      detail: canClose
+        ? "La cuenta ya no impide cerrar. Si no queda nada pendiente, podés finalizar la visita."
+        : closeHint ?? "Antes de cerrar, asegurate de que pedidos y cobro estén resueltos.",
+      tone: canClose ? "success" : "warning",
+      active: focusSection === "actions",
+      onClick: () => setFocusSection("actions" as const),
+    },
+  ];
 
   return (
     <div className="screen">
@@ -310,6 +348,25 @@ export function VisitPage({ visitId }: { visitId: string }) {
                   >
                     <span>{card.label}</span>
                     <strong>{card.value}</strong>
+                    <p>{card.detail}</p>
+                  </button>
+                ))}
+              </div>
+            </article>
+
+            <article className="waiter-guidance-card">
+              <span className="waiter-guidance-eyebrow">Qué quedó habilitado</span>
+              <strong>Pedido, cuenta y cierre en un solo vistazo</strong>
+              <div className="waiter-stage-grid">
+                {visitStageCards.map((card) => (
+                  <button
+                    key={card.label}
+                    type="button"
+                    className={`waiter-stage-card waiter-stage-card--${card.tone}${card.active ? " waiter-stage-card--active" : ""}`}
+                    onClick={card.onClick}
+                  >
+                    <span>{card.label}</span>
+                    <strong>{card.title}</strong>
                     <p>{card.detail}</p>
                   </button>
                 ))}

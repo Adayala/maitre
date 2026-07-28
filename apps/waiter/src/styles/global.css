@@ -316,6 +316,54 @@ p {
   gap: 0.75rem;
 }
 
+.waiter-stage-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.waiter-stage-card {
+  display: grid;
+  gap: 0.3rem;
+  text-align: left;
+  padding: 0.95rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.waiter-stage-card span {
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.waiter-stage-card p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.waiter-stage-card--active {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 45%, transparent);
+}
+
+.waiter-stage-card--success {
+  border-color: color-mix(in srgb, var(--success) 38%, transparent);
+  background: color-mix(in srgb, var(--success) 8%, var(--surface-2));
+}
+
+.waiter-stage-card--warning {
+  border-color: color-mix(in srgb, #f59e0b 38%, transparent);
+  background: color-mix(in srgb, #f59e0b 8%, var(--surface-2));
+}
+
+.waiter-stage-card--info {
+  border-color: color-mix(in srgb, var(--primary) 38%, transparent);
+  background: color-mix(in srgb, var(--primary) 8%, var(--surface-2));
+}
+
 .waiter-focus-card {
   display: grid;
   gap: 0.25rem;
@@ -1700,5 +1748,9 @@ p {
 
   .waiter-focus-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .waiter-stage-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
