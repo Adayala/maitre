@@ -276,7 +276,7 @@ function getBrandsSummary(total: number, active: number, inactive: number) {
   return {
     tone: "success" as const,
     title: "Marcas listas para sostener operación y experiencia pública",
-    message: "La capa comercial visible ya muestra una base consistente para seguir afinando owner app y experiencia cliente.",
+    message: "La capa comercial visible ya muestra una base consistente para seguir afinando el backoffice owner y la experiencia cliente.",
   };
 }
 

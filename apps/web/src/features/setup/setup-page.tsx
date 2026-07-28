@@ -92,7 +92,7 @@ export function SetupPage() {
           <>
             <article className={`overview-priority overview-priority--${summary.tone}`}>
               <div className="overview-priority__copy">
-                <span className="overview-priority__eyebrow">Prioridad de setup</span>
+                <span className="overview-priority__eyebrow">Prioridad de puesta en marcha</span>
                 <strong>{summary.title}</strong>
                 <p>{summary.message}</p>
               </div>
@@ -239,7 +239,7 @@ function describeSetupStatus(status: SetupItem["status"]) {
   if (status === "BLOCKED") {
     return {
       label: "Bloqueado",
-      message: "Hay una dependencia o faltante que hoy impide cerrar este tramo del setup.",
+      message: "Hay una dependencia o faltante que hoy impide cerrar este tramo de la puesta en marcha.",
     };
   }
 
@@ -253,7 +253,7 @@ function getSetupSummary(total: number, complete: number, incomplete: number, bl
   if (total === 0) {
     return {
       tone: "warning" as const,
-      title: "Todavía no hay setup relevado",
+      title: "Todavía no hay puesta en marcha relevada",
       message: "Conviene cargar estructura mínima para que el tenant deje de depender de configuración manual dispersa.",
     };
   }
@@ -261,7 +261,7 @@ function getSetupSummary(total: number, complete: number, incomplete: number, bl
   if (blocked > 0) {
     return {
       tone: "warning" as const,
-      title: "El setup tiene bloqueos activos",
+      title: "La puesta en marcha tiene bloqueos activos",
       message: `Hay ${blocked} paso(s) bloqueados. Conviene destrabarlos primero para que el resto del onboarding avance con menos fricción.`,
     };
   }
@@ -269,14 +269,14 @@ function getSetupSummary(total: number, complete: number, incomplete: number, bl
   if (incomplete > 0) {
     return {
       tone: "info" as const,
-      title: "El setup está encaminado, pero todavía incompleto",
+      title: "La puesta en marcha está encaminada, pero todavía incompleta",
       message: `${complete} de ${total} pasos ya están resueltos. Queda cerrar la base restante para operar con menos huecos.`,
     };
   }
 
   return {
     tone: "success" as const,
-    title: "El setup base del tenant está completo",
+    title: "La puesta en marcha base del tenant está completa",
     message: "La configuración mínima visible ya quedó cerrada y el foco puede pasar a pulir operación y experiencia.",
   };
 }
@@ -313,7 +313,7 @@ function getSetupNextStep({
   if (incomplete > 0) {
     return {
       eyebrow: "Cierre de base",
-      label: "Completar setup pendiente",
+      label: "Completar puesta en marcha pendiente",
       detail: `Ya hay ${complete} pasos resueltos, pero todavía faltan tramos de base antes de considerar al tenant listo para operar.`,
       to: "/branches",
     };
@@ -321,7 +321,7 @@ function getSetupNextStep({
 
   return {
     eyebrow: "Siguiente control",
-    label: "Cruzar setup con operación real",
+    label: "Cruzar puesta en marcha con operación real",
     detail: "Con la base completa, el próximo paso útil es validar cómo se refleja en usuarios, sedes y apps operativas.",
     to: "/profiles",
   };
@@ -344,8 +344,8 @@ function getSetupStageCards({
       title: total > 0 ? `${total} bloque(s) relevado(s)` : "Falta base inicial",
       detail:
         total > 0
-          ? "Ya existe una lectura estructurada del setup del tenant."
-          : "Sin setup visible, el owner todavía depende de contexto disperso.",
+          ? "Ya existe una lectura estructurada de la puesta en marcha del tenant."
+          : "Sin una puesta en marcha visible, el owner todavía depende de contexto disperso.",
       tone: total > 0 ? "success" : "warning",
       to: "/overview",
     },
@@ -355,7 +355,7 @@ function getSetupStageCards({
       detail:
         blocked > 0
           ? "Conviene resolver estos bloqueos primero para que el onboarding vuelva a avanzar."
-          : "No aparecen impedimentos estructurales en el setup base.",
+          : "No aparecen impedimentos estructurales en la puesta en marcha base.",
       tone: blocked > 0 ? "warning" : "success",
       to: "/settings",
     },

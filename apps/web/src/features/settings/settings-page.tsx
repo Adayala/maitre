@@ -23,7 +23,7 @@ export function SettingsPage() {
     },
     {
       title: "Operación interna",
-      description: "Parámetros que afectan caja, cocina, floor y flujos del staff.",
+      description: "Parámetros que afectan caja, cocina, salón y flujos del staff.",
       status: "Depende de features habilitadas",
       nextView: "Perfiles · Apps táctiles",
       to: "/profiles",
@@ -241,7 +241,7 @@ function getSettingsNextStep({ hasTenant }: { hasTenant: boolean }) {
   return {
     eyebrow: "Gobierno del tenant",
     label: "Revisar setup y suscripción",
-    detail: "Con el contexto listo, lo más útil es cruzar estructura base con capacidades comerciales antes de bajar a settings finos.",
+      detail: "Con el contexto listo, lo más útil es cruzar estructura base con capacidades comerciales antes de bajar a configuraciones finas.",
     to: "/setup",
   };
 }

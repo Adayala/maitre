@@ -33,7 +33,7 @@ interface ProfileDefinition {
 const PROFILE_DEFINITIONS: ProfileDefinition[] = [
   {
     id: "owner",
-    label: "Owner",
+    label: "Dueño",
     type: "internal",
     badge: "Control total",
     description: "Visión completa del negocio y autoridad total sobre configuración, operación y reporting.",
@@ -49,7 +49,7 @@ const PROFILE_DEFINITIONS: ProfileDefinition[] = [
   },
   {
     id: "admin",
-    label: "Admin",
+    label: "Administrador",
     type: "internal",
     badge: "Administración",
     description: "Administra estructura, usuarios, catálogo y casi toda la operación diaria.",
@@ -65,7 +65,7 @@ const PROFILE_DEFINITIONS: ProfileDefinition[] = [
   },
   {
     id: "manager",
-    label: "Manager",
+    label: "Gerente",
     type: "internal",
     badge: "Supervisión",
     description: "Supervisa la operación, corrige excepciones y coordina equipos sin administrar el tenant.",
@@ -149,7 +149,7 @@ const PROFILE_DEFINITIONS: ProfileDefinition[] = [
     type: "public",
     badge: "Consulta pública",
     description:
-      "Perfil externo de consulta. No es un rol interno RBAC: representa la experiencia pública/anónima del comensal antes de autenticarse.",
+      "Perfil externo de consulta. No es un rol interno de permisos: representa la experiencia pública/anónima del comensal antes de autenticarse.",
     primarySurface: "Web pública / mobile",
     interactionMode: "Self-service",
     focusSummary: "Discovery, reserva y seguimiento personal.",
@@ -161,7 +161,7 @@ const PROFILE_DEFINITIONS: ProfileDefinition[] = [
     ],
     notes: [
       "La consulta pública anónima no se modela como Role interno.",
-      "Sirve para diseñar la futura app/portal customer-facing separado del backoffice.",
+      "Sirve para diseñar la futura app o portal orientado al cliente, separado del backoffice.",
     ],
   },
 ];
@@ -318,7 +318,7 @@ function getProfilePriority(profile: ProfileDefinition) {
     return {
       tone: "info" as const,
       title: "Este perfil representa una experiencia pública, no un rol interno",
-      message: "Sirve para pensar discovery, reserva y seguimiento del cliente sin mezclarlo con RBAC interno.",
+      message: "Sirve para pensar discovery, reserva y seguimiento del cliente sin mezclarlo con roles y permisos internos.",
     };
   }
 
@@ -349,7 +349,7 @@ function getProfileLinks(profile: ProfileDefinition) {
   if (profile.type === "public") {
     return [
       {
-        eyebrow: "Customer",
+        eyebrow: "Cliente",
         label: "Discovery y reserva",
         detail: "Revisar cómo la experiencia pública deriva desde consulta sin login hacia reserva autenticada.",
         to: "/subscription",
@@ -446,7 +446,7 @@ function getProfileStageCards(profile: ProfileDefinition) {
       title: profile.type === "public" ? "No es rol interno" : "Cruzar con usuarios y permisos",
       detail:
         profile.type === "public"
-          ? "La experiencia cliente no debe mezclarse con RBAC interno del staff."
+          ? "La experiencia cliente no debe mezclarse con roles y permisos internos del staff."
           : "Después conviene validar quién usa este perfil y en qué sedes o apps.",
       tone: profile.type === "public" ? "warning" : "success",
       to: profile.type === "public" ? "/subscription" : "/users",

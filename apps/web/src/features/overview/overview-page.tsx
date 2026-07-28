@@ -106,7 +106,7 @@ export function OverviewPage() {
                 <dd>{data.data.setup.tenantName ?? "Sin nombre"}</dd>
               </div>
               <div>
-                <dt>Estado setup</dt>
+                <dt>Estado de puesta en marcha</dt>
                 <dd>{data.data.setup.status}</dd>
               </div>
               <div>
@@ -128,7 +128,7 @@ export function OverviewPage() {
               </article>
             ) : (
               <article className="overview-card">
-                <h2>Snapshot operativo</h2>
+                <h2>Foto operativa</h2>
                 <dl className="kpi-grid">
                   <div>
                     <dt>Visitas abiertas</dt>
@@ -194,7 +194,7 @@ function getOverviewPriority(payload: OverviewResponse["data"]) {
   if (payload.operations.status === "UNAVAILABLE") {
     return {
       tone: "info" as const,
-      title: "El setup existe, pero la operación todavía no expone métricas",
+      title: "La puesta en marcha existe, pero la operación todavía no expone métricas",
       message: payload.operations.reason ?? "Todavía no hay snapshot operativo disponible para este tenant.",
     };
   }
@@ -238,9 +238,9 @@ function getOverviewNextStep(payload: OverviewResponse["data"]) {
   if (payload.operations.status === "UNAVAILABLE") {
     return {
       eyebrow: "Checklist de base",
-      label: "Revisar setup",
+      label: "Revisar puesta en marcha",
       detail: "Comprobá qué parte del tenant sigue incompleta para habilitar métricas operativas.",
-      message: "Todavía no hay snapshot operativo; conviene revisar el setup antes de seguir expandiendo.",
+      message: "Todavía no hay foto operativa; conviene revisar la puesta en marcha antes de seguir expandiendo.",
       to: "/setup",
     };
   }

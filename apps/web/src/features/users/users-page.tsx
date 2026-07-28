@@ -341,7 +341,7 @@ function getUsersNextStep({
 
   if (withoutRoles > 0) {
     return {
-      eyebrow: "RBAC operativo",
+      eyebrow: "Roles operativos",
       label: "Asignar roles faltantes",
       detail: "Completá roles para evitar usuarios visibles sin superficie o responsabilidad clara dentro de las apps.",
       to: "/profiles",
