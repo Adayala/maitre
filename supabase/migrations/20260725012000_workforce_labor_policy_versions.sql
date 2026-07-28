@@ -1,7 +1,7 @@
 create table if not exists workforce_labor_policy_versions (
   id uuid primary key,
-  tenant_id uuid not null references tenants(id) on delete cascade,
-  branch_id uuid not null references branches(id) on delete cascade,
+  tenant_id uuid not null references organization_tenants(id) on delete cascade,
+  branch_id uuid not null references organization_branches(id) on delete cascade,
   jurisdiction_code text not null,
   source_type text not null check (source_type in ('OFFICIAL', 'COUNSEL', 'INTERNAL_APPROVED_REFERENCE')),
   source_ref text not null,

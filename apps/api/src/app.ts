@@ -52,7 +52,7 @@ import { registerInvoiceTemplateRoutes } from "./routes/invoice-templates.js";
 // SPEC-211 — app.ts instantiates and wires plugins/routes without listen().
 // server.ts (local/process) and api/serverless.ts (Vercel) both consume this.
 export async function buildApp(container?: Container): Promise<FastifyInstance> {
-  const app = Fastify({ logger: true });
+  const app = Fastify({ logger: true, trustProxy: true });
   const resolvedContainer = container ?? (await buildContainer());
 
   // SPEC-210 topology: browser -> Maitre API. The browser sends only a
@@ -61,7 +61,7 @@ export async function buildApp(container?: Container): Promise<FastifyInstance> 
   // client) call this API from a different origin during local dev.
   await app.register(cors, {
     origin: true,
-    methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Tenant-Id", "X-Branch-Id"],
   });
 
