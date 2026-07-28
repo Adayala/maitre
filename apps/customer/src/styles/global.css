@@ -118,6 +118,59 @@ body {
   font-size: clamp(2rem, 6vw, 4rem);
 }
 
+.customer-brand-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.btn--hero-secondary {
+  border-color: rgba(255, 255, 255, 0.72);
+  background: rgba(15, 18, 20, 0.42);
+  color: #fff;
+  backdrop-filter: blur(8px);
+}
+
+.customer-public-nav {
+  justify-content: center;
+}
+
+.customer-home {
+  display: grid;
+  gap: 1rem;
+}
+
+.customer-home__welcome {
+  padding: clamp(1.35rem, 4vw, 2.5rem);
+}
+
+.customer-home__welcome .owner-card-title {
+  max-width: 18ch;
+  font-family: var(--brand-font-heading, inherit);
+  font-size: clamp(1.8rem, 5vw, 3rem);
+}
+
+.customer-home__feature {
+  align-content: start;
+}
+
+.customer-text-link {
+  width: fit-content;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--primary);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.customer-account-panel {
+  margin-top: 0.25rem;
+}
+
 .customer-eyebrow {
   margin: 0;
   font-size: 0.78rem;
@@ -925,6 +978,14 @@ body {
 
   .customer-mode-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .customer-home {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .customer-home__welcome {
+    grid-column: 1 / -1;
   }
 }
 

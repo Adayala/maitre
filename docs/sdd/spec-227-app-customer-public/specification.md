@@ -2,7 +2,7 @@
 
 ## Screens
 
-- Home / Landing pública
+- Home / Landing pública editorial
 - Menú público
 - Sucursales
 - Promociones
@@ -10,6 +10,21 @@
 - Login / registro de cliente
 - Crear reserva autenticada
 - Confirmación de reserva
+
+## Jerarquía de la experiencia
+
+La app Customer se presenta como el sitio público del restaurante, no como un panel de Maitre.
+
+1. **Header público:** identidad de marca y navegación simple a Inicio, Menú, Sucursales y
+   Reservar; el acceso a cuenta es secundario.
+2. **Home:** hero editorial, propuesta del restaurante y CTA primarios a menú y reserva.
+3. **Contenido público:** menú, sucursales y promociones en screens dedicadas.
+4. **Conversión:** reservar conserva la intención y solicita identidad sólo cuando es necesaria.
+5. **Cuenta:** acceso, próximas reservas e historial en una screen separada.
+
+La home no muestra checklists, KPIs de sesión, selección de tenant, estados de suscripción ni
+mensajes de operación. La sucursal puede elegirse con lenguaje customer-facing, pero el tenant se
+resuelve internamente desde la presentación pública y la sesión.
 
 ## Flujo principal
 
@@ -45,6 +60,10 @@ Rutas autenticadas de cliente:
 
 El path real puede cambiar, pero la separación entre superficies públicas y autenticadas debe
 preservarse.
+
+Una implementación inicial puede resolver estas rutas con navegación client-side interna, siempre
+que cada screen tenga una jerarquía inequívoca, soporte deep-link futuro y no renderice
+simultáneamente la home, el login y los paneles de cuenta.
 
 ## Estados transversales
 
