@@ -17,6 +17,29 @@ Devuelve `{ "data": SubscriptionCatalogPackage[] }` ordenado por `sortOrder`. Ca
 su propuesta comercial, beneficios y composición versionada. El cliente calcula el estimado con
 los precios vigentes del catálogo y aplica los ítems mediante las mutaciones granulares existentes.
 
+### `GET /v1/subscriptions/{tenantId}/access?branchId={branchId}`
+
+Proyección mínima para aplicaciones consumidoras. Devuelve exclusivamente servicios activos y
+cantidades contratadas que aplican al tenant y, cuando se informa `branchId`, a esa sucursal:
+
+```json
+{
+  "data": {
+    "tenantId": "uuid",
+    "branchId": "uuid",
+    "services": [
+      { "code": "CORE", "quantity": 1, "scopeRefId": null },
+      { "code": "FLOOR", "quantity": 1, "scopeRefId": "branch-uuid" },
+      { "code": "WAITERS", "quantity": 8, "scopeRefId": "branch-uuid" }
+    ]
+  }
+}
+```
+
+No expone precios, IDs internos de contratación ni ítems inactivos. Requiere sesión válida y
+contexto del mismo tenant, pero no permisos comerciales: las apps operativas necesitan conocer sus
+capacidades efectivas para ocultar superficies no contratadas.
+
 ### `POST /v1/subscriptions/{tenantId}/items`
 
 ```json
