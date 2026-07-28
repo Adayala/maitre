@@ -601,9 +601,19 @@ export function HostPage() {
               <h2 className="host-hero-title">{selectedBranch?.name ?? "Sucursal"}</h2>
               <p className="host-hero-copy">Gestioná confirmaciones, lista de espera, disponibilidad y seating.</p>
             </div>
-            <div className="cashier-balance-block">
-              <span className="cashier-balance-label">Mesas libres</span>
-              <strong>{availableTables.length}</strong>
+            <div className="host-hero-metrics">
+              <div className="cashier-balance-block">
+                <span className="cashier-balance-label">Mesas libres</span>
+                <strong>{availableTables.length}</strong>
+              </div>
+              <div className="cashier-balance-block">
+                <span className="cashier-balance-label">Waitlist sentable</span>
+                <strong>{seatableWaitlistCount}</strong>
+              </div>
+              <div className="cashier-balance-block">
+                <span className="cashier-balance-label">Pendientes</span>
+                <strong>{pendingReservations.length}</strong>
+              </div>
             </div>
           </div>
         </section>
