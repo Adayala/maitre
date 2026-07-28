@@ -35,10 +35,11 @@ export function calculateEntitlements(
   const result: CalculatedEntitlement[] = [];
   for (const item of activeItems) {
     if (item.status !== "ACTIVE") continue;
-    const catalogItem = catalogByCode.get(item.serviceId);
+    const code = item.catalogItemCode ?? item.serviceId;
+    const catalogItem = catalogByCode.get(code);
     if (!catalogItem || catalogItem.billingType !== "QUANTITY") continue;
 
-    const resource = item.scopeRefId ? `${item.serviceId}[${item.scopeRefId}]` : item.serviceId;
+    const resource = item.scopeRefId ? `${code}[${item.scopeRefId}]` : code;
     const override = overrideByResource.get(resource);
     const hardLimit = override ? override.hardLimit : item.quantity;
     const softLimit = softLimitByResource.get(resource);

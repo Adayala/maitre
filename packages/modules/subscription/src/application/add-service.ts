@@ -19,6 +19,7 @@ export class SubscriptionNotOperableError extends Error {
 export interface AddServiceInput {
   subscriptionId: string;
   serviceId: string;
+  scopeRefId?: string;
   quantity?: number;
   unitPrice?: number;
   correlationId?: string;
@@ -41,9 +42,11 @@ export async function addService(
   }
 
   const now = (deps.now ?? (() => new Date()))();
+  const catalogItem = await deps.catalog.findByCode(input.serviceId);
   const existing = await deps.subscriptionItems.findByServiceId(
     input.subscriptionId,
     input.serviceId,
+    input.scopeRefId ?? null,
   );
 
   const item: SubscriptionItem = existing
@@ -52,9 +55,11 @@ export async function addService(
         id: randomUUID(),
         subscriptionId: input.subscriptionId,
         serviceId: input.serviceId,
+        catalogItemCode: input.serviceId,
+        scopeRefId: input.scopeRefId ?? null,
         status: "ACTIVE",
         quantity: input.quantity ?? 1,
-        unitPrice: input.unitPrice ?? 0,
+        unitPrice: input.unitPrice ?? catalogItem?.unitPrice ?? 0,
         activatedAt: now,
       };
 

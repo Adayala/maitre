@@ -52,7 +52,7 @@ export class FakeSubscriptionItemRepository implements SubscriptionItemRepositor
 }
 
 export class FakeEntitlementRepository implements EntitlementRepositoryPort {
-  private readonly items: Entitlement[] = [];
+  private items: Entitlement[] = [];
   async listBySubscription(subscriptionId: string) {
     return this.items.filter((e) => e.subscriptionId === subscriptionId);
   }
@@ -60,6 +60,11 @@ export class FakeEntitlementRepository implements EntitlementRepositoryPort {
     const i = this.items.findIndex((e) => e.id === entitlement.id);
     if (i >= 0) this.items[i] = entitlement;
     else this.items.push(entitlement);
+  }
+  async deleteByResource(subscriptionId: string, resource: string) {
+    this.items = this.items.filter(
+      (item) => item.subscriptionId !== subscriptionId || item.resource !== resource,
+    );
   }
 }
 

@@ -34,6 +34,13 @@ export async function recalculateEntitlements(
   const calculated = calculateEntitlements(items, catalogByCode, existing, now);
   const existingByResource = new Map(existing.map((e) => [e.resource, e] as const));
 
+  const calculatedResources = new Set(calculated.map((item) => item.resource));
+  for (const stale of existing) {
+    if (!calculatedResources.has(stale.resource)) {
+      await deps.entitlements.deleteByResource(subscriptionId, stale.resource);
+    }
+  }
+
   const result: Entitlement[] = [];
   for (const calc of calculated) {
     const prior = existingByResource.get(calc.resource);

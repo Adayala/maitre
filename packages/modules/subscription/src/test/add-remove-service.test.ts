@@ -84,7 +84,7 @@ test("addService rejects a non-operable (e.g. cancelled) subscription", async ()
   );
 });
 
-test("removeService deactivates a service; its entitlement row is no longer recalculated (stale, not deleted)", async () => {
+test("removeService deactivates a service and removes its derived entitlement", async () => {
   const { subscriptions, subscriptionItems, entitlements, catalog, outbox, subscription } =
     await deps();
   await addService(
@@ -100,13 +100,10 @@ test("removeService deactivates a service; its entitlement row is no longer reca
   const items = await subscriptionItems.listBySubscription(subscription.id);
   assert.equal(items[0]!.status, "INACTIVE");
 
-  // recalculateEntitlements only upserts resources still derivable from
-  // active items; it does not delete entitlements for resources that drop
-  // out of the calculation. This is a known limitation, not asserted away.
   const seatsEntitlement = (await entitlements.listBySubscription(subscription.id)).find(
     (e) => e.resource === "seats",
   );
-  assert.equal(seatsEntitlement?.hardLimit, 10);
+  assert.equal(seatsEntitlement, undefined);
 });
 
 test("removeService appends ServiceDeactivated to the outbox", async () => {

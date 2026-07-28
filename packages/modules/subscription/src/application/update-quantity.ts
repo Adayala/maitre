@@ -41,6 +41,10 @@ export async function updateQuantity(
     (i) => i.id === input.itemId,
   );
   if (!existing) throw new SubscriptionItemNotFoundError(input.itemId);
+  const catalogItem = await deps.catalog.findByCode(existing.catalogItemCode ?? existing.serviceId);
+  if (!catalogItem || catalogItem.billingType !== "QUANTITY") {
+    throw new InvalidQuantityForServiceError(existing.serviceId);
+  }
 
   const updated: SubscriptionItem = { ...existing, quantity: input.quantity };
   await deps.subscriptionItems.save(updated);

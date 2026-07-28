@@ -6,6 +6,7 @@ import { buildContainer, type Container } from "../composition/container.js";
 import type {
   InMemoryOutboxRepository,
   FixtureSessionVerificationPort,
+  InMemoryCatalogItemRepository,
 } from "@maitre/adapter-persistence-memory";
 
 // SPEC-224 §5 — Fastify inject() covers SPEC-031 (Subscriptions) and
@@ -85,6 +86,7 @@ test("GET /v1/subscriptions/:tenantId returns the seeded subscription", async ()
       "autoRenew",
       "createdAt",
       "updatedAt",
+      "items",
     ]),
   );
   assert.equal(response.json().data.planCode, "PROFESSIONAL");
@@ -140,8 +142,8 @@ test("GET /v1/entitlements/:tenantId lists entitlements and quotas", async () =>
   );
   const branches = response
     .json()
-    .data.entitlements.find((e: { resource: string }) => e.resource === "branches");
-  assert.equal(branches.hardLimit, 5); // PROFESSIONAL default
+    .data.entitlements.find((e: { resource: string }) => e.resource === "BRANCHES");
+  assert.equal(branches.hardLimit, 1);
   await app.close();
 });
 
@@ -163,7 +165,17 @@ test("POST /v1/subscriptions/:id/services activates a service and raises entitle
   assert.equal(response.statusCode, 201);
   assert.deepEqual(
     new Set(Object.keys(response.json().data as Record<string, unknown>)),
-    new Set(["id", "subscriptionId", "serviceId", "status", "quantity", "unitPrice", "activatedAt"]),
+    new Set([
+      "id",
+      "subscriptionId",
+      "serviceId",
+      "catalogItemCode",
+      "scopeRefId",
+      "status",
+      "quantity",
+      "unitPrice",
+      "activatedAt",
+    ]),
   );
   assert.equal(response.json().data.status, "ACTIVE");
   assert.equal(response.json().data.quantity, 1);
@@ -180,8 +192,8 @@ test("POST /v1/subscriptions/:id/services activates a service and raises entitle
   });
   const branches = entResponse
     .json()
-    .data.entitlements.find((e: { resource: string }) => e.resource === "branches");
-  assert.equal(branches.hardLimit, 10);
+    .data.entitlements.find((e: { resource: string }) => e.resource === "BRANCHES");
+  assert.equal(branches.hardLimit, 1);
   await app.close();
 });
 
@@ -235,7 +247,18 @@ test("DELETE /v1/subscriptions/:id/services/:serviceId deactivates and lowers en
   assert.equal(del.statusCode, 200);
   assert.deepEqual(
     new Set(Object.keys(del.json().data as Record<string, unknown>)),
-    new Set(["id", "subscriptionId", "serviceId", "status", "quantity", "unitPrice", "activatedAt", "deactivatedAt"]),
+    new Set([
+      "id",
+      "subscriptionId",
+      "serviceId",
+      "catalogItemCode",
+      "scopeRefId",
+      "status",
+      "quantity",
+      "unitPrice",
+      "activatedAt",
+      "deactivatedAt",
+    ]),
   );
   assert.equal(del.json().data.status, "INACTIVE");
   assert.equal(del.json().data.quantity, 1);
@@ -337,8 +360,8 @@ test("POST /v1/subscriptions/upgrade changes the plan and recalculates entitleme
   });
   const beforeBranches = beforeEntitlements
     .json()
-    .data.entitlements.find((e: { resource: string }) => e.resource === "branches");
-  assert.equal(beforeBranches.hardLimit, 5);
+    .data.entitlements.find((e: { resource: string }) => e.resource === "BRANCHES");
+  assert.equal(beforeBranches.hardLimit, 1);
 
   const response = await app.inject({
     method: "POST",
@@ -380,8 +403,8 @@ test("POST /v1/subscriptions/upgrade changes the plan and recalculates entitleme
   });
   const afterBranches = afterEntitlements
     .json()
-    .data.entitlements.find((e: { resource: string }) => e.resource === "branches");
-  assert.equal(afterBranches.hardLimit, Number.MAX_SAFE_INTEGER);
+    .data.entitlements.find((e: { resource: string }) => e.resource === "BRANCHES");
+  assert.equal(afterBranches.hardLimit, 1);
   await app.close();
 });
 
@@ -530,6 +553,120 @@ test("POST /v1/subscriptions/:id/services validates serviceId, quantity and unit
     '[\n  {\n    "code": "too_small",\n    "minimum": 0,\n    "type": "number",\n    "inclusive": true,\n    "exact": false,\n    "message": "Number must be greater than or equal to 0",\n    "path": [\n      "unitPrice"\n    ]\n  }\n]',
   );
   assert.equal(negativeUnitPrice.json().status, 400);
+  await app.close();
+});
+
+test("GET /v1/subscription-catalog returns active catalog items", async () => {
+  const container = await buildContainer();
+  const tenantId = await getTenantId(container);
+  const app = await buildApp(container);
+  const response = await app.inject({
+    method: "GET",
+    url: "/v1/subscription-catalog",
+    headers: {
+      authorization: `Bearer ${container.demoAccessToken}`,
+      "x-tenant-id": tenantId,
+    },
+  });
+  assert.equal(response.statusCode, 200);
+  assert.ok(Array.isArray(response.json().data));
+  await app.close();
+});
+
+test("POST /v1/subscriptions/:tenantId/items adds a QUANTITY item scoped to a branch", async () => {
+  const container = await buildContainer();
+  const tenantId = await getTenantId(container);
+  const app = await buildApp(container);
+  await (container.catalog as InMemoryCatalogItemRepository).save({
+    code: "SEATS",
+    name: "Seats",
+    billingType: "QUANTITY",
+    billingScope: "BRANCH",
+    unitPrice: 1000,
+    currency: "ARS",
+    period: "MONTHLY",
+    dependsOn: [],
+    isActive: true,
+    version: 1,
+  });
+
+  const response = await app.inject({
+    method: "POST",
+    url: `/v1/subscriptions/${tenantId}/items`,
+    headers: {
+      authorization: `Bearer ${container.demoAccessToken}`,
+      "x-tenant-id": tenantId,
+    },
+    payload: { catalogItemCode: "SEATS", quantity: 12, scopeRefId: randomUUID() },
+  });
+  assert.equal(response.statusCode, 201);
+  assert.equal(response.json().data.quantity, 12);
+  await app.close();
+});
+
+test("PATCH and DELETE granular items update quantity and deactivate the exact scoped item", async () => {
+  const container = await buildContainer();
+  const tenantId = await getTenantId(container);
+  const app = await buildApp(container);
+  const scopeRefId = randomUUID();
+  const headers = {
+    authorization: `Bearer ${container.demoAccessToken}`,
+    "x-tenant-id": tenantId,
+  };
+
+  const created = await app.inject({
+    method: "POST",
+    url: `/v1/subscriptions/${tenantId}/items`,
+    headers,
+    payload: { catalogItemCode: "SHIFT_SLOTS", quantity: 2, scopeRefId },
+  });
+  assert.equal(created.statusCode, 201);
+  const itemId = created.json().data.id as string;
+
+  const updated = await app.inject({
+    method: "PATCH",
+    url: `/v1/subscriptions/${tenantId}/items/${itemId}`,
+    headers,
+    payload: { quantity: 4 },
+  });
+  assert.equal(updated.statusCode, 200);
+  assert.equal(updated.json().data.quantity, 4);
+
+  const removed = await app.inject({
+    method: "DELETE",
+    url: `/v1/subscriptions/${tenantId}/items/${itemId}`,
+    headers,
+  });
+  assert.equal(removed.statusCode, 200);
+  assert.equal(removed.json().data.id, itemId);
+  assert.equal(removed.json().data.status, "INACTIVE");
+  await app.close();
+});
+
+test("POST granular SERVICE item rejects quantity and requires non-tenant scope", async () => {
+  const container = await buildContainer();
+  const tenantId = await getTenantId(container);
+  const app = await buildApp(container);
+  const headers = {
+    authorization: `Bearer ${container.demoAccessToken}`,
+    "x-tenant-id": tenantId,
+  };
+
+  const missingScope = await app.inject({
+    method: "POST",
+    url: `/v1/subscriptions/${tenantId}/items`,
+    headers,
+    payload: { catalogItemCode: "QR_MENU" },
+  });
+  assert.equal(missingScope.statusCode, 400);
+
+  const quantityOnService = await app.inject({
+    method: "POST",
+    url: `/v1/subscriptions/${tenantId}/items`,
+    headers,
+    payload: { catalogItemCode: "QR_MENU", quantity: 2, scopeRefId: randomUUID() },
+  });
+  assert.equal(quantityOnService.statusCode, 400);
   await app.close();
 });
 

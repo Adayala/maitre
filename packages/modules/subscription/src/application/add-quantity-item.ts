@@ -85,6 +85,7 @@ export async function addQuantityItem(
         id: randomUUID(),
         subscriptionId: input.subscriptionId,
         serviceId: input.catalogItemCode,
+        catalogItemCode: input.catalogItemCode,
         scopeRefId,
         status: "ACTIVE",
         quantity: input.quantity,

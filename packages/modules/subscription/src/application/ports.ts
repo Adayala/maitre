@@ -23,6 +23,7 @@ export interface SubscriptionItemRepositoryPort {
 export interface EntitlementRepositoryPort {
   listBySubscription(subscriptionId: string): Promise<Entitlement[]>;
   save(entitlement: Entitlement): Promise<void>;
+  deleteByResource(subscriptionId: string, resource: string): Promise<void>;
 }
 
 export interface QuotaRepositoryPort {

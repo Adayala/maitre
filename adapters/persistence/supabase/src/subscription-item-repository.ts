@@ -7,6 +7,7 @@ interface SubscriptionItemRow {
   id: string;
   subscription_id: string;
   service_id: string;
+  catalog_item_code: string | null;
   scope_ref_id: string | null;
   status: string;
   quantity: number;
@@ -20,6 +21,7 @@ function fromRow(row: SubscriptionItemRow): SubscriptionItem {
     id: row.id,
     subscriptionId: row.subscription_id,
     serviceId: row.service_id,
+    catalogItemCode: row.catalog_item_code,
     scopeRefId: row.scope_ref_id,
     status: row.status as SubscriptionItem["status"],
     quantity: row.quantity,
@@ -34,6 +36,7 @@ function toRow(item: SubscriptionItem): SubscriptionItemRow {
     id: item.id,
     subscription_id: item.subscriptionId,
     service_id: item.serviceId,
+    catalog_item_code: item.catalogItemCode ?? item.serviceId,
     scope_ref_id: item.scopeRefId ?? null,
     status: item.status,
     quantity: item.quantity,

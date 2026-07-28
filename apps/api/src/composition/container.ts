@@ -45,6 +45,7 @@ import {
   InMemoryFiscalCertificateRepository,
   InMemoryInvoiceTemplateRepository,
   InMemoryTaxRateRepository,
+  InMemoryCatalogItemRepository,
   FixtureSessionVerificationPort,
 } from "@maitre/adapter-persistence-memory";
 import {
@@ -102,6 +103,7 @@ import {
   SupabaseFiscalCertificateRepository,
   SupabaseInvoiceTemplateRepository,
   SupabaseTaxRateRepository,
+  SupabaseCatalogItemRepository,
 } from "@maitre/adapter-persistence-supabase";
 import {
   createTenant,
@@ -127,10 +129,14 @@ import {
 import { SupabaseSessionVerificationPort } from "@maitre/adapter-identity-supabase-auth";
 import {
   createSubscription,
+  addService,
+  addQuantityItem,
+  type CatalogItem,
   type SubscriptionRepositoryPort,
   type SubscriptionItemRepositoryPort,
   type EntitlementRepositoryPort,
   type QuotaRepositoryPort,
+  type CatalogRepositoryPort,
 } from "@maitre/subscription";
 import {
   createMenu,
@@ -236,6 +242,7 @@ export interface Container {
   outbox: OutboxPort;
   subscriptions: SubscriptionRepositoryPort;
   subscriptionItems: SubscriptionItemRepositoryPort;
+  catalog: CatalogRepositoryPort;
   entitlements: EntitlementRepositoryPort;
   quotas: QuotaRepositoryPort;
   menus: MenuRepositoryPort;
@@ -304,6 +311,66 @@ const DEMO_MENU_ID = "00000000-0000-0000-0000-000000000009";
 const DEMO_CATEGORY_ID = "00000000-0000-0000-0000-00000000000a";
 const DEMO_PRODUCT_ID = "00000000-0000-0000-0000-00000000000b";
 const DEMO_ACCESS_TOKEN = "demo-token";
+
+const catalogItem = (
+  code: string,
+  name: string,
+  billingType: CatalogItem["billingType"],
+  billingScope: CatalogItem["billingScope"],
+  unitPrice: number,
+  dependsOn: string[] = [],
+): CatalogItem => ({
+  code,
+  name,
+  billingType,
+  billingScope,
+  unitPrice,
+  currency: "ARS",
+  period: "MONTHLY",
+  dependsOn,
+  isActive: true,
+  version: 1,
+});
+
+const SEED_CATALOG_ITEMS: CatalogItem[] = [
+  catalogItem("CORE", "Maitre Core", "SERVICE", "TENANT", 15_000),
+  catalogItem("BRANCHES", "Maitre Branches", "QUANTITY", "TENANT", 8_000, ["CORE"]),
+  catalogItem("IDENTITY", "Maitre Identity", "SERVICE", "TENANT", 0, ["CORE"]),
+  catalogItem("CONNECT", "Maitre Connect", "SERVICE", "BRANCH", 3_000, ["CORE"]),
+  catalogItem("FLOOR", "Maitre Floor", "SERVICE", "BRANCH", 6_000, ["CORE", "BRANCHES"]),
+  catalogItem("SEATS", "Plazas", "QUANTITY", "BRANCH", 500, ["FLOOR"]),
+  catalogItem("RESERVATIONS", "Maitre Reservations", "SERVICE", "BRANCH", 4_000, ["CORE", "BRANCHES"]),
+  catalogItem("SHIFTS", "Maitre Shifts", "SERVICE", "BRANCH", 3_000, ["CORE", "BRANCHES"]),
+  catalogItem("SHIFT_SLOTS", "Turnos", "QUANTITY", "BRANCH", 300, ["SHIFTS"]),
+  catalogItem("WAITERS", "Mozos", "QUANTITY", "BRANCH", 1_200, ["FLOOR"]),
+  catalogItem("CASHIERS", "Cajeros", "QUANTITY", "BRANCH", 1_500, ["CASH"]),
+  catalogItem("KITCHEN", "Maitre Kitchen", "SERVICE", "BRANCH", 5_000, ["FLOOR"]),
+  catalogItem("QR_MENU", "Maitre QR Menu", "SERVICE", "BRANCH", 2_000, ["CORE"]),
+  catalogItem("QR_ORDERING", "Maitre QR Ordering", "SERVICE", "BRANCH", 3_000, ["QR_MENU"]),
+  catalogItem("GUEST", "Maitre Guest", "SERVICE", "BRANCH", 2_000, ["CORE"]),
+  catalogItem("DELIVERY", "Maitre Delivery", "SERVICE", "BRANCH", 4_000, ["CORE"]),
+  catalogItem("INVENTORY", "Maitre Inventory", "SERVICE", "BRANCH", 5_000, ["CORE"]),
+  catalogItem("CASH", "Maitre Cash", "SERVICE", "BRANCH", 3_500, ["CORE"]),
+  catalogItem("BILLING", "Maitre Billing", "SERVICE", "FISCAL_ENTITY", 5_000, ["CORE"]),
+  catalogItem("PAYMENTS", "Maitre Payments", "SERVICE", "TENANT", 4_000, ["CASH"]),
+  catalogItem("PAYLANDING", "Maitre PayLanding", "SERVICE", "TENANT", 3_000, ["PAYMENTS"]),
+  catalogItem("PAYLANDING.MERCADOPAGO", "PayLanding — Mercado Pago", "SERVICE", "CONNECTOR", 0, ["PAYLANDING"]),
+  catalogItem("PAYLANDING.NARANJA_X", "PayLanding — Naranja X", "SERVICE", "CONNECTOR", 0, ["PAYLANDING"]),
+  catalogItem("PAYLANDING.MODO", "PayLanding — MODO", "SERVICE", "CONNECTOR", 0, ["PAYLANDING"]),
+  catalogItem("PAYLANDING.TODO_PAGO", "PayLanding — Todo Pago", "SERVICE", "CONNECTOR", 0, ["PAYLANDING"]),
+  catalogItem("ARCA", "Maitre ARCA", "SERVICE", "FISCAL_ENTITY", 7_000, ["BILLING"]),
+  catalogItem("IVA", "Maitre IVA", "SERVICE", "FISCAL_ENTITY", 4_000, ["BILLING"]),
+  catalogItem("FEEDBACK", "Maitre Feedback", "SERVICE", "BRANCH", 2_500, ["CORE"]),
+  catalogItem("REPUTATION", "Maitre Reputation", "SERVICE", "BRANCH", 3_500, ["CORE"]),
+  catalogItem("CRM", "Maitre CRM", "SERVICE", "BRAND", 4_500, ["CORE"]),
+  catalogItem("LOYALTY", "Maitre Loyalty", "SERVICE", "BRAND", 4_000, ["CRM"]),
+  catalogItem("AI_ASSISTANT", "Maitre AI Assistant", "SERVICE", "TENANT", 8_000, ["CORE"]),
+  catalogItem("AI_FORECAST", "Maitre AI Forecast", "SERVICE", "BRANCH", 7_000, ["CORE"]),
+  catalogItem("AI_PROMISE", "Maitre AI Promise", "SERVICE", "BRANCH", 7_000, ["RESERVATIONS"]),
+  catalogItem("AI_KITCHEN", "Maitre AI Kitchen", "SERVICE", "BRANCH", 7_000, ["KITCHEN"]),
+  catalogItem("AI_AHEAD", "Maitre Ahead", "SERVICE", "BRANCH", 10_000, ["FLOOR", "RESERVATIONS", "KITCHEN"]),
+  catalogItem("AI_AUTOPILOT", "Maitre Autopilot", "SERVICE", "BRANCH", 12_000, ["AI_AHEAD"]),
+];
 // Demo public MENU_READ capability for manual QR-menu curl testing against the
 // seeded demo Menu. Only its SHA-256 hash is stored (hash-at-rest); the raw
 // token below is the value a client presents to GET /public/menu/:token. Fixed
@@ -348,6 +415,7 @@ interface Repositories {
   outbox: OutboxPort;
   subscriptions: SubscriptionRepositoryPort;
   subscriptionItems: SubscriptionItemRepositoryPort;
+  catalog: CatalogRepositoryPort;
   entitlements: EntitlementRepositoryPort;
   quotas: QuotaRepositoryPort;
   menus: MenuRepositoryPort;
@@ -432,6 +500,7 @@ function buildRepositories(): Repositories {
       outbox: new SupabaseOutboxRepository(client),
       subscriptions: new SupabaseSubscriptionRepository(client),
       subscriptionItems: new SupabaseSubscriptionItemRepository(client),
+      catalog: new SupabaseCatalogItemRepository(client),
       entitlements: new SupabaseEntitlementRepository(client),
       quotas: new SupabaseQuotaRepository(client),
       menus: new SupabaseMenuRepository(client),
@@ -491,6 +560,8 @@ function buildRepositories(): Repositories {
     outbox: new InMemoryOutboxRepository(),
     subscriptions: new InMemorySubscriptionRepository(),
     subscriptionItems: new InMemorySubscriptionItemRepository(),
+    // seed real llega en la Task 8 (SEED_CATALOG_ITEMS)
+    catalog: new InMemoryCatalogItemRepository(SEED_CATALOG_ITEMS),
     entitlements: new InMemoryEntitlementRepository(),
     quotas: new InMemoryQuotaRepository(),
     menus: new InMemoryMenuRepository(),
@@ -678,6 +749,12 @@ async function ensureSeed(repos: Repositories): Promise<void> {
     );
   }
 
+  for (const item of SEED_CATALOG_ITEMS) {
+    if (!(await repos.catalog.findByCode(item.code))) {
+      await (repos.catalog as CatalogRepositoryPort & { save(item: CatalogItem): Promise<void> }).save(item);
+    }
+  }
+
   const subscription = await repos.subscriptions.findById(DEMO_SUBSCRIPTION_ID);
   if (!subscription) {
     await createSubscription(
@@ -685,10 +762,57 @@ async function ensureSeed(repos: Repositories): Promise<void> {
         subscriptions: repos.subscriptions,
         subscriptionItems: repos.subscriptionItems,
         entitlements: repos.entitlements,
+        catalog: repos.catalog,
         now: () => now,
       },
       { id: DEMO_SUBSCRIPTION_ID, tenantId: tenant.id, planCode: "PROFESSIONAL" },
     );
+
+    const itemDeps = {
+      subscriptions: repos.subscriptions,
+      subscriptionItems: repos.subscriptionItems,
+      catalog: repos.catalog,
+      entitlements: repos.entitlements,
+      outbox: repos.outbox,
+      now: () => now,
+    };
+    await addService(itemDeps, {
+      subscriptionId: DEMO_SUBSCRIPTION_ID,
+      serviceId: "CORE",
+    });
+    await addQuantityItem(itemDeps, {
+      subscriptionId: DEMO_SUBSCRIPTION_ID,
+      catalogItemCode: "BRANCHES",
+      quantity: 1,
+    });
+    await addService(itemDeps, {
+      subscriptionId: DEMO_SUBSCRIPTION_ID,
+      serviceId: "FLOOR",
+      scopeRefId: DEMO_BRANCH_ID,
+    });
+    await addQuantityItem(itemDeps, {
+      subscriptionId: DEMO_SUBSCRIPTION_ID,
+      catalogItemCode: "SEATS",
+      quantity: 12,
+      scopeRefId: DEMO_BRANCH_ID,
+    });
+    await addQuantityItem(itemDeps, {
+      subscriptionId: DEMO_SUBSCRIPTION_ID,
+      catalogItemCode: "WAITERS",
+      quantity: 8,
+      scopeRefId: DEMO_BRANCH_ID,
+    });
+    await addQuantityItem(itemDeps, {
+      subscriptionId: DEMO_SUBSCRIPTION_ID,
+      catalogItemCode: "CASHIERS",
+      quantity: 3,
+      scopeRefId: DEMO_BRANCH_ID,
+    });
+    await addService(itemDeps, {
+      subscriptionId: DEMO_SUBSCRIPTION_ID,
+      serviceId: "RESERVATIONS",
+      scopeRefId: DEMO_BRANCH_ID,
+    });
   }
 
   let menu = await repos.menus.findById(tenant.id, DEMO_MENU_ID);

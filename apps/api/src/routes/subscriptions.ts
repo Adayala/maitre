@@ -5,10 +5,16 @@ import {
   addService,
   removeService,
   upgradePlan,
+  addQuantityItem,
+  updateQuantity,
   SubscriptionNotOperableError,
   ServiceNotFoundError,
   SubscriptionNotFoundError,
   UnknownPlanError,
+  CatalogItemNotFoundError,
+  MissingScopeRefError,
+  InvalidQuantityForServiceError,
+  SubscriptionItemNotFoundError,
 } from "@maitre/subscription";
 import type { Container } from "../composition/container.js";
 import { requireTenantContext, requirePermission } from "../http/request-context.js";
@@ -27,6 +33,16 @@ const addServiceBodySchema = z.object({
   unitPrice: z.number().nonnegative().optional(),
 });
 
+const addItemBodySchema = z.object({
+  catalogItemCode: z.string().min(1),
+  quantity: z.number().int().positive().optional(),
+  scopeRefId: z.string().optional(),
+});
+
+const updateItemBodySchema = z.object({
+  quantity: z.number().int().positive(),
+});
+
 export async function registerSubscriptionRoutes(
   app: FastifyInstance,
   container: Container,
@@ -43,7 +59,8 @@ export async function registerSubscriptionRoutes(
         }
         const subscription = await container.subscriptions.findByTenantId(req.params.tenantId);
         if (!subscription) return sendProblem(reply, correlationId, notFound("Subscription"));
-        return { data: subscription };
+        const items = await container.subscriptionItems.listBySubscription(subscription.id);
+        return { data: { ...subscription, items } };
       } catch (err) {
         return sendProblem(reply, correlationId, err);
       }
@@ -65,6 +82,7 @@ export async function registerSubscriptionRoutes(
           subscriptions: container.subscriptions,
           subscriptionItems: container.subscriptionItems,
           entitlements: container.entitlements,
+          catalog: container.catalog,
         },
         {
           subscriptionId: subscription.id,
@@ -102,6 +120,7 @@ export async function registerSubscriptionRoutes(
             subscriptions: container.subscriptions,
             subscriptionItems: container.subscriptionItems,
             entitlements: container.entitlements,
+            catalog: container.catalog,
             outbox: container.outbox,
           },
           { subscriptionId: req.params.id, ...omitUndefined(body), correlationId },
@@ -137,6 +156,7 @@ export async function registerSubscriptionRoutes(
             subscriptions: container.subscriptions,
             subscriptionItems: container.subscriptionItems,
             entitlements: container.entitlements,
+            catalog: container.catalog,
             outbox: container.outbox,
           },
           { subscriptionId: req.params.id, serviceId: req.params.serviceId, correlationId },
@@ -145,6 +165,163 @@ export async function registerSubscriptionRoutes(
       } catch (err) {
         if (err instanceof ServiceNotFoundError) {
           return sendProblem(reply, correlationId, notFound("Service"));
+        }
+        return sendProblem(reply, correlationId, err);
+      }
+    },
+  );
+
+  app.get("/v1/subscription-catalog", async (req, reply) => {
+    const correlationId = randomUUID();
+    try {
+      await requireTenantContext(container, req);
+      const items = await container.catalog.listActive();
+      return { data: items };
+    } catch (err) {
+      return sendProblem(reply, correlationId, err);
+    }
+  });
+
+  app.post<{ Params: { tenantId: string } }>(
+    "/v1/subscriptions/:tenantId/items",
+    async (req, reply) => {
+      const correlationId = randomUUID();
+      try {
+        const ctx = await requireTenantContext(container, req);
+        requirePermission(ctx, "service:manage");
+        if (ctx.tenantId !== req.params.tenantId) {
+          return sendProblem(reply, correlationId, notFound("Subscription"));
+        }
+        const body = addItemBodySchema.parse(req.body);
+        const subscription = await container.subscriptions.findByTenantId(req.params.tenantId);
+        if (!subscription) return sendProblem(reply, correlationId, notFound("Subscription"));
+
+        const catalogItem = await container.catalog.findByCode(body.catalogItemCode);
+        if (!catalogItem || !catalogItem.isActive) {
+          throw new CatalogItemNotFoundError(body.catalogItemCode);
+        }
+        if (catalogItem.billingScope !== "TENANT" && !body.scopeRefId) {
+          throw new MissingScopeRefError(body.catalogItemCode);
+        }
+        if (catalogItem.billingType === "SERVICE" && body.quantity !== undefined) {
+          return sendProblem(
+            reply,
+            correlationId,
+            badRequest(`Catalog item "${body.catalogItemCode}" does not accept quantity`),
+          );
+        }
+
+        const sharedDeps = {
+          subscriptions: container.subscriptions,
+          subscriptionItems: container.subscriptionItems,
+          catalog: container.catalog,
+          entitlements: container.entitlements,
+          outbox: container.outbox,
+        };
+        const item =
+          catalogItem.billingType === "QUANTITY"
+            ? await addQuantityItem(sharedDeps, {
+                subscriptionId: subscription.id,
+                catalogItemCode: body.catalogItemCode,
+                quantity: body.quantity ?? 1,
+                ...(body.scopeRefId ? { scopeRefId: body.scopeRefId } : {}),
+                correlationId,
+              })
+            : await addService(sharedDeps, {
+                subscriptionId: subscription.id,
+                serviceId: body.catalogItemCode,
+                unitPrice: catalogItem.unitPrice,
+                ...(body.scopeRefId ? { scopeRefId: body.scopeRefId } : {}),
+                correlationId,
+              });
+        reply.code(201);
+        return { data: item };
+      } catch (err) {
+        if (
+          err instanceof CatalogItemNotFoundError ||
+          err instanceof MissingScopeRefError ||
+          err instanceof InvalidQuantityForServiceError ||
+          err instanceof z.ZodError
+        ) {
+          return sendProblem(reply, correlationId, badRequest(err.message));
+        }
+        return sendProblem(reply, correlationId, err);
+      }
+    },
+  );
+
+  app.patch<{ Params: { tenantId: string; itemId: string } }>(
+    "/v1/subscriptions/:tenantId/items/:itemId",
+    async (req, reply) => {
+      const correlationId = randomUUID();
+      try {
+        const ctx = await requireTenantContext(container, req);
+        requirePermission(ctx, "service:manage");
+        if (ctx.tenantId !== req.params.tenantId) {
+          return sendProblem(reply, correlationId, notFound("Subscription"));
+        }
+        const body = updateItemBodySchema.parse(req.body);
+        const subscription = await container.subscriptions.findByTenantId(req.params.tenantId);
+        if (!subscription) return sendProblem(reply, correlationId, notFound("Subscription"));
+
+        const item = await updateQuantity(
+          {
+            subscriptions: container.subscriptions,
+            subscriptionItems: container.subscriptionItems,
+            entitlements: container.entitlements,
+            catalog: container.catalog,
+          },
+          { subscriptionId: subscription.id, itemId: req.params.itemId, quantity: body.quantity },
+        );
+        return { data: item };
+      } catch (err) {
+        if (err instanceof SubscriptionItemNotFoundError) {
+          return sendProblem(reply, correlationId, notFound("SubscriptionItem"));
+        }
+        if (err instanceof InvalidQuantityForServiceError || err instanceof z.ZodError) {
+          return sendProblem(reply, correlationId, badRequest(err.message));
+        }
+        return sendProblem(reply, correlationId, err);
+      }
+    },
+  );
+
+  app.delete<{ Params: { tenantId: string; itemId: string } }>(
+    "/v1/subscriptions/:tenantId/items/:itemId",
+    async (req, reply) => {
+      const correlationId = randomUUID();
+      try {
+        const ctx = await requireTenantContext(container, req);
+        requirePermission(ctx, "service:manage");
+        if (ctx.tenantId !== req.params.tenantId) {
+          return sendProblem(reply, correlationId, notFound("Subscription"));
+        }
+        const subscription = await container.subscriptions.findByTenantId(req.params.tenantId);
+        if (!subscription) return sendProblem(reply, correlationId, notFound("Subscription"));
+
+        const items = await container.subscriptionItems.listBySubscription(subscription.id);
+        const target = items.find((i) => i.id === req.params.itemId);
+        if (!target) return sendProblem(reply, correlationId, notFound("SubscriptionItem"));
+
+        const item = await removeService(
+          {
+            subscriptions: container.subscriptions,
+            subscriptionItems: container.subscriptionItems,
+            entitlements: container.entitlements,
+            catalog: container.catalog,
+            outbox: container.outbox,
+          },
+          {
+            subscriptionId: subscription.id,
+            serviceId: target.serviceId,
+            scopeRefId: target.scopeRefId ?? null,
+            correlationId,
+          },
+        );
+        return { data: item };
+      } catch (err) {
+        if (err instanceof ServiceNotFoundError) {
+          return sendProblem(reply, correlationId, notFound("SubscriptionItem"));
         }
         return sendProblem(reply, correlationId, err);
       }

@@ -27,7 +27,11 @@ alter table subscription_items
 alter table subscription_items drop constraint subscription_items_subscription_id_service_id_key;
 alter table subscription_items
   add constraint subscription_items_scope_unique
-  unique (subscription_id, catalog_item_code, scope_ref_id);
+  unique nulls not distinct (subscription_id, catalog_item_code, scope_ref_id);
+
+-- Catalog codes and scoped keys replace the legacy fixed resource enum.
+alter table subscription_entitlements
+  drop constraint subscription_entitlements_resource_check;
 
 alter table subscription_catalog_items enable row level security;
 
