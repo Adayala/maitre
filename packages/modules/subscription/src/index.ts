@@ -15,3 +15,5 @@ export * from "./application/add-service.js";
 export * from "./application/remove-service.js";
 export * from "./application/upgrade-plan.js";
 export * from "./application/recalculate-entitlements.js";
+export * from "./application/add-quantity-item.js";
+export * from "./application/update-quantity.js";

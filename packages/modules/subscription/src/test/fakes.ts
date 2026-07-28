@@ -30,10 +30,17 @@ export class FakeSubscriptionItemRepository implements SubscriptionItemRepositor
   async listBySubscription(subscriptionId: string) {
     return this.items.filter((i) => i.subscriptionId === subscriptionId);
   }
-  async findByServiceId(subscriptionId: string, serviceId: string) {
+  async findByServiceId(
+    subscriptionId: string,
+    serviceId: string,
+    scopeRefId: string | null = null,
+  ) {
     return (
       this.items.find(
-        (i) => i.subscriptionId === subscriptionId && i.serviceId === serviceId,
+        (i) =>
+          i.subscriptionId === subscriptionId &&
+          i.serviceId === serviceId &&
+          (i.scopeRefId ?? null) === scopeRefId,
       ) ?? null
     );
   }
