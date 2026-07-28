@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 
 type ProfileId =
   | "owner"
@@ -181,6 +182,7 @@ export function ProfilesPage() {
   ];
   const profileLinks = getProfileLinks(selectedProfile);
   const profilePriority = getProfilePriority(selectedProfile);
+  const profileStageCards = getProfileStageCards(selectedProfile);
 
   return (
     <section aria-labelledby="profiles-heading" className="profiles-page">
@@ -260,11 +262,24 @@ export function ProfilesPage() {
             <h3>Siguiente vista útil</h3>
             <div className="overview-link-grid">
               {profileLinks.map((link) => (
-                <div key={link.label} className="overview-link-card">
+                <Link key={link.label} className="overview-link-card" to={link.to}>
                   <span>{link.eyebrow}</span>
                   <strong>{link.label}</strong>
                   <p>{link.detail}</p>
-                </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+
+          <section className="profile-card" aria-label="Decisiones del owner para este perfil">
+            <h3>Qué debería decidir el owner</h3>
+            <div className="owner-stage-grid">
+              {profileStageCards.map((card) => (
+                <Link key={card.label} className={`owner-stage-card owner-stage-card--${card.tone}`} to={card.to}>
+                  <span>{card.label}</span>
+                  <strong>{card.title}</strong>
+                  <p>{card.detail}</p>
+                </Link>
               ))}
             </div>
           </section>
@@ -337,11 +352,13 @@ function getProfileLinks(profile: ProfileDefinition) {
         eyebrow: "Customer",
         label: "Discovery y reserva",
         detail: "Revisar cómo la experiencia pública deriva desde consulta sin login hacia reserva autenticada.",
+        to: "/subscription",
       },
       {
         eyebrow: "Arquitectura",
         label: "Mapa multiapp",
         detail: "Comparar este perfil con las apps táctiles e internas para no mezclar responsabilidades.",
+        to: "/overview",
       },
     ];
   }
@@ -352,11 +369,13 @@ function getProfileLinks(profile: ProfileDefinition) {
         eyebrow: "Backoffice",
         label: "Overview / Setup",
         detail: "Validar estructura, sucursales y estado general del tenant.",
+        to: "/setup",
       },
       {
         eyebrow: "Gobierno",
         label: "Usuarios / Suscripción",
         detail: "Cruzar permisos, capacidades y límites del tenant.",
+        to: "/users",
       },
     ];
   }
@@ -367,11 +386,13 @@ function getProfileLinks(profile: ProfileDefinition) {
         eyebrow: "Operación",
         label: "Host / Floor",
         detail: "Seguir seating, waitlist, reservas y ritmo del salón.",
+        to: "/branches",
       },
       {
         eyebrow: "Coordinación",
         label: "Kitchen / Cashier",
         detail: "Conectar cocina, caja y piso sin perder visibilidad del turno.",
+        to: "/overview",
       },
     ];
   }
@@ -381,11 +402,54 @@ function getProfileLinks(profile: ProfileDefinition) {
       eyebrow: "App operativa",
       label: profile.appKey,
       detail: "Este perfil ya tiene una app táctil específica como superficie principal.",
+      to: "/branches",
     },
     {
       eyebrow: "Backoffice",
       label: "Profiles / Overview",
       detail: "Usar estas vistas para validar que el diseño del perfil siga alineado con foundations.",
+      to: "/overview",
     },
   ];
+}
+
+function getProfileStageCards(profile: ProfileDefinition) {
+  const isOperational =
+    profile.id === "maitre" || profile.id === "waiter" || profile.id === "cashier" || profile.id === "cook";
+
+  return [
+    {
+      label: "Superficie",
+      title: profile.primarySurface,
+      detail: "Define dónde vive la experiencia principal de este actor dentro de la plataforma.",
+      tone: profile.type === "public" ? "info" : "success",
+      to: "/overview",
+    },
+    {
+      label: "Interacción",
+      title: profile.interactionMode,
+      detail: isOperational
+        ? "Este perfil necesita baja fricción y decisiones rápidas durante el turno."
+        : "Este perfil privilegia lectura amplia y control más que velocidad operativa.",
+      tone: isOperational ? "warning" : "info",
+      to: "/settings",
+    },
+    {
+      label: "App",
+      title: profile.appKey,
+      detail: "El owner debería confirmar que la superficie objetivo coincide con el alcance real del perfil.",
+      tone: "info",
+      to: "/branches",
+    },
+    {
+      label: "Gobierno",
+      title: profile.type === "public" ? "No es rol interno" : "Cruzar con usuarios y permisos",
+      detail:
+        profile.type === "public"
+          ? "La experiencia cliente no debe mezclarse con RBAC interno del staff."
+          : "Después conviene validar quién usa este perfil y en qué sedes o apps.",
+      tone: profile.type === "public" ? "warning" : "success",
+      to: profile.type === "public" ? "/subscription" : "/users",
+    },
+  ] as const;
 }
