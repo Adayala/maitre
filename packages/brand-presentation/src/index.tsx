@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import type { BrandPresentationDocument } from "@maitre/contracts";
 
 export const PLATFORM_PRESENTATION: BrandPresentationDocument = {
@@ -63,28 +63,25 @@ interface ProviderProps {
   children: ReactNode;
 }
 
+const BrandPresentationContext = createContext(PLATFORM_PRESENTATION);
+
+export function useBrandPresentation() {
+  return useContext(BrandPresentationContext);
+}
+
 export function BrandPresentationProvider(props: ProviderProps) {
   const [presentation, setPresentation] = useState(PLATFORM_PRESENTATION);
   useEffect(() => {
-    if (!props.accessToken || !props.tenantId) {
+    if (!props.tenantId) {
       setPresentation(PLATFORM_PRESENTATION);
       applyBrandPresentation(PLATFORM_PRESENTATION);
       return;
     }
     const controller = new AbortController();
-    void resolveBrandId(props, controller.signal)
-      .then(async (brandId) => {
-        if (!brandId) return PLATFORM_PRESENTATION;
-        const query = new URLSearchParams({ surface: props.surface });
-        if (props.branchId) query.set("branchId", props.branchId);
-        const response = await fetch(`${props.apiUrl}/v1/brands/${brandId}/presentation/effective?${query}`, {
-          headers: { Authorization: `Bearer ${props.accessToken}`, "X-Tenant-Id": props.tenantId! },
-          signal: controller.signal,
-        });
-        if (!response.ok) throw new Error("presentation-unavailable");
-        const payload = await response.json() as { data: { document: BrandPresentationDocument } };
-        return payload.data.document;
-      })
+    void (props.accessToken
+      ? resolveAuthenticatedPresentation(props, controller.signal)
+      : resolvePublicPresentation(props, controller.signal))
+      .then((document) => document ?? PLATFORM_PRESENTATION)
       .then((document) => { setPresentation(document); applyBrandPresentation(document); })
       .catch((error) => {
         if ((error as Error).name !== "AbortError") {
@@ -116,17 +113,47 @@ export function BrandPresentationProvider(props: ProviderProps) {
   } as CSSProperties;
   const template = presentation.templates[props.surface];
   return (
-    <div
-      style={style}
-      data-brand-revision={presentation.schemaVersion}
-      data-brand-surface={props.surface}
-      data-brand-template={template?.templateId ?? "default"}
-      data-brand-variant={template?.variant}
-    >
-      <BrandSignature document={presentation} />
-      {props.children}
-    </div>
+    <BrandPresentationContext.Provider value={presentation}>
+      <div
+        style={style}
+        data-brand-revision={presentation.schemaVersion}
+        data-brand-surface={props.surface}
+        data-brand-template={template?.templateId ?? "default"}
+        data-brand-variant={template?.variant}
+      >
+        {props.surface !== "PUBLIC_HOME" ? <BrandSignature document={presentation} /> : null}
+        {props.children}
+      </div>
+    </BrandPresentationContext.Provider>
   );
+}
+
+async function resolveAuthenticatedPresentation(props: ProviderProps, signal: AbortSignal) {
+  return resolveBrandId(props, signal)
+      .then(async (brandId) => {
+        if (!brandId) return PLATFORM_PRESENTATION;
+        const query = new URLSearchParams({ surface: props.surface });
+        if (props.branchId) query.set("branchId", props.branchId);
+        const response = await fetch(`${props.apiUrl}/v1/brands/${brandId}/presentation/effective?${query}`, {
+          headers: { Authorization: `Bearer ${props.accessToken}`, "X-Tenant-Id": props.tenantId! },
+          signal,
+        });
+        if (!response.ok) throw new Error("presentation-unavailable");
+        const payload = await response.json() as { data: { document: BrandPresentationDocument } };
+        return payload.data.document;
+      });
+}
+
+async function resolvePublicPresentation(props: ProviderProps, signal: AbortSignal) {
+  if (!props.tenantId || !props.brandId) return null;
+  const query = new URLSearchParams({ surface: props.surface });
+  const response = await fetch(
+    `${props.apiUrl}/public/tenants/${props.tenantId}/brands/${props.brandId}/presentation?${query}`,
+    { signal },
+  );
+  if (!response.ok) return null;
+  const payload = await response.json() as { data: { document: BrandPresentationDocument } };
+  return payload.data.document;
 }
 
 async function resolveBrandId(props: ProviderProps, signal: AbortSignal) {

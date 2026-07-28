@@ -13,7 +13,9 @@ const queryClient = new QueryClient({
 function BrandTheme({ children }: { children: React.ReactNode }) {
   const { accessToken } = useAuth();
   const { selectedTenantId, selectedBranchId } = useSession();
-  return <BrandPresentationProvider apiUrl={import.meta.env["VITE_API_URL"] ?? "http://localhost:3001"} accessToken={accessToken} tenantId={selectedTenantId} branchId={selectedBranchId} surface="PUBLIC_HOME">{children}</BrandPresentationProvider>;
+  const publicTenantId = (import.meta.env["VITE_PUBLIC_TENANT_ID"] as string | undefined) ?? null;
+  const publicBrandId = (import.meta.env["VITE_PUBLIC_BRAND_ID"] as string | undefined) ?? null;
+  return <BrandPresentationProvider apiUrl={import.meta.env["VITE_API_URL"] ?? "http://localhost:3001"} accessToken={accessToken} tenantId={selectedTenantId ?? publicTenantId} branchId={selectedBranchId} brandId={accessToken ? null : publicBrandId} surface="PUBLIC_HOME">{children}</BrandPresentationProvider>;
 }
 
 export function App() {

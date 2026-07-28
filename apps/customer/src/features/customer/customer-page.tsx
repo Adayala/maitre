@@ -4,6 +4,7 @@ import { useAuth, isSupabaseConfigured } from "../../app/auth-context.js";
 import { useSession } from "../../app/session-context.js";
 import { useApi } from "../../app/use-api.js";
 import { StateView } from "../../components/state-view.js";
+import { useBrandPresentation } from "../../../../../packages/brand-presentation/src/index.js";
 
 const PUBLIC_MENU_TOKEN = "demo-qr-menu-token";
 const PARTY_SIZE_PRESETS = ["1", "2", "4", "6", "8"];
@@ -76,6 +77,7 @@ type TimePresetConfig =
   | { label: string; dayOffset?: number; fixedHour: number; fixedMinute: number };
 
 export function CustomerPage() {
+  const brand = useBrandPresentation();
   const queryClient = useQueryClient();
   const api = useApi();
   const { accessToken, email, signInWithPassword, signInWithToken, signOut } = useAuth();
@@ -298,11 +300,19 @@ export function CustomerPage() {
     <main className="customer-app">
       <section className="customer-shell">
         <section className="customer-hero">
-          <p className="customer-eyebrow">Experiencia cliente</p>
-          <h1>Paperclip / Maitre Customer</h1>
-          <p>
-            Discovery público primero; reserva y seguimiento cuando la persona decide identificarse.
-          </p>
+          <div
+            className="customer-brand-intro"
+            style={brand.assets.hero?.url ? { backgroundImage: `linear-gradient(90deg, rgba(20, 15, 10, .86), rgba(20, 15, 10, .24)), url("${brand.assets.hero.url}")` } : undefined}
+          >
+            {brand.assets.logoDark?.url || brand.assets.logo?.url ? (
+              <img src={brand.assets.logoDark?.url ?? brand.assets.logo?.url} alt={brand.identity.displayName ?? "Marca"} />
+            ) : null}
+            <div>
+              <p className="customer-eyebrow">Experiencia cliente</p>
+              <h1>{brand.identity.displayName ?? "Maitre"}</h1>
+              <p>{brand.identity.tagline ?? "Descubrí el menú, elegí tu sucursal y reservá tu mesa."}</p>
+            </div>
+          </div>
           <div className="customer-journey-strip">
             <div className="customer-journey-pill">
               <span>Explorar</span>
