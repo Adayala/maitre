@@ -40,6 +40,58 @@ export function SetupPage() {
     { label: "Sucursal resuelta", done: Boolean(selectedBranchId) },
     { label: "Estación lista para cocinar", done: step === "station" ? stations.length > 0 : false },
   ];
+  const pendingChecklist = checklist.filter((item) => !item.done).map((item) => item.label);
+  const setupRoutes =
+    step === "tenant"
+      ? [
+          {
+            eyebrow: "Paso inmediato",
+            title: "Elegir la empresa correcta",
+            detail: "Esto define todo el contexto operativo de la cocina para este dispositivo.",
+            onClick: () => undefined,
+            disabled: true,
+          },
+          {
+            eyebrow: "Si te equivocaste antes",
+            title: "Cerrar sesión",
+            detail: "Útil si el dispositivo quedó con un usuario que no corresponde a este turno.",
+            onClick: () => void signOut(),
+            disabled: false,
+          },
+        ]
+      : step === "branch"
+        ? [
+            {
+              eyebrow: "Paso inmediato",
+              title: "Elegir la sucursal del turno",
+              detail: "La cocina va a recibir comandas sólo de la sede que definas acá.",
+              onClick: () => undefined,
+              disabled: true,
+            },
+            {
+              eyebrow: "Volver atrás",
+              title: "Cambiar empresa",
+              detail: "Si el dispositivo quedó en la empresa equivocada, corregilo antes de seguir.",
+              onClick: () => selectTenant(""),
+              disabled: tenants.length <= 1,
+            },
+          ]
+        : [
+            {
+              eyebrow: "Paso inmediato",
+              title: "Fijar la estación",
+              detail: "Esto determina qué comandas va a ver y producir este KDS durante el turno.",
+              onClick: () => undefined,
+              disabled: true,
+            },
+            {
+              eyebrow: "Volver atrás",
+              title: "Cambiar sucursal",
+              detail: "Si el dispositivo quedó apuntando a otra sede, conviene corregirlo antes de arrancar.",
+              onClick: () => selectBranch(""),
+              disabled: branches.length <= 1,
+            },
+          ];
 
   return (
     <main className="setup">
@@ -69,6 +121,31 @@ export function SetupPage() {
             </div>
           ))}
         </div>
+
+        <article className="setup-panel">
+          <p className="setup-eyebrow">Qué conviene hacer ahora</p>
+          <strong>{summary.title}</strong>
+          <p>
+            {pendingChecklist.length > 0
+              ? `Todavía falta resolver: ${pendingChecklist.join(", ")}.`
+              : "La configuración base ya está encaminada; sólo queda confirmar la selección visible."}
+          </p>
+          <div className="setup-options">
+            {setupRoutes.map((route) => (
+              <button
+                key={route.title}
+                type="button"
+                className="option-btn"
+                onClick={route.onClick}
+                disabled={route.disabled}
+              >
+                <span className="option-sub">{route.eyebrow}</span>
+                <span>{route.title}</span>
+                <span className="option-sub">{route.detail}</span>
+              </button>
+            ))}
+          </div>
+        </article>
 
         {step === "tenant" && (
           <StateView
