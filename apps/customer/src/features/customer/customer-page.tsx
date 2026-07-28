@@ -7,6 +7,7 @@ import { StateView } from "../../components/state-view.js";
 import { useBrandPresentation } from "../../../../../packages/brand-presentation/src/index.js";
 
 const PUBLIC_MENU_TOKEN = "demo-qr-menu-token";
+const PUBLIC_API_URL = (import.meta.env["VITE_API_URL"] as string | undefined) ?? "http://localhost:3001";
 const PARTY_SIZE_PRESETS = ["1", "2", "4", "6", "8"];
 const DURATION_PRESETS = ["60", "90", "120"];
 
@@ -111,7 +112,7 @@ export function CustomerPage() {
   const menuQuery = useQuery({
     queryKey: ["customer-public-menu", PUBLIC_MENU_TOKEN],
     queryFn: async () => {
-      const response = await fetch(`http://127.0.0.1:3001/public/menu/${PUBLIC_MENU_TOKEN}`);
+      const response = await fetch(`${PUBLIC_API_URL}/public/menu/${PUBLIC_MENU_TOKEN}`);
       if (!response.ok) throw new Error("No se pudo cargar el menú público");
       return (await response.json()) as PublicMenuPayload;
     },
@@ -120,7 +121,7 @@ export function CustomerPage() {
   const branchesQuery = useQuery({
     queryKey: ["customer-public-branch", PUBLIC_MENU_TOKEN],
     queryFn: async () => {
-      const response = await fetch(`http://127.0.0.1:3001/public/branches/${PUBLIC_MENU_TOKEN}`);
+      const response = await fetch(`${PUBLIC_API_URL}/public/branches/${PUBLIC_MENU_TOKEN}`);
       if (!response.ok) throw new Error("No se pudieron cargar las sucursales públicas");
       return (await response.json()) as PublicBranchPayload;
     },

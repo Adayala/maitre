@@ -1052,9 +1052,9 @@ async function ensureSeed(repos: Repositories): Promise<void> {
     }
   }
 
-  const subscription = await repos.subscriptions.findById(DEMO_SUBSCRIPTION_ID);
+  let subscription = await repos.subscriptions.findById(DEMO_SUBSCRIPTION_ID);
   if (!subscription) {
-    await createSubscription(
+    subscription = await createSubscription(
       {
         subscriptions: repos.subscriptions,
         subscriptionItems: repos.subscriptionItems,
@@ -1064,53 +1064,32 @@ async function ensureSeed(repos: Repositories): Promise<void> {
       },
       { id: DEMO_SUBSCRIPTION_ID, tenantId: tenant.id, planCode: "PROFESSIONAL" },
     );
-
-    const itemDeps = {
-      subscriptions: repos.subscriptions,
-      subscriptionItems: repos.subscriptionItems,
-      catalog: repos.catalog,
-      entitlements: repos.entitlements,
-      outbox: repos.outbox,
-      now: () => now,
-    };
-    await addService(itemDeps, {
-      subscriptionId: DEMO_SUBSCRIPTION_ID,
-      serviceId: "CORE",
-    });
-    await addQuantityItem(itemDeps, {
-      subscriptionId: DEMO_SUBSCRIPTION_ID,
-      catalogItemCode: "BRANCHES",
-      quantity: 1,
-    });
-    await addService(itemDeps, {
-      subscriptionId: DEMO_SUBSCRIPTION_ID,
-      serviceId: "FLOOR",
-      scopeRefId: DEMO_BRANCH_ID,
-    });
-    await addQuantityItem(itemDeps, {
-      subscriptionId: DEMO_SUBSCRIPTION_ID,
-      catalogItemCode: "SEATS",
-      quantity: 12,
-      scopeRefId: DEMO_BRANCH_ID,
-    });
-    await addQuantityItem(itemDeps, {
-      subscriptionId: DEMO_SUBSCRIPTION_ID,
-      catalogItemCode: "WAITERS",
-      quantity: 8,
-      scopeRefId: DEMO_BRANCH_ID,
-    });
-    await addQuantityItem(itemDeps, {
-      subscriptionId: DEMO_SUBSCRIPTION_ID,
-      catalogItemCode: "CASHIERS",
-      quantity: 3,
-      scopeRefId: DEMO_BRANCH_ID,
-    });
-    await addService(itemDeps, {
-      subscriptionId: DEMO_SUBSCRIPTION_ID,
-      serviceId: "RESERVATIONS",
-      scopeRefId: DEMO_BRANCH_ID,
-    });
   }
+
+  const itemDeps = {
+    subscriptions: repos.subscriptions,
+    subscriptionItems: repos.subscriptionItems,
+    catalog: repos.catalog,
+    entitlements: repos.entitlements,
+    outbox: repos.outbox,
+    now: () => now,
+  };
+  const ensureService = async (serviceId: string, scopeRefId?: string) => {
+    const existing = await repos.subscriptionItems.findByServiceId(DEMO_SUBSCRIPTION_ID, serviceId, scopeRefId ?? null);
+    if (!existing) await addService(itemDeps, { subscriptionId: DEMO_SUBSCRIPTION_ID, serviceId, ...(scopeRefId ? { scopeRefId } : {}) });
+  };
+  const ensureQuantity = async (catalogItemCode: string, quantity: number, scopeRefId?: string) => {
+    const existing = await repos.subscriptionItems.findByServiceId(DEMO_SUBSCRIPTION_ID, catalogItemCode, scopeRefId ?? null);
+    if (!existing) await addQuantityItem(itemDeps, { subscriptionId: DEMO_SUBSCRIPTION_ID, catalogItemCode, quantity, ...(scopeRefId ? { scopeRefId } : {}) });
+  };
+  await ensureService("CORE");
+  await ensureQuantity("BRANCHES", 1);
+  await ensureService("FLOOR", DEMO_BRANCH_ID);
+  await ensureQuantity("SEATS", 12, DEMO_BRANCH_ID);
+  await ensureQuantity("WAITERS", 8, DEMO_BRANCH_ID);
+  await ensureQuantity("CASHIERS", 3, DEMO_BRANCH_ID);
+  await ensureService("RESERVATIONS", DEMO_BRANCH_ID);
+  await ensureService("QR_MENU", DEMO_BRANCH_ID);
 
   let menu = await repos.menus.findById(tenant.id, DEMO_MENU_ID);
   if (!menu) {
