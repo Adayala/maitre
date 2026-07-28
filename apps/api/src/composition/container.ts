@@ -1560,7 +1560,11 @@ function buildSessionVerifier(): SessionVerificationPort {
   if (driver === "supabase") {
     const url = process.env["SUPABASE_URL"];
     if (!url) throw new Error("SUPABASE_URL must be set for AUTH_DRIVER=supabase");
-    return new SupabaseSessionVerificationPort(url);
+    return new SupabaseSessionVerificationPort(url, {
+      ...(process.env["SUPABASE_PUBLISHABLE_KEY"]
+        ? { apiKey: process.env["SUPABASE_PUBLISHABLE_KEY"] }
+        : {}),
+    });
   }
   return new FixtureSessionVerificationPort();
 }

@@ -43,6 +43,10 @@ export async function requireAuthenticatedContext(
   try {
     principal = await container.sessions.verifyAccessToken(token);
   } catch (err) {
+    req.log.warn(
+      { errorName: err instanceof Error ? err.name : "UnknownError", errorMessage: err instanceof Error ? err.message : "token verification failed" },
+      "access token verification failed",
+    );
     if (err instanceof Error && err.message === "session-expired") throw sessionExpired();
     throw authenticationRequired();
   }
