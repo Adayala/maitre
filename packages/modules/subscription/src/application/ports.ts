@@ -12,7 +12,11 @@ export interface SubscriptionRepositoryPort {
 
 export interface SubscriptionItemRepositoryPort {
   listBySubscription(subscriptionId: string): Promise<SubscriptionItem[]>;
-  findByServiceId(subscriptionId: string, serviceId: string): Promise<SubscriptionItem | null>;
+  findByServiceId(
+    subscriptionId: string,
+    serviceId: string,
+    scopeRefId?: string | null,
+  ): Promise<SubscriptionItem | null>;
   save(item: SubscriptionItem): Promise<void>;
 }
 
