@@ -225,13 +225,33 @@ td {
 
 .user-management-form input,
 .user-management-form select,
-.user-table-actions select {
+.user-table-actions select,
+.overview-card table select,
+.organization-selector select,
+.organization-list input,
+.organization-list select {
   min-height: 2.65rem;
   padding: 0.55rem 0.65rem;
   border: 1px solid var(--color-border);
   border-radius: 0.5rem;
   background: var(--color-bg);
   color: var(--color-fg);
+}
+
+.organization-selector {
+  display: grid;
+  gap: 0.35rem;
+  max-width: 28rem;
+  margin-bottom: 1rem;
+}
+
+.organization-list {
+  margin-top: 1rem;
+}
+
+.organization-list label {
+  display: grid;
+  gap: 0.35rem;
 }
 
 .user-table-actions {

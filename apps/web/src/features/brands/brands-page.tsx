@@ -1,5 +1,9 @@
+import { useState, type FormEvent } from "react";
 import { useTenantQuery } from "../../lib/use-tenant-query.js";
 import { StateView } from "../../components/state-view.js";
+import { apiRequest } from "../../lib/api-client.js";
+import { useAuth } from "../../app/auth-context.js";
+import { useTenantContext } from "../../app/tenant-context.js";
 
 interface Brand {
   id: string;
@@ -9,11 +13,17 @@ interface Brand {
 }
 
 export function BrandsPage() {
+  const { accessToken } = useAuth();
+  const { selectedTenantId } = useTenantContext();
   const { data, isLoading, error, refetch } = useTenantQuery<{ data: Brand[] }>(
     "brands",
     "/v1/brands",
   );
   const brands = data?.data ?? [];
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [mutationError, setMutationError] = useState<string | null>(null);
   const activeBrands = brands.filter((brand) => isBrandActive(brand.status));
   const inactiveBrands = brands.filter((brand) => !isBrandActive(brand.status));
   const summary = getBrandsSummary(brands.length, activeBrands.length, inactiveBrands.length);
@@ -24,17 +34,66 @@ export function BrandsPage() {
     { label: "Base comercial relevada", done: brands.length > 0 },
   ];
 
+  async function create(e: FormEvent) {
+    e.preventDefault();
+    if (!accessToken || !selectedTenantId) return;
+    setIsSaving(true);
+    setMutationError(null);
+    try {
+      await apiRequest("/v1/brands", {
+        accessToken,
+        tenantId: selectedTenantId,
+        method: "POST",
+        body: { name, description: description || undefined, config: { language: "es", currency: "ARS" } },
+      });
+      setName("");
+      setDescription("");
+      await refetch();
+    } catch (err) {
+      setMutationError(err instanceof Error ? err.message : "No se pudo crear la marca");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function update(brand: Brand, status: "ACTIVE" | "INACTIVE") {
+    if (!accessToken || !selectedTenantId) return;
+    setIsSaving(true);
+    setMutationError(null);
+    try {
+      await apiRequest(`/v1/brands/${brand.id}`, {
+        accessToken,
+        tenantId: selectedTenantId,
+        method: "PATCH",
+        body: { status },
+      });
+      await refetch();
+    } catch (err) {
+      setMutationError(err instanceof Error ? err.message : "No se pudo actualizar la marca");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
   return (
     <section aria-labelledby="brands-heading" className="overview-page">
       <h1 id="brands-heading">Marcas</h1>
       <StateView
         isLoading={isLoading}
         error={error as Error | null}
-        isEmpty={brands.length === 0}
-        emptyMessage="Todavía no hay marcas creadas."
         onRetry={() => void refetch()}
       >
-        {brands.length > 0 && (
+        <>
+          <article className="overview-card">
+            <h2>Nueva marca</h2>
+            <form className="user-management-form" onSubmit={create}>
+              <label>Nombre<input required minLength={3} value={name} onChange={(event) => setName(event.target.value)} /></label>
+              <label>Descripción<input value={description} onChange={(event) => setDescription(event.target.value)} /></label>
+              <button type="submit" disabled={isSaving}>{isSaving ? "Guardando…" : "Crear marca"}</button>
+            </form>
+            {mutationError ? <p role="alert" className="login-error">{mutationError}</p> : null}
+          </article>
+        {brands.length > 0 ? (
           <>
             <article className={`overview-priority overview-priority--${summary.tone}`}>
               <div className="overview-priority__copy">
@@ -100,6 +159,7 @@ export function BrandsPage() {
                     <th scope="col">Nombre</th>
                     <th scope="col">Slug</th>
                     <th scope="col">Estado</th>
+                    <th scope="col">Gestionar</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -108,13 +168,24 @@ export function BrandsPage() {
                       <td>{brand.name}</td>
                       <td>{brand.slug}</td>
                       <td>{brand.status}</td>
+                      <td>
+                        <select
+                          value={isBrandActive(brand.status) ? "ACTIVE" : "INACTIVE"}
+                          disabled={isSaving || normalizeBrandStatus(brand.status) === "ARCHIVED"}
+                          onChange={(event) => void update(brand, event.target.value as "ACTIVE" | "INACTIVE")}
+                        >
+                          <option value="ACTIVE">Activa</option>
+                          <option value="INACTIVE">Inactiva</option>
+                        </select>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </article>
           </>
-        )}
+        ) : <article className="overview-priority overview-priority--warning"><div className="overview-priority__copy"><strong>Todavía no hay marcas</strong><p>Creá la primera marca para poder asociar sucursales.</p></div></article>}
+        </>
       </StateView>
     </section>
   );

@@ -1,5 +1,9 @@
+import { useEffect, useState, type FormEvent } from "react";
 import { useTenantQuery } from "../../lib/use-tenant-query.js";
 import { StateView } from "../../components/state-view.js";
+import { apiRequest } from "../../lib/api-client.js";
+import { useAuth } from "../../app/auth-context.js";
+import { useTenantContext } from "../../app/tenant-context.js";
 
 interface Branch {
   id: string;
@@ -9,12 +13,42 @@ interface Branch {
   timezone: string;
 }
 
+interface BrandOption { id: string; name: string }
+interface Salon { id: string; branchId: string; name: string; capacity: number; description?: string; status: "ACTIVE" | "INACTIVE" }
+
 export function BranchesPage() {
+  const { accessToken } = useAuth();
+  const { selectedTenantId } = useTenantContext();
   const { data, isLoading, error, refetch } = useTenantQuery<{ data: Branch[] }>(
     "branches",
     "/v1/branches",
   );
   const branches = data?.data ?? [];
+  const { data: brandsData } = useTenantQuery<{ data: BrandOption[] }>("brands-for-branches", "/v1/brands");
+  const brands = brandsData?.data ?? [];
+  const [selectedBranchId, setSelectedBranchId] = useState("");
+  const { data: salonsData, refetch: refetchSalons } = useTenantQuery<{ data: Salon[] }>(
+    `salons-${selectedBranchId}`,
+    `/v1/salons?branchId=${encodeURIComponent(selectedBranchId)}`,
+    { enabled: Boolean(accessToken && selectedTenantId && selectedBranchId) },
+  );
+  const salons = salonsData?.data ?? [];
+  const [brandId, setBrandId] = useState("");
+  const [name, setName] = useState("");
+  const [code, setCode] = useState("");
+  const [timezone, setTimezone] = useState("America/Argentina/Buenos_Aires");
+  const [salonName, setSalonName] = useState("");
+  const [salonCapacity, setSalonCapacity] = useState(40);
+  const [isSaving, setIsSaving] = useState(false);
+  const [mutationError, setMutationError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!brandId && brands[0]) setBrandId(brands[0].id);
+  }, [brandId, brands]);
+
+  useEffect(() => {
+    if (!selectedBranchId && branches[0]) setSelectedBranchId(branches[0].id);
+  }, [branches, selectedBranchId]);
   const activeBranches = branches.filter((branch) => isBranchActive(branch.status));
   const inactiveBranches = branches.filter((branch) => !isBranchActive(branch.status));
   const uniqueTimezones = new Set(branches.map((branch) => branch.timezone));
@@ -26,17 +60,62 @@ export function BranchesPage() {
     { label: "Sucursal operable", done: activeBranches.length > 0 },
   ];
 
+  async function mutate(path: string, method: "POST" | "PATCH" | "DELETE", body?: unknown) {
+    if (!accessToken || !selectedTenantId) return;
+    setMutationError(null);
+    setIsSaving(true);
+    try {
+      await apiRequest(path, { accessToken, tenantId: selectedTenantId, method, ...(body !== undefined ? { body } : {}) });
+      await refetch();
+      if (selectedBranchId) await refetchSalons();
+    } catch (err) {
+      setMutationError(err instanceof Error ? err.message : "No se pudo guardar el cambio");
+      throw err;
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function createBranch(e: FormEvent) {
+    e.preventDefault();
+    try {
+      await mutate("/v1/branches", "POST", { brandId, name, code, timezone });
+      setName("");
+      setCode("");
+    } catch { /* error is displayed by mutate */ }
+  }
+
+  async function createSalon(e: FormEvent) {
+    e.preventDefault();
+    try {
+      await mutate("/v1/salons", "POST", { branchId: selectedBranchId, name: salonName, capacity: salonCapacity });
+      setSalonName("");
+    } catch { /* error is displayed by mutate */ }
+  }
+
   return (
     <section aria-labelledby="branches-heading" className="overview-page">
       <h1 id="branches-heading">Sucursales</h1>
       <StateView
         isLoading={isLoading}
         error={error as Error | null}
-        isEmpty={branches.length === 0}
-        emptyMessage="Todavía no hay sucursales creadas."
         onRetry={() => void refetch()}
       >
-        {branches.length > 0 && (
+        <>
+          <article className="overview-card">
+            <h2>Nueva sucursal</h2>
+            {brands.length > 0 ? (
+              <form className="user-management-form" onSubmit={createBranch}>
+                <label>Marca<select required value={brandId} onChange={(event) => setBrandId(event.target.value)}>{brands.map((brand) => <option key={brand.id} value={brand.id}>{brand.name}</option>)}</select></label>
+                <label>Nombre<input required value={name} onChange={(event) => setName(event.target.value)} /></label>
+                <label>Código<input required value={code} onChange={(event) => setCode(event.target.value.toUpperCase())} /></label>
+                <label>Zona horaria<input required value={timezone} onChange={(event) => setTimezone(event.target.value)} /></label>
+                <button type="submit" disabled={isSaving}>Crear sucursal</button>
+              </form>
+            ) : <p>Primero necesitás crear una marca.</p>}
+            {mutationError ? <p role="alert" className="login-error">{mutationError}</p> : null}
+          </article>
+        {branches.length > 0 ? (
           <>
             <article className={`overview-priority overview-priority--${summary.tone}`}>
               <div className="overview-priority__copy">
@@ -106,6 +185,7 @@ export function BranchesPage() {
                     <th scope="col">Código</th>
                     <th scope="col">Zona horaria</th>
                     <th scope="col">Estado</th>
+                    <th scope="col">Gestionar</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -115,13 +195,40 @@ export function BranchesPage() {
                       <td>{branch.code}</td>
                       <td>{branch.timezone}</td>
                       <td>{branch.status}</td>
+                      <td><select value={isBranchActive(branch.status) ? "ACTIVE" : "INACTIVE"} disabled={isSaving} onChange={(event) => void mutate(`/v1/branches/${branch.id}`, "PATCH", { status: event.target.value }).catch(() => undefined)}><option value="ACTIVE">Activa</option><option value="INACTIVE">Inactiva</option></select></td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </article>
           </>
-        )}
+        ) : <article className="overview-priority overview-priority--warning"><div className="overview-priority__copy"><strong>Todavía no hay sucursales</strong><p>Creá una para habilitar salones y operación.</p></div></article>}
+
+          <article className="overview-card">
+            <h2>Salones</h2>
+            {branches.length > 0 ? (
+              <>
+                <label className="organization-selector">Sucursal<select value={selectedBranchId} onChange={(event) => setSelectedBranchId(event.target.value)}>{branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.name}</option>)}</select></label>
+                <form className="user-management-form" onSubmit={createSalon}>
+                  <label>Nombre<input required value={salonName} onChange={(event) => setSalonName(event.target.value)} /></label>
+                  <label>Capacidad<input required type="number" min={1} value={salonCapacity} onChange={(event) => setSalonCapacity(Number(event.target.value))} /></label>
+                  <button type="submit" disabled={isSaving}>Crear salón</button>
+                </form>
+                <div className="profile-module-grid organization-list">
+                  {salons.map((salon) => (
+                    <article className="profile-card" key={salon.id}>
+                      <label>Nombre<input defaultValue={salon.name} onBlur={(event) => { const nextName = event.target.value.trim(); if (nextName && nextName !== salon.name) void mutate(`/v1/salons/${salon.id}`, "PATCH", { name: nextName }).catch(() => undefined); }} /></label>
+                      <label>Capacidad<input type="number" min={1} defaultValue={salon.capacity} onBlur={(event) => { const capacity = Number(event.target.value); if (capacity !== salon.capacity) void mutate(`/v1/salons/${salon.id}`, "PATCH", { capacity }).catch(() => undefined); }} /></label>
+                      <label>Estado<select value={salon.status} onChange={(event) => void mutate(`/v1/salons/${salon.id}`, "PATCH", { status: event.target.value }).catch(() => undefined)}><option value="ACTIVE">Activo</option><option value="INACTIVE">Inactivo</option></select></label>
+                      {salon.status === "ACTIVE" ? <button type="button" disabled={isSaving} onClick={() => void mutate(`/v1/salons/${salon.id}`, "DELETE").catch(() => undefined)}>Desactivar salón</button> : null}
+                    </article>
+                  ))}
+                  {salons.length === 0 ? <p>No hay salones en esta sucursal.</p> : null}
+                </div>
+              </>
+            ) : <p>Creá una sucursal antes de administrar salones.</p>}
+          </article>
+        </>
       </StateView>
     </section>
   );

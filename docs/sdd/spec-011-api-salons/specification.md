@@ -43,11 +43,16 @@ Campos: name, capacity, description
 
 Response (200): Salón actualizado
 
+### DELETE /salons/:id (Desactivar)
+
+Baja lógica: cambia el salón a `INACTIVE` y conserva mesas e historial. Response (204).
+
 ## Autorización
 
 - POST /salons → OWNER, ADMIN
 - GET /salons → OWNER, ADMIN, MANAGER
 - PATCH /salons/:id → OWNER, ADMIN
+- DELETE /salons/:id → OWNER, ADMIN
 
 ## Superficie de backoffice
 
