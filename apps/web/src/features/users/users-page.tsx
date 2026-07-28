@@ -26,6 +26,30 @@ export function UsersPage() {
     { label: "Roles asignados", done: usersWithoutRoles.length === 0 && users.length > 0 },
     { label: "Invitaciones visibles", done: users.length === 0 || pendingUsers.length >= 0 },
   ];
+  const pendingChecklist = checklist.filter((step) => !step.done).map((step) => step.label);
+  const nextStep = getUsersNextStep({
+    total: users.length,
+    active: activeUsers.length,
+    pending: pendingUsers.length,
+    withoutRoles: usersWithoutRoles.length,
+  });
+  const userQuickLinks = [
+    {
+      eyebrow: "Perfiles",
+      label: "Profiles",
+      detail: "Cruzar el equipo actual con las superficies y roles operativos definidos para el tenant.",
+    },
+    {
+      eyebrow: "Estructura",
+      label: "Branches",
+      detail: "Verificar si ya existen las sedes donde este equipo va a operar.",
+    },
+    {
+      eyebrow: "Gobierno",
+      label: "Settings / Subscription",
+      detail: "Alinear quién opera el tenant con capacidades y configuración activas.",
+    },
+  ];
 
   return (
     <section aria-labelledby="users-heading" className="overview-page">
@@ -76,6 +100,22 @@ export function UsersPage() {
                   </div>
                 ))}
               </div>
+              <p>
+                {pendingChecklist.length > 0
+                  ? `Todavía conviene resolver: ${pendingChecklist.join(", ")}.`
+                  : "La base del equipo ya está visible y lista para seguir afinando acceso por perfil."}
+              </p>
+            </article>
+
+            <article className="overview-card">
+              <h2>Siguiente paso recomendado</h2>
+              <div className="overview-link-grid">
+                <div className="overview-link-card overview-link-card--primary">
+                  <span>{nextStep.eyebrow}</span>
+                  <strong>{nextStep.label}</strong>
+                  <p>{nextStep.detail}</p>
+                </div>
+              </div>
             </article>
 
             <section className="profile-module-grid" aria-label="Resumen de usuarios">
@@ -94,6 +134,19 @@ export function UsersPage() {
                 );
               })}
             </section>
+
+            <article className="overview-card">
+              <h2>Atajos relacionados</h2>
+              <div className="overview-link-grid">
+                {userQuickLinks.map((link) => (
+                  <div key={link.label} className="overview-link-card">
+                    <span>{link.eyebrow}</span>
+                    <strong>{link.label}</strong>
+                    <p>{link.detail}</p>
+                  </div>
+                ))}
+              </div>
+            </article>
 
             <article className="overview-card">
               <h2>Detalle tabular</h2>
@@ -198,5 +251,55 @@ function getUsersSummary(total: number, active: number, pending: number, without
     tone: "success" as const,
     title: "Equipo cargado y visible",
     message: "Ya se ve una base de usuarios operativa con roles asignados para seguir afinando el backoffice.",
+  };
+}
+
+function getUsersNextStep({
+  total,
+  active,
+  pending,
+  withoutRoles,
+}: {
+  total: number;
+  active: number;
+  pending: number;
+  withoutRoles: number;
+}) {
+  if (total === 0) {
+    return {
+      eyebrow: "Onboarding",
+      label: "Invitar primer equipo",
+      detail: "Antes de operar conviene cargar al menos las personas clave de owner/admin y los primeros perfiles operativos.",
+    };
+  }
+
+  if (active === 0) {
+    return {
+      eyebrow: "Activación",
+      label: "Conseguir primer usuario activo",
+      detail: "El equipo existe, pero todavía falta que alguien complete activación para poder operar el tenant.",
+    };
+  }
+
+  if (withoutRoles > 0) {
+    return {
+      eyebrow: "RBAC operativo",
+      label: "Asignar roles faltantes",
+      detail: "Completá roles para evitar usuarios visibles sin superficie o responsabilidad clara dentro de las apps.",
+    };
+  }
+
+  if (pending > 0) {
+    return {
+      eyebrow: "Cierre de onboarding",
+      label: "Completar invitaciones pendientes",
+      detail: "Queda equipo por activar; conviene cerrar ese pendiente antes de considerar el tenant plenamente armado.",
+    };
+  }
+
+  return {
+    eyebrow: "Siguiente control",
+    label: "Cruzar equipo con perfiles y sedes",
+    detail: "Con el equipo visible y activo, el próximo paso útil es validar cómo se distribuye por app, perfil y sucursal.",
   };
 }

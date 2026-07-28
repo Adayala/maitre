@@ -29,6 +29,30 @@ export function PublicBranchesPage() {
       return (await response.json()) as PublicBranchPayload;
     },
   });
+  const branchDecisionRoutes = [
+    {
+      badge: "Todavía dudás del horario",
+      title: "Consultar disponibilidad",
+      description: "Ideal si ya elegiste sede pero necesitás validar momento y capacidad antes de loguearte.",
+      to: "/public/availability",
+      cta: "Ver disponibilidad",
+    },
+    {
+      badge: "Querés seguir explorando",
+      title: "Volver al menú",
+      description: "Si la decisión depende de la propuesta gastronómica, conviene volver a la carta pública.",
+      to: "/public/menu",
+      cta: "Ver menú",
+    },
+    {
+      badge: "Ya elegiste sede",
+      title: "Ir a reserva",
+      description: "Cuando la sede ya está definida, el siguiente paso natural es entrar al flujo autenticado de reserva.",
+      to: "/public/reservations/new",
+      cta: "Reservar",
+      prefetch: reservePrefetchProps,
+    },
+  ];
 
   return (
     <section className="public-page" aria-labelledby="public-branches-heading">
@@ -43,6 +67,29 @@ export function PublicBranchesPage() {
         <div className="public-detail-list">
           <span><strong>Objetivo:</strong> elegir sede antes de reservar</span>
           <span><strong>Siguiente paso:</strong> revisar disponibilidad o pasar a reserva</span>
+        </div>
+      </article>
+
+      <article className="public-card">
+        <h2>Siguiente decisión después de elegir sede</h2>
+        <div className="public-route-grid">
+          {branchDecisionRoutes.map((route) => (
+            <Link
+              key={route.to}
+              to={route.to}
+              className={`public-route-card ${route.to.includes("/reservations/") ? "public-route-card--accent" : ""}`}
+              {...(route.prefetch ?? {})}
+            >
+              <div className="public-route-meta">
+                <span className={`public-route-badge ${route.to.includes("/reservations/") ? "public-route-badge--accent" : ""}`}>
+                  {route.badge}
+                </span>
+                <h3>{route.title}</h3>
+              </div>
+              <p>{route.description}</p>
+              <span className="public-route-link">{route.cta}</span>
+            </Link>
+          ))}
         </div>
       </article>
 

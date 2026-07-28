@@ -23,6 +23,29 @@ export function BrandsPage() {
     { label: "Marca publicable", done: activeBrands.length > 0 },
     { label: "Base comercial relevada", done: brands.length > 0 },
   ];
+  const pendingChecklist = checklist.filter((step) => !step.done).map((step) => step.label);
+  const nextStep = getBrandsNextStep({
+    total: brands.length,
+    active: activeBrands.length,
+    inactive: inactiveBrands.length,
+  });
+  const brandQuickLinks = [
+    {
+      eyebrow: "Sedes",
+      label: "Branches",
+      detail: "Cruzar si las marcas visibles ya tienen sucursales listas para operar o mostrarse al cliente.",
+    },
+    {
+      eyebrow: "Experiencia",
+      label: "Public web / Customer",
+      detail: "Validar si la capa comercial ya alcanza para discovery, promociones y reservas.",
+    },
+    {
+      eyebrow: "Gobierno",
+      label: "Settings / Subscription",
+      detail: "Conectar marca visible con configuración del tenant y capacidades contratadas.",
+    },
+  ];
 
   return (
     <section aria-labelledby="brands-heading" className="overview-page">
@@ -73,6 +96,22 @@ export function BrandsPage() {
                   </div>
                 ))}
               </div>
+              <p>
+                {pendingChecklist.length > 0
+                  ? `Todavía conviene resolver: ${pendingChecklist.join(", ")}.`
+                  : "La capa comercial visible ya quedó suficientemente armada para seguir afinando experiencia y operación."}
+              </p>
+            </article>
+
+            <article className="overview-card">
+              <h2>Siguiente paso recomendado</h2>
+              <div className="overview-link-grid">
+                <div className="overview-link-card overview-link-card--primary">
+                  <span>{nextStep.eyebrow}</span>
+                  <strong>{nextStep.label}</strong>
+                  <p>{nextStep.detail}</p>
+                </div>
+              </div>
             </article>
 
             <section className="profile-module-grid" aria-label="Resumen de marcas">
@@ -90,6 +129,19 @@ export function BrandsPage() {
                 );
               })}
             </section>
+
+            <article className="overview-card">
+              <h2>Atajos relacionados</h2>
+              <div className="overview-link-grid">
+                {brandQuickLinks.map((link) => (
+                  <div key={link.label} className="overview-link-card">
+                    <span>{link.eyebrow}</span>
+                    <strong>{link.label}</strong>
+                    <p>{link.detail}</p>
+                  </div>
+                ))}
+              </div>
+            </article>
 
             <article className="overview-card">
               <h2>Detalle tabular</h2>
@@ -172,5 +224,45 @@ function getBrandsSummary(total: number, active: number, inactive: number) {
     tone: "success" as const,
     title: "Marcas listas para sostener operación y experiencia pública",
     message: "La capa comercial visible ya muestra una base consistente para seguir afinando owner app y experiencia cliente.",
+  };
+}
+
+function getBrandsNextStep({
+  total,
+  active,
+  inactive,
+}: {
+  total: number;
+  active: number;
+  inactive: number;
+}) {
+  if (total === 0) {
+    return {
+      eyebrow: "Capa comercial",
+      label: "Crear primera marca",
+      detail: "Sin una marca visible cuesta ordenar catálogo, sedes y experiencia pública del tenant.",
+    };
+  }
+
+  if (active === 0) {
+    return {
+      eyebrow: "Publicación",
+      label: "Habilitar una marca visible",
+      detail: "La estructura comercial existe, pero todavía falta una marca plenamente utilizable como referencia pública.",
+    };
+  }
+
+  if (inactive > 0) {
+    return {
+      eyebrow: "Normalización",
+      label: "Revisar marcas pendientes",
+      detail: "Conviene resolver estados incompletos antes de apoyarse en esas marcas para todos los frentes del tenant.",
+    };
+  }
+
+  return {
+    eyebrow: "Siguiente control",
+    label: "Cruzar marca con sedes y experiencia",
+    detail: "Con la base comercial lista, el próximo paso útil es validar cómo se proyecta en sucursales y superficies públicas.",
   };
 }

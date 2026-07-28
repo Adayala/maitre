@@ -28,6 +28,33 @@ export function AuditLogsPage() {
     { label: "Actores identificables", done: uniqueActors.size > 0 },
     { label: "Recursos trazables", done: uniqueResources.size > 0 },
   ];
+  const pendingChecklist = checklist.filter((step) => !step.done).map((step) => step.label);
+  const sensitiveEntries = entries.filter((entry) => {
+    const action = entry.action.trim().toUpperCase();
+    return action.includes("DELETE") || action.includes("CANCEL");
+  });
+  const nextStep = getAuditNextStep({
+    total: entries.length,
+    automatedCount: automatedEntries.length,
+    sensitiveCount: sensitiveEntries.length,
+  });
+  const auditQuickLinks = [
+    {
+      eyebrow: "Equipo",
+      label: "Users / Profiles",
+      detail: "Cruzar eventos con quiénes pueden operar cada superficie y cada rol del tenant.",
+    },
+    {
+      eyebrow: "Base",
+      label: "Setup / Settings",
+      detail: "Validar si los cambios auditados vienen de configuración, onboarding o ajustes operativos.",
+    },
+    {
+      eyebrow: "Comercial",
+      label: "Subscription",
+      detail: "Seguir si parte de la actividad observada responde a cambios de capacidad o estado comercial.",
+    },
+  ];
 
   return (
     <section aria-labelledby="audit-heading" className="overview-page">
@@ -78,6 +105,22 @@ export function AuditLogsPage() {
                   </div>
                 ))}
               </div>
+              <p>
+                {pendingChecklist.length > 0
+                  ? `Todavía conviene revisar: ${pendingChecklist.join(", ")}.`
+                  : "La huella auditable visible ya alcanza para lectura operativa y soporte básico."}
+              </p>
+            </article>
+
+            <article className="overview-card">
+              <h2>Siguiente paso recomendado</h2>
+              <div className="overview-link-grid">
+                <div className="overview-link-card overview-link-card--primary">
+                  <span>{nextStep.eyebrow}</span>
+                  <strong>{nextStep.label}</strong>
+                  <p>{nextStep.detail}</p>
+                </div>
+              </div>
             </article>
 
             <section className="profile-module-grid" aria-label="Eventos recientes">
@@ -99,6 +142,19 @@ export function AuditLogsPage() {
                 );
               })}
             </section>
+
+            <article className="overview-card">
+              <h2>Atajos relacionados</h2>
+              <div className="overview-link-grid">
+                {auditQuickLinks.map((link) => (
+                  <div key={link.label} className="overview-link-card">
+                    <span>{link.eyebrow}</span>
+                    <strong>{link.label}</strong>
+                    <p>{link.detail}</p>
+                  </div>
+                ))}
+              </div>
+            </article>
 
             <article className="overview-card">
               <h2>Detalle tabular</h2>
@@ -194,5 +250,45 @@ function getAuditSummary(total: number, latestEntry: AuditLogItem | null, automa
     tone: "success" as const,
     title: "La actividad del tenant ya tiene huella auditable",
     message: `Último evento visible: ${formatDateTime(latestEntry.occurredAt)}. Ya hay base para seguimiento y soporte operativo.`,
+  };
+}
+
+function getAuditNextStep({
+  total,
+  automatedCount,
+  sensitiveCount,
+}: {
+  total: number;
+  automatedCount: number;
+  sensitiveCount: number;
+}) {
+  if (total === 0) {
+    return {
+      eyebrow: "Trazabilidad",
+      label: "Generar primera huella auditable",
+      detail: "Conviene asegurar que el tenant ya registre eventos básicos antes de depender de soporte, investigación o control operativo.",
+    };
+  }
+
+  if (sensitiveCount > 0) {
+    return {
+      eyebrow: "Seguimiento",
+      label: "Revisar cambios sensibles",
+      detail: "Hay bajas, cancelaciones o eliminaciones visibles; conviene validarlas primero para entender impacto operativo.",
+    };
+  }
+
+  if (automatedCount > 0) {
+    return {
+      eyebrow: "Procesos internos",
+      label: "Distinguir humano vs automatizado",
+      detail: "La traza ya mezcla staff y procesos automáticos; el siguiente paso útil es interpretar qué parte vino de integraciones o jobs.",
+    };
+  }
+
+  return {
+    eyebrow: "Gobierno",
+    label: "Cruzar actividad con equipo y configuración",
+    detail: "Con trazabilidad visible, el próximo paso útil es relacionar eventos con usuarios, perfiles y cambios del tenant.",
   };
 }

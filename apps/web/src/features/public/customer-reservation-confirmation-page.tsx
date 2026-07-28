@@ -21,10 +21,51 @@ export function CustomerReservationConfirmationPage() {
   const location = useLocation();
   const reservation = location.state as ReservationDetail | undefined;
   const confirmationNextAction = getConfirmationNextAction(reservation?.status ?? "");
+  const confirmationChecklist = reservation
+    ? [
+        { label: "La reserva se creó correctamente", done: Boolean(reservation.id) },
+        { label: "La fecha y hora quedaron registradas", done: Boolean(reservation.startAt) },
+        { label: "La cantidad de comensales quedó definida", done: reservation.partySize > 0 },
+        {
+          label: "La reserva ya está confirmada por el local",
+          done: reservation.status === "CONFIRMED",
+        },
+      ]
+    : [];
+  const confirmationPending = confirmationChecklist
+    .filter((step) => !step.done)
+    .map((step) => step.label);
 
   if (!reservation) {
     return <Navigate to="/public/reservations/new" replace />;
   }
+
+  const confirmationRoutes = [
+    {
+      badge: "Seguimiento",
+      title: "Ver mis reservas",
+      description: "Ahí vas a poder seguir el estado, abrir el detalle o cancelar si todavía aplica.",
+      to: "/public/reservations",
+      cta: "Ir a mis reservas",
+      accent: true,
+      prefetch: reservationsPrefetchProps,
+    },
+    {
+      badge: "Exploración",
+      title: "Seguir viendo el menú",
+      description: "Podés aprovechar para revisar platos, promos o definir mejor la próxima visita.",
+      to: "/public/menu",
+      cta: "Explorar menú",
+    },
+    {
+      badge: "Otra visita",
+      title: "Crear otra reserva",
+      description: "Útil si querés organizar otra salida sin tener que volver a empezar desde cero.",
+      to: "/public/reservations/new",
+      cta: "Nueva reserva",
+      prefetch: reservePrefetchProps,
+    },
+  ];
 
   return (
     <section className="public-page" aria-labelledby="customer-reservation-confirmation-heading">
@@ -40,6 +81,46 @@ export function CustomerReservationConfirmationPage() {
               <strong>✓</strong>
               <span>{step}</span>
             </div>
+          ))}
+        </div>
+      </article>
+
+      <article className="public-card">
+        <h2>Siguiente paso recomendado</h2>
+        <div className="public-checklist">
+          {confirmationChecklist.map((step) => (
+            <div key={step.label} className={`public-check-item ${step.done ? "public-check-item--done" : ""}`}>
+              <strong>{step.done ? "✓" : "•"}</strong>
+              <span>{step.label}</span>
+            </div>
+          ))}
+        </div>
+        <p className="public-field-hint">
+          {confirmationPending.length > 0
+            ? `Todavía no quedó resuelto: ${confirmationPending.join(", ")}. Lo mejor ahora es seguir la reserva desde Mis reservas.`
+            : "La reserva ya quedó bien armada y lista para seguimiento."}
+        </p>
+      </article>
+
+      <article className="public-card">
+        <h2>Qué podés hacer ahora</h2>
+        <div className="public-route-grid">
+          {confirmationRoutes.map((route) => (
+            <Link
+              key={route.to}
+              to={route.to}
+              className={`public-route-card ${route.accent ? "public-route-card--accent" : ""}`}
+              {...(route.prefetch ?? {})}
+            >
+              <div className="public-route-meta">
+                <span className={`public-route-badge ${route.accent ? "public-route-badge--accent" : ""}`}>
+                  {route.badge}
+                </span>
+                <h3>{route.title}</h3>
+              </div>
+              <p>{route.description}</p>
+              <span className="public-route-link">{route.cta}</span>
+            </Link>
           ))}
         </div>
       </article>
@@ -77,7 +158,7 @@ export function CustomerReservationConfirmationPage() {
         <Link to="/public" className="public-secondary-cta">
           Volver al inicio
         </Link>
-        <Link to="/public/menu" className="public-cta" {...reservePrefetchProps}>
+        <Link to="/public/menu" className="public-cta">
           Seguir explorando
         </Link>
       </div>

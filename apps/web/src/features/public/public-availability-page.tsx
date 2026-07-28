@@ -25,6 +25,30 @@ export function PublicAvailabilityPage() {
       description: "No se publican IDs de mesa, layout operativo ni estado interno del salón.",
     },
   ];
+  const decisionRoutes = [
+    {
+      badge: "Ya sabés que querés ir",
+      title: "Pasá a reserva autenticada",
+      description: "La forma correcta de validar capacidad real hoy es iniciar la reserva y dejar que la API revalide en vivo.",
+      to: "/public/reservations/new",
+      cta: "Ir a reservar",
+      prefetch: reservePrefetchProps,
+    },
+    {
+      badge: "Todavía comparás sedes",
+      title: "Volvé a sucursales",
+      description: "Si la decisión depende más de ubicación o contacto, conviene resolver eso antes de reservar.",
+      to: "/public/branches",
+      cta: "Ver sucursales",
+    },
+    {
+      badge: "Seguís explorando",
+      title: "Revisá el menú",
+      description: "Si todavía estás evaluando propuesta o estilo del lugar, podés volver al menú público sin fricción.",
+      to: "/public/menu",
+      cta: "Volver al menú",
+    },
+  ];
 
   return (
     <section className="public-page" aria-labelledby="public-availability-heading">
@@ -56,6 +80,29 @@ export function PublicAvailabilityPage() {
               <strong>{index === 0 ? "✓" : index + 1}</strong>
               <span>{step}</span>
             </div>
+          ))}
+        </div>
+      </article>
+
+      <article className="public-card">
+        <h2>Qué conviene hacer después</h2>
+        <div className="public-route-grid">
+          {decisionRoutes.map((route) => (
+            <Link
+              key={route.to}
+              to={route.to}
+              className={`public-route-card ${route.to.includes("/reservations/") ? "public-route-card--accent" : ""}`}
+              {...(route.prefetch ?? {})}
+            >
+              <div className="public-route-meta">
+                <span className={`public-route-badge ${route.to.includes("/reservations/") ? "public-route-badge--accent" : ""}`}>
+                  {route.badge}
+                </span>
+                <h3>{route.title}</h3>
+              </div>
+              <p>{route.description}</p>
+              <span className="public-route-link">{route.cta}</span>
+            </Link>
           ))}
         </div>
       </article>

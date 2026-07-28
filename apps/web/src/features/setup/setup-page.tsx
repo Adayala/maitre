@@ -45,6 +45,30 @@ export function SetupPage() {
     { label: "Al menos un paso completo", done: completedItems.length > 0 },
     { label: "Próximos pasos visibles", done: (data?.data.nextSteps.length ?? 0) > 0 || incompleteItems.length === 0 },
   ];
+  const pendingChecklist = checklist.filter((step) => !step.done).map((step) => step.label);
+  const nextStep = getSetupNextStep({
+    total: setupEntries.length,
+    complete: completedItems.length,
+    incomplete: incompleteItems.length,
+    blocked: blockedItems.length,
+  });
+  const setupQuickLinks = [
+    {
+      eyebrow: "Base",
+      label: "Overview / Branches",
+      detail: "Cruzar el estado del setup con la estructura real de sedes y visibilidad operativa.",
+    },
+    {
+      eyebrow: "Equipo",
+      label: "Users / Profiles",
+      detail: "Validar si el tenant ya tiene personas y perfiles para consumir lo que se configura.",
+    },
+    {
+      eyebrow: "Comercial",
+      label: "Subscription / Settings",
+      detail: "Revisar capacidades y dominios de configuración que pueden destrabar el onboarding.",
+    },
+  ];
 
   return (
     <section aria-labelledby="setup-heading" className="overview-page">
@@ -93,6 +117,22 @@ export function SetupPage() {
                   </div>
                 ))}
               </div>
+              <p>
+                {pendingChecklist.length > 0
+                  ? `Todavía conviene resolver: ${pendingChecklist.join(", ")}.`
+                  : "La base del onboarding ya está suficientemente visible para pasar a operación y afinado funcional."}
+              </p>
+            </article>
+
+            <article className="overview-card">
+              <h2>Siguiente paso recomendado</h2>
+              <div className="overview-link-grid">
+                <div className="overview-link-card overview-link-card--primary">
+                  <span>{nextStep.eyebrow}</span>
+                  <strong>{nextStep.label}</strong>
+                  <p>{nextStep.detail}</p>
+                </div>
+              </div>
             </article>
 
             <section className="profile-module-grid" aria-label="Estado del setup">
@@ -126,6 +166,19 @@ export function SetupPage() {
                   </li>
                 ))}
               </ul>
+            </article>
+
+            <article className="overview-card">
+              <h2>Atajos relacionados</h2>
+              <div className="overview-link-grid">
+                {setupQuickLinks.map((link) => (
+                  <div key={link.label} className="overview-link-card">
+                    <span>{link.eyebrow}</span>
+                    <strong>{link.label}</strong>
+                    <p>{link.detail}</p>
+                  </div>
+                ))}
+              </div>
             </article>
 
             {data.data.nextSteps.length > 0 && (
@@ -195,5 +248,47 @@ function getSetupSummary(total: number, complete: number, incomplete: number, bl
     tone: "success" as const,
     title: "El setup base del tenant está completo",
     message: "La configuración mínima visible ya quedó cerrada y el foco puede pasar a pulir operación y experiencia.",
+  };
+}
+
+function getSetupNextStep({
+  total,
+  complete,
+  incomplete,
+  blocked,
+}: {
+  total: number;
+  complete: number;
+  incomplete: number;
+  blocked: number;
+}) {
+  if (total === 0) {
+    return {
+      eyebrow: "Onboarding",
+      label: "Cargar base mínima del tenant",
+      detail: "Primero conviene materializar la estructura inicial para que el tenant deje de depender de configuración manual dispersa.",
+    };
+  }
+
+  if (blocked > 0) {
+    return {
+      eyebrow: "Desbloqueo",
+      label: "Resolver pasos bloqueados",
+      detail: "Los bloqueos activos hoy frenan el resto del onboarding, así que conviene atacarlos primero.",
+    };
+  }
+
+  if (incomplete > 0) {
+    return {
+      eyebrow: "Cierre de base",
+      label: "Completar setup pendiente",
+      detail: `Ya hay ${complete} pasos resueltos, pero todavía faltan tramos de base antes de considerar al tenant listo para operar.`,
+    };
+  }
+
+  return {
+    eyebrow: "Siguiente control",
+    label: "Cruzar setup con operación real",
+    detail: "Con la base completa, el próximo paso útil es validar cómo se refleja en usuarios, sedes y apps operativas.",
   };
 }
