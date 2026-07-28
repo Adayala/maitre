@@ -32,12 +32,25 @@ interface SubscriptionItemResponse {
 interface CatalogItemResponse {
   code: string;
   name: string;
+  description: string;
+  benefits: string[];
   billingType: "SERVICE" | "QUANTITY";
   billingScope: "TENANT" | "BRAND" | "FISCAL_ENTITY" | "BRANCH" | "POS" | "CONNECTOR";
   unitPrice: number;
   currency: string;
   dependsOn: string[];
   isActive: boolean;
+}
+
+interface CatalogPackageResponse {
+  code: string;
+  name: string;
+  tagline: string;
+  description: string;
+  benefits: string[];
+  items: { catalogItemCode: string; quantity?: number }[];
+  isActive: boolean;
+  sortOrder: number;
 }
 
 const CATALOG_CATEGORIES = [
@@ -106,6 +119,7 @@ export function SubscriptionPage() {
   const queryClient = useQueryClient();
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [scopeRefs, setScopeRefs] = useState<Record<string, string>>({});
+  const [packageBranchId, setPackageBranchId] = useState("");
 
   const subscriptionQuery = useQuery({
     queryKey: ["subscription", selectedTenantId],
@@ -136,6 +150,15 @@ export function SubscriptionPage() {
       }),
     enabled: Boolean(accessToken && selectedTenantId),
   });
+  const packagesQuery = useQuery({
+    queryKey: ["subscription-packages"],
+    queryFn: () =>
+      apiRequest<{ data: CatalogPackageResponse[] }>("/v1/subscription-packages", {
+        accessToken: accessToken!,
+        tenantId: selectedTenantId!,
+      }),
+    enabled: Boolean(accessToken && selectedTenantId),
+  });
 
   const invalidateSubscriptionData = () => {
     void queryClient.invalidateQueries({ queryKey: ["subscription", selectedTenantId] });
@@ -159,12 +182,63 @@ export function SubscriptionPage() {
       }),
     onSuccess: invalidateSubscriptionData,
   });
+  const packageMutation = useMutation({
+    mutationFn: async ({
+      catalogPackage,
+      branchId,
+    }: {
+      catalogPackage: CatalogPackageResponse;
+      branchId: string;
+    }) => {
+      for (const packageItem of catalogPackage.items) {
+        const definition = catalog.find((item) => item.code === packageItem.catalogItemCode);
+        if (!definition) throw new Error(`No existe ${packageItem.catalogItemCode} en el catálogo`);
+        const scopeRefId = definition.billingScope === "TENANT" ? null : branchId;
+        const existing = activeItems.find(
+          (item) =>
+            item.serviceId === definition.code &&
+            (definition.billingScope === "TENANT" || item.scopeRefId === scopeRefId),
+        );
+        if (
+          existing &&
+          definition.billingType === "QUANTITY" &&
+          existing.quantity !== (packageItem.quantity ?? 1)
+        ) {
+          await apiRequest(`/v1/subscriptions/${selectedTenantId}/items/${existing.id}`, {
+            method: "PATCH",
+            accessToken: accessToken!,
+            tenantId: selectedTenantId!,
+            body: { quantity: packageItem.quantity ?? 1 },
+          });
+        } else if (!existing) {
+          await apiRequest(`/v1/subscriptions/${selectedTenantId}/items`, {
+            method: "POST",
+            accessToken: accessToken!,
+            tenantId: selectedTenantId!,
+            body: {
+              catalogItemCode: definition.code,
+              ...(definition.billingType === "QUANTITY"
+                ? { quantity: packageItem.quantity ?? 1 }
+                : {}),
+              ...(scopeRefId ? { scopeRefId } : {}),
+            },
+          });
+        }
+      }
+    },
+    onSuccess: invalidateSubscriptionData,
+  });
 
   const isLoading =
-    subscriptionQuery.isLoading || entitlementsQuery.isLoading || catalogQuery.isLoading;
-  const error = subscriptionQuery.error ?? entitlementsQuery.error ?? catalogQuery.error;
+    subscriptionQuery.isLoading ||
+    entitlementsQuery.isLoading ||
+    catalogQuery.isLoading ||
+    packagesQuery.isLoading;
+  const error =
+    subscriptionQuery.error ?? entitlementsQuery.error ?? catalogQuery.error ?? packagesQuery.error;
   const subscription = subscriptionQuery.data?.data;
   const catalog = catalogQuery.data?.data ?? [];
+  const catalogPackages = packagesQuery.data?.data ?? [];
   const entitlements = entitlementsQuery.data?.data.entitlements ?? [];
   const quotas = entitlementsQuery.data?.data.quotas ?? [];
   const tenantBranches = me?.tenants.find((tenant) => tenant.id === selectedTenantId)?.branches ?? [];
@@ -203,6 +277,7 @@ export function SubscriptionPage() {
           void subscriptionQuery.refetch();
           void entitlementsQuery.refetch();
           void catalogQuery.refetch();
+          void packagesQuery.refetch();
         }}
       >
         {subscription && entitlementsQuery.data && (
@@ -257,6 +332,82 @@ export function SubscriptionPage() {
                   <strong>{formatMoney(estimatedMonthlyTotal, "ARS")}</strong>
                 </p>
               </div>
+              <section aria-labelledby="subscription-packages-heading">
+                <h3 id="subscription-packages-heading">Paquetes recomendados</h3>
+                <p>
+                  Elegí una configuración inicial y después ajustá cada servicio de forma
+                  independiente.
+                </p>
+                <label>
+                  Sucursal donde aplicar el paquete
+                  <select
+                    value={packageBranchId || (tenantBranches.length === 1 ? tenantBranches[0]!.id : "")}
+                    onChange={(event) => setPackageBranchId(event.target.value)}
+                  >
+                    <option value="">Seleccionar</option>
+                    {tenantBranches.map((branch) => (
+                      <option key={branch.id} value={branch.id}>
+                        {branch.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="profile-module-grid">
+                  {catalogPackages.map((catalogPackage) => {
+                    const packagePrice = catalogPackage.items.reduce((total, packageItem) => {
+                      const definition = catalog.find(
+                        (item) => item.code === packageItem.catalogItemCode,
+                      );
+                      return (
+                        total +
+                        (definition?.unitPrice ?? 0) *
+                          (definition?.billingType === "QUANTITY"
+                            ? packageItem.quantity ?? 1
+                            : 1)
+                      );
+                    }, 0);
+                    const selectedBranch =
+                      packageBranchId || (tenantBranches.length === 1 ? tenantBranches[0]!.id : "");
+                    return (
+                      <article key={catalogPackage.code} className="profile-card">
+                        <p className="profile-eyebrow">{catalogPackage.tagline}</p>
+                        <h2>{catalogPackage.name}</h2>
+                        <p>{catalogPackage.description}</p>
+                        <ul>
+                          {catalogPackage.benefits.map((benefit) => (
+                            <li key={benefit}>{benefit}</li>
+                          ))}
+                        </ul>
+                        <p>
+                          Incluye{" "}
+                          {catalogPackage.items
+                            .map((item) => {
+                              const name =
+                                catalog.find(
+                                  (definition) => definition.code === item.catalogItemCode,
+                                )?.name ?? item.catalogItemCode;
+                              return item.quantity ? `${name} × ${item.quantity}` : name;
+                            })
+                            .join(", ")}
+                        </p>
+                        <p>
+                          Estimado: <strong>{formatMoney(packagePrice, "ARS")} / mes</strong>
+                        </p>
+                        <button
+                          type="button"
+                          disabled={packageMutation.isPending || !selectedBranch}
+                          onClick={() => {
+                            if (!packageBranchId && selectedBranch) setPackageBranchId(selectedBranch);
+                            packageMutation.mutate({ catalogPackage, branchId: selectedBranch });
+                          }}
+                        >
+                          Configurar este paquete
+                        </button>
+                      </article>
+                    );
+                  })}
+                </div>
+              </section>
               {CATALOG_CATEGORIES.map((category) => {
                 const categoryItems = catalog.filter((item) =>
                   (category.codes as readonly string[]).includes(item.code),
@@ -283,6 +434,12 @@ export function SubscriptionPage() {
                               {item.billingScope}
                             </p>
                             <h2>{item.name}</h2>
+                            <p>{item.description}</p>
+                            <ul>
+                              {item.benefits.map((benefit) => (
+                                <li key={benefit}>{benefit}</li>
+                              ))}
+                            </ul>
                             <p>{formatMoney(item.unitPrice, item.currency)} / mes</p>
                             {item.dependsOn.length > 0 ? (
                               <p>Requiere: {item.dependsOn.join(", ")}</p>

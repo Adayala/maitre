@@ -570,6 +570,28 @@ test("GET /v1/subscription-catalog returns active catalog items", async () => {
   });
   assert.equal(response.statusCode, 200);
   assert.ok(Array.isArray(response.json().data));
+  assert.ok(response.json().data.every((item: { description: string }) => item.description.length > 40));
+  await app.close();
+});
+
+test("GET /v1/subscription-packages returns ordered configured packages", async () => {
+  const container = await buildContainer();
+  const tenantId = await getTenantId(container);
+  const app = await buildApp(container);
+  const response = await app.inject({
+    method: "GET",
+    url: "/v1/subscription-packages",
+    headers: {
+      authorization: `Bearer ${container.demoAccessToken}`,
+      "x-tenant-id": tenantId,
+    },
+  });
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(
+    response.json().data.map((catalogPackage: { code: string }) => catalogPackage.code),
+    ["BASE_OPERATIVA", "ESENCIAL", "GESTION_INTEGRAL"],
+  );
+  assert.ok(response.json().data.every((catalogPackage: { items: unknown[] }) => catalogPackage.items.length > 0));
   await app.close();
 });
 

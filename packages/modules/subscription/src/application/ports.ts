@@ -3,6 +3,7 @@ import type { SubscriptionItem } from "../domain/subscription-item.js";
 import type { Entitlement } from "../domain/entitlement.js";
 import type { Quota } from "../domain/quota.js";
 import type { CatalogItem } from "../domain/catalog-item.js";
+import type { CatalogPackage } from "../domain/catalog-package.js";
 
 export interface SubscriptionRepositoryPort {
   findByTenantId(tenantId: string): Promise<Subscription | null>;
@@ -35,4 +36,10 @@ export interface QuotaRepositoryPort {
 export interface CatalogRepositoryPort {
   listActive(): Promise<CatalogItem[]>;
   findByCode(code: string): Promise<CatalogItem | null>;
+}
+
+export interface CatalogPackageRepositoryPort {
+  listActive(): Promise<CatalogPackage[]>;
+  findByCode(code: string): Promise<CatalogPackage | null>;
+  save(catalogPackage: CatalogPackage): Promise<void>;
 }

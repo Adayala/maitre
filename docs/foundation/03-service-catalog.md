@@ -22,6 +22,25 @@ Los precios y condiciones se versionan. Un cambio no modifica retroactivamente c
 
 Todo ítem del catálogo, sea `SERVICE` o `QUANTITY`, se contrata y descontrata de forma independiente y en cualquier momento.
 
+Cada ítem también declara una descripción comercial extensa y una lista de beneficios. Estas
+propiedades viven en el catálogo persistido y son la fuente de verdad para la pantalla de
+suscripción.
+
+## Paquetes recomendados
+
+Los paquetes son composiciones versionadas de ítems del catálogo. Facilitan una configuración
+inicial, pero no crean planes rígidos: después de aplicarlos, cada servicio y cantidad continúa
+siendo independiente.
+
+| Código | Enfoque | Composición inicial |
+| --- | --- | --- |
+| `BASE_OPERATIVA` | Mínimo para comenzar | Core, 1 sucursal, Floor, 20 plazas y Cash |
+| `ESENCIAL` | Alternativa económica con crecimiento comercial | Base + Reservations, QR Menu, 40 plazas, 4 mozos y 1 cajero |
+| `GESTION_INTEGRAL` | Operación media conectada | Esencial ampliado con Shifts, Kitchen, QR Ordering, 80 plazas, 8 mozos y 2 cajeros |
+
+La composición se almacena en `subscription_catalog_packages.items`; React nunca define qué
+incluye un paquete.
+
 ## Servicios fundacionales
 
 | Código | Servicio | Tipo | Alcance | Dependencia |

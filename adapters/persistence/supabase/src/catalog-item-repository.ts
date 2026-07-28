@@ -6,6 +6,8 @@ const TABLE = "subscription_catalog_items";
 interface CatalogItemRow {
   code: string;
   name: string;
+  description: string;
+  benefits: string[];
   billing_type: string;
   billing_scope: string;
   unit_price: number;
@@ -20,6 +22,8 @@ function fromRow(row: CatalogItemRow): CatalogItem {
   return {
     code: row.code,
     name: row.name,
+    description: row.description,
+    benefits: row.benefits,
     billingType: row.billing_type as CatalogItem["billingType"],
     billingScope: row.billing_scope as CatalogItem["billingScope"],
     unitPrice: row.unit_price,
@@ -50,6 +54,8 @@ export class SupabaseCatalogItemRepository implements CatalogRepositoryPort {
     const row: CatalogItemRow = {
       code: item.code,
       name: item.name,
+      description: item.description ?? "",
+      benefits: item.benefits ?? [],
       billing_type: item.billingType,
       billing_scope: item.billingScope,
       unit_price: item.unitPrice,

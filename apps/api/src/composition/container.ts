@@ -46,6 +46,7 @@ import {
   InMemoryInvoiceTemplateRepository,
   InMemoryTaxRateRepository,
   InMemoryCatalogItemRepository,
+  InMemoryCatalogPackageRepository,
   FixtureSessionVerificationPort,
 } from "@maitre/adapter-persistence-memory";
 import {
@@ -104,6 +105,7 @@ import {
   SupabaseInvoiceTemplateRepository,
   SupabaseTaxRateRepository,
   SupabaseCatalogItemRepository,
+  SupabaseCatalogPackageRepository,
 } from "@maitre/adapter-persistence-supabase";
 import {
   createTenant,
@@ -132,11 +134,13 @@ import {
   addService,
   addQuantityItem,
   type CatalogItem,
+  type CatalogPackage,
   type SubscriptionRepositoryPort,
   type SubscriptionItemRepositoryPort,
   type EntitlementRepositoryPort,
   type QuotaRepositoryPort,
   type CatalogRepositoryPort,
+  type CatalogPackageRepositoryPort,
 } from "@maitre/subscription";
 import {
   createMenu,
@@ -243,6 +247,7 @@ export interface Container {
   subscriptions: SubscriptionRepositoryPort;
   subscriptionItems: SubscriptionItemRepositoryPort;
   catalog: CatalogRepositoryPort;
+  catalogPackages: CatalogPackageRepositoryPort;
   entitlements: EntitlementRepositoryPort;
   quotas: QuotaRepositoryPort;
   menus: MenuRepositoryPort;
@@ -322,6 +327,8 @@ const catalogItem = (
 ): CatalogItem => ({
   code,
   name,
+  description: catalogDescription(code, name, billingType, billingScope),
+  benefits: catalogBenefits(code, billingType),
   billingType,
   billingScope,
   unitPrice,
@@ -331,6 +338,87 @@ const catalogItem = (
   isActive: true,
   version: 1,
 });
+
+const CATALOG_PURPOSE: Record<string, string> = {
+  CORE: "centraliza la estructura del negocio, usuarios, permisos, auditoría y configuración común de Maitre",
+  BRANCHES: "permite administrar sucursales adicionales dentro del mismo tenant con datos y operación aislados",
+  IDENTITY: "gestiona accesos, roles y permisos para que cada persona vea y opere solamente lo que le corresponde",
+  CONNECT: "integra Maitre con sistemas externos y automatiza el intercambio de información operativa",
+  FLOOR: "digitaliza el salón, las mesas, ocupaciones, visitas, pedidos y precuentas de cada sucursal",
+  SEATS: "define la capacidad simultánea habilitada del salón y acompaña el crecimiento de cada sucursal",
+  RESERVATIONS: "organiza agenda, disponibilidad, reservas, confirmaciones, señas, cancelaciones y lista de espera",
+  SHIFTS: "planifica jornadas, dotaciones, horarios y asignaciones del equipo por sucursal",
+  SHIFT_SLOTS: "habilita franjas operativas diferenciadas como desayuno, almuerzo, merienda y cena",
+  WAITERS: "habilita al personal de salón que puede recibir asignaciones y operar mesas durante el servicio",
+  CASHIERS: "habilita cajeros o cajas concurrentes para registrar y controlar movimientos de dinero",
+  KITCHEN: "coordina comandas, estaciones, preparación, estados y despacho entre salón y cocina",
+  QR_MENU: "publica una carta digital actualizada con categorías, productos, precios e información del menú",
+  QR_ORDERING: "permite que el cliente realice pedidos desde la mesa con aprobación y seguimiento operativo",
+  GUEST: "consolida perfiles, preferencias e historial de clientes para brindar una atención más personalizada",
+  DELIVERY: "organiza pedidos para entrega, estados de preparación y seguimiento del despacho",
+  INVENTORY: "controla existencias, movimientos y disponibilidad de insumos vinculados a la operación",
+  CASH: "administra cajas, aperturas, cierres, movimientos y conciliaciones por sucursal",
+  BILLING: "gestiona documentos comerciales y facturación por entidad fiscal",
+  PAYMENTS: "unifica el registro y la conciliación de distintos medios de pago",
+  PAYLANDING: "genera páginas y enlaces de cobro para reservas, delivery y cuentas pendientes",
+  ARCA: "automatiza la autorización fiscal y la emisión electrónica integrada con ARCA",
+  IVA: "ordena registración, reportes y conciliación de IVA por entidad fiscal",
+  FEEDBACK: "captura opiniones del cliente y las convierte en señales accionables para el equipo",
+  REPUTATION: "centraliza reputación y reseñas para detectar problemas y oportunidades de mejora",
+  CRM: "organiza segmentos, comunicaciones y relación comercial con clientes frecuentes",
+  LOYALTY: "crea beneficios y recompensas para aumentar recurrencia y valor de cada cliente",
+  AI_ASSISTANT: "ofrece asistencia contextual para consultar datos y resolver tareas con lenguaje natural",
+  AI_FORECAST: "anticipa demanda y carga operativa utilizando el historial del negocio",
+  AI_PROMISE: "estima compromisos realistas de reserva, preparación y atención según capacidad disponible",
+  AI_KITCHEN: "detecta cuellos de botella y recomienda prioridades para mejorar tiempos de cocina",
+  AI_AHEAD: "anticipa riesgos operativos combinando información de salón, reservas y cocina",
+  AI_AUTOPILOT: "ejecuta acciones operativas autorizadas bajo políticas, límites y trazabilidad definidos",
+};
+
+function catalogDescription(
+  code: string,
+  name: string,
+  billingType: CatalogItem["billingType"],
+  billingScope: CatalogItem["billingScope"],
+) {
+  const connectorProvider = code.startsWith("PAYLANDING.")
+    ? code.replace("PAYLANDING.", "").replaceAll("_", " ")
+    : null;
+  const purpose =
+    CATALOG_PURPOSE[code] ??
+    (connectorProvider
+      ? `conecta PayLanding con ${connectorProvider} para cobrar mediante ese proveedor de forma independiente`
+      : "incorpora una capacidad especializada al ecosistema operativo de Maitre");
+  const commercialModel =
+    billingType === "QUANTITY"
+      ? "Se contrata por unidades y puede ajustarse a medida que cambia la operación."
+      : "Se activa o desactiva de manera independiente.";
+  return `${name} ${purpose}. ${commercialModel} Su alcance ${billingScope.toLowerCase()} permite asignar el costo y la capacidad al lugar exacto donde se utiliza.`;
+}
+
+function catalogBenefits(code: string, billingType: CatalogItem["billingType"]): string[] {
+  if (code.startsWith("AI_")) {
+    return [
+      "Reduce decisiones reactivas mediante señales anticipadas",
+      "Convierte datos operativos en recomendaciones concretas",
+      "Mantiene trazabilidad y control humano sobre las acciones",
+    ];
+  }
+  if (code.startsWith("PAYLANDING.")) {
+    return [
+      "Amplía las alternativas de cobro para el cliente",
+      "Permite activar cada proveedor de forma independiente",
+      "Centraliza el seguimiento del pago dentro de Maitre",
+    ];
+  }
+  return [
+    billingType === "QUANTITY"
+      ? "Pagás únicamente por la capacidad que necesitás"
+      : "Podés activarlo sin cambiar el resto de la suscripción",
+    "Centraliza la operación y reduce tareas manuales",
+    "Escala por tenant o alcance operativo sin perder trazabilidad",
+  ];
+}
 
 const SEED_CATALOG_ITEMS: CatalogItem[] = [
   catalogItem("CORE", "Maitre Core", "SERVICE", "TENANT", 15_000),
@@ -370,6 +458,87 @@ const SEED_CATALOG_ITEMS: CatalogItem[] = [
   catalogItem("AI_KITCHEN", "Maitre AI Kitchen", "SERVICE", "BRANCH", 7_000, ["KITCHEN"]),
   catalogItem("AI_AHEAD", "Maitre Ahead", "SERVICE", "BRANCH", 10_000, ["FLOOR", "RESERVATIONS", "KITCHEN"]),
   catalogItem("AI_AUTOPILOT", "Maitre Autopilot", "SERVICE", "BRANCH", 12_000, ["AI_AHEAD"]),
+];
+
+const SEED_CATALOG_PACKAGES: CatalogPackage[] = [
+  {
+    code: "BASE_OPERATIVA",
+    name: "Base Operativa",
+    tagline: "Lo mínimo indispensable para comenzar a operar",
+    description:
+      "Una configuración inicial para digitalizar una sucursal pequeña: estructura central, salón, capacidad para veinte comensales y control básico de caja.",
+    benefits: [
+      "Menor inversión mensual para iniciar",
+      "Operación centralizada de salón y caja",
+      "Base preparada para agregar módulos sin migraciones",
+    ],
+    items: [
+      { catalogItemCode: "CORE" },
+      { catalogItemCode: "BRANCHES", quantity: 1 },
+      { catalogItemCode: "FLOOR" },
+      { catalogItemCode: "SEATS", quantity: 20 },
+      { catalogItemCode: "CASH" },
+    ],
+    isActive: true,
+    sortOrder: 10,
+    version: 1,
+  },
+  {
+    code: "ESENCIAL",
+    name: "Esencial",
+    tagline: "Más capacidad comercial a un precio accesible",
+    description:
+      "Pensado para restaurantes en crecimiento que necesitan reservas, carta QR y una dotación inicial de salón y caja, manteniendo una configuración simple.",
+    benefits: [
+      "Reduce tareas manuales de reservas y atención",
+      "Incluye una experiencia digital para el cliente",
+      "Acompaña un equipo inicial de cuatro mozos y un cajero",
+    ],
+    items: [
+      { catalogItemCode: "CORE" },
+      { catalogItemCode: "BRANCHES", quantity: 1 },
+      { catalogItemCode: "FLOOR" },
+      { catalogItemCode: "SEATS", quantity: 40 },
+      { catalogItemCode: "CASH" },
+      { catalogItemCode: "RESERVATIONS" },
+      { catalogItemCode: "QR_MENU" },
+      { catalogItemCode: "WAITERS", quantity: 4 },
+      { catalogItemCode: "CASHIERS", quantity: 1 },
+    ],
+    isActive: true,
+    sortOrder: 20,
+    version: 1,
+  },
+  {
+    code: "GESTION_INTEGRAL",
+    name: "Gestión Integral",
+    tagline: "Operación conectada para equipos con mayor volumen",
+    description:
+      "Una propuesta intermedia completa que conecta salón, reservas, turnos, cocina, pedidos QR y caja para coordinar el servicio de punta a punta.",
+    benefits: [
+      "Visibilidad integral desde la reserva hasta el cierre de caja",
+      "Mejor coordinación entre salón y cocina",
+      "Capacidad inicial para ochenta plazas, ocho mozos y dos cajeros",
+    ],
+    items: [
+      { catalogItemCode: "CORE" },
+      { catalogItemCode: "BRANCHES", quantity: 1 },
+      { catalogItemCode: "FLOOR" },
+      { catalogItemCode: "SEATS", quantity: 80 },
+      { catalogItemCode: "CASH" },
+      { catalogItemCode: "RESERVATIONS" },
+      { catalogItemCode: "SHIFTS" },
+      { catalogItemCode: "SHIFT_SLOTS", quantity: 3 },
+      { catalogItemCode: "WAITERS", quantity: 8 },
+      { catalogItemCode: "CASHIERS", quantity: 2 },
+      { catalogItemCode: "KITCHEN" },
+      { catalogItemCode: "QR_MENU" },
+      { catalogItemCode: "QR_ORDERING" },
+    ],
+    isActive: true,
+    sortOrder: 30,
+    version: 1,
+  },
 ];
 // Demo public MENU_READ capability for manual QR-menu curl testing against the
 // seeded demo Menu. Only its SHA-256 hash is stored (hash-at-rest); the raw
@@ -416,6 +585,7 @@ interface Repositories {
   subscriptions: SubscriptionRepositoryPort;
   subscriptionItems: SubscriptionItemRepositoryPort;
   catalog: CatalogRepositoryPort;
+  catalogPackages: CatalogPackageRepositoryPort;
   entitlements: EntitlementRepositoryPort;
   quotas: QuotaRepositoryPort;
   menus: MenuRepositoryPort;
@@ -501,6 +671,7 @@ function buildRepositories(): Repositories {
       subscriptions: new SupabaseSubscriptionRepository(client),
       subscriptionItems: new SupabaseSubscriptionItemRepository(client),
       catalog: new SupabaseCatalogItemRepository(client),
+      catalogPackages: new SupabaseCatalogPackageRepository(client),
       entitlements: new SupabaseEntitlementRepository(client),
       quotas: new SupabaseQuotaRepository(client),
       menus: new SupabaseMenuRepository(client),
@@ -562,6 +733,7 @@ function buildRepositories(): Repositories {
     subscriptionItems: new InMemorySubscriptionItemRepository(),
     // seed real llega en la Task 8 (SEED_CATALOG_ITEMS)
     catalog: new InMemoryCatalogItemRepository(SEED_CATALOG_ITEMS),
+    catalogPackages: new InMemoryCatalogPackageRepository(SEED_CATALOG_PACKAGES),
     entitlements: new InMemoryEntitlementRepository(),
     quotas: new InMemoryQuotaRepository(),
     menus: new InMemoryMenuRepository(),
@@ -752,6 +924,11 @@ async function ensureSeed(repos: Repositories): Promise<void> {
   for (const item of SEED_CATALOG_ITEMS) {
     if (!(await repos.catalog.findByCode(item.code))) {
       await (repos.catalog as CatalogRepositoryPort & { save(item: CatalogItem): Promise<void> }).save(item);
+    }
+  }
+  for (const catalogPackage of SEED_CATALOG_PACKAGES) {
+    if (!(await repos.catalogPackages.findByCode(catalogPackage.code))) {
+      await repos.catalogPackages.save(catalogPackage);
     }
   }
 

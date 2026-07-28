@@ -182,6 +182,17 @@ export async function registerSubscriptionRoutes(
     }
   });
 
+  app.get("/v1/subscription-packages", async (req, reply) => {
+    const correlationId = randomUUID();
+    try {
+      await requireTenantContext(container, req);
+      const packages = await container.catalogPackages.listActive();
+      return { data: packages };
+    } catch (err) {
+      return sendProblem(reply, correlationId, err);
+    }
+  });
+
   app.post<{ Params: { tenantId: string } }>(
     "/v1/subscriptions/:tenantId/items",
     async (req, reply) => {

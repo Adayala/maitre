@@ -6,3 +6,5 @@
 - Un ítem inactivo no admite nuevas altas, pero sigue resolviendo contratos históricos.
 - Todo alcance excepto `TENANT` exige `scopeRefId` en SubscriptionItem.
 - Cambiar precio o condiciones no modifica retroactivamente `unitPrice` de ítems contratados.
+- Todo ítem activo debe tener una descripción comercial autosuficiente y al menos un beneficio.
+- La UI consume descripción y beneficios desde API; no mantiene copias hardcodeadas.

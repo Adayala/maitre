@@ -13,6 +13,8 @@ export type CatalogBillingScope =
 export interface CatalogItem {
   code: string;
   name: string;
+  description?: string;
+  benefits?: string[];
   billingType: CatalogBillingType;
   billingScope: CatalogBillingScope;
   unitPrice: number;

@@ -8,7 +8,14 @@ Devuelve la Subscription vigente y sus `items`. `{tenantId}` debe coincidir con 
 
 ### `GET /v1/subscription-catalog`
 
-Devuelve `{ "data": CatalogItem[] }` con los ítems activos de SPEC-228.
+Devuelve `{ "data": CatalogItem[] }` con los ítems activos de SPEC-228, incluyendo
+`description` y `benefits`.
+
+### `GET /v1/subscription-packages`
+
+Devuelve `{ "data": SubscriptionCatalogPackage[] }` ordenado por `sortOrder`. Cada paquete incluye
+su propuesta comercial, beneficios y composición versionada. El cliente calcula el estimado con
+los precios vigentes del catálogo y aplica los ítems mediante las mutaciones granulares existentes.
 
 ### `POST /v1/subscriptions/{tenantId}/items`
 
