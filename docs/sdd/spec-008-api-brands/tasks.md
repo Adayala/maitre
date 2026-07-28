@@ -10,5 +10,6 @@
 - [ ] TASK-6: Error handling
 - [ ] TASK-7: Tests
 - [ ] TASK-8: Review
+- [x] TASK-9: Alta y edición visibles en `/brands`
 
 **Est: ~14h**

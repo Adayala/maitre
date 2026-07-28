@@ -61,3 +61,8 @@ Response (204): No content
 - name: min 3 chars, max 100
 - slug: auto-generated, unique per tenant
 - logo_url: must be valid URL
+
+## Superficie de backoffice
+
+`/brands` incluye alta de marca y edición de nombre/estado. El formulario permanece visible aunque
+la lista esté vacía y refresca el listado después de cada mutación exitosa.
