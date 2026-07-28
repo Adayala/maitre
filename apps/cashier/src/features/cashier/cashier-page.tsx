@@ -408,6 +408,67 @@ export function CashierPage() {
     { label: "No quedan sesiones abiertas o con diferencia", done: historyAttentionCount === 0 },
   ];
   const historyPending = historyChecklist.filter((step) => !step.done).map((step) => step.label);
+  const cashierStageCards = [
+    {
+      label: "Apertura",
+      title: activeSession ? "Caja abierta" : "Falta abrir caja",
+      detail: activeSession
+        ? `Ya podés operar sobre ${registerQuery.data?.data.displayName ?? "la caja actual"}.`
+        : "El primer paso es abrir la sesión para empezar a registrar movimiento.",
+      tone: activeSession ? "success" : "warning",
+      active: focusSection === "session",
+      onClick: () => setFocusSection("session" as const),
+    },
+    {
+      label: "Operación",
+      title: movementStats.count > 0 ? `${movementStats.count} movimiento${movementStats.count === 1 ? "" : "s"} registrado${movementStats.count === 1 ? "" : "s"}` : "Todavía sin actividad",
+      detail:
+        movementStats.count > 0
+          ? `Ventas ${formatMoney(movementStats.salesIn, activeSession?.currency ?? DEFAULT_CURRENCY)} y salidas ${formatMoney(movementStats.withdrawalsOut, activeSession?.currency ?? DEFAULT_CURRENCY)}.`
+          : "Cuando empiece el turno, acá vas a ver si la caja realmente se está moviendo.",
+      tone: movementStats.count > 0 ? "info" : "warning",
+      active: focusSection === "movement",
+      onClick: () => setFocusSection("movement" as const),
+    },
+    {
+      label: "Cierre",
+      title:
+        activeSession?.status === "CLOSING"
+          ? "Cierre en curso"
+          : activeSession?.status === "OPEN"
+            ? "Todavía en operación"
+            : closedSession
+              ? "Último cierre generado"
+              : "Sin cierre reciente",
+      detail:
+        activeSession?.status === "CLOSING"
+          ? "Conviene terminar conteo y pasar a conciliación para no dejar el turno colgado."
+          : activeSession?.status === "OPEN"
+            ? "Todavía no corresponde cerrar; seguí registrando operación."
+            : closedSession
+              ? "Ya existe un cierre reciente para revisar o conciliar."
+              : "Cuando termine el turno, este frente va a tomar protagonismo.",
+      tone: activeSession?.status === "CLOSING" ? "warning" : activeSession?.status === "OPEN" ? "info" : "success",
+      active: focusSection === "session" || focusSection === "reconciliation",
+      onClick: () => setFocusSection(activeSession?.status === "CLOSING" ? "reconciliation" : "session"),
+    },
+    {
+      label: "Conciliación",
+      title: reconciliationSummaryLabel,
+      detail:
+        reconciliationDifference == null
+          ? "Todavía no hay diferencia calculada o no empezó la conciliación."
+          : `Diferencia actual ${formatMoney(reconciliationDifference, activeSession?.currency ?? DEFAULT_CURRENCY)}.`,
+      tone:
+        reconciliationRecordQuery.data?.status === "APPROVED" || reconciliationDifference === 0
+          ? "success"
+          : reconciliationRecordQuery.data?.status === "SUBMITTED"
+            ? "info"
+            : "warning",
+      active: focusSection === "reconciliation" || focusSection === "history",
+      onClick: () => setFocusSection("reconciliation" as const),
+    },
+  ] as const;
 
   return (
     <main className="cashier-app">
@@ -521,6 +582,29 @@ export function CashierPage() {
                   {historyAttentionCount > 0 ? `${historyAttentionCount} sesión/es a revisar` : "Sin alertas visibles"}
                 </span>
               </button>
+            </article>
+
+            <article className="cashier-card cashier-card--wide">
+              <div className="cashier-card-head">
+                <div>
+                  <h2>Lectura por etapa</h2>
+                  <p className="muted">Apertura, operación, cierre y conciliación en un solo vistazo.</p>
+                </div>
+              </div>
+              <div className="cashier-stage-grid">
+                {cashierStageCards.map((card) => (
+                  <button
+                    key={card.label}
+                    type="button"
+                    className={`cashier-stage-card cashier-stage-card--${card.tone}${card.active ? " cashier-stage-card--active" : ""}`}
+                    onClick={card.onClick}
+                  >
+                    <span>{card.label}</span>
+                    <strong>{card.title}</strong>
+                    <p>{card.detail}</p>
+                  </button>
+                ))}
+              </div>
             </article>
 
             <article className={`cashier-card${focusSection === "session" ? " cashier-card--focus" : ""}`}>
