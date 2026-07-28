@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { calculateEntitlements } from "../domain/calculate-entitlements.js";
 import type { Entitlement } from "../domain/entitlement.js";
 import type {
+  CatalogRepositoryPort,
   EntitlementRepositoryPort,
   SubscriptionItemRepositoryPort,
 } from "./ports.js";
@@ -9,12 +10,16 @@ import type {
 export interface RecalculateEntitlementsDeps {
   subscriptionItems: SubscriptionItemRepositoryPort;
   entitlements: EntitlementRepositoryPort;
+  catalog: CatalogRepositoryPort;
   now?: () => Date;
 }
 
 // SPEC-035 §4 — "Persist to entitlements table". Recomputes every resource
-// from plan + active services + existing (still-active) overrides, then
-// upserts one Entitlement row per resource.
+// from the contracted subscription_items (each QUANTITY item contributing a
+// limit via its CatalogItem) + existing (still-active) overrides, then
+// upserts one Entitlement row per resource. `planCode` is accepted for
+// call-site compatibility but no longer drives limits — the plan is now an
+// informational label on the Subscription only.
 export async function recalculateEntitlements(
   deps: RecalculateEntitlementsDeps,
   subscriptionId: string,
@@ -22,10 +27,11 @@ export async function recalculateEntitlements(
 ): Promise<Entitlement[]> {
   const now = (deps.now ?? (() => new Date()))();
   const items = await deps.subscriptionItems.listBySubscription(subscriptionId);
-  const activeServiceIds = items.filter((i) => i.status === "ACTIVE").map((i) => i.serviceId);
   const existing = await deps.entitlements.listBySubscription(subscriptionId);
+  const catalogItems = await deps.catalog.listActive();
+  const catalogByCode = new Map(catalogItems.map((c) => [c.code, c] as const));
 
-  const calculated = calculateEntitlements(planCode, activeServiceIds, existing, now);
+  const calculated = calculateEntitlements(items, catalogByCode, existing, now);
   const existingByResource = new Map(existing.map((e) => [e.resource, e] as const));
 
   const result: Entitlement[] = [];

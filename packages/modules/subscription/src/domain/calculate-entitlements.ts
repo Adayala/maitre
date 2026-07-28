@@ -1,56 +1,31 @@
-import type { EntitlementResource, Entitlement } from "./entitlement.js";
-import { resolvePlan } from "./plan-registry.js";
+import type { Entitlement } from "./entitlement.js";
+import type { SubscriptionItem } from "./subscription-item.js";
+import type { CatalogItem } from "./catalog-item.js";
 import { isOverrideActive } from "./entitlement.js";
 
-// SPEC-035 — no formal service catalog spec exists yet; these overrides are
-// illustrative placeholders matching SPEC-035's own example ("floor" ->
-// branches>=10, "kitchen" -> orders unlimited). Revisit once a real Service
-// entity/spec exists.
-const SERVICE_OVERRIDES: Record<string, Partial<Record<EntitlementResource, number>>> = {
-  floor: { branches: 10 },
-  kitchen: { orders: Number.MAX_SAFE_INTEGER },
-};
-
 export interface CalculatedEntitlement {
-  resource: EntitlementResource;
+  resource: string;
   hardLimit: number;
   softLimit?: number;
 }
 
-/**
- * SPEC-035 §Algoritmo — plan defaults, then service overrides (max), then
- * active tenant overrides (highest precedence). Pure function; persisting
- * the result to the entitlements table is the caller's job.
- */
+// Replaces the PLAN_REGISTRY-based calculation (plan.limits + fixed
+// per-service overrides) with one derived directly from the contracted
+// subscription_items: a SERVICE item grants boolean capability (no numeric
+// limit of its own here), while a QUANTITY item contributes a hard limit
+// equal to its contracted quantity, keyed as "<CODE>[<scopeRefId>]" so the
+// same catalog code doesn't collide across different scopes (e.g. branches).
 export function calculateEntitlements(
-  planCode: string,
-  activeServiceIds: string[],
+  activeItems: SubscriptionItem[],
+  catalogByCode: Map<string, CatalogItem>,
   existingEntitlements: Entitlement[],
   now: Date,
 ): CalculatedEntitlement[] {
-  const plan = resolvePlan(planCode);
-  const limits = new Map<EntitlementResource, number>(
-    Object.entries(plan.limits) as [EntitlementResource, number][],
-  );
-
-  for (const serviceId of activeServiceIds) {
-    const overrides = SERVICE_OVERRIDES[serviceId];
-    if (!overrides) continue;
-    for (const [resource, value] of Object.entries(overrides) as [
-      EntitlementResource,
-      number,
-    ][]) {
-      const current = limits.get(resource) ?? 0;
-      limits.set(resource, Math.max(current, value));
-    }
-  }
-
   const overrideByResource = new Map(
     existingEntitlements
       .filter((e) => isOverrideActive(e, now))
       .map((e) => [e.resource, e] as const),
   );
-
   const softLimitByResource = new Map(
     existingEntitlements
       .filter((e) => e.softLimit != null)
@@ -58,15 +33,16 @@ export function calculateEntitlements(
   );
 
   const result: CalculatedEntitlement[] = [];
-  for (const [resource, hardLimit] of limits) {
+  for (const item of activeItems) {
+    if (item.status !== "ACTIVE") continue;
+    const catalogItem = catalogByCode.get(item.serviceId);
+    if (!catalogItem || catalogItem.billingType !== "QUANTITY") continue;
+
+    const resource = item.scopeRefId ? `${item.serviceId}[${item.scopeRefId}]` : item.serviceId;
     const override = overrideByResource.get(resource);
-    const finalHardLimit = override ? override.hardLimit : hardLimit;
+    const hardLimit = override ? override.hardLimit : item.quantity;
     const softLimit = softLimitByResource.get(resource);
-    result.push({
-      resource,
-      hardLimit: finalHardLimit,
-      ...(softLimit != null ? { softLimit } : {}),
-    });
+    result.push({ resource, hardLimit, ...(softLimit != null ? { softLimit } : {}) });
   }
   return result;
 }

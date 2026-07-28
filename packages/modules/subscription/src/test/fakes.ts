@@ -1,10 +1,12 @@
 import type { Subscription } from "../domain/subscription.js";
 import type { SubscriptionItem } from "../domain/subscription-item.js";
 import type { Entitlement } from "../domain/entitlement.js";
+import type { CatalogItem } from "../domain/catalog-item.js";
 import type {
   SubscriptionRepositoryPort,
   SubscriptionItemRepositoryPort,
   EntitlementRepositoryPort,
+  CatalogRepositoryPort,
 } from "../application/ports.js";
 import type { OutboxPort, OutboxRecord } from "../application/outbox.js";
 
@@ -51,6 +53,16 @@ export class FakeEntitlementRepository implements EntitlementRepositoryPort {
     const i = this.items.findIndex((e) => e.id === entitlement.id);
     if (i >= 0) this.items[i] = entitlement;
     else this.items.push(entitlement);
+  }
+}
+
+export class FakeCatalogRepository implements CatalogRepositoryPort {
+  constructor(private readonly items: CatalogItem[] = []) {}
+  async listActive() {
+    return this.items.filter((i) => i.isActive);
+  }
+  async findByCode(code: string) {
+    return this.items.find((i) => i.code === code) ?? null;
   }
 }
 
