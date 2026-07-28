@@ -381,7 +381,7 @@ export function CustomerPage() {
     }
     submitTimerRef.current = window.setTimeout(() => {
       setIsAuthenticating(false);
-      setLoginError("El login no respondió. Probá de nuevo.");
+      setLoginError("El acceso no respondió. Probá de nuevo.");
     }, SUBMIT_FAILSAFE_MS);
     try {
       await signInWithPassword(loginEmail, loginPassword);
@@ -433,14 +433,14 @@ export function CustomerPage() {
       <section className="customer-shell">
         <section className="customer-hero">
           <p className="customer-eyebrow">Experiencia cliente</p>
-          <h1>Paperclip / Maitre Customer</h1>
+          <h1>Reservas y visitas</h1>
           <p>
-            Discovery público primero; reserva y seguimiento cuando la persona decide identificarse.
+            Primero explorás en modo público; cuando decidís avanzar, pasás a reserva y seguimiento con tu cuenta.
           </p>
           <div className="customer-journey-strip">
             <div className="customer-journey-pill">
               <span>Explorar</span>
-              <strong>Sin login</strong>
+              <strong>Sin cuenta</strong>
             </div>
             <div className={`customer-journey-pill ${accessToken ? "customer-journey-pill--done" : ""}`}>
               <span>Acceso</span>
@@ -487,12 +487,12 @@ export function CustomerPage() {
           <article className="cashier-card">
             <h2 className="owner-card-title">Acceso</h2>
             <p className="owner-card-copy">
-              Podés descubrir menú y sucursales sin cuenta. El login aparece recién cuando querés reservar o seguir tu historial.
+              Podés descubrir menú y sucursales sin cuenta. La sesión aparece recién cuando querés reservar o seguir tu historial.
             </p>
             <div className="customer-mode-grid">
               <div className={`customer-mode-card ${!accessToken ? "customer-mode-card--active" : ""}`}>
                 <span className="customer-mode-card__eyebrow">Modo público</span>
-                <strong>Exploración sin login</strong>
+                <strong>Exploración sin cuenta</strong>
                 <p>Ver menú, propuesta y sucursales públicas antes de decidir.</p>
                 <div className="customer-mode-card__actions">
                   <button type="button" className="btn btn--ghost" onClick={() => setTab("menu")}>
@@ -506,7 +506,7 @@ export function CustomerPage() {
               <div className={`customer-mode-card ${accessToken ? "customer-mode-card--active" : ""}`}>
                 <span className="customer-mode-card__eyebrow">Modo identificado</span>
                 <strong>Reserva y seguimiento</strong>
-                <p>Elegir tenant, definir sucursal, reservar y revisar próximas visitas.</p>
+                <p>Elegir restaurante, definir sucursal, reservar y revisar próximas visitas.</p>
                 <div className="customer-mode-card__actions">
                   <button type="button" className="btn btn--primary" onClick={() => setTab(accessToken ? "reserve" : "mine")}>
                     {accessToken ? "Continuar reserva" : "Ir a acceso"}
@@ -528,7 +528,7 @@ export function CustomerPage() {
                 </ul>
               </article>
               <article className={`customer-access-card ${accessToken ? "customer-access-card--active" : ""}`}>
-                <span className="customer-access-card__eyebrow">Se habilita con login</span>
+                <span className="customer-access-card__eyebrow">Se habilita con cuenta</span>
                 <strong>{accessToken ? "Ya quedó habilitado" : "Recién cuando decidís continuar"}</strong>
                 <ul className="customer-access-card__list">
                   <li>Consultar disponibilidad real.</li>
@@ -566,7 +566,7 @@ export function CustomerPage() {
                             submitTimerRef.current = null;
                           }
                           setIsAuthenticating(false);
-                          setLoginError("Login cancelado. Podés reintentar.");
+                          setLoginError("Acceso cancelado. Podés reintentar.");
                         }}
                       >
                         Cancelar intento
@@ -576,11 +576,11 @@ export function CustomerPage() {
                 ) : (
                   <div className="cashier-form">
                     <label>
-                      Token local
+                      Token local (demo)
                       <input
                         value={fixtureToken}
                         onChange={(e) => setFixtureToken(e.target.value)}
-                        placeholder="Bearer token"
+                        placeholder="Token de acceso"
                       />
                     </label>
                     <button
@@ -624,20 +624,20 @@ export function CustomerPage() {
 
           {accessToken ? (
             <article className="cashier-card">
-              <h2 className="owner-card-title">Contexto</h2>
+              <h2 className="owner-card-title">Restaurante y sucursal</h2>
               <StateView
                 isLoading={isLoading}
                 error={error ?? null}
                 isEmpty={tenants.length === 0}
                 emptyIcon="🏢"
-                emptyTitle="Sin tenant"
-                emptyMessage="La sesión no tiene tenants visibles."
+                emptyTitle="Sin restaurante"
+                emptyMessage="Tu cuenta no tiene restaurantes visibles."
               >
                 <div className="cashier-form">
                   <label>
-                    Tenant
+                    Restaurante
                     <select value={selectedTenantId ?? ""} onChange={(e) => selectTenant(e.target.value)}>
-                      <option value="">Elegí tenant</option>
+                      <option value="">Elegí restaurante</option>
                       {tenants.map((tenant) => (
                         <option key={tenant.id} value={tenant.id}>{tenant.name}</option>
                       ))}
@@ -835,17 +835,17 @@ export function CustomerPage() {
                         </div>
                       ) : (
                         <div className="cashier-banner cashier-banner--info">
-                          <span>No hay sucursales visibles para el tenant elegido.</span>
+                          <span>No hay sucursales visibles para el restaurante elegido.</span>
                         </div>
                       )
                     ) : (
                       <div className="cashier-banner cashier-banner--info">
-                        <span>Elegí un tenant para ver y seleccionar sucursales reservables.</span>
+                        <span>Elegí un restaurante para ver y seleccionar sucursales reservables.</span>
                       </div>
                     )
                   ) : (
                     <div className="cashier-banner cashier-banner--info">
-                      <span>Podés explorar la sucursal pública sin login; para elegir una sucursal reservable, iniciá sesión.</span>
+                      <span>Podés explorar la sucursal pública sin cuenta; para elegir una sucursal reservable, iniciá sesión.</span>
                     </div>
                   )}
                 </div>
@@ -943,7 +943,7 @@ export function CustomerPage() {
                 >
                   {!selectedTenantId || !selectedBranchId ? (
                     <div className="cashier-banner cashier-banner--info">
-                      <span>Antes de confirmar, definí tenant y sucursal para operar con contexto real.</span>
+                      <span>Antes de confirmar, definí restaurante y sucursal para operar con contexto real.</span>
                     </div>
                   ) : null}
                   <label>
@@ -1027,7 +1027,7 @@ export function CustomerPage() {
               <h2 className="owner-card-title">Disponibilidad</h2>
               {!accessToken ? (
                 <div className="cashier-banner cashier-banner--info">
-                  <span>Iniciá sesión y elegí tenant/sucursal para consultar disponibilidad real.</span>
+                  <span>Iniciá sesión y elegí restaurante y sucursal para consultar disponibilidad real.</span>
                 </div>
               ) : (
                 <StateView isLoading={availabilityQuery.isLoading} error={(availabilityQuery.error as Error) ?? null} onRetry={() => void availabilityQuery.refetch()}>
@@ -1320,7 +1320,7 @@ function getCustomerReservePriority({
   if (!selectedTenantId) {
     return {
       tone: "info" as const,
-      message: "Elegí un tenant para continuar con el flujo de reserva.",
+      message: "Elegí un restaurante para continuar con el flujo de reserva.",
     };
   }
 
@@ -1354,7 +1354,7 @@ function getCustomerReservePriority({
 
   return {
     tone: "info" as const,
-    message: "Completá los datos clave para pasar de discovery a reserva confirmable.",
+    message: "Completá los datos clave para pasar de la exploración a una reserva confirmable.",
   };
 }
 
@@ -1372,7 +1372,7 @@ function getCustomerNextAction({
   if (!accessToken) {
     return {
       tone: "info" as const,
-      title: "Explorá sin login y reservá cuando quieras",
+      title: "Explorá sin cuenta y reservá cuando quieras",
       detail: "Podés ver menú y sucursales sin cuenta. Cuando decidas reservar o seguir tu historial, iniciá sesión.",
       ctaLabel: "Ir a acceso",
       nextTab: "mine" as CustomerTab,
@@ -1393,7 +1393,7 @@ function getCustomerNextAction({
     return {
       tone: "info" as const,
       title: "Elegí primero el restaurante",
-      detail: "Seleccioná el tenant para habilitar las sucursales disponibles y pasar al flujo real de reserva.",
+      detail: "Seleccioná el restaurante para habilitar las sucursales disponibles y pasar al flujo real de reserva.",
       ctaLabel: "Ver sucursales",
       nextTab: "branches" as CustomerTab,
     };
@@ -1441,7 +1441,7 @@ function getCustomerReserveActionPlan({
           : "Completá los datos mínimos y después revisá disponibilidad real antes de reservar.",
     steps: [
       { label: "Sesión activa", done: accessToken },
-      { label: "Tenant definido", done: Boolean(selectedTenantId) },
+      { label: "Restaurante definido", done: Boolean(selectedTenantId) },
       { label: "Sucursal definida", done: Boolean(selectedBranch) },
       { label: "Horario cargado", done: Boolean(startAt) },
       { label: "Disponibilidad favorable", done: availability === true },
