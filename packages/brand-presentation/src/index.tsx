@@ -109,6 +109,9 @@ export function BrandPresentationProvider(props: ProviderProps) {
     "--text": presentation.colors.text,
     "--muted": presentation.colors.mutedText,
     "--border": presentation.colors.border,
+    backgroundColor: presentation.colors.canvas,
+    color: presentation.colors.text,
+    minHeight: "100vh",
     fontFamily: presentation.typography.body ? `${presentation.typography.body.family}, ${presentation.typography.body.fallback}` : undefined,
   } as CSSProperties;
   const template = presentation.templates[props.surface];
