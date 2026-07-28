@@ -109,6 +109,7 @@ proyección generada cuando se implemente `npm run sdd:validate`.
 
 - [ ] spec-entity-subscription — Subscription: items, status, billing cycle
 - [ ] spec-entity-subscription-item — SubscriptionItem: serviceCode, scope, branches
+- [ ] [SPEC-228 — SubscriptionCatalogItem](spec-228-entity-subscription-catalog-item/) — catálogo versionado, precio, tipo y alcance
 - [ ] spec-entity-entitlement — Entitlement: derecho efectivo (FLOOR.ACCESS)
 - [ ] spec-entity-quota — Quota: límite cuantitativo (MAX_BRANCHES)
 

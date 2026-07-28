@@ -2,43 +2,53 @@
 
 ## Endpoints
 
-### `GET /v1/subscription`
+### `GET /v1/subscriptions/{tenantId}`
 
-Devuelve la Subscription vigente del contexto autenticado, sus items visibles, revisión y estado de
-recomputación. El Tenant se resuelve server-side.
+Devuelve la Subscription vigente y sus `items`. `{tenantId}` debe coincidir con el tenant autenticado.
 
-### `POST /v1/subscriptions`
+### `GET /v1/subscription-catalog`
 
-Provisioning de plataforma, no endpoint tenant común:
+Devuelve `{ "data": CatalogItem[] }` con los ítems activos de SPEC-228.
+
+### `POST /v1/subscriptions/{tenantId}/items`
 
 ```json
 {
-  "tenantId": "uuid",
-  "catalogVersion": 1,
-  "period": { "startsAt": "ISO8601", "endsAt": null },
-  "items": [
-    {
-      "serviceCode": "floor",
-      "quantity": 1,
-      "branchScopes": [],
-      "config": {}
-    }
-  ]
+  "catalogItemCode": "SEATS",
+  "quantity": 12,
+  "scopeRefId": "branch-uuid"
 }
 ```
 
-Requiere capability de plataforma, Idempotency-Key y auditoría. `tenantId` sólo se acepta en este
-workflow privilegiado.
+Requiere `service:manage`. `quantity` es obligatoria conceptualmente para `QUANTITY` (si se omite,
+la API usa `1`) y está prohibida para `SERVICE`. `scopeRefId` es obligatorio salvo alcance `TENANT`.
+Responde `201` con el ítem creado o reactivado.
 
-### `PATCH /v1/subscriptions/{subscriptionId}`
+### `PATCH /v1/subscriptions/{tenantId}/items/{itemId}`
 
-Requiere `If-Match`. Puede proponer status/período/items conforme a catálogo. Desactivar un item
-preserva su identidad/historia; no existe DELETE. Una reducción incompatible responde `422` con
-estado/remediation aplicable.
+Actualiza un ítem cuantitativo:
+
+```json
+{ "quantity": 8 }
+```
+
+La cantidad debe ser un entero positivo. Responde `404` si el ítem no pertenece a la suscripción.
+
+### `DELETE /v1/subscriptions/{tenantId}/items/{itemId}`
+
+Desactiva el ítem identificado, preserva su fila e historial y recalcula entitlements. El verbo
+DELETE expresa baja comercial lógica, no hard delete.
+
+## Autorización y errores
+
+- Todos los endpoints requieren contexto autenticado de tenant.
+- Las mutaciones requieren `service:manage`.
+- Tenant ajeno o ítem inexistente responde `404` sin filtrar existencia.
+- Payload, catálogo inactivo, cantidad o alcance inválidos responden `400`.
 
 ## Fuera de alcance
 
-- `/upgrade`, billing cycle, precio, charge, refund y proration;
+- checkout, charge, refund y proration;
 - hard delete;
 - writes de Entitlement/Quota;
 - tenantId arbitrario en endpoints de usuario tenant.
