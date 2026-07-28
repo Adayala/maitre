@@ -393,6 +393,21 @@ export function CashierPage() {
     { label: "Conciliación enviada", done: reconciliationRecordQuery.data?.status === "SUBMITTED" || reconciliationRecordQuery.data?.status === "APPROVED" },
     { label: "Sin diferencia", done: reconciliationDifference === 0 || reconciliationDifference == null },
   ];
+  const settlementDifference = dailySettlementQuery.data?.data.differenceMinorUnits ?? null;
+  const settlementChecklist = [
+    { label: "Hay sesiones del día para revisar", done: (dailySettlementQuery.data?.data.sessionCount ?? 0) > 0 },
+    { label: "El día no muestra diferencia global", done: settlementDifference === 0 || settlementDifference == null },
+    { label: "No quedan sesiones con alertas", done: historyAttentionCount === 0 },
+    { label: "Hay una sesión puntual seleccionada", done: Boolean(selectedHistorySession) },
+  ];
+  const settlementPending = settlementChecklist.filter((step) => !step.done).map((step) => step.label);
+  const historyChecklist = [
+    { label: "Existe historial cargado", done: sessionHistory.length > 0 },
+    { label: "Hay una sesión elegida para inspeccionar", done: Boolean(selectedHistorySession) },
+    { label: "La sesión elegida tiene settlement asociado", done: !selectedHistorySession || Boolean(selectedSettlementSession) },
+    { label: "No quedan sesiones abiertas o con diferencia", done: historyAttentionCount === 0 },
+  ];
+  const historyPending = historyChecklist.filter((step) => !step.done).map((step) => step.label);
 
   return (
     <main className="cashier-app">
@@ -871,13 +886,39 @@ export function CashierPage() {
               </article>
             ) : null}
 
-            <article className="cashier-card cashier-card--wide">
+            <article className={`cashier-card cashier-card--wide${focusSection === "history" ? " cashier-card--focus" : ""}`}>
               <div className="cashier-card-head">
                 <h2>Daily settlement</h2>
                 <label className="cashier-inline-field">
                   <span>Fecha</span>
                   <input type="date" value={settlementDate} onChange={(e) => setSettlementDate(e.target.value)} />
                 </label>
+              </div>
+              <div className="cashier-panel">
+                <strong>Qué revisar en el cierre del día</strong>
+                <div className="cashier-checklist">
+                  {settlementChecklist.map((step) => (
+                    <div key={step.label} className={`cashier-check ${step.done ? "cashier-check--done" : ""}`}>
+                      <strong>{step.done ? "✓" : "•"}</strong>
+                      <span>{step.label}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className={`cashier-banner ${historyAttentionCount > 0 || (settlementDifference ?? 0) !== 0 ? "cashier-banner--warning" : "cashier-banner--success"}`}>
+                  <span>
+                    {settlementPending.length > 0
+                      ? `Todavía conviene revisar: ${settlementPending.join(", ")}.`
+                      : "El settlement diario ya quedó consistente y sin focos pendientes."}
+                  </span>
+                </div>
+                <div className="cashier-quick-actions">
+                  <button type="button" className="btn btn--ghost btn--sm" onClick={() => setFocusSection("history")}>
+                    Ir a historial
+                  </button>
+                  <button type="button" className="btn btn--ghost btn--sm" onClick={() => setSessionStatusFilter("CLOSING")}>
+                    Ver sesiones en cierre
+                  </button>
+                </div>
               </div>
 
               <StateView
@@ -970,6 +1011,18 @@ export function CashierPage() {
                             <span className={`muted ${session.differenceMinorUnits ? "cashier-session-difference" : ""}`}>
                               Diferencia: {formatMoney(session.differenceMinorUnits ?? 0, dailySettlementQuery.data.data.currency)}
                             </span>
+                            <div className="cashier-quick-actions">
+                              <button
+                                type="button"
+                                className="btn btn--ghost btn--sm"
+                                onClick={() => {
+                                  setSelectedHistorySessionId(session.cashSessionId);
+                                  setFocusSection("history");
+                                }}
+                              >
+                                Ver en historial
+                              </button>
+                            </div>
                           </li>
                         ))}
                       </ul>
@@ -985,6 +1038,24 @@ export function CashierPage() {
                 <span className="muted">Caja actual y cierres recientes</span>
               </div>
               <p className="cashier-list-hint">El listado prioriza primero sesiones activas o en cierre y luego cierres recientes.</p>
+              <div className="cashier-panel">
+                <strong>Cómo leer este historial</strong>
+                <div className="cashier-checklist">
+                  {historyChecklist.map((step) => (
+                    <div key={step.label} className={`cashier-check ${step.done ? "cashier-check--done" : ""}`}>
+                      <strong>{step.done ? "✓" : "•"}</strong>
+                      <span>{step.label}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className={`cashier-banner ${historyAttentionCount > 0 ? "cashier-banner--warning" : "cashier-banner--success"}`}>
+                  <span>
+                    {historyPending.length > 0
+                      ? `Todavía hay contexto para revisar: ${historyPending.join(", ")}.`
+                      : "El historial ya quedó limpio y sin sesiones operativas pendientes."}
+                  </span>
+                </div>
+              </div>
               <div className="cashier-toolbar">
                 <div className="cashier-segmented">
                   <button type="button" className={`btn btn--sm ${sessionStatusFilter === "ALL" ? "btn--primary" : "btn--ghost"}`} onClick={() => setSessionStatusFilter("ALL")}>Todas</button>
