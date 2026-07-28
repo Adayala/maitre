@@ -372,27 +372,30 @@ export function SubscriptionPage() {
                       <article key={catalogPackage.code} className="profile-card">
                         <p className="profile-eyebrow">{catalogPackage.tagline}</p>
                         <h2>{catalogPackage.name}</h2>
-                        <p>{catalogPackage.description}</p>
-                        <ul>
-                          {catalogPackage.benefits.map((benefit) => (
-                            <li key={benefit}>{benefit}</li>
-                          ))}
-                        </ul>
-                        <p>
-                          Incluye{" "}
-                          {catalogPackage.items
-                            .map((item) => {
-                              const name =
-                                catalog.find(
-                                  (definition) => definition.code === item.catalogItemCode,
-                                )?.name ?? item.catalogItemCode;
-                              return item.quantity ? `${name} × ${item.quantity}` : name;
-                            })
-                            .join(", ")}
-                        </p>
                         <p>
                           Estimado: <strong>{formatMoney(packagePrice, "ARS")} / mes</strong>
                         </p>
+                        <details>
+                          <summary>Ver descripción y beneficios</summary>
+                          <p>{catalogPackage.description}</p>
+                          <ul>
+                            {catalogPackage.benefits.map((benefit) => (
+                              <li key={benefit}>{benefit}</li>
+                            ))}
+                          </ul>
+                          <p>
+                            Incluye{" "}
+                            {catalogPackage.items
+                              .map((item) => {
+                                const name =
+                                  catalog.find(
+                                    (definition) => definition.code === item.catalogItemCode,
+                                  )?.name ?? item.catalogItemCode;
+                                return item.quantity ? `${name} × ${item.quantity}` : name;
+                              })
+                              .join(", ")}
+                          </p>
+                        </details>
                         <button
                           type="button"
                           disabled={packageMutation.isPending || !selectedBranch}
@@ -434,16 +437,19 @@ export function SubscriptionPage() {
                               {item.billingScope}
                             </p>
                             <h2>{item.name}</h2>
-                            <p>{item.description}</p>
-                            <ul>
-                              {item.benefits.map((benefit) => (
-                                <li key={benefit}>{benefit}</li>
-                              ))}
-                            </ul>
                             <p>{formatMoney(item.unitPrice, item.currency)} / mes</p>
-                            {item.dependsOn.length > 0 ? (
-                              <p>Requiere: {item.dependsOn.join(", ")}</p>
-                            ) : null}
+                            <details>
+                              <summary>Ver descripción y beneficios</summary>
+                              <p>{item.description}</p>
+                              <ul>
+                                {item.benefits.map((benefit) => (
+                                  <li key={benefit}>{benefit}</li>
+                                ))}
+                              </ul>
+                              {item.dependsOn.length > 0 ? (
+                                <p>Requiere: {item.dependsOn.join(", ")}</p>
+                              ) : null}
+                            </details>
                             {item.billingScope === "BRANCH" ? (
                               <label>
                                 Sucursal
