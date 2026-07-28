@@ -184,6 +184,39 @@ export function VisitPage({ visitId }: { visitId: string }) {
     canClose,
     checkStatus: check?.status ?? null,
   });
+  const visitChecklist = [
+    { label: "No hay borrador pendiente", done: !draftOrder },
+    { label: "Ítems listos ya entregados", done: readyItems === 0 },
+    {
+      label: "Estado de cuenta claro",
+      done: check == null || check.status === "OPEN" || check.status === "PAYMENT_PENDING" || check.status === "SETTLED" || check.status === "VOID",
+    },
+    { label: "Mesa lista para cierre", done: canClose },
+  ];
+  const visitPending = visitChecklist.filter((step) => !step.done).map((step) => step.label);
+  const visitFocusCards = [
+    {
+      label: "Cuenta",
+      value: check ? 1 : 0,
+      detail: paymentRequested ? "Pago en curso" : canRequestPayment ? "Lista para pedir cuenta" : "Sin foco inmediato",
+      active: focusSection === "check",
+      onClick: () => setFocusSection("check"),
+    },
+    {
+      label: "Pedidos",
+      value: activeOrders.length,
+      detail: readyItems > 0 ? "Hay ítems listos" : draftOrder ? "Hay borrador abierto" : "Servicio en seguimiento",
+      active: focusSection === "orders",
+      onClick: () => setFocusSection("orders"),
+    },
+    {
+      label: "Acciones",
+      value: canClose ? 1 : 0,
+      detail: canClose ? "Mesa lista para cerrar" : "Seguir servicio o cobro",
+      active: focusSection === "actions",
+      onClick: () => setFocusSection("actions"),
+    },
+  ];
 
   return (
     <div className="screen">
@@ -242,6 +275,45 @@ export function VisitPage({ visitId }: { visitId: string }) {
             <article className="waiter-kpi-card">
               <span>Entregados</span>
               <strong>{deliveredItems}</strong>
+            </article>
+          </section>
+
+          <section className="waiter-guidance" aria-label="Guía operativa de la mesa">
+            <article className="waiter-guidance-card">
+              <span className="waiter-guidance-eyebrow">Chequeo de mesa</span>
+              <strong>Qué conviene revisar ahora</strong>
+              <div className="waiter-checklist">
+                {visitChecklist.map((step) => (
+                  <div key={step.label} className={`waiter-check ${step.done ? "waiter-check--done" : ""}`}>
+                    <strong>{step.done ? "✓" : "•"}</strong>
+                    <span>{step.label}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="waiter-guidance-note">
+                {visitPending.length > 0
+                  ? `Todavía conviene pasar por: ${visitPending.join(", ")}.`
+                  : "La mesa está ordenada y lista para seguir o cerrar sin fricción."}
+              </p>
+            </article>
+
+            <article className="waiter-guidance-card">
+              <span className="waiter-guidance-eyebrow">Atajos del mozo</span>
+              <strong>Entrá directo al frente útil</strong>
+              <div className="waiter-focus-grid">
+                {visitFocusCards.map((card) => (
+                  <button
+                    key={card.label}
+                    type="button"
+                    className={`waiter-focus-card ${card.active ? "waiter-focus-card--active" : ""}`}
+                    onClick={card.onClick}
+                  >
+                    <span>{card.label}</span>
+                    <strong>{card.value}</strong>
+                    <p>{card.detail}</p>
+                  </button>
+                ))}
+              </div>
             </article>
           </section>
 

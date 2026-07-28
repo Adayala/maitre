@@ -254,6 +254,114 @@ export function CustomerPage() {
     selectedBranchId,
     source: "branches",
   });
+  const menuDecisionRoutes = [
+    {
+      step: "Si ya te convenció",
+      title: accessToken ? "Seguir con la reserva" : "Pasar al acceso",
+      description: accessToken
+        ? "Podés convertir interés en reserva sin salir del flujo."
+        : "Para reservar o guardar historial, primero necesitás identificarte.",
+      onClick: () => setTab(menuNextStep.nextTab),
+    },
+    {
+      step: "Si te falta contexto",
+      title: "Revisar sucursales",
+      description: "Antes de elegir fecha, conviene definir en qué sede querés ir.",
+      onClick: () => setTab("branches"),
+    },
+    {
+      step: "Si querés volver",
+      title: "Volver al inicio",
+      description: "Ideal para retomar el recorrido general sin perderte en el detalle.",
+      onClick: () => setTab("discover"),
+    },
+  ];
+  const branchesDecisionRoutes = [
+    {
+      step: selectedBranchId ? "Ya elegiste una sede" : "Elegí primero una sede",
+      title: selectedBranchId ? "Ir a reservar" : "Marcar una sucursal",
+      description: selectedBranchId
+        ? "Con la sucursal definida, el siguiente paso natural es pasar al flujo de reserva."
+        : "Definí la sede para poder continuar con disponibilidad y reserva real.",
+      onClick: () => setTab(selectedBranchId ? "reserve" : "branches"),
+    },
+    {
+      step: accessToken ? "Si querés comparar" : "Si seguís explorando",
+      title: "Volver al menú",
+      description: "Te sirve para contrastar la sede con la propuesta gastronómica antes de decidir.",
+      onClick: () => setTab("menu"),
+    },
+    {
+      step: accessToken ? "Si ya reservaste antes" : "Si preferís esperar",
+      title: accessToken ? "Ver mis reservas" : "Volver al inicio",
+      description: accessToken
+        ? "Podés revisar próximas visitas sin rehacer el recorrido."
+        : "Mantené el flujo público hasta que decidas iniciar sesión.",
+      onClick: () => setTab(accessToken ? "mine" : "discover"),
+    },
+  ];
+  const mineDecisionRoutes = accessToken
+    ? nextReservation
+      ? [
+          {
+            step: "Seguimiento",
+            title: "Preparar la próxima visita",
+            description: "Revisá sede, horario y estado antes de salir para evitar sorpresas.",
+            onClick: () => setTab("branches"),
+          },
+          {
+            step: "Nueva salida",
+            title: "Crear otra reserva",
+            description: "Útil si querés organizar una segunda visita sin esperar a terminar la actual.",
+            onClick: () => setTab("reserve"),
+          },
+          {
+            step: "Exploración",
+            title: "Volver al menú",
+            description: "Podés seguir viendo carta o promos mentales antes de decidir otra salida.",
+            onClick: () => setTab("menu"),
+          },
+        ]
+      : [
+          {
+            step: "Próximo paso",
+            title: customerNextAction.ctaLabel,
+            description: customerNextAction.detail,
+            onClick: () => setTab(customerNextAction.nextTab),
+          },
+          {
+            step: "Comparar antes",
+            title: "Ver sucursales",
+            description: "Definí mejor la sede antes de reservar de nuevo.",
+            onClick: () => setTab("branches"),
+          },
+          {
+            step: "Inspiración",
+            title: "Explorar menú",
+            description: "Volvé a la carta si todavía no decidiste cómo querés planear la próxima salida.",
+            onClick: () => setTab("menu"),
+          },
+        ]
+    : [
+        {
+          step: "Acceso requerido",
+          title: "Iniciar sesión",
+          description: "Necesitás sesión para ver reservas, cancelarlas o seguir su estado.",
+          onClick: () => setTab("mine"),
+        },
+        {
+          step: "Mientras tanto",
+          title: "Explorar menú",
+          description: "Podés seguir en modo público hasta decidir si querés reservar.",
+          onClick: () => setTab("menu"),
+        },
+        {
+          step: "Elegir sede",
+          title: "Ver sucursales",
+          description: "También podés usar el tiempo para entender qué sede te conviene más.",
+          onClick: () => setTab("branches"),
+        },
+      ];
 
   async function handlePasswordLogin(event: FormEvent) {
     event.preventDefault();
@@ -577,6 +685,18 @@ export function CustomerPage() {
                 </button>
               </div>
             </article>
+            <article className="cashier-card">
+              <h2 className="owner-card-title">Atajos según tu situación</h2>
+              <div className="customer-path-grid">
+                {menuDecisionRoutes.map((route) => (
+                  <button key={route.title} type="button" className="customer-path-card" onClick={route.onClick}>
+                    <span className="customer-path-step">{route.step}</span>
+                    <strong>{route.title}</strong>
+                    <p>{route.description}</p>
+                  </button>
+                ))}
+              </div>
+            </article>
           </section>
         ) : null}
 
@@ -660,6 +780,18 @@ export function CustomerPage() {
                 <button type="button" className="btn btn--ghost" onClick={() => setTab("reserve")}>
                   Ir a reservar
                 </button>
+              </div>
+            </article>
+            <article className="cashier-card">
+              <h2 className="owner-card-title">Qué conviene hacer después</h2>
+              <div className="customer-path-grid">
+                {branchesDecisionRoutes.map((route) => (
+                  <button key={route.title} type="button" className="customer-path-card" onClick={route.onClick}>
+                    <span className="customer-path-step">{route.step}</span>
+                    <strong>{route.title}</strong>
+                    <p>{route.description}</p>
+                  </button>
+                ))}
               </div>
             </article>
           </section>
@@ -911,6 +1043,18 @@ export function CustomerPage() {
                 </div>
               </article>
             ) : null}
+            <article className="cashier-card">
+              <h2 className="owner-card-title">Atajos para seguir</h2>
+              <div className="customer-path-grid">
+                {mineDecisionRoutes.map((route) => (
+                  <button key={route.title} type="button" className="customer-path-card" onClick={route.onClick}>
+                    <span className="customer-path-step">{route.step}</span>
+                    <strong>{route.title}</strong>
+                    <p>{route.description}</p>
+                  </button>
+                ))}
+              </div>
+            </article>
             <article className="cashier-card">
               <h2 className="owner-card-title">Mis reservas</h2>
               {!accessToken ? (
