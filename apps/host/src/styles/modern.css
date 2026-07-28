@@ -1,0 +1,44 @@
+/* ARRIVAL ORBIT — final visual layer */
+:root {
+  color-scheme:dark;
+  --bg:#171225; --surface:#221b34; --surface-2:#2b2241; --surface-3:#352a4d;
+  --border:#55456e; --text:#fff9ef; --muted:#c0b5cf; --primary:#ff775f;
+  --success:#73e2a7; --danger:#ff5f7f; --radius:24px; --radius-sm:16px;
+  --shadow:0 24px 55px rgba(8,4,18,.42); --font:"Avenir Next",Avenir,"Segoe UI",system-ui,sans-serif;
+}
+[data-brand-surface="HOST"] {
+  --bg:#171225 !important; --surface:#221b34 !important; --surface-2:#2b2241 !important;
+  --surface-3:#352a4d !important; --border:#55456e !important; --text:#fff9ef !important;
+  --muted:#c0b5cf !important; --primary:#ff775f !important; --success:#73e2a7 !important;
+  --danger:#ff5f7f !important; background-color:#171225 !important; color:#fff9ef !important;
+}
+body {
+  background: radial-gradient(circle at 12% 8%,rgba(255,119,95,.2),transparent 28rem),
+    radial-gradient(circle at 92% 36%,rgba(126,87,194,.3),transparent 32rem),linear-gradient(145deg,#171225,#0f0c18 70%);
+}
+body::before { content:""; position:fixed; inset:14vh -8rem auto auto; width:22rem; aspect-ratio:1; border:1px solid rgba(255,119,95,.18); border-radius:50%; box-shadow:0 0 0 4rem rgba(255,119,95,.035),0 0 0 9rem rgba(255,119,95,.025); pointer-events:none; }
+.app-header { min-height:88px; margin:12px; border:1px solid rgba(255,255,255,.09); border-radius:22px; background:rgba(34,27,52,.78); backdrop-filter:blur(24px); box-shadow:var(--shadow); }
+.hdr-logo { border-radius:50%; background:var(--primary); box-shadow:0 0 0 7px rgba(255,119,95,.14); }
+.hdr-title,.host-hero-title { font-weight:850; letter-spacing:-.045em; }
+.host-grid,.cashier-grid { gap:1.15rem; }
+.cashier-card,.cashier-kpi-strip,.host-form-panel,.host-reservation-card,.host-table-card,.login-panel,.login-form-card {
+  border:1px solid rgba(255,255,255,.09); border-radius:var(--radius);
+  background:radial-gradient(circle at 100% 0,rgba(255,119,95,.1),transparent 12rem),rgba(34,27,52,.88); box-shadow:var(--shadow);
+}
+.cashier-card--hero { position:relative; overflow:hidden; background:linear-gradient(120deg,#ff775f,#9b5de5); color:#171225; }
+.cashier-card--hero::after { content:""; position:absolute; width:180px; aspect-ratio:1; right:-55px; bottom:-75px; border:22px solid rgba(255,255,255,.18); border-radius:50%; }
+.host-reservation-card { border-left:5px solid var(--primary); transition:transform 220ms ease,box-shadow 220ms ease; }
+.host-reservation-card:hover,.host-table-card:hover { transform:translateY(-4px); box-shadow:0 30px 65px rgba(8,4,18,.55); }
+.host-status,.host-preset-chip,.cashier-session-pill,.btn { border-radius:999px; }
+.host-table-card { min-height:126px; }
+.host-table-card strong { font-size:clamp(1.35rem,4vw,2rem); }
+.btn { font-weight:800; }
+.btn--primary { background:var(--primary); color:#171225; box-shadow:0 10px 24px rgba(255,119,95,.25); }
+.login { background:transparent; color:var(--text); }
+.login-card { border:1px solid rgba(255,255,255,.12); background:rgba(23,18,37,.88); backdrop-filter:blur(18px); }
+.login-form-card input { background:#171225; color:var(--text); }
+:focus-visible { outline:3px solid #ffd166; outline-offset:3px; }
+@media (prefers-reduced-motion:no-preference) {
+  .host-reservation-card,.host-table-card,.cashier-card { animation:arrival-orbit-in 440ms cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes arrival-orbit-in { from { opacity:0; transform:translateY(18px) scale(.985); } to { opacity:1; transform:none; } }
+}
