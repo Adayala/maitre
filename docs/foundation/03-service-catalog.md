@@ -28,9 +28,10 @@ suscripción.
 
 ## Paquetes recomendados
 
-Los paquetes son composiciones versionadas de ítems del catálogo. Facilitan una configuración
-inicial, pero no crean planes rígidos: después de aplicarlos, cada servicio y cantidad continúa
-siendo independiente.
+Los paquetes son composiciones versionadas de ítems del catálogo aplicadas al tenant. Facilitan una
+configuración inicial, pero no crean planes rígidos: después de aplicarlos, cada servicio y cantidad
+continúa siendo independiente. Los ítems con alcance sucursal se replican en todas las sucursales
+actuales; el paquete en sí no pertenece a una sucursal.
 
 | Código | Enfoque | Composición inicial |
 | --- | --- | --- |

@@ -119,7 +119,6 @@ export function SubscriptionPage() {
   const queryClient = useQueryClient();
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [scopeRefs, setScopeRefs] = useState<Record<string, string>>({});
-  const [packageBranchId, setPackageBranchId] = useState("");
 
   const subscriptionQuery = useQuery({
     queryKey: ["subscription", selectedTenantId],
@@ -183,46 +182,52 @@ export function SubscriptionPage() {
     onSuccess: invalidateSubscriptionData,
   });
   const packageMutation = useMutation({
-    mutationFn: async ({
-      catalogPackage,
-      branchId,
-    }: {
-      catalogPackage: CatalogPackageResponse;
-      branchId: string;
-    }) => {
+    mutationFn: async (catalogPackage: CatalogPackageResponse) => {
       for (const packageItem of catalogPackage.items) {
         const definition = catalog.find((item) => item.code === packageItem.catalogItemCode);
         if (!definition) throw new Error(`No existe ${packageItem.catalogItemCode} en el catálogo`);
-        const scopeRefId = definition.billingScope === "TENANT" ? null : branchId;
-        const existing = activeItems.find(
-          (item) =>
-            item.serviceId === definition.code &&
-            (definition.billingScope === "TENANT" || item.scopeRefId === scopeRefId),
-        );
-        if (
-          existing &&
-          definition.billingType === "QUANTITY" &&
-          existing.quantity !== (packageItem.quantity ?? 1)
-        ) {
-          await apiRequest(`/v1/subscriptions/${selectedTenantId}/items/${existing.id}`, {
-            method: "PATCH",
-            accessToken: accessToken!,
-            tenantId: selectedTenantId!,
-            body: { quantity: packageItem.quantity ?? 1 },
-          });
-        } else if (!existing) {
-          await apiRequest(`/v1/subscriptions/${selectedTenantId}/items`, {
-            method: "POST",
-            accessToken: accessToken!,
-            tenantId: selectedTenantId!,
-            body: {
-              catalogItemCode: definition.code,
-              ...(definition.billingType === "QUANTITY"
-                ? { quantity: packageItem.quantity ?? 1 }
-                : {}),
-              ...(scopeRefId ? { scopeRefId } : {}),
-            },
-          });
+        const scopeRefs =
+          definition.billingScope === "TENANT"
+            ? [null]
+            : definition.billingScope === "BRANCH"
+              ? tenantBranches.map((branch) => branch.id)
+              : [];
+        if (scopeRefs.length === 0) {
+          throw new Error(
+            `${definition.name} requiere un alcance ${definition.billingScope} que el paquete no puede resolver automáticamente`,
+          );
+        }
+        for (const scopeRefId of scopeRefs) {
+          const existing = activeItems.find(
+            (item) =>
+              item.serviceId === definition.code &&
+              (definition.billingScope === "TENANT" || item.scopeRefId === scopeRefId),
+          );
+          if (
+            existing &&
+            definition.billingType === "QUANTITY" &&
+            existing.quantity !== (packageItem.quantity ?? 1)
+          ) {
+            await apiRequest(`/v1/subscriptions/${selectedTenantId}/items/${existing.id}`, {
+              method: "PATCH",
+              accessToken: accessToken!,
+              tenantId: selectedTenantId!,
+              body: { quantity: packageItem.quantity ?? 1 },
+            });
+          } else if (!existing) {
+            await apiRequest(`/v1/subscriptions/${selectedTenantId}/items`, {
+              method: "POST",
+              accessToken: accessToken!,
+              tenantId: selectedTenantId!,
+              body: {
+                catalogItemCode: definition.code,
+                ...(definition.billingType === "QUANTITY"
+                  ? { quantity: packageItem.quantity ?? 1 }
+                  : {}),
+                ...(scopeRefId ? { scopeRefId } : {}),
+              },
+            });
+          }
         }
       }
     },
@@ -338,20 +343,10 @@ export function SubscriptionPage() {
                   Elegí una configuración inicial y después ajustá cada servicio de forma
                   independiente.
                 </p>
-                <label>
-                  Sucursal donde aplicar el paquete
-                  <select
-                    value={packageBranchId || (tenantBranches.length === 1 ? tenantBranches[0]!.id : "")}
-                    onChange={(event) => setPackageBranchId(event.target.value)}
-                  >
-                    <option value="">Seleccionar</option>
-                    {tenantBranches.map((branch) => (
-                      <option key={branch.id} value={branch.id}>
-                        {branch.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <p>
+                  El paquete configura el tenant completo. Los servicios de sucursal se aplican a
+                  todas las sucursales actuales.
+                </p>
                 <div className="profile-module-grid">
                   {catalogPackages.map((catalogPackage) => {
                     const packagePrice = catalogPackage.items.reduce((total, packageItem) => {
@@ -363,11 +358,12 @@ export function SubscriptionPage() {
                         (definition?.unitPrice ?? 0) *
                           (definition?.billingType === "QUANTITY"
                             ? packageItem.quantity ?? 1
+                            : 1) *
+                          (definition?.billingScope === "BRANCH"
+                            ? Math.max(tenantBranches.length, 1)
                             : 1)
                       );
                     }, 0);
-                    const selectedBranch =
-                      packageBranchId || (tenantBranches.length === 1 ? tenantBranches[0]!.id : "");
                     return (
                       <article key={catalogPackage.code} className="profile-card">
                         <p className="profile-eyebrow">{catalogPackage.tagline}</p>
@@ -398,11 +394,8 @@ export function SubscriptionPage() {
                         </details>
                         <button
                           type="button"
-                          disabled={packageMutation.isPending || !selectedBranch}
-                          onClick={() => {
-                            if (!packageBranchId && selectedBranch) setPackageBranchId(selectedBranch);
-                            packageMutation.mutate({ catalogPackage, branchId: selectedBranch });
-                          }}
+                          disabled={packageMutation.isPending || tenantBranches.length === 0}
+                          onClick={() => packageMutation.mutate(catalogPackage)}
                         >
                           Configurar este paquete
                         </button>

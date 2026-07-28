@@ -327,8 +327,8 @@ const catalogItem = (
 ): CatalogItem => ({
   code,
   name,
-  description: catalogDescription(code, name, billingType, billingScope),
-  benefits: catalogBenefits(code, billingType),
+  description: catalogDescription(code, name),
+  benefits: catalogBenefits(code),
   billingType,
   billingScope,
   unitPrice,
@@ -336,7 +336,7 @@ const catalogItem = (
   period: "MONTHLY",
   dependsOn,
   isActive: true,
-  version: 1,
+  version: 2,
 });
 
 const CATALOG_PURPOSE: Record<string, string> = {
@@ -375,49 +375,65 @@ const CATALOG_PURPOSE: Record<string, string> = {
   AI_AUTOPILOT: "ejecuta acciones operativas autorizadas bajo políticas, límites y trazabilidad definidos",
 };
 
-function catalogDescription(
-  code: string,
-  name: string,
-  billingType: CatalogItem["billingType"],
-  billingScope: CatalogItem["billingScope"],
-) {
+const CATALOG_BENEFITS: Record<string, string[]> = {
+  CORE: ["Unifica la configuración del negocio", "Mantiene permisos y auditoría centralizados"],
+  BRANCHES: ["Separa la operación por sucursal", "Consolida la gestión del grupo"],
+  IDENTITY: ["Reduce accesos indebidos", "Simplifica altas, bajas y cambios de rol"],
+  CONNECT: ["Evita carga duplicada de datos", "Sincroniza sistemas externos con Maitre"],
+  FLOOR: ["Agiliza la rotación de mesas", "Da visibilidad del salón en tiempo real"],
+  SEATS: ["Ajusta la capacidad habilitada por sucursal", "Define límites operativos claros"],
+  RESERVATIONS: ["Ordena la demanda antes del servicio", "Reduce ausencias y sobreventa"],
+  SHIFTS: ["Alinea dotación y demanda", "Facilita el control de jornadas"],
+  SHIFT_SLOTS: ["Separa la operación por franja horaria", "Mejora la planificación diaria"],
+  WAITERS: ["Controla quién puede operar mesas", "Facilita asignaciones de salón"],
+  CASHIERS: ["Controla cajas concurrentes", "Define responsables de cada turno"],
+  KITCHEN: ["Reduce demoras y comandas perdidas", "Coordina prioridades de preparación"],
+  QR_MENU: ["Mantiene precios y productos actualizados", "Evita reimpresiones de carta"],
+  QR_ORDERING: ["Reduce tiempos de toma de pedido", "Permite seguimiento desde la mesa"],
+  GUEST: ["Recuerda preferencias del cliente", "Mejora la personalización del servicio"],
+  DELIVERY: ["Ordena preparación y despacho", "Da seguimiento a cada entrega"],
+  INVENTORY: ["Previene faltantes de insumos", "Mejora el control de movimientos"],
+  CASH: ["Trazabilidad de aperturas y cierres", "Reduce diferencias de caja"],
+  BILLING: ["Centraliza documentos comerciales", "Separa la facturación por entidad fiscal"],
+  PAYMENTS: ["Unifica medios de pago", "Simplifica conciliaciones"],
+  PAYLANDING: ["Permite cobrar antes o después del servicio", "Reduce pagos pendientes"],
+  ARCA: ["Evita carga fiscal duplicada", "Acelera la emisión de comprobantes"],
+  IVA: ["Ordena información impositiva", "Facilita conciliación y control"],
+  FEEDBACK: ["Detecta problemas rápidamente", "Prioriza mejoras basadas en clientes"],
+  REPUTATION: ["Centraliza reseñas externas", "Identifica tendencias de satisfacción"],
+  CRM: ["Segmenta clientes por comportamiento", "Mejora la relevancia de comunicaciones"],
+  LOYALTY: ["Aumenta la recurrencia", "Reconoce a los clientes frecuentes"],
+  AI_ASSISTANT: ["Acelera consultas operativas", "Reduce tiempo buscando información"],
+  AI_FORECAST: ["Anticipa picos de demanda", "Mejora la planificación de recursos"],
+  AI_PROMISE: ["Evita promesas difíciles de cumplir", "Ajusta tiempos a la capacidad real"],
+  AI_KITCHEN: ["Detecta cuellos de botella", "Mejora prioridades de preparación"],
+  AI_AHEAD: ["Alerta riesgos antes del servicio", "Conecta señales de salón, reservas y cocina"],
+  AI_AUTOPILOT: ["Automatiza acciones repetitivas autorizadas", "Conserva control y trazabilidad"],
+};
+
+function catalogDescription(code: string, name: string) {
   const connectorProvider = code.startsWith("PAYLANDING.")
     ? code.replace("PAYLANDING.", "").replaceAll("_", " ")
     : null;
   const purpose =
     CATALOG_PURPOSE[code] ??
     (connectorProvider
-      ? `conecta PayLanding con ${connectorProvider} para cobrar mediante ese proveedor de forma independiente`
-      : "incorpora una capacidad especializada al ecosistema operativo de Maitre");
-  const commercialModel =
-    billingType === "QUANTITY"
-      ? "Se contrata por unidades y puede ajustarse a medida que cambia la operación."
-      : "Se activa o desactiva de manera independiente.";
-  return `${name} ${purpose}. ${commercialModel} Su alcance ${billingScope.toLowerCase()} permite asignar el costo y la capacidad al lugar exacto donde se utiliza.`;
+      ? `Conecta PayLanding con ${connectorProvider} para procesar cobros con ese proveedor`
+      : `${name} agrega una capacidad especializada a la operación`);
+  return `${purpose.charAt(0).toUpperCase()}${purpose.slice(1)}.`;
 }
 
-function catalogBenefits(code: string, billingType: CatalogItem["billingType"]): string[] {
+function catalogBenefits(code: string): string[] {
   if (code.startsWith("AI_")) {
-    return [
-      "Reduce decisiones reactivas mediante señales anticipadas",
-      "Convierte datos operativos en recomendaciones concretas",
-      "Mantiene trazabilidad y control humano sobre las acciones",
-    ];
+    return CATALOG_BENEFITS[code] ?? [];
   }
   if (code.startsWith("PAYLANDING.")) {
     return [
-      "Amplía las alternativas de cobro para el cliente",
-      "Permite activar cada proveedor de forma independiente",
-      "Centraliza el seguimiento del pago dentro de Maitre",
+      "Ofrece ese medio de pago al cliente",
+      "Registra el estado del cobro en Maitre",
     ];
   }
-  return [
-    billingType === "QUANTITY"
-      ? "Pagás únicamente por la capacidad que necesitás"
-      : "Podés activarlo sin cambiar el resto de la suscripción",
-    "Centraliza la operación y reduce tareas manuales",
-    "Escala por tenant o alcance operativo sin perder trazabilidad",
-  ];
+  return CATALOG_BENEFITS[code] ?? [];
 }
 
 const SEED_CATALOG_ITEMS: CatalogItem[] = [
@@ -922,12 +938,14 @@ async function ensureSeed(repos: Repositories): Promise<void> {
   }
 
   for (const item of SEED_CATALOG_ITEMS) {
-    if (!(await repos.catalog.findByCode(item.code))) {
+    const existing = await repos.catalog.findByCode(item.code);
+    if (!existing || existing.version < item.version) {
       await (repos.catalog as CatalogRepositoryPort & { save(item: CatalogItem): Promise<void> }).save(item);
     }
   }
   for (const catalogPackage of SEED_CATALOG_PACKAGES) {
-    if (!(await repos.catalogPackages.findByCode(catalogPackage.code))) {
+    const existing = await repos.catalogPackages.findByCode(catalogPackage.code);
+    if (!existing || existing.version < catalogPackage.version) {
       await repos.catalogPackages.save(catalogPackage);
     }
   }
