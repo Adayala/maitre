@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth, isSupabaseConfigured } from "../../app/auth-context.js";
 import { useSession } from "../../app/session-context.js";
@@ -8,6 +8,7 @@ import { StateView } from "../../components/state-view.js";
 const PUBLIC_MENU_TOKEN = "demo-qr-menu-token";
 const PARTY_SIZE_PRESETS = ["1", "2", "4", "6", "8"];
 const DURATION_PRESETS = ["60", "90", "120"];
+const SUBMIT_FAILSAFE_MS = 12_000;
 
 interface PublicMenuPayload {
   data: {
@@ -85,6 +86,7 @@ export function CustomerPage() {
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const submitTimerRef = useRef<number | null>(null);
   const [partySize, setPartySize] = useState("2");
   const [startAt, setStartAt] = useState(defaultDateTimeLocal());
   const [durationMinutes, setDurationMinutes] = useState("90");
@@ -254,6 +256,13 @@ export function CustomerPage() {
     selectedBranchId,
     source: "branches",
   });
+  useEffect(() => {
+    return () => {
+      if (submitTimerRef.current !== null) {
+        window.clearTimeout(submitTimerRef.current);
+      }
+    };
+  }, []);
   const menuDecisionRoutes = [
     {
       step: "Si ya te convenció",
@@ -367,6 +376,13 @@ export function CustomerPage() {
     event.preventDefault();
     setLoginError(null);
     setIsAuthenticating(true);
+    if (submitTimerRef.current !== null) {
+      window.clearTimeout(submitTimerRef.current);
+    }
+    submitTimerRef.current = window.setTimeout(() => {
+      setIsAuthenticating(false);
+      setLoginError("El login no respondió. Probá de nuevo.");
+    }, SUBMIT_FAILSAFE_MS);
     try {
       await signInWithPassword(loginEmail, loginPassword);
       setFlashMessage("Sesión iniciada. Ya podés pasar del modo público al flujo de reserva.");
@@ -374,6 +390,10 @@ export function CustomerPage() {
     } catch (err) {
       setLoginError(err instanceof Error ? err.message : "No se pudo iniciar sesión");
     } finally {
+      if (submitTimerRef.current !== null) {
+        window.clearTimeout(submitTimerRef.current);
+        submitTimerRef.current = null;
+      }
       setIsAuthenticating(false);
     }
   }
@@ -381,6 +401,13 @@ export function CustomerPage() {
   function handleFixtureLogin() {
     setLoginError(null);
     setIsAuthenticating(true);
+    if (submitTimerRef.current !== null) {
+      window.clearTimeout(submitTimerRef.current);
+    }
+    submitTimerRef.current = window.setTimeout(() => {
+      setIsAuthenticating(false);
+      setLoginError("La validación no respondió. Probá de nuevo.");
+    }, SUBMIT_FAILSAFE_MS);
     try {
       signInWithToken(fixtureToken.trim());
       setFlashMessage("Acceso local resuelto. Continuá con la elección de sucursal.");
@@ -388,6 +415,10 @@ export function CustomerPage() {
     } catch (err) {
       setLoginError(err instanceof Error ? err.message : "No se pudo iniciar sesión");
     } finally {
+      if (submitTimerRef.current !== null) {
+        window.clearTimeout(submitTimerRef.current);
+        submitTimerRef.current = null;
+      }
       setIsAuthenticating(false);
     }
   }
@@ -505,6 +536,22 @@ export function CustomerPage() {
                     >
                       {isAuthenticating ? "Ingresando…" : "Ingresar"}
                     </button>
+                    {isAuthenticating ? (
+                      <button
+                        type="button"
+                        className="btn btn--ghost btn--xl"
+                        onClick={() => {
+                          if (submitTimerRef.current !== null) {
+                            window.clearTimeout(submitTimerRef.current);
+                            submitTimerRef.current = null;
+                          }
+                          setIsAuthenticating(false);
+                          setLoginError("Login cancelado. Podés reintentar.");
+                        }}
+                      >
+                        Cancelar intento
+                      </button>
+                    ) : null}
                   </form>
                 ) : (
                   <div className="cashier-form">
@@ -524,6 +571,22 @@ export function CustomerPage() {
                     >
                       {isAuthenticating ? "Validando…" : "Continuar"}
                     </button>
+                    {isAuthenticating ? (
+                      <button
+                        type="button"
+                        className="btn btn--ghost btn--xl"
+                        onClick={() => {
+                          if (submitTimerRef.current !== null) {
+                            window.clearTimeout(submitTimerRef.current);
+                            submitTimerRef.current = null;
+                          }
+                          setIsAuthenticating(false);
+                          setLoginError("Validación cancelada. Podés reintentar.");
+                        }}
+                      >
+                        Cancelar intento
+                      </button>
+                    ) : null}
                   </div>
                 )}
                 {loginError ? <p className="login-error">{loginError}</p> : null}
