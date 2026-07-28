@@ -1386,6 +1386,44 @@ p {
   font-weight: 600;
 }
 
+.sheet-guidance {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.9rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.sheet-checklist {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.sheet-check {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-3);
+}
+
+.sheet-check strong {
+  color: var(--muted);
+}
+
+.sheet-check--done {
+  border-color: color-mix(in srgb, var(--success) 40%, transparent);
+  background: color-mix(in srgb, var(--success) 10%, var(--surface-3));
+}
+
+.sheet-check--done strong {
+  color: var(--success);
+}
+
 .sheet-hint {
   margin-top: 0.55rem;
   color: var(--muted);
