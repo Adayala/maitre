@@ -40,7 +40,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (!shouldHydrateAuth || authHydrationState !== "idle") {
+    if (!shouldHydrateAuth) {
+      setAuthHydrationState("ready");
       return;
     }
 
@@ -56,21 +57,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        const { data } = await supabase.auth.getSession();
-        if (!isActive) return;
-
-        if (data.session) {
-          setAccessToken(data.session.access_token);
-          setEmail(data.session.user.email ?? null);
-        }
-
         const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+          if (!isActive) return;
           setAccessToken(session?.access_token ?? null);
           setEmail(session?.user.email ?? null);
           setAuthHydrationState("ready");
         });
 
         unsubscribe = () => subscription.subscription.unsubscribe();
+        const { data } = await supabase.auth.getSession();
+        if (!isActive) return;
+        setAccessToken(data.session?.access_token ?? null);
+        setEmail(data.session?.user.email ?? null);
         setAuthHydrationState("ready");
       })
       .catch(() => {
@@ -83,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isActive = false;
       unsubscribe();
     };
-  }, [authHydrationState, shouldHydrateAuth]);
+  }, [shouldHydrateAuth]);
 
   async function signInWithPassword(signInEmail: string, password: string) {
     const supabase = await getSupabaseClient();
