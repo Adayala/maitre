@@ -517,6 +517,26 @@ export function CustomerPage() {
                 </div>
               </div>
             </div>
+            <div className="customer-access-grid">
+              <article className="customer-access-card">
+                <span className="customer-access-card__eyebrow">Disponible ahora</span>
+                <strong>Podés avanzar sin cuenta</strong>
+                <ul className="customer-access-card__list">
+                  <li>Ver menú, categorías y precios.</li>
+                  <li>Comparar sucursales antes de elegir.</li>
+                  <li>Entender la propuesta antes de reservar.</li>
+                </ul>
+              </article>
+              <article className={`customer-access-card ${accessToken ? "customer-access-card--active" : ""}`}>
+                <span className="customer-access-card__eyebrow">Se habilita con login</span>
+                <strong>{accessToken ? "Ya quedó habilitado" : "Recién cuando decidís continuar"}</strong>
+                <ul className="customer-access-card__list">
+                  <li>Consultar disponibilidad real.</li>
+                  <li>Crear y cancelar reservas propias.</li>
+                  <li>Seguir próximas visitas e historial.</li>
+                </ul>
+              </article>
+            </div>
             {!accessToken ? (
               <>
                 {isSupabaseConfigured ? (
