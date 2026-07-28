@@ -403,6 +403,44 @@ td {
   padding: 1.5rem;
 }
 
+.public-access-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.public-access-card,
+.auth-gate-card {
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  padding: 0.95rem 1rem;
+  background: color-mix(in srgb, var(--color-bg-soft, #f6f7f9) 70%, white);
+}
+
+.public-access-card span,
+.auth-gate-card span {
+  display: inline-block;
+  margin-bottom: 0.25rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.8;
+}
+
+.public-access-card strong,
+.auth-gate-card strong {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.public-access-card p,
+.auth-gate-card p {
+  margin: 0;
+  opacity: 0.82;
+}
+
 .public-page {
   display: flex;
   flex-direction: column;

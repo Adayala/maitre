@@ -47,6 +47,18 @@ export function PublicLayout() {
       </header>
 
       <main id="main-content" className="public-main">
+        <section className="public-access-strip" aria-label="Cómo usar la experiencia pública">
+          <article className="public-access-card">
+            <span>Sin login</span>
+            <strong>Menú, promociones y sucursales</strong>
+            <p>La experiencia pública sirve para explorar antes de decidir.</p>
+          </article>
+          <article className="public-access-card">
+            <span>Con login</span>
+            <strong>Reservar y gestionar tu visita</strong>
+            <p>Cuando el cliente quiere avanzar a una reserva, recién ahí pedimos sesión.</p>
+          </article>
+        </section>
         <Outlet />
       </main>
     </div>
