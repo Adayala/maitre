@@ -367,7 +367,7 @@ function getProfileLinks(profile: ProfileDefinition) {
     return [
       {
         eyebrow: "Backoffice",
-        label: "Overview / Setup",
+        label: "Resumen · Puesta en marcha",
         detail: "Validar estructura, sucursales y estado general del tenant.",
         to: "/setup",
       },
@@ -384,13 +384,13 @@ function getProfileLinks(profile: ProfileDefinition) {
     return [
       {
         eyebrow: "Operación",
-        label: "Host / Floor",
+        label: "Host · Salón",
         detail: "Seguir seating, waitlist, reservas y ritmo del salón.",
         to: "/branches",
       },
       {
         eyebrow: "Coordinación",
-        label: "Kitchen / Cashier",
+        label: "Cocina · Caja",
         detail: "Conectar cocina, caja y piso sin perder visibilidad del turno.",
         to: "/overview",
       },
@@ -406,7 +406,7 @@ function getProfileLinks(profile: ProfileDefinition) {
     },
     {
       eyebrow: "Backoffice",
-      label: "Profiles / Overview",
+      label: "Perfiles · Resumen",
       detail: "Usar estas vistas para validar que el diseño del perfil siga alineado con foundations.",
       to: "/overview",
     },

@@ -35,19 +35,19 @@ export function BranchesPage() {
   const branchQuickLinks = [
     {
       eyebrow: "Base",
-      label: "Overview / Setup",
+      label: "Resumen · Puesta en marcha",
       detail: "Revisar si la estructura del tenant ya soporta abrir y operar sedes reales.",
       to: "/setup",
     },
     {
       eyebrow: "Equipo",
-      label: "Users / Profiles",
+      label: "Usuarios · Perfiles",
       detail: "Validar qué personas y perfiles van a usar cada sucursal en operación.",
       to: "/users",
     },
     {
       eyebrow: "Experiencia",
-      label: "Customer / Host",
+      label: "Cliente · Host",
       detail: "Cruzar si las sucursales visibles ya sostienen discovery público y recepción operativa.",
       to: "/profiles",
     },

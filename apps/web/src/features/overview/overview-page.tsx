@@ -37,7 +37,7 @@ export function OverviewPage() {
 
   return (
     <section aria-labelledby="overview-heading" className="overview-page">
-      <h1 id="overview-heading">Overview</h1>
+      <h1 id="overview-heading">Resumen del tenant</h1>
       <StateView
         isLoading={isLoading}
         error={error as Error | null}

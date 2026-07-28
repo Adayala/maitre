@@ -11,28 +11,28 @@ export function SettingsPage() {
       title: "Identidad del tenant",
       description: "Nombre visible, estructura base y contexto general de operación.",
       status: tenant ? "Listo para revisar" : "Pendiente de contexto",
-      nextView: "Overview / Setup",
+      nextView: "Resumen · Puesta en marcha",
       to: "/setup",
     },
     {
       title: "Experiencia cliente",
       description: "Lo que después impacta menú público, promociones, reserva y seguimiento.",
       status: "A definir por módulo",
-      nextView: "Customer / Public web",
+      nextView: "Cliente · Web pública",
       to: "/profiles",
     },
     {
       title: "Operación interna",
       description: "Parámetros que afectan caja, cocina, floor y flujos del staff.",
       status: "Depende de features habilitadas",
-      nextView: "Profiles / apps táctiles",
+      nextView: "Perfiles · Apps táctiles",
       to: "/profiles",
     },
     {
       title: "Fiscal / suscripción",
       description: "Configuración comercial, límites y capacidades del tenant.",
       status: "Coordinar con billing y fiscal",
-      nextView: "Subscription / fiscal",
+      nextView: "Suscripción · Fiscal",
       to: "/subscription",
     },
   ];
@@ -48,13 +48,13 @@ export function SettingsPage() {
   const settingsQuickLinks = [
     {
       eyebrow: "Base",
-      label: "Overview / Setup",
+      label: "Resumen · Puesta en marcha",
       detail: "Validá estructura y pasos pendientes antes de editar parámetros finos.",
       to: "/setup",
     },
     {
       eyebrow: "Equipo",
-      label: "Profiles / Users",
+      label: "Perfiles · Usuarios",
       detail: "Revisá qué actores van a consumir estas configuraciones.",
       to: "/users",
     },

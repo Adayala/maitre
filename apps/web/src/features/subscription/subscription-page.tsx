@@ -71,13 +71,13 @@ export function SubscriptionPage() {
   const quickLinks = [
     {
       eyebrow: "Gobierno",
-      label: "Overview / Settings",
+      label: "Resumen · Configuración",
       detail: "Cruzar el estado comercial con el contexto real del tenant y sus configuraciones activas.",
       to: "/settings",
     },
     {
       eyebrow: "Estructura",
-      label: "Branches / Users",
+      label: "Sucursales · Usuarios",
       detail: "Validar si el crecimiento del tenant explica la presión sobre límites y capacidades.",
       to: "/branches",
     },
@@ -98,7 +98,7 @@ export function SubscriptionPage() {
 
   return (
     <section aria-labelledby="subscription-heading" className="overview-page">
-      <h1 id="subscription-heading">Suscripción &amp; Billing</h1>
+      <h1 id="subscription-heading">Suscripción y capacidad</h1>
       <StateView
         isLoading={isLoading}
         error={error as Error | null}
@@ -300,7 +300,7 @@ function getSubscriptionNextStep({
 }) {
   if (status !== "ACTIVE") {
     return {
-      eyebrow: "Billing",
+      eyebrow: "Estado comercial",
       label: "Revisar estado comercial",
       detail: "Antes de seguir expandiendo operación conviene normalizar el estado de la suscripción del tenant.",
       to: "/settings",

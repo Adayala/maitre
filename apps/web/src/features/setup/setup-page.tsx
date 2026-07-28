@@ -56,19 +56,19 @@ export function SetupPage() {
   const setupQuickLinks = [
     {
       eyebrow: "Base",
-      label: "Overview / Branches",
+      label: "Resumen · Sucursales",
       detail: "Cruzar el estado del setup con la estructura real de sedes y visibilidad operativa.",
       to: "/branches",
     },
     {
       eyebrow: "Equipo",
-      label: "Users / Profiles",
+      label: "Usuarios · Perfiles",
       detail: "Validar si el tenant ya tiene personas y perfiles para consumir lo que se configura.",
       to: "/users",
     },
     {
       eyebrow: "Comercial",
-      label: "Subscription / Settings",
+      label: "Suscripción · Configuración",
       detail: "Revisar capacidades y dominios de configuración que pueden destrabar el onboarding.",
       to: "/subscription",
     },
@@ -82,7 +82,7 @@ export function SetupPage() {
 
   return (
     <section aria-labelledby="setup-heading" className="overview-page">
-      <h1 id="setup-heading">Setup Wizard</h1>
+      <h1 id="setup-heading">Puesta en marcha</h1>
       <StateView
         isLoading={isLoading}
         error={error as Error | null}

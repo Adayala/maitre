@@ -49,7 +49,7 @@ export function UsersPage() {
     },
     {
       eyebrow: "Gobierno",
-      label: "Settings / Subscription",
+      label: "Configuración · Suscripción",
       detail: "Alinear quién opera el tenant con capacidades y configuración activas.",
       to: "/settings",
     },

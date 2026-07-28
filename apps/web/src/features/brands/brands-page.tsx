@@ -39,7 +39,7 @@ export function BrandsPage() {
     },
     {
       eyebrow: "Experiencia",
-      label: "Public web / Customer",
+      label: "Web pública · Cliente",
       detail: "Validar si la capa comercial ya alcanza para discovery, promociones y reservas.",
       to: "/profiles",
     },

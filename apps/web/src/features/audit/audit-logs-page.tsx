@@ -42,7 +42,7 @@ export function AuditLogsPage() {
   const auditQuickLinks = [
     {
       eyebrow: "Equipo",
-      label: "Users / Profiles",
+      label: "Usuarios · Perfiles",
       detail: "Cruzar eventos con quiénes pueden operar cada superficie y cada rol del tenant.",
       to: "/users",
     },
