@@ -281,16 +281,17 @@ td {
   padding: 0.8rem 0.9rem;
   border-radius: 0.65rem;
   border: 1px solid var(--color-border);
-  background: color-mix(in srgb, var(--color-bg-soft, #f6f7f9) 70%, white);
+  background: color-mix(in srgb, var(--color-bg) 96%, var(--color-accent) 4%);
+  color: var(--color-fg);
 }
 
 .overview-check strong {
-  color: var(--color-fg-muted, inherit);
+  color: color-mix(in srgb, var(--color-fg) 70%, transparent);
 }
 
 .overview-check--done {
   border-color: color-mix(in srgb, #2fa86b 35%, var(--color-border));
-  background: color-mix(in srgb, #2fa86b 10%, white);
+  background: color-mix(in srgb, var(--color-bg) 90%, #2fa86b 10%);
 }
 
 .overview-check--done strong {
