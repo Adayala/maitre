@@ -1630,9 +1630,20 @@ h3 {
   font-size: 0.92rem;
   font-weight: 700;
 }
+.card-decision-note {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
 
 .kds--rush .card-lock-note,
-.kds--rush .card-pending-note {
+.kds--rush .card-pending-note,
+.kds--rush .card-decision-note {
   padding: 0.5rem 0.55rem;
   font-size: 0.84rem;
 }
