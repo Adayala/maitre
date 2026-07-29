@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@maitre/identity": "*",
-    "jose": "^5.9.6"
+    "jose": "^6.2.4"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
