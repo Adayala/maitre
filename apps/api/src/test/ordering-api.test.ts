@@ -208,7 +208,6 @@ serialTest("Cancel order records an adjustment", async () => {
       "updatedAt",
       "submittedAt",
       "cancelledAt",
-      "catalogRevisionId",
     ]),
   );
   assert.equal(cancel.json().data.status, "CANCELLED");
@@ -918,7 +917,7 @@ serialTest("Order item routes expose current 404 contract for unknown order vs u
 
 serialTest("QR menu token: seeded public resolve + issue/resolve + 404 anti-enumeration", async () => {
   const container = await buildContainer();
-  const { tenantId } = await getContext(container);
+  const { tenantId, branchId } = await getContext(container);
   const app = await buildApp(container);
   const headers = ownerHeaders(container, tenantId);
 
@@ -930,7 +929,12 @@ serialTest("QR menu token: seeded public resolve + issue/resolve + 404 anti-enum
   assert.equal(seeded.json().data.menu.id, undefined);
 
   // Issue a fresh token and resolve it.
-  const issue = await app.inject({ method: "POST", url: "/v1/qr-menu-tokens", headers, payload: { menuId: DEMO_MENU_ID } });
+  const issue = await app.inject({
+    method: "POST",
+    url: "/v1/qr-menu-tokens",
+    headers,
+    payload: { menuId: DEMO_MENU_ID, branchId },
+  });
   assert.equal(issue.statusCode, 201);
   const token = issue.json().data.token;
   const resolve = await app.inject({ method: "GET", url: `/public/menu/${token}` });
