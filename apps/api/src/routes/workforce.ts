@@ -1096,8 +1096,9 @@ export async function registerWorkforceRoutes(
       const existing = await container.shiftAssignments!.findById(ctx.tenantId, req.params.id);
       if (!existing) return sendProblem(reply, correlationId, notFound("ShiftAssignment"));
       requireBranchScopedSupervisorManage(ctx, existing.branchId, "ShiftAssignment");
+      const commandId = parseOptionalIdempotencyKey(req.headers["idempotency-key"]);
       const expectedRevision = parseIfMatchRevision(req.headers["if-match"]);
-      if (existing.revision !== expectedRevision) {
+      if (existing.revision !== expectedRevision && existing.decisionCommandId !== commandId) {
         return sendProblem(
           reply,
           correlationId,
@@ -1113,7 +1114,7 @@ export async function registerWorkforceRoutes(
         },
         ctx.tenantId,
         req.params.id,
-        parseOptionalIdempotencyKey(req.headers["idempotency-key"]),
+        commandId,
       );
       return { data: assignment };
     } catch (err) {
@@ -1136,8 +1137,9 @@ export async function registerWorkforceRoutes(
       const previous = await container.shiftAssignments!.findById(ctx.tenantId, req.params.id);
       if (!previous) return sendProblem(reply, correlationId, notFound("ShiftAssignment"));
       requireBranchScopedSupervisorManage(ctx, previous.branchId, "ShiftAssignment");
+      const commandId = parseOptionalIdempotencyKey(req.headers["idempotency-key"]);
       const expectedRevision = parseIfMatchRevision(req.headers["if-match"]);
-      if (previous.revision !== expectedRevision) {
+      if (previous.revision !== expectedRevision && previous.decisionCommandId !== commandId) {
         return sendProblem(
           reply,
           correlationId,
@@ -1153,7 +1155,7 @@ export async function registerWorkforceRoutes(
         },
         ctx.tenantId,
         req.params.id,
-        parseOptionalIdempotencyKey(req.headers["idempotency-key"]),
+        commandId,
       );
       await recordAuditLog(
         { auditLogs: container.auditLogs },
@@ -1196,8 +1198,9 @@ export async function registerWorkforceRoutes(
       const previous = await container.shiftAssignments!.findById(ctx.tenantId, req.params.id);
       if (!previous) return sendProblem(reply, correlationId, notFound("ShiftAssignment"));
       requireBranchScopedSupervisorManage(ctx, previous.branchId, "ShiftAssignment");
+      const commandId = parseOptionalIdempotencyKey(req.headers["idempotency-key"]);
       const expectedRevision = parseIfMatchRevision(req.headers["if-match"]);
-      if (previous.revision !== expectedRevision) {
+      if (previous.revision !== expectedRevision && previous.decisionCommandId !== commandId) {
         return sendProblem(
           reply,
           correlationId,
@@ -1213,7 +1216,7 @@ export async function registerWorkforceRoutes(
         },
         ctx.tenantId,
         req.params.id,
-        parseOptionalIdempotencyKey(req.headers["idempotency-key"]),
+        commandId,
       );
       await recordAuditLog(
         { auditLogs: container.auditLogs },
@@ -1254,8 +1257,9 @@ export async function registerWorkforceRoutes(
         const existing = await container.shiftAssignments!.findById(ctx.tenantId, req.params.id);
         if (!existing) return sendProblem(reply, correlationId, notFound("ShiftAssignment"));
         requireBranchScopedSupervisorManage(ctx, existing.branchId, "ShiftAssignment");
+        const commandId = parseOptionalIdempotencyKey(req.headers["idempotency-key"]);
         const expectedRevision = parseIfMatchRevision(req.headers["if-match"]);
-        if (existing.revision !== expectedRevision) {
+        if (existing.revision !== expectedRevision && existing.decisionCommandId !== commandId) {
           return sendProblem(
             reply,
             correlationId,
@@ -1263,7 +1267,6 @@ export async function registerWorkforceRoutes(
           );
         }
         const body = reassignShiftAssignmentBodySchema.parse(req.body);
-        const commandId = parseOptionalIdempotencyKey(req.headers["idempotency-key"]);
         const result = await reassignShiftAssignment(
           {
             employments: container.employments!,

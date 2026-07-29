@@ -188,6 +188,11 @@ export async function reassignShiftAssignment(
 
   const cancelled = transitionShiftAssignment(previous, "CANCELLED", now, input.commandId);
   await deps.shiftAssignments.save(cancelled);
+  if (deps.outbox) {
+    await deps.outbox.append(
+      shiftAssignmentCancelledEvent(cancelled, input.commandId ?? randomUUID()),
+    );
+  }
 
   const created = await createShiftAssignment(deps, {
     tenantId: input.tenantId,
