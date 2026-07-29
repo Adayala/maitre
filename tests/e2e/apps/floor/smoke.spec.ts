@@ -424,7 +424,8 @@ test("arma un pedido y lo envía a cocina desde una visita", async ({
   await dialog.getByPlaceholder("Ej: sin sal, punto jugoso…").fill("Sin queso");
   await dialog.getByRole("button", { name: /Agregar/ }).click();
 
-  await expect(page.getByText("2", { exact: true })).toBeVisible();
+  const cartButton = page.getByRole("button", { name: /Ver pedido/ });
+  await expect(cartButton.locator(".cart-count")).toHaveText("2");
   await page.getByRole("button", { name: "Enviar a cocina" }).click();
 
   await expect
