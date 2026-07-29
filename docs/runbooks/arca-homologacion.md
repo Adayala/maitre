@@ -78,7 +78,7 @@ Inyectar desde el secret manager:
 FISCAL_ARCA_DRIVER=wsfev1
 ARCA_HOMOLOGATION_CUIT=30XXXXXXXXX
 ARCA_HOMOLOGATION_CERTIFICATE_PEM=-----BEGIN CERTIFICATE-----...
-ARCA_HOMOLOGATION_PRIVATE_KEY_PEM=-----BEGIN PRIVATE KEY-----...
+ARCA_HOMOLOGATION_PRIVATE_KEY_PEM=<PEM_PRIVATE_KEY_FROM_SECRET_MANAGER>
 ```
 
 También se aceptan saltos de línea representados como `\n`. No almacenar valores reales en
