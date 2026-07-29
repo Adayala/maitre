@@ -51,9 +51,22 @@ if (failures.length) {
 }
 console.log("No unaccepted high or critical dependency vulnerabilities.");
 
-function extractAdvisoryIds(via) {
-  return (via ?? [])
-    .filter((item) => typeof item === "object" && item.url)
-    .map((item) => item.url.match(/GHSA-[\w-]+/)?.[0])
-    .filter(Boolean);
+function extractAdvisoryIds(via, visited = new Set()) {
+  return [
+    ...new Set(
+      (via ?? []).flatMap((item) => {
+        if (typeof item === "object" && item.url) {
+          return item.url.match(/GHSA-[\w-]+/)?.[0] ?? [];
+        }
+        if (typeof item === "string" && !visited.has(item)) {
+          visited.add(item);
+          return extractAdvisoryIds(
+            report.vulnerabilities?.[item]?.via,
+            visited,
+          );
+        }
+        return [];
+      }),
+    ),
+  ];
 }
