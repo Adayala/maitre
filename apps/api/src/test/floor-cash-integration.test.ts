@@ -11,8 +11,10 @@ import { buildContainer, type Container } from "../composition/container.js";
 import {
   capturePaymentWithCash,
   CashSessionMismatchError,
+  CashSessionNotFoundError,
   CashSessionRequiredError,
 } from "../floor/capture-payment-with-cash.js";
+import { buildApp } from "../app.js";
 
 const tenantId = "00000000-0000-0000-0000-000000000001";
 const branchId = "00000000-0000-0000-0000-000000000003";
@@ -156,7 +158,7 @@ test("validates an explicitly selected cash session", async () => {
 
   await assert.rejects(
     () => capture(container, payment.id, randomUUID()),
-    /CashSession .* not found/,
+    (error) => error instanceof CashSessionNotFoundError,
   );
 
   const wrongBranch = await seedSession(container, { branchId: randomUUID() });
@@ -182,6 +184,25 @@ test("validates an explicitly selected cash session", async () => {
       error instanceof CashSessionMismatchError &&
       error.message.includes("is not OPEN"),
   );
+});
+
+test("returns a CashSession 404 instead of misreporting the Payment", async () => {
+  const container = await buildContainer();
+  const payment = await seedPayment(container);
+  const app = await buildApp(container);
+  const response = await app.inject({
+    method: "POST",
+    url: `/v1/payments/${payment.id}/capture`,
+    headers: {
+      authorization: `Bearer ${container.demoAccessToken}`,
+      "x-tenant-id": tenantId,
+    },
+    payload: { cashSessionId: randomUUID() },
+  });
+
+  assert.equal(response.statusCode, 404);
+  assert.equal(response.json().title, "CashSession not found");
+  await app.close();
 });
 
 test("records tip once and returns the captured payment on retry", async () => {

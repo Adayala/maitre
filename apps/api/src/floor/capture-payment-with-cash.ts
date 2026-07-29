@@ -29,6 +29,13 @@ export class CashSessionMismatchError extends Error {
   }
 }
 
+export class CashSessionNotFoundError extends Error {
+  constructor(cashSessionId: string) {
+    super(`CashSession ${cashSessionId} not found`);
+    this.name = "CashSessionNotFoundError";
+  }
+}
+
 export interface CapturePaymentWithCashInput {
   tenantId: string;
   paymentId: string;
@@ -121,7 +128,7 @@ async function resolveCashSession(
       input.tenantId,
       input.cashSessionId,
     );
-    if (!session) throw new Error(`CashSession ${input.cashSessionId} not found`);
+    if (!session) throw new CashSessionNotFoundError(input.cashSessionId);
     return session;
   }
 

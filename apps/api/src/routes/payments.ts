@@ -16,6 +16,7 @@ import { omitUndefined } from "../http/omit-undefined.js";
 import {
   capturePaymentWithCash,
   CashSessionMismatchError,
+  CashSessionNotFoundError,
   CashSessionRequiredError,
 } from "../floor/capture-payment-with-cash.js";
 
@@ -106,6 +107,9 @@ export async function registerPaymentRoutes(app: FastifyInstance, container: Con
       if (err instanceof z.ZodError) return sendProblem(reply, correlationId, badRequest(err.message));
       if (err instanceof CashSessionRequiredError || err instanceof CashSessionMismatchError) {
         return sendProblem(reply, correlationId, conflict(err.message));
+      }
+      if (err instanceof CashSessionNotFoundError) {
+        return sendProblem(reply, correlationId, notFound("CashSession"));
       }
       if (err instanceof PaymentExceedsBalanceError) return sendProblem(reply, correlationId, badRequest(err.message));
       if (err instanceof InvalidPaymentTransitionError) return sendProblem(reply, correlationId, conflict(err.message));
