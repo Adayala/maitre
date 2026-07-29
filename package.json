@@ -29,13 +29,13 @@
     "dev:api": "npm run dev --workspace apps/api"
   },
   "devDependencies": {
-    "@axe-core/playwright": "4.11.0",
+    "@axe-core/playwright": "4.12.1",
     "@eslint/js": "10.0.1",
     "@playwright/test": "^1.62.0",
     "dependency-cruiser": "17.4.3",
     "eslint": "10.8.0",
-    "globals": "17.4.0",
-    "prettier": "3.8.2",
+    "globals": "17.8.0",
+    "prettier": "3.9.6",
     "typescript": "^5.5.4",
     "typescript-eslint": "8.65.0"
   },
