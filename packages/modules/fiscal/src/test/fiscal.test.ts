@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  FakeAuthorizationAttemptRepository,
   FakeInvoiceRepository,
   FakePointOfSaleRepository,
   FakeTaxRateRepository,
@@ -8,12 +9,16 @@ import {
   FakeOutboxRepository,
 } from "./fakes.js";
 import { SimulatedArcaAdapter } from "../adapters/simulated-arca-adapter.js";
-import { createPointOfSale } from "../application/point-of-sale-commands.js";
+import {
+  createPointOfSale,
+  setPointOfSaleRegistration,
+} from "../application/point-of-sale-commands.js";
 import { createTaxRate, publishTaxRate, resolveTaxRateQuery, supersedeTaxRate } from "../application/tax-rate-commands.js";
 import {
   createInvoice,
   validateInvoice,
   issueInvoice,
+  reconcileInvoice,
   creditInvoice,
   voidDraftInvoice,
   type InvoiceDeps,
@@ -54,15 +59,62 @@ test("production emission requires verified ARCA point-of-sale registration", ()
   );
 });
 
-function makeDeps(): InvoiceDeps & { outbox: FakeOutboxRepository; pointsOfSale: FakePointOfSaleRepository } {
+test("ARCA point-of-sale verification requires evidence and records the actor", async () => {
+  const deps = makeDeps();
+  const pos = await createPointOfSale(deps, {
+    tenantId: TENANT,
+    fiscalEntityId: FE,
+    branchId: "branch-1",
+    environment: "PRODUCTION",
+    officialCode: "00003",
+    arcaDomicileCode: "domicile-1",
+    allowedVoucherTypes: ["FACTURA_A"],
+  });
+
+  await assert.rejects(
+    () =>
+      setPointOfSaleRegistration(deps, {
+        tenantId: TENANT,
+        id: pos.id,
+        status: "VERIFIED",
+        actorId: "owner-1",
+      }),
+    /Registration evidence is required/,
+  );
+
+  const verified = await setPointOfSaleRegistration(deps, {
+    tenantId: TENANT,
+    id: pos.id,
+    status: "VERIFIED",
+    actorId: "owner-1",
+    evidenceRef: "arca://registration/00003",
+  });
+
+  assert.equal(verified.registrationStatus, "VERIFIED");
+  assert.equal(verified.registrationEvidenceRef, "arca://registration/00003");
+  assert.equal(verified.verifiedBy, "owner-1");
+  assert.equal(verified.verifiedAt, NOW);
+  assert.equal(verified.revision, 2);
+});
+
+function makeDeps(): InvoiceDeps & {
+  outbox: FakeOutboxRepository;
+  pointsOfSale: FakePointOfSaleRepository;
+  authorizationAttempts: FakeAuthorizationAttemptRepository;
+} {
   return {
     invoices: new FakeInvoiceRepository(),
     pointsOfSale: new FakePointOfSaleRepository(),
     taxRates: new FakeTaxRateRepository(),
     arca: new SimulatedArcaAdapter({ now: clock }),
     outbox: new FakeOutboxRepository(),
+    authorizationAttempts: new FakeAuthorizationAttemptRepository(),
     now: clock,
-  } as InvoiceDeps & { outbox: FakeOutboxRepository; pointsOfSale: FakePointOfSaleRepository };
+  } as InvoiceDeps & {
+    outbox: FakeOutboxRepository;
+    pointsOfSale: FakePointOfSaleRepository;
+    authorizationAttempts: FakeAuthorizationAttemptRepository;
+  };
 }
 
 async function seedRateAndPos(deps: ReturnType<typeof makeDeps>) {
@@ -140,6 +192,53 @@ test("state machine: DRAFT -> VALIDATED -> AUTHORIZED with fake CAE and number 1
   assert.ok(issued.cae && issued.cae.startsWith("SIM"));
   assert.ok(issued.caeExpiresAt instanceof Date);
   assert.ok(deps.outbox.records.some((r) => r.eventName === "fiscal.invoice.authorized.v1"));
+  assert.equal(deps.authorizationAttempts.items.length, 1);
+  assert.equal(deps.authorizationAttempts.items[0]?.status, "AUTHORIZED");
+  assert.equal(deps.authorizationAttempts.items[0]?.requestedNumber, 1);
+  assert.equal(deps.authorizationAttempts.items[0]?.requestHash.length, 64);
+});
+
+test("ambiguous authorization is persisted and reconciliation authorizes it", async () => {
+  const deps = makeDeps();
+  const { pos } = await seedRateAndPos(deps);
+  const draft = await seedDraft(deps, pos.id);
+  deps.arca = {
+    authorize: async () => ({
+      outcome: "PENDING_RECONCILIATION",
+      assignedNumber: 17,
+      providerRef: "arca:1:1:17",
+    }),
+    reconcile: async () => ({
+      outcome: "AUTHORIZED",
+      assignedNumber: 17,
+      cae: "76123456789012",
+      caeExpiresAt: new Date("2026-08-01T00:00:00.000Z"),
+      providerRef: "arca:1:1:17",
+    }),
+  };
+
+  const pending = await issueInvoice(deps, {
+    tenantId: TENANT,
+    id: draft.id,
+    cuit: "20111111112",
+  });
+  assert.equal(pending.status, "PENDING_RECONCILIATION");
+  assert.equal(pending.number, 17);
+  assert.equal(deps.authorizationAttempts.items[0]?.status, "PENDING_RECONCILIATION");
+
+  const authorized = await reconcileInvoice(deps, {
+    tenantId: TENANT,
+    id: draft.id,
+    cuit: "20111111112",
+  });
+  assert.equal(authorized.status, "AUTHORIZED");
+  assert.equal(authorized.number, 17);
+  assert.equal(authorized.cae, "76123456789012");
+  assert.equal(deps.authorizationAttempts.items[0]?.status, "AUTHORIZED");
+  assert.ok(deps.authorizationAttempts.items[0]?.resolvedAt);
+  assert.ok(
+    deps.outbox.records.some((record) => record.eventName === "fiscal.invoice.authorized.v1"),
+  );
 });
 
 test("AUTHORIZED invoice is immutable: re-issuing conflicts", async () => {

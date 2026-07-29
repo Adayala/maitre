@@ -98,6 +98,21 @@ const registrationBody = z.object({
   status: z.enum(["DECLARED", "VERIFIED", "REJECTED", "INACTIVE"]),
   evidenceRef: z.string().min(1).optional(),
   rejectionReason: z.string().min(1).optional(),
+}).superRefine((body, ctx) => {
+  if (body.status === "VERIFIED" && !body.evidenceRef) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["evidenceRef"],
+      message: "Registration evidence is required to verify an ARCA point of sale",
+    });
+  }
+  if (body.status === "REJECTED" && !body.rejectionReason) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["rejectionReason"],
+      message: "A rejection reason is required to reject an ARCA point of sale",
+    });
+  }
 });
 
 const exportBody = z.object({
