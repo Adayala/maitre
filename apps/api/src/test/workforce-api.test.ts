@@ -2293,6 +2293,7 @@ test("Workforce list endpoints support status filters", async () => {
   const { container, app } = await buildWorkforceTestApp();
   const { tenantId, branchId } = await getContext(container);
   const headers = ownerHeaders(container, tenantId);
+  container.now = () => new Date("2026-07-24T10:00:03Z");
 
   const employment = (
     await app.inject({
@@ -2377,6 +2378,7 @@ test("Workforce list endpoints support status filters", async () => {
   });
   assert.equal(closeEntry.statusCode, 200);
 
+  container.now = () => new Date("2026-07-24T15:00:03Z");
   const secondOpenClockIn = await app.inject({
     method: "POST",
     url: "/v1/time-entries/clock-in",
@@ -4807,7 +4809,7 @@ test("Workforce reassign returns 404 for missing target employment", async () =>
     },
   });
   assert.equal(reassignMissingEmployment.statusCode, 404);
-  assert.equal(reassignMissingEmployment.json().detail, "Employment not found");
+  assert.equal(reassignMissingEmployment.json().title, "Employment not found");
 
   await app.close();
 });
@@ -5848,7 +5850,7 @@ test("Workforce adjustment decision endpoints return 404 for missing base resour
     payload: { approverId: "manager-missing-base" },
   });
   assert.equal(approveMissingTimeEntry.statusCode, 404);
-  assert.equal(approveMissingTimeEntry.json().detail, "TimeEntry not found");
+  assert.equal(approveMissingTimeEntry.json().title, "TimeEntry not found");
 
   const breakAdjustmentId = randomUUID();
   await container.breakAdjustments!.save({
@@ -5869,7 +5871,7 @@ test("Workforce adjustment decision endpoints return 404 for missing base resour
     payload: { approverId: "manager-missing-base" },
   });
   assert.equal(rejectMissingBreakLog.statusCode, 404);
-  assert.equal(rejectMissingBreakLog.json().detail, "BreakLog not found");
+  assert.equal(rejectMissingBreakLog.json().title, "BreakLog not found");
 
   await app.close();
 });
@@ -5924,7 +5926,7 @@ test("Workforce break adjustment endpoints return 404 for missing base time entr
     headers,
   });
   assert.equal(getMissingTimeEntryBreakAdjustment.statusCode, 404);
-  assert.equal(getMissingTimeEntryBreakAdjustment.json().detail, "TimeEntry not found");
+  assert.equal(getMissingTimeEntryBreakAdjustment.json().title, "TimeEntry not found");
 
   const approveMissingTimeEntryBreakAdjustment = await app.inject({
     method: "POST",
@@ -5933,7 +5935,7 @@ test("Workforce break adjustment endpoints return 404 for missing base time entr
     payload: { approverId: "manager-missing-base" },
   });
   assert.equal(approveMissingTimeEntryBreakAdjustment.statusCode, 404);
-  assert.equal(approveMissingTimeEntryBreakAdjustment.json().detail, "TimeEntry not found");
+  assert.equal(approveMissingTimeEntryBreakAdjustment.json().title, "TimeEntry not found");
 
   const rejectMissingTimeEntryBreakAdjustment = await app.inject({
     method: "POST",
@@ -5942,7 +5944,7 @@ test("Workforce break adjustment endpoints return 404 for missing base time entr
     payload: { approverId: "manager-missing-base" },
   });
   assert.equal(rejectMissingTimeEntryBreakAdjustment.statusCode, 404);
-  assert.equal(rejectMissingTimeEntryBreakAdjustment.json().detail, "TimeEntry not found");
+  assert.equal(rejectMissingTimeEntryBreakAdjustment.json().title, "TimeEntry not found");
 
   await app.close();
 });
@@ -5985,7 +5987,7 @@ test("Workforce break adjustment create/list endpoints return 404 for missing ba
     },
   });
   assert.equal(createAdjustment.statusCode, 404);
-  assert.equal(createAdjustment.json().detail, "TimeEntry not found");
+  assert.equal(createAdjustment.json().title, "TimeEntry not found");
 
   const listAdjustments = await app.inject({
     method: "GET",
@@ -5993,7 +5995,7 @@ test("Workforce break adjustment create/list endpoints return 404 for missing ba
     headers,
   });
   assert.equal(listAdjustments.statusCode, 404);
-  assert.equal(listAdjustments.json().detail, "TimeEntry not found");
+  assert.equal(listAdjustments.json().title, "TimeEntry not found");
 
   await app.close();
 });
@@ -7666,7 +7668,7 @@ test("Workforce time export requires recent step-up and writes audit evidence", 
     provider: "fixture",
     subject: "demo-owner",
     issuedAt: new Date("2026-07-25T00:00:00Z"),
-    expiresAt: new Date("2026-07-25T23:59:59Z"),
+    expiresAt: new Date("2100-01-01T00:00:00Z"),
   });
   const headers = { authorization: `Bearer ${exportToken}`, "x-tenant-id": tenantId };
 
@@ -7753,7 +7755,7 @@ test("Workforce time export denies missing or stale step-up", async () => {
     provider: "fixture",
     subject: "demo-owner",
     issuedAt: new Date("2026-07-25T00:00:00Z"),
-    expiresAt: new Date("2026-07-25T23:59:59Z"),
+    expiresAt: new Date("2100-01-01T00:00:00Z"),
   });
   const headers = { authorization: `Bearer ${exportToken}`, "x-tenant-id": tenantId };
 
@@ -7824,7 +7826,7 @@ test("Workforce time export list and detail deny resources outside branch scope"
     provider: "fixture",
     subject: "demo-owner",
     issuedAt: new Date("2026-07-25T00:00:00Z"),
-    expiresAt: new Date("2026-07-25T23:59:59Z"),
+    expiresAt: new Date("2100-01-01T00:00:00Z"),
   });
   const headers = { authorization: `Bearer ${exportOwnerToken}`, "x-tenant-id": tenantId };
 
@@ -7910,7 +7912,7 @@ test("Workforce time export list and detail deny resources outside branch scope"
     provider: "fixture",
     subject: scopedAdmin.externalIdentityId,
     issuedAt: new Date("2026-07-25T00:00:00Z"),
-    expiresAt: new Date("2026-07-25T23:59:59Z"),
+    expiresAt: new Date("2100-01-01T00:00:00Z"),
   });
   const scopedHeaders = { authorization: `Bearer ${scopedToken}`, "x-tenant-id": tenantId };
 
@@ -7963,7 +7965,7 @@ test("Workforce labor policy review is branch-scoped and does not grant time exp
     provider: "fixture",
     subject: manager.externalIdentityId,
     issuedAt: new Date("2026-07-25T00:00:00Z"),
-    expiresAt: new Date("2026-07-25T23:59:59Z"),
+    expiresAt: new Date("2100-01-01T00:00:00Z"),
   });
   const managerHeaders = { authorization: `Bearer ${managerToken}`, "x-tenant-id": tenantId };
 

@@ -4,10 +4,7 @@ import { spawnSync } from "node:child_process";
 import { coverageFailures, parseCoverageSummary } from "./coverage-gate.mjs";
 
 const roots = ["apps", "packages", "adapters"];
-const quarantined = new Set([
-  "apps/api/dist/test/organization-api.test.js",
-  "apps/api/dist/test/workforce-api.test.js",
-]);
+const quarantined = new Set(["apps/api/dist/test/organization-api.test.js"]);
 const discovered = roots.flatMap((root) => collectTests(root));
 const testFiles = discovered.filter((file) => !quarantined.has(file));
 const coverage = process.argv.includes("--coverage");
