@@ -10,6 +10,12 @@
 - Production no es un destino configurado hasta completar gates explícitos.
 - Vercel llama Production al target que Maitre usa como `demo`; `APP_ENV` evita confundirlos.
 - Vercel Hobby puede rechazar deployments de commits cuyo autor no sea owner del Hobby team. Debe auditarse antes de incorporar contribución directa de varias personas.
+- Desde 2026-07-29, GitHub Actions ejecuta el delivery autoritativo con `VERCEL_TOKEN`; la Vercel
+  GitHub App no participa del gate ni del despliegue.
+- El deploy selectivo reduce builds sin confiar en exclusiones optimistas: paths compartidos y
+  desconocidos fuerzan la matriz completa.
+- API se despliega sola ante cambios propios, pero todos los clientes ejecutan E2E porque el
+  contrato backend puede afectar cualquier interfaz.
 
 ## Fuentes verificadas 2026-07-21
 

@@ -2,16 +2,18 @@
 
 ## Estado de capacidades
 
-| Capacidad | Estado inicial |
-| --- | --- |
-| workflows GitHub Actions | NOT_IMPLEMENTED |
-| check `ci/required` | NOT_IMPLEMENTED |
-| branch protection | NOT_VERIFIED |
-| Vercel Git integration | pendiente confirmación del owner |
-| Preview deployments | NOT_VERIFIED |
-| staged Production/demo | NOT_CONFIGURED |
-| migration workflow | NOT_IMPLEMENTED |
-| Production comercial | DISABLED |
+| Capacidad                          | Estado inicial                             |
+| ---------------------------------- | ------------------------------------------ |
+| workflows GitHub Actions           | IMPLEMENTED                                |
+| check `ci/required`                | NOT_IMPLEMENTED                            |
+| branch protection                  | NOT_VERIFIED                               |
+| Deploy Vercel por GitHub Actions   | IMPLEMENTED                                |
+| Vercel Git integration             | NOT_REQUIRED para el delivery autoritativo |
+| Preview deployments                | NOT_VERIFIED                               |
+| Deploy selectivo desde `main`      | IMPLEMENTED                                |
+| staged Production/demo sin rebuild | NOT_IMPLEMENTED                            |
+| migration workflow                 | NOT_IMPLEMENTED                            |
+| Production comercial               | DISABLED                                   |
 
 ## Workflow PR
 
@@ -25,17 +27,17 @@ permissions:
 Jobs que necesiten publicar checks/reports solicitan únicamente el permiso adicional en ese job. PRs de forks/no confiables no ejecutan código con secrets ni usan `pull_request_target` para checkout del head.
 
 ```text
-changes
-  ├── docs_quality: format + sdd:validate + secret scan
-  ├── static: lint + typecheck + deps:check
-  ├── unit_contract: unit/component + contract/OpenAPI
-  ├── build: web + api (+ UI docs si ADR-004)
-  ├── security: audit + Sonar cuando SPK-05 lo habilite
-  ├── integration: PostgreSQL/RLS cuando el cambio aplica
-  └── e2e: smoke sobre Preview cuando el recorrido aplica
+affected
+  ├── quality: format + lint + typecheck + deps + SDD + unit/coverage + security + budgets + SBOM
+  ├── CodeQL: JavaScript/TypeScript
+  └── e2e: matriz de clientes afectados
         ↓
-     ci/required (always)
+ push main → deploy: matriz Vercel afectada
 ```
+
+La agregación futura `ci/required`, integration/RLS y preview smoke continúan pendientes. El job
+`affected` siempre corre y decide explícitamente si E2E/deploy aplican; una ruta desconocida
+selecciona todo.
 
 `ci/required` usa `if: always()` y falla si un job obligatorio falló, fue cancelado o se omitió indebidamente. Los jobs no aplicables retornan éxito explícito con razón; no dependen de workflows enteros que nunca disparan y dejan checks pending.
 
@@ -49,14 +51,17 @@ changes
 
 ## Delivery demo
 
-1. PR SHA obtiene Preview con `APP_ENV=preview` y variables mínimas.
-2. `ci/required` y review permiten squash merge.
-3. `main` genera un Production deployment staged con variables `APP_ENV=demo`.
-4. El dominio demo no se auto-asigna.
-5. Se ejecutan health, smoke, synthetic y headers/security checks sobre staged URL.
-6. Owner aprueba y promueve ese deployment sin rebuild.
-7. Se registra deployment ID, SHA, config revision y evidencia.
-8. Ante fallo, no se promueve; si ya era current, instant rollback al deployment compatible anterior.
+1. PR SHA ejecuta Quality, CodeQL y E2E afectados sin secretos de deploy.
+2. Review/checks permiten squash merge.
+3. El SHA integrado en `main` repite los gates.
+4. Si pasan, GitHub Actions ejecuta `vercel pull` y `vercel deploy --prod` sólo para la matriz
+   afectada.
+5. GitHub Actions y Vercel registran job, SHA y deployment.
+6. Ante fallo de gates no se despliega; ante fallo de una aplicación, las demás matrices no se
+   cancelan.
+
+Preview aislado, smoke post-deploy, promoción staged sin rebuild e instant rollback permanecen
+como estado objetivo, no como capacidad ya verificada.
 
 ## Migraciones
 
