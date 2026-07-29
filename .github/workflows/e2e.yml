@@ -15,6 +15,41 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  affected:
+    name: Detect affected applications
+    runs-on: ubuntu-24.04
+    outputs:
+      deploy: ${{ steps.detect.outputs.deploy }}
+      e2e: ${{ steps.detect.outputs.e2e }}
+      has_deploy: ${{ steps.detect.outputs.has_deploy }}
+      has_e2e: ${{ steps.detect.outputs.has_e2e }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: detect
+        name: Build selective test and deployment matrices
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            result="$(node tooling/deployment/detect-affected.mjs --all </dev/null)"
+          else
+            base="$BEFORE_SHA"
+            if [[ "$EVENT_NAME" == "pull_request" ]]; then
+              base="$BASE_SHA"
+            fi
+            result="$(git diff --name-only "$base" "$HEAD_SHA" | node tooling/deployment/detect-affected.mjs)"
+          fi
+          echo "deploy=$(node -e 'const value=JSON.parse(process.argv[1]); process.stdout.write(JSON.stringify(value.deploy))' "$result")" >> "$GITHUB_OUTPUT"
+          echo "e2e=$(node -e 'const value=JSON.parse(process.argv[1]); process.stdout.write(JSON.stringify(value.e2e))' "$result")" >> "$GITHUB_OUTPUT"
+          echo "has_deploy=$(node -e 'const value=JSON.parse(process.argv[1]); process.stdout.write(String(value.has_deploy))' "$result")" >> "$GITHUB_OUTPUT"
+          echo "has_e2e=$(node -e 'const value=JSON.parse(process.argv[1]); process.stdout.write(String(value.has_e2e))' "$result")" >> "$GITHUB_OUTPUT"
+          echo "$result" >> "$GITHUB_STEP_SUMMARY"
+
   quality:
     name: Quality gate
     runs-on: ubuntu-24.04
@@ -32,6 +67,7 @@ jobs:
           npm run lint
           npm run typecheck
           npm run deps:check
+          npm run deploy:affected:test
           npm run sdd:validate
       - name: Unit tests and coverage
         run: npm run test:coverage
@@ -54,6 +90,8 @@ jobs:
 
   playwright:
     name: E2E · ${{ matrix.label }}
+    if: needs.affected.outputs.has_e2e == 'true'
+    needs: affected
     runs-on: ubuntu-24.04
     container: mcr.microsoft.com/playwright:v1.62.0-noble
     timeout-minutes: 20
@@ -61,25 +99,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - app: dash
-            label: Dash
-            workspace: apps/web
-          - app: host
-            label: Host
-            workspace: apps/host
-          - app: floor
-            label: Floor
-            workspace: apps/waiter
-          - app: kitchen
-            label: Kitchen
-            workspace: apps/kitchen
-          - app: cash
-            label: Cash
-            workspace: apps/cashier
-          - app: guest
-            label: Guest
-            workspace: apps/customer
+        include: ${{ fromJSON(needs.affected.outputs.e2e) }}
 
     steps:
       - name: Checkout repository
@@ -121,28 +141,20 @@ jobs:
 
   deploy:
     name: Deploy · ${{ matrix.name }}
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [quality, playwright]
+    if: >-
+      always() &&
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      needs.affected.outputs.has_deploy == 'true' &&
+      needs.quality.result == 'success' &&
+      (needs.playwright.result == 'success' || needs.playwright.result == 'skipped')
+    needs: [affected, quality, playwright]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - name: api
-            project_id: prj_gAFxIYi8bL5TkpbwpoBYlRyaHqZk
-          - name: web
-            project_id: prj_9qxMJEtIMVtq8k43SuzVTqsYewgd
-          - name: kitchen
-            project_id: prj_DRbMDZIlV9NrPZApEw2CHVxnZD1K
-          - name: waiter
-            project_id: prj_np4ZH8Whi8gfoTj9MuTGoojBOEcH
-          - name: cashier
-            project_id: prj_VBaKDObIvmSTKWuD2eJsyegtoxni
-          - name: host
-            project_id: prj_QMdvmmgsDT9S6os663n4vOv8BpeH
-          - name: customer
-            project_id: prj_MpM495erYWa5cbtprfEYQTjKCX0r
+        include: ${{ fromJSON(needs.affected.outputs.deploy) }}
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: team_cvlEbUCNF87Ldam2yzMhKBkc
