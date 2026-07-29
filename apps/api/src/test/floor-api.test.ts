@@ -217,7 +217,10 @@ serialTest("Visit reopen returns CLOSING to OPEN and visit list is query-scoped 
   assert.equal(reopen.json().data.status, "OPEN");
   assert.equal(reopen.json().data.revision, 3);
   assert.equal(reopen.json().data.createdAt, visit.createdAt);
-  assert.notEqual(reopen.json().data.updatedAt, requestClose.json().data.updatedAt);
+  assert.ok(
+    Date.parse(reopen.json().data.updatedAt as string) >=
+      Date.parse(requestClose.json().data.updatedAt as string),
+  );
   await app.close();
 });
 

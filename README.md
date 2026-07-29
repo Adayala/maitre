@@ -102,9 +102,10 @@ Este repositorio contiene las especificaciones y la implementación activa de Ma
 aplicaciones web, módulos de dominio, adaptadores, migraciones y pruebas automatizadas. Las
 especificaciones siguen actuando como contrato de la implementación.
 
-Los pull requests ejecutan Quality, CodeQL y los E2E afectados. Después de un merge a `main`, el
-workflow `End-to-end` despliega en Vercel únicamente la API o las aplicaciones alcanzadas por el
-cambio; los cambios compartidos usan una selección conservadora completa. Consulta
+Los pull requests ejecutan Quality, CodeQL y los E2E afectados, resumidos por el check estable
+`E2E gate`. Después de un merge a `main`, el workflow `End-to-end` despliega en Vercel únicamente
+la API o las aplicaciones alcanzadas por el cambio, siempre que `Quality gate` y `E2E gate` pasen;
+los cambios compartidos usan una selección conservadora completa. Consulta
 [Operación y despliegue en Vercel](DEPLOYMENT.md).
 
 ## Estado operativo local actual

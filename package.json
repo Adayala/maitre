@@ -10,6 +10,7 @@
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
+    "coverage:gate:test": "node --test tooling/quality/coverage-gate.test.mjs",
     "deps:check": "depcruise --config dependency-cruiser.config.cjs apps packages adapters",
     "deploy:affected:test": "node --test tooling/deployment/detect-affected.test.mjs",
     "format:check": "prettier --check eslint.config.mjs dependency-cruiser.config.cjs tooling tests/e2e .github",
