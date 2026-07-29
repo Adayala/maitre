@@ -68,6 +68,7 @@ jobs:
           npm run typecheck
           npm run deps:check
           npm run deploy:affected:test
+          npm run coverage:gate:test
           npm run sdd:validate
       - name: Unit tests and coverage
         run: npm run test:coverage
@@ -139,6 +140,23 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+  e2e-gate:
+    name: E2E gate
+    if: ${{ always() }}
+    needs: [affected, playwright]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require every affected Playwright project
+        env:
+          HAS_E2E: ${{ needs.affected.outputs.has_e2e }}
+          PLAYWRIGHT_RESULT: ${{ needs.playwright.result }}
+        run: |
+          if [[ "$HAS_E2E" == "true" && "$PLAYWRIGHT_RESULT" != "success" ]]; then
+            echo "Affected E2E projects did not all pass: $PLAYWRIGHT_RESULT"
+            exit 1
+          fi
+          echo "E2E gate passed (affected=$HAS_E2E, result=$PLAYWRIGHT_RESULT)."
+
   deploy:
     name: Deploy · ${{ matrix.name }}
     if: >-
@@ -147,8 +165,8 @@ jobs:
       github.ref == 'refs/heads/main' &&
       needs.affected.outputs.has_deploy == 'true' &&
       needs.quality.result == 'success' &&
-      (needs.playwright.result == 'success' || needs.playwright.result == 'skipped')
-    needs: [affected, quality, playwright]
+      needs.e2e-gate.result == 'success'
+    needs: [affected, quality, e2e-gate]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     strategy:
