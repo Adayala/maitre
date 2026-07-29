@@ -1,6 +1,8 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Navigate, useSearchParams } from "react-router-dom";
 import { useAuth, isSupabaseConfigured } from "../../app/auth-context.js";
+
+const SUBMIT_FAILSAFE_MS = 12_000;
 
 // SPEC-023 — login happens via the identity provider's SDK; this screen never
 // touches passwords beyond forwarding them to supabase-js directly. A
@@ -14,6 +16,7 @@ export function LoginPage() {
   const [fixtureToken, setFixtureToken] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submitTimerRef = useRef<number | null>(null);
   const next = searchParams.get("next") ?? "/";
   const mode = searchParams.get("mode");
   const isCustomerMode = mode === "customer";
@@ -29,17 +32,36 @@ export function LoginPage() {
         "Si el build local no tiene Supabase Auth, podés usar token manual.",
       ];
 
+  useEffect(() => {
+    return () => {
+      if (submitTimerRef.current !== null) {
+        window.clearTimeout(submitTimerRef.current);
+      }
+    };
+  }, []);
+
   if (accessToken) return <Navigate to={next} replace />;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
     setIsSubmitting(true);
+    if (submitTimerRef.current !== null) {
+      window.clearTimeout(submitTimerRef.current);
+    }
+    submitTimerRef.current = window.setTimeout(() => {
+      setIsSubmitting(false);
+      setError("El login no respondió. Probá de nuevo.");
+    }, SUBMIT_FAILSAFE_MS);
     try {
       await signInWithPassword(email, password);
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo iniciar sesión");
     } finally {
+      if (submitTimerRef.current !== null) {
+        window.clearTimeout(submitTimerRef.current);
+        submitTimerRef.current = null;
+      }
       setIsSubmitting(false);
     }
   }
@@ -112,6 +134,21 @@ export function LoginPage() {
             <button type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Ingresando…" : "Ingresar"}
             </button>
+            {isSubmitting ? (
+              <button
+                type="button"
+                onClick={() => {
+                  if (submitTimerRef.current !== null) {
+                    window.clearTimeout(submitTimerRef.current);
+                    submitTimerRef.current = null;
+                  }
+                  setIsSubmitting(false);
+                  setError("Login cancelado. Podés reintentar.");
+                }}
+              >
+                Cancelar intento
+              </button>
+            ) : null}
           </form>
         ) : (
           <div className="login-form-card">

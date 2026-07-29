@@ -461,6 +461,57 @@ export function KdsPage() {
   ];
   const queuePendingLabels = queueChecklist.filter((step) => !step.done).map((step) => step.label);
   const queueNeedsAttention = queuePendingLabels.length > 0;
+  const productionStageCards = [
+    {
+      label: "Tomar",
+      title: receivedCount > 0 ? `${receivedCount} nueva${receivedCount === 1 ? "" : "s"} por absorber` : "Ingresos bajo control",
+      detail:
+        receivedCount > 0
+          ? "Conviene repartir o tomar las comandas recién llegadas para que no envejezcan en la cola."
+          : "No quedaron comandas nuevas esperando asignación.",
+      tone: receivedCount > 0 ? "warning" : "success",
+      active: quickView === "NEW" || activeFilter === "RECEIVED",
+      onClick: () => {
+        setQuickView(receivedCount > 0 ? "NEW" : "NONE");
+        setActiveFilter(receivedCount > 0 ? "RECEIVED" : "ALL");
+      },
+    },
+    {
+      label: "Cocinar",
+      title: inProgressCount > 0 || claimedCount > 0 ? `${claimedCount + inProgressCount} en ejecución` : "Sin producción activa",
+      detail:
+        lateCount > 0
+          ? "Hay atraso: conviene priorizar las comandas que ya están fuera de tiempo."
+          : claimedCount + inProgressCount > 0
+            ? "La producción está en marcha; seguí ritmo y evitá pausas innecesarias."
+            : "No hay comandas tomadas o en preparación en este instante.",
+      tone: lateCount > 0 ? "warning" : claimedCount + inProgressCount > 0 ? "info" : "success",
+      active: quickView === "LATE" || activeFilter === "CLAIMED" || activeFilter === "IN_PROGRESS",
+      onClick: () => {
+        if (lateCount > 0) {
+          setQuickView("LATE");
+          setActiveFilter("ALL");
+          return;
+        }
+        setQuickView("NONE");
+        setActiveFilter(inProgressCount > 0 ? "IN_PROGRESS" : claimedCount > 0 ? "CLAIMED" : "ALL");
+      },
+    },
+    {
+      label: "Despachar",
+      title: readyCount > 0 ? `${readyCount} lista${readyCount === 1 ? "" : "s"} para handoff` : "Nada lista para salir",
+      detail:
+        readyCount > 0
+          ? "La siguiente ganancia operativa está en confirmar salida y liberar lugar mental en estación."
+          : "Todavía no hay preparación terminada para pasar a salón.",
+      tone: readyCount > 0 ? "success" : "info",
+      active: quickView === "READY" || activeFilter === "READY",
+      onClick: () => {
+        setQuickView(readyCount > 0 ? "READY" : "NONE");
+        setActiveFilter(readyCount > 0 ? "READY" : "ALL");
+      },
+    },
+  ] as const;
   const quickViewLabel =
     quickView === "LATE"
       ? "Atrasadas"
@@ -974,6 +1025,29 @@ export function KdsPage() {
                   Ver cola completa
                 </button>
               ) : null}
+            </div>
+          </article>
+
+          <article className="kds-guidance-card">
+            <div className="kds-guidance-card__head">
+              <div>
+                <span className="kds-guidance-card__eyebrow">Lectura por etapa</span>
+                <strong>Tomar, cocinar y despachar</strong>
+              </div>
+            </div>
+            <div className="kds-stage-grid">
+              {productionStageCards.map((card) => (
+                <button
+                  key={card.label}
+                  type="button"
+                  className={`kds-stage-card kds-stage-card--${card.tone}${card.active ? " kds-stage-card--active" : ""}`}
+                  onClick={card.onClick}
+                >
+                  <span>{card.label}</span>
+                  <strong>{card.title}</strong>
+                  <p>{card.detail}</p>
+                </button>
+              ))}
             </div>
           </article>
         </section>

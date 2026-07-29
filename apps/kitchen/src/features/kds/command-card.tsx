@@ -95,6 +95,13 @@ export function CommandCard({
     : primaryActionsFor(status).filter((action) => !deniedActions?.[action.action]);
   const canCancel =
     !lockedByOtherOwner && status !== "READY" && !deniedActions?.cancel; // keep the destructive tap away from the hand-off moment
+  const decisionNote = getDecisionNote({
+    status,
+    lockedByOtherOwner,
+    ownedByMe,
+    hasAllergens: payload.allergenFlags.length > 0,
+    hasNotes: Boolean(payload.notes),
+  });
 
   function submitCancel() {
     const reason = cancelReason.trim();
@@ -190,6 +197,7 @@ export function CommandCard({
             {pendingLabel}
           </p>
         )}
+        {decisionNote ? <p className="card-decision-note">{decisionNote}</p> : null}
         {cancelOpen && canCancel && (
           <div className="cancel-box" role="group" aria-label="Motivo de cancelación">
             <label className="cancel-box__label" htmlFor={`cancel-reason-${command.id}`}>
@@ -253,4 +261,48 @@ export function CommandCard({
       </footer>
     </article>
   );
+}
+
+function getDecisionNote({
+  status,
+  lockedByOtherOwner,
+  ownedByMe,
+  hasAllergens,
+  hasNotes,
+}: {
+  status: CommandStatus;
+  lockedByOtherOwner: boolean;
+  ownedByMe: boolean;
+  hasAllergens: boolean;
+  hasNotes: boolean;
+}) {
+  if (lockedByOtherOwner) {
+    return "Quedó tomada por otro cocinero; seguí sólo cuando se libere o llegue el handoff.";
+  }
+
+  if (status === "RECEIVED") {
+    return hasAllergens || hasNotes
+      ? "Antes de tomarla, mirá alérgenos y nota para no arrancar con un supuesto incorrecto."
+      : "Si esta estación la va a producir ahora, el siguiente paso natural es tomarla.";
+  }
+
+  if (status === "CLAIMED") {
+    return ownedByMe
+      ? "Ya está tomada por vos: empezá preparación o soltala si no corresponde a esta estación."
+      : "La comanda está tomada y lista para arrancar preparación.";
+  }
+
+  if (status === "IN_PROGRESS") {
+    return "Seguí producción y marcala lista sólo cuando toda la línea pueda salir sin bloqueo.";
+  }
+
+  if (status === "ON_HOLD") {
+    return "Retomala cuando el bloqueo operativo esté resuelto y el flujo pueda continuar.";
+  }
+
+  if (status === "READY") {
+    return "Confirmá handoff cuando efectivamente salga de cocina para no dejar falsas listas.";
+  }
+
+  return null;
 }

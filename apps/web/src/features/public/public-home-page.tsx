@@ -55,6 +55,30 @@ export function PublicHomePage() {
       cta: "Ver mis reservas",
     },
   ];
+  const decisionRoutes = [
+    {
+      badge: "Todavía estoy mirando",
+      title: "Empezá por menú",
+      description: "Ideal si primero querés entender propuesta, categorías, precios y estilo del restaurante.",
+      to: "/public/menu",
+      cta: "Ir al menú",
+    },
+    {
+      badge: "Quiero elegir sede",
+      title: "Compará sucursales",
+      description: "Si tu duda es la ubicación o el canal de contacto, esta es la mejor entrada.",
+      to: "/public/branches",
+      cta: "Ver sucursales",
+    },
+    {
+      badge: "Ya estoy decidido",
+      title: "Pasá a reservar",
+      description: "Cuando ya sabés que querés ir, el siguiente paso natural es iniciar el flujo autenticado.",
+      to: "/public/reservations/new",
+      cta: "Empezar reserva",
+      prefetch: reservePrefetchProps,
+    },
+  ];
 
   return (
     <section className="public-page" aria-labelledby="public-home-heading">
@@ -93,6 +117,32 @@ export function PublicHomePage() {
           <span><strong>Primer clic sugerido:</strong> Ver menú</span>
           <span><strong>Segundo paso:</strong> Comparar sucursales</span>
           <span><strong>Tercer paso:</strong> Pasar a reserva autenticada</span>
+        </div>
+      </article>
+
+      <article className="public-card">
+        <h2>Elegí por dónde empezar</h2>
+        <p>
+          No todas las personas llegan con la misma intención. Este bloque te ayuda a entrar al recorrido correcto sin dar vueltas.
+        </p>
+        <div className="public-route-grid">
+          {decisionRoutes.map((route) => (
+            <Link
+              key={route.to}
+              to={route.to}
+              className={`public-route-card ${route.to.includes("/reservations/") ? "public-route-card--accent" : ""}`}
+              {...(route.prefetch ?? {})}
+            >
+              <div className="public-route-meta">
+                <span className={`public-route-badge ${route.to.includes("/reservations/") ? "public-route-badge--accent" : ""}`}>
+                  {route.badge}
+                </span>
+                <h3>{route.title}</h3>
+              </div>
+              <p>{route.description}</p>
+              <span className="public-route-link">{route.cta}</span>
+            </Link>
+          ))}
         </div>
       </article>
 

@@ -1,0 +1,43 @@
+name: Deploy to Vercel
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: api
+            project_id: prj_gAFxIYi8bL5TkpbwpoBYlRyaHqZk
+          - name: web
+            project_id: prj_9qxMJEtIMVtq8k43SuzVTqsYewgd
+          - name: kitchen
+            project_id: prj_DRbMDZIlV9NrPZApEw2CHVxnZD1K
+          - name: waiter
+            project_id: prj_np4ZH8Whi8gfoTj9MuTGoojBOEcH
+          - name: cashier
+            project_id: prj_VBaKDObIvmSTKWuD2eJsyegtoxni
+          - name: host
+            project_id: prj_QMdvmmgsDT9S6os663n4vOv8BpeH
+          - name: customer
+            project_id: prj_MpM495erYWa5cbtprfEYQTjKCX0r
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: team_cvlEbUCNF87Ldam2yzMhKBkc
+      VERCEL_PROJECT_ID: ${{ matrix.project_id }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Deploy ${{ matrix.name }} to Vercel
+        run: |
+          npx --yes vercel@57 pull --yes --environment=production --token="$VERCEL_TOKEN"
+          npx --yes vercel@57 deploy --prod --yes --token="$VERCEL_TOKEN"

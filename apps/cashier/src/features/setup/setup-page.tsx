@@ -43,6 +43,58 @@ export function SetupPage() {
     { label: "Sucursal resuelta", done: Boolean(selectedBranchId) },
     { label: "Caja lista para operar", done: step !== "register" ? false : registers.length > 0 },
   ];
+  const pendingChecklist = checklist.filter((item) => !item.done).map((item) => item.label);
+  const setupRoutes =
+    step === "tenant"
+      ? [
+          {
+            eyebrow: "Paso inmediato",
+            title: "Elegir la empresa correcta",
+            detail: "Esto define el contexto comercial sobre el que va a abrir y cerrar esta caja.",
+            onClick: () => undefined,
+            disabled: true,
+          },
+          {
+            eyebrow: "Si el usuario no corresponde",
+            title: "Cerrar sesión",
+            detail: "Útil si el dispositivo quedó abierto con una cuenta que no debería operar caja.",
+            onClick: () => void signOut(),
+            disabled: false,
+          },
+        ]
+      : step === "branch"
+        ? [
+            {
+              eyebrow: "Paso inmediato",
+              title: "Elegir la sucursal del turno",
+              detail: "La caja sólo va a registrar sesiones y movimientos de la sede que definas acá.",
+              onClick: () => undefined,
+              disabled: true,
+            },
+            {
+              eyebrow: "Volver atrás",
+              title: "Cambiar empresa",
+              detail: "Si el tenant quedó mal elegido, conviene corregirlo antes de fijar la caja.",
+              onClick: () => selectTenant(""),
+              disabled: tenants.length <= 1,
+            },
+          ]
+        : [
+            {
+              eyebrow: "Paso inmediato",
+              title: "Fijar la caja operativa",
+              detail: "Esto determina sobre qué caja física o lógica vas a abrir sesión y registrar movimientos.",
+              onClick: () => undefined,
+              disabled: true,
+            },
+            {
+              eyebrow: "Volver atrás",
+              title: "Cambiar sucursal",
+              detail: "Si esta caja corresponde a otra sede, corregí la sucursal antes de arrancar el turno.",
+              onClick: () => selectBranch(""),
+              disabled: !selectedBranchId,
+            },
+          ];
 
   return (
     <main className="setup">
@@ -72,6 +124,31 @@ export function SetupPage() {
             </div>
           ))}
         </div>
+
+        <article className="setup-panel">
+          <p className="setup-eyebrow">Qué conviene hacer ahora</p>
+          <strong>{summary.title}</strong>
+          <p>
+            {pendingChecklist.length > 0
+              ? `Todavía falta resolver: ${pendingChecklist.join(", ")}.`
+              : "La configuración base ya está encaminada; sólo queda confirmar la selección visible."}
+          </p>
+          <div className="setup-options">
+            {setupRoutes.map((route) => (
+              <button
+                key={route.title}
+                type="button"
+                className="option-btn"
+                onClick={route.onClick}
+                disabled={route.disabled}
+              >
+                <span className="option-sub">{route.eyebrow}</span>
+                <span>{route.title}</span>
+                <span className="option-sub">{route.detail}</span>
+              </button>
+            ))}
+          </div>
+        </article>
 
         {step === "tenant" ? (
           <StateView

@@ -48,6 +48,12 @@ export function ProductAddSheet({
         : null;
 
   const lineTotal = product.priceMinorUnits * quantity;
+  const addChecklist = [
+    { label: "Producto elegido", done: Boolean(product.id) },
+    { label: "Cantidad definida", done: quantity > 0 },
+    { label: "Nota dentro del límite", done: notes.length <= NOTE_MAX },
+  ];
+  const addPending = addChecklist.filter((step) => !step.done).map((step) => step.label);
 
   return (
     <div className="sheet-root" role="dialog" aria-modal="true" aria-label={`Agregar ${product.name}`}>
@@ -57,6 +63,23 @@ export function ProductAddSheet({
         <h2 className="sheet-title">{product.name}</h2>
         <p className="sheet-sub">{formatMoney(product.priceMinorUnits, product.currency)} c/u</p>
         <p className="sheet-hint">Confirmá cantidad y, si hace falta, dejá una nota clara para cocina.</p>
+
+        <div className="sheet-guidance">
+          <strong>Chequeo rápido antes de agregar</strong>
+          <div className="sheet-checklist">
+            {addChecklist.map((step) => (
+              <div key={step.label} className={`sheet-check ${step.done ? "sheet-check--done" : ""}`}>
+                <strong>{step.done ? "✓" : "•"}</strong>
+                <span>{step.label}</span>
+              </div>
+            ))}
+          </div>
+          <p className="sheet-hint">
+            {addPending.length > 0
+              ? `Todavía conviene revisar: ${addPending.join(", ")}.`
+              : "La línea ya está lista para sumarse al borrador del pedido."}
+          </p>
+        </div>
 
         {product.allergens.length > 0 && (
           <p className="sheet-allergens">⚠ Alérgenos: {product.allergens.join(", ")}</p>

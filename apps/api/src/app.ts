@@ -1,5 +1,7 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import cors from "@fastify/cors";
+import swagger from "@fastify/swagger";
+import swaggerUi from "@fastify/swagger-ui";
 import { buildContainer, type Container } from "./composition/container.js";
 import { registerHealthRoutes } from "./routes/health.js";
 import { registerMeRoutes } from "./routes/me.js";
@@ -64,6 +66,18 @@ export async function buildApp(container?: Container): Promise<FastifyInstance> 
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Tenant-Id", "X-Branch-Id"],
   });
+
+  // API documentation — most routes validate with a manual Zod .parse() inside
+  // the handler rather than a Fastify route `schema`, so this generates a
+  // real, browsable endpoint catalog (path/method per route) without detailed
+  // per-route request/response bodies. Served at /docs, separate from /v1/*.
+  await app.register(swagger, {
+    openapi: {
+      info: { title: "Maitre API", version: "0.0.1" },
+      servers: [{ url: "/" }],
+    },
+  });
+  await app.register(swaggerUi, { routePrefix: "/docs" });
 
   await registerHealthRoutes(app, resolvedContainer);
   await registerMeRoutes(app, resolvedContainer);

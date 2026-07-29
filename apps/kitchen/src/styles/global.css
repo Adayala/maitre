@@ -1342,6 +1342,54 @@ h3 {
   gap: 0.65rem;
 }
 
+.kds-stage-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.kds-stage-card {
+  display: grid;
+  gap: 0.3rem;
+  text-align: left;
+  padding: 0.95rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+.kds-stage-card span {
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.kds-stage-card p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.kds-stage-card--active {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 45%, transparent);
+}
+
+.kds-stage-card--success {
+  border-color: color-mix(in srgb, var(--success) 38%, transparent);
+  background: color-mix(in srgb, var(--success) 8%, var(--surface-3));
+}
+
+.kds-stage-card--warning {
+  border-color: color-mix(in srgb, var(--u-warn) 38%, transparent);
+  background: color-mix(in srgb, var(--u-warn) 10%, var(--surface-3));
+}
+
+.kds-stage-card--info {
+  border-color: color-mix(in srgb, var(--primary) 38%, transparent);
+  background: color-mix(in srgb, var(--primary) 8%, var(--surface-3));
+}
+
 .quickview-chip {
   flex: 0 0 auto;
   display: inline-flex;
@@ -1399,6 +1447,10 @@ h3 {
 @media (min-width: 980px) {
   .kds-guidance {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .kds-stage-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 .card {
@@ -1777,9 +1829,20 @@ h3 {
   font-size: 0.92rem;
   font-weight: 700;
 }
+.card-decision-note {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
 
 .kds--rush .card-lock-note,
-.kds--rush .card-pending-note {
+.kds--rush .card-pending-note,
+.kds--rush .card-decision-note {
   padding: 0.5rem 0.55rem;
   font-size: 0.84rem;
 }

@@ -119,6 +119,39 @@ export function OrderPage({ visitId, orderId }: { visitId: string; orderId: stri
     searchActive,
     resultCount: products.length,
   });
+  const orderChecklist = [
+    { label: "Categoría elegida", done: Boolean(currentCategoryId) },
+    { label: "Menú con platos visibles", done: products.length > 0 || !menuQ.isLoading },
+    { label: "Pedido con al menos un ítem", done: cartCount > 0 },
+    { label: "Búsqueda sin bloquear el flujo", done: !searchActive || products.length > 0 },
+  ];
+  const orderPending = orderChecklist.filter((step) => !step.done).map((step) => step.label);
+  const orderFocusCards = [
+    {
+      label: "Menú",
+      value: products.length,
+      detail: searchActive ? "Resultados visibles" : "Platos en esta categoría",
+      active: focusSection === "menu",
+      onClick: () => setFocusSection("menu"),
+    },
+    {
+      label: "Pedido",
+      value: cartCount,
+      detail: cartCount > 0 ? "Ítems listos para revisar" : "Todavía vacío",
+      active: focusSection === "cart",
+      onClick: () => {
+        setFocusSection("cart");
+        if (cartCount > 0) setCartOpen(true);
+      },
+    },
+    {
+      label: "Búsqueda",
+      value: searchActive ? products.length : 0,
+      detail: searchActive ? "Coincidencias activas" : "Sin filtro",
+      active: searchActive,
+      onClick: () => setSearchTerm(""),
+    },
+  ];
 
   return (
     <div className="screen">
@@ -165,6 +198,45 @@ export function OrderPage({ visitId, orderId }: { visitId: string; orderId: stri
             {orderPriority.cta}
           </button>
         </div>
+
+        <section className="waiter-guidance" aria-label="Guía para armar pedido">
+          <article className="waiter-guidance-card">
+            <span className="waiter-guidance-eyebrow">Chequeo de armado</span>
+            <strong>Qué conviene revisar antes de enviar</strong>
+            <div className="waiter-checklist">
+              {orderChecklist.map((step) => (
+                <div key={step.label} className={`waiter-check ${step.done ? "waiter-check--done" : ""}`}>
+                  <strong>{step.done ? "✓" : "•"}</strong>
+                  <span>{step.label}</span>
+                </div>
+              ))}
+            </div>
+            <p className="waiter-guidance-note">
+              {orderPending.length > 0
+                ? `Todavía conviene mirar: ${orderPending.join(", ")}.`
+                : "El pedido ya tiene contexto suficiente para revisarse y enviarse a cocina."}
+            </p>
+          </article>
+
+          <article className="waiter-guidance-card">
+            <span className="waiter-guidance-eyebrow">Atajos del mozo</span>
+            <strong>Entrá directo al punto útil del flujo</strong>
+            <div className="waiter-focus-grid">
+              {orderFocusCards.map((card) => (
+                <button
+                  key={card.label}
+                  type="button"
+                  className={`waiter-focus-card ${card.active ? "waiter-focus-card--active" : ""}`}
+                  onClick={card.onClick}
+                >
+                  <span>{card.label}</span>
+                  <strong>{card.value}</strong>
+                  <p>{card.detail}</p>
+                </button>
+              ))}
+            </div>
+          </article>
+        </section>
 
         <StateView
           isLoading={menuQ.isLoading}

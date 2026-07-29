@@ -61,6 +61,46 @@ export function CustomerReservationDetailPage() {
 
   const reservation = reservationQuery.data?.data;
   const detailNextAction = reservation ? getReservationDetailNextAction(reservation.status, Boolean(reservation.visitId)) : null;
+  const detailChecklist = reservation
+    ? [
+        { label: "La reserva quedó ubicada", done: Boolean(reservation.id) },
+        { label: "La fecha y hora están claras", done: Boolean(reservation.startAt) },
+        { label: "La sucursal está identificada", done: Boolean(reservation.branchId) },
+        {
+          label: "La reserva todavía admite cancelación",
+          done: reservation.status === "PENDING" || reservation.status === "CONFIRMED",
+        },
+      ]
+    : [];
+  const detailPending = detailChecklist.filter((step) => !step.done).map((step) => step.label);
+  const detailRoutes = reservation
+    ? [
+        {
+          badge: "Volver al seguimiento",
+          title: "Ver todas mis reservas",
+          description: "Ideal para revisar próximas visitas, historial y cambios recientes en un solo lugar.",
+          to: "/public/reservations",
+          cta: "Ir a mis reservas",
+          prefetch: reservationsPrefetchProps,
+        },
+        {
+          badge: "Nueva planificación",
+          title: "Crear otra reserva",
+          description: "Útil si querés organizar otra visita o reemplazar una reserva cancelada.",
+          to: "/public/reservations/new",
+          cta: "Nueva reserva",
+          accent: reservation.status === "CANCELLED" || reservation.status === "COMPLETED",
+          prefetch: reservePrefetchProps,
+        },
+        {
+          badge: "Contexto adicional",
+          title: "Explorar sucursales",
+          description: "Si cambió la sede o querés comparar otra opción, podés volver al listado público.",
+          to: "/public/branches",
+          cta: "Ver sucursales",
+        },
+      ]
+    : [];
 
   return (
     <section className="public-page" aria-labelledby="customer-reservation-detail-heading">
@@ -92,6 +132,46 @@ export function CustomerReservationDetailPage() {
               </div>
             </article>
           ) : null}
+
+          <article className="public-card">
+            <h2>Qué revisar antes de salir de esta pantalla</h2>
+            <div className="public-checklist">
+              {detailChecklist.map((step) => (
+                <div key={step.label} className={`public-check-item ${step.done ? "public-check-item--done" : ""}`}>
+                  <strong>{step.done ? "✓" : "•"}</strong>
+                  <span>{step.label}</span>
+                </div>
+              ))}
+            </div>
+            <p className="public-field-hint">
+              {detailPending.length > 0
+                ? `Ya no aplica o quedó pendiente revisar: ${detailPending.join(", ")}.`
+                : "El detalle ya tiene todo lo necesario para seguir o cerrar esta gestión con claridad."}
+            </p>
+          </article>
+
+          <article className="public-card">
+            <h2>Atajos relacionados</h2>
+            <div className="public-route-grid">
+              {detailRoutes.map((route) => (
+                <Link
+                  key={route.to}
+                  to={route.to}
+                  className={`public-route-card ${route.accent ? "public-route-card--accent" : ""}`}
+                  {...(route.prefetch ?? {})}
+                >
+                  <div className="public-route-meta">
+                    <span className={`public-route-badge ${route.accent ? "public-route-badge--accent" : ""}`}>
+                      {route.badge}
+                    </span>
+                    <h3>{route.title}</h3>
+                  </div>
+                  <p>{route.description}</p>
+                  <span className="public-route-link">{route.cta}</span>
+                </Link>
+              ))}
+            </div>
+          </article>
 
           <div className="public-card-grid">
             <article className="public-card">
