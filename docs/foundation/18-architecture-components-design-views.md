@@ -15,7 +15,8 @@ Este documento no reemplaza las specs normativas. Las conecta visualmente.
 - El backend ya tiene adapters Supabase para fiscal, y el rollout de tablas quedó
   aplicado en el proyecto conectado mediante `supabase/migrations/20260727143000_fiscal_domain.sql`.
 - El flujo fiscal técnico ya fue validado end-to-end contra Supabase: create →
-  validate → issue → QR. La autorización ARCA sigue simulada, no legalmente productiva.
+  validate → issue → QR. Además existe cliente real WSAA/WSFEv1 y `FEDummy` fue validado en
+  homologación; aún no existe habilitación fiscal productiva.
 - La estrategia multiapp por rol ya existe en implementación: `web`, `customer`, `waiter`, `host`, `kitchen`, `cashier`, `api`.
 - La dirección visual por rol ya está materializada en las seis superficies frontend. Customer usa
   presentación editorial de marca y las apps operativas incorporan una capa `modern.css` propia,
@@ -36,14 +37,14 @@ Este documento no reemplaza las specs normativas. Las conecta visualmente.
 | Apps y dispositivos | [15-applications-and-devices.md](../sdd/_guides/15-applications-and-devices.md) | Definido y reflejado en las superficies actuales |
 | Stack técnico | [TECH_STACK.md](../sdd/TECH_STACK.md) | Claro, orientado a plataforma |
 
-## Estado operativo relevado al 28 de julio de 2026
+## Estado operativo relevado al 29 de julio de 2026
 
 | Área | Estado runtime validado | Nota |
 | --- | --- | --- |
 | API local `apps/api` | Operativa contra Supabase | `/health/live` y `/health/ready` responden OK |
 | Auth / contexto | Operativo | `/v1/me/context` responde `401` limpio sin bearer |
 | Datos organization/floor/reservations/ordering/kitchen/cash | Presentes en Supabase | hay datos reales mínimos para prueba manual |
-| Fiscal | Operativo en modo simulado | schema aplicado, seed fiscal creado y emisión live `FACTURA_A` validada; ARCA real sigue pendiente |
+| Fiscal | Simulado end-to-end + ARCA homologación conectada | migraciones aplicadas, titular/sucursal/POS asociados, WSAA y `FEDummy` validados; matriz de comprobantes pendiente |
 | Fallback memory/fixture | Sólo soporte local/test | no forma parte del runtime operativo principal |
 | Customer público | Desplegado | home editorial Casa Maitre, menú, sucursales, reserva y cuenta separados |
 | Apps por rol | Desplegadas | Waiter, Host, Kitchen, Cashier y Dash poseen identidad visual y URL independientes |
@@ -139,10 +140,17 @@ graph LR
 
 - El 27 de julio de 2026 se aplicó la migration fiscal `20260727143000_fiscal_domain.sql`
   al proyecto Supabase conectado.
+- El 29 de julio de 2026 se aplicó
+  `20260729210000_arca_fiscal_ownership_and_registration.sql` y se asociaron explícitamente
+  titular fiscal, suscripción, sucursal y punto de venta de homologación.
+- Ese día también se obtuvo un Ticket de Acceso WSAA y se validó `FEDummy` con el certificado de
+  testing autorizado para `wsfe`.
 - Ese mismo día se validó un flujo fiscal live completo sobre Supabase:
   `create → validate → issue → QR`.
 - La validación emitió una `FACTURA_A` técnica con CAE simulado; prueba wiring
   end-to-end, no habilitación fiscal legal real.
+- La validación ARCA real alcanzó autenticación y health check; todavía no emitió un comprobante
+  de homologación ni constituye evidencia productiva.
 
 ## Vista 2 — Apps, roles y modo de interacción
 

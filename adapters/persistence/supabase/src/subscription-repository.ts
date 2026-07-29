@@ -6,6 +6,7 @@ const TABLE = "subscription_subscriptions";
 interface SubscriptionRow {
   id: string;
   tenant_id: string;
+  subscriber_fiscal_entity_id: string | null;
   plan_code: string;
   status: string;
   billing_cycle: string;
@@ -23,6 +24,9 @@ function fromRow(row: SubscriptionRow): Subscription {
   return {
     id: row.id,
     tenantId: row.tenant_id,
+    ...(row.subscriber_fiscal_entity_id
+      ? { subscriberFiscalEntityId: row.subscriber_fiscal_entity_id }
+      : {}),
     planCode: row.plan_code,
     status: row.status as Subscription["status"],
     billingCycle: row.billing_cycle as Subscription["billingCycle"],
@@ -41,6 +45,7 @@ function toRow(subscription: Subscription): SubscriptionRow {
   return {
     id: subscription.id,
     tenant_id: subscription.tenantId,
+    subscriber_fiscal_entity_id: subscription.subscriberFiscalEntityId ?? null,
     plan_code: subscription.planCode,
     status: subscription.status,
     billing_cycle: subscription.billingCycle,

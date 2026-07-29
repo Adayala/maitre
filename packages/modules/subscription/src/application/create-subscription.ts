@@ -6,6 +6,7 @@ import { recalculateEntitlements, type RecalculateEntitlementsDeps } from "./rec
 
 export interface CreateSubscriptionInput {
   tenantId: string;
+  subscriberFiscalEntityId?: string;
   planCode: string;
   billingCycle?: BillingCycle;
   id?: string;
@@ -29,6 +30,9 @@ export async function createSubscription(
   const subscription: Subscription = {
     id: input.id ?? randomUUID(),
     tenantId: input.tenantId,
+    ...(input.subscriberFiscalEntityId
+      ? { subscriberFiscalEntityId: input.subscriberFiscalEntityId }
+      : {}),
     planCode: input.planCode,
     status: "TRIAL",
     billingCycle: input.billingCycle ?? "MONTHLY",

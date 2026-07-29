@@ -58,6 +58,7 @@ export interface InvoiceLineItem {
   unitNetMinorUnits: number;
   discountsAppliedMinorUnits: number;
   taxRateVersion: string; // normativeSourceVersion of the resolved TaxRate
+  taxOfficialCode: string;
   taxTreatment: "TAXED" | "EXEMPT" | "NON_TAXED";
   taxableBaseMinorUnits: number;
   exemptBaseMinorUnits: number;
@@ -82,6 +83,8 @@ export interface RecipientSnapshot {
   legalName?: string | null;
   taxId?: string | null;
   taxCondition?: string | null;
+  documentType?: number | null;
+  vatConditionId?: number | null;
 }
 
 export interface Invoice {

@@ -4,7 +4,7 @@
 
 Dejar explícito qué partes de Maitre ya corren sobre Supabase en el runtime operativo principal, cuáles tienen evidencia live reciente y dónde siguen existiendo brechas reales.
 
-## Estado relevado el 27 de julio de 2026
+## Estado relevado el 29 de julio de 2026
 
 | Área | Adapter Supabase | Wiring en `apps/api` | Evidencia reciente | Gap principal |
 | --- | --- | --- | --- | --- |
@@ -15,11 +15,20 @@ Dejar explícito qué partes de Maitre ya corren sobre Supabase en el runtime op
 | Ordering | Sí | Sí | órdenes presentes | Falta recorrido waiter/cashier completo |
 | Kitchen | Sí | Sí | commands presentes | Falta validación live de tablero KDS |
 | Cash | Sí | Sí | sessions y movements presentes | Falta flujo live de cierre / conciliación |
-| Fiscal | Sí | Sí | migration + emisión técnica live | ARCA real sigue simulado |
+| Fiscal | Sí | Sí | migraciones, asociación fiscal, WSAA y `FEDummy` real en homologación | matriz de comprobantes y rollout productivo pendientes |
 | Workforce | Sí | Sí | repos Supabase presentes | Falta seed útil y prueba live |
 | Catalog | Sí | Sí | wiring completo | Falta evidencia live por UI pública |
 | Subscription | Sí | Sí | wiring completo | Falta prueba funcional de owner/backoffice |
 | Audit | Sí | Sí | wiring completo | Falta explotación visible / consultas live |
+
+### Detalle fiscal vigente
+
+- Migración de ownership/registro ARCA aplicada.
+- Suscripción del tenant de desarrollo asociada a una entidad fiscal `RI`.
+- Sucursal principal y POS `0001` de homologación asociados a la misma entidad.
+- Alta guardada como `DECLARED`; producción exige `VERIFIED`.
+- La razón social usada en desarrollo es temporal y no puede promoverse a producción.
+- El adapter simulado rechaza cualquier comprobante marcado `PRODUCTION`.
 
 ## Qué ya no es un gap
 

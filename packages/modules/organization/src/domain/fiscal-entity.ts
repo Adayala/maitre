@@ -20,6 +20,11 @@ export interface FiscalEntity {
   id: string;
   tenantId: string;
   cuit: string;
+  /** Authoritative registered business name used on fiscal documents. */
+  legalName?: string;
+  /** Optional commercial/display alias; never replaces legalName on a voucher. */
+  displayName?: string;
+  /** @deprecated compatibility alias for records created before legalName existed. */
   name: string;
   legalAddress?: string;
   fiscalAddress?: string;

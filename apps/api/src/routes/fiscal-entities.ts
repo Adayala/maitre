@@ -5,6 +5,8 @@ import { recordAuditLog } from "@maitre/audit";
 import {
   createFiscalEntity,
   DuplicateCuitError,
+  InvalidFiscalEntityTransitionError,
+  transitionFiscalEntity,
   type FiscalEntity,
 } from "@maitre/organization";
 import { InvalidCuitError } from "@maitre/organization";
@@ -29,20 +31,30 @@ const STEP_UP_MAX_AGE_MS = 15 * 60 * 1000;
 // SPEC-009 — FiscalEntities API. All endpoints are OWNER only (fiscal:*
 // is granted solely via role_owner's wildcard permission).
 const createFiscalEntityBodySchema = z.object({
-  name: z.string().trim().min(3).max(200),
+  legalName: z.string().trim().min(3).max(200).optional(),
+  /** @deprecated accepted during API migration; treated as legalName. */
+  name: z.string().trim().min(3).max(200).optional(),
+  displayName: z.string().trim().min(1).max(200).optional(),
   cuit: z.string().min(1),
   taxCondition: z.enum(["RI", "MONOTRIBUTISTA", "EXENTO"]),
   legalAddress: z.string().trim().min(1).max(300).optional(),
   fiscalAddress: z.string().trim().min(1).max(300).optional(),
   activityCode: z.string().trim().min(1).max(64).optional(),
+}).refine((body) => Boolean(body.legalName ?? body.name), {
+  message: "legalName is required",
+  path: ["legalName"],
 });
 
 const patchFiscalEntityBodySchema = z.object({
+  legalName: z.string().trim().min(3).max(200).optional(),
+  /** @deprecated accepted during API migration; treated as legalName. */
   name: z.string().trim().min(3).max(200).optional(),
+  displayName: z.string().trim().min(1).max(200).optional(),
   taxCondition: z.enum(["RI", "MONOTRIBUTISTA", "EXENTO"]).optional(),
   legalAddress: z.string().trim().min(1).max(300).optional(),
   fiscalAddress: z.string().trim().min(1).max(300).optional(),
   activityCode: z.string().trim().min(1).max(64).optional(),
+  status: z.enum(["ACTIVE", "INACTIVE", "ARCHIVED"]).optional(),
   reason: z.string().trim().min(3).max(500).optional(),
 });
 
@@ -154,7 +166,8 @@ function isSensitiveFiscalPatch(
     body.taxCondition !== undefined ||
     body.legalAddress !== undefined ||
     body.fiscalAddress !== undefined ||
-    body.activityCode !== undefined
+    body.activityCode !== undefined ||
+    body.status !== undefined
   );
 }
 
@@ -182,6 +195,7 @@ export async function registerFiscalEntityRoutes(
         {
           tenantId: ctx.tenantId,
           ...omitUndefined(body),
+          name: body.legalName ?? body.name!,
           ...(createIdempotencyKey ? { createIdempotencyKey } : {}),
           actorId: ctx.userId,
           correlationId,
@@ -269,10 +283,25 @@ export async function registerFiscalEntityRoutes(
       const stepUpAt = sensitivePatch
         ? requireRecentStepUp(ctx, req.headers["x-step-up-at"], now)
         : null;
-      const { reason, ...patchFields } = parsedBody;
+      const { reason, name, ...patchFields } = parsedBody;
       const body = omitUndefined(patchFields);
+      const nextLegalName = body.legalName ?? name;
       const previous = entity;
-      const updated: FiscalEntity = { ...entity, ...body, updatedAt: now, updatedBy: ctx.userId };
+      let updated: FiscalEntity = {
+        ...entity,
+        ...body,
+        ...(nextLegalName ? { legalName: nextLegalName, name: nextLegalName } : {}),
+        updatedAt: now,
+        updatedBy: ctx.userId,
+      };
+      if (body.status && body.status !== entity.status) {
+        updated = {
+          ...transitionFiscalEntity(entity, body.status, now),
+          ...body,
+          ...(nextLegalName ? { legalName: nextLegalName, name: nextLegalName } : {}),
+          updatedBy: ctx.userId,
+        };
+      }
       await container.fiscalEntities.save(updated);
       await recordAuditLog(
         { auditLogs: container.auditLogs, now: () => now },
@@ -295,6 +324,9 @@ export async function registerFiscalEntityRoutes(
       reply.header("etag", `"${updated.updatedAt.getTime()}"`);
       return toResponse(updated, ctx);
     } catch (err) {
+      if (err instanceof InvalidFiscalEntityTransitionError) {
+        return sendProblem(reply, correlationId, conflict(err.message));
+      }
       if (err instanceof z.ZodError) {
         return sendProblem(reply, correlationId, badRequest(err.message));
       }

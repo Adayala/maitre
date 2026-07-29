@@ -15,6 +15,7 @@ export interface RequestOptions {
   tenantId?: string;
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
+  headers?: Record<string, string>;
 }
 
 // SPEC-215 §4 — X-Tenant-Id expresses a requested selection; the server is
@@ -25,6 +26,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions): Prom
   };
   if (options.tenantId) headers["X-Tenant-Id"] = options.tenantId;
   if (options.body !== undefined) headers["Content-Type"] = "application/json";
+  Object.assign(headers, options.headers ?? {});
 
   const response = await fetch(`${API_URL}${path}`, {
     method: options.method ?? "GET",

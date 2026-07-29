@@ -4,6 +4,8 @@ import { randomUUID } from "node:crypto";
 import {
   type FiscalPointOfSale,
   type FiscalPointOfSaleStatus,
+  type ArcaRegistrationStatus,
+  type FiscalIssuingSystem,
   DuplicatePointOfSaleError,
 } from "../domain/fiscal-point-of-sale.js";
 import type { FiscalEnvironment, VoucherType } from "../domain/invoice.js";
@@ -22,8 +24,13 @@ export interface CreatePointOfSaleInput {
   id?: string;
   tenantId: string;
   fiscalEntityId: string;
+  branchId?: string;
   environment: FiscalEnvironment;
   officialCode: string;
+  arcaDomicileCode?: string;
+  arcaDomicileLabel?: string;
+  issuingSystem?: FiscalIssuingSystem;
+  registrationEvidenceRef?: string;
   allowedVoucherTypes: VoucherType[];
 }
 
@@ -41,8 +48,17 @@ export async function createPointOfSale(deps: PointOfSaleDeps, input: CreatePoin
     id: input.id ?? randomUUID(),
     tenantId: input.tenantId,
     fiscalEntityId: input.fiscalEntityId,
+    ...(input.branchId ? { branchId: input.branchId } : {}),
     environment: input.environment,
     officialCode: input.officialCode,
+    ...(input.arcaDomicileCode ? { arcaDomicileCode: input.arcaDomicileCode } : {}),
+    ...(input.arcaDomicileLabel ? { arcaDomicileLabel: input.arcaDomicileLabel } : {}),
+    issuingSystem: input.issuingSystem ?? "WSFEV1",
+    registrationStatus: "DECLARED",
+    ...(input.registrationEvidenceRef
+      ? { registrationEvidenceRef: input.registrationEvidenceRef }
+      : {}),
+    declaredAt: now,
     allowedVoucherTypes: input.allowedVoucherTypes,
     status: "ACTIVE",
     revision: 1,
@@ -51,6 +67,38 @@ export async function createPointOfSale(deps: PointOfSaleDeps, input: CreatePoin
   };
   await deps.pointsOfSale.save(pos);
   return pos;
+}
+
+export async function setPointOfSaleRegistration(
+  deps: PointOfSaleDeps,
+  input: {
+    tenantId: string;
+    id: string;
+    status: ArcaRegistrationStatus;
+    actorId: string;
+    evidenceRef?: string;
+    rejectionReason?: string;
+  },
+): Promise<FiscalPointOfSale> {
+  const pos = await deps.pointsOfSale.findById(input.tenantId, input.id);
+  if (!pos) throw new Error(`FiscalPointOfSale ${input.id} not found`);
+  if (input.status === "VERIFIED" && !input.evidenceRef) {
+    throw new Error("Registration evidence is required to verify an ARCA point of sale");
+  }
+  const now = nowFrom(deps);
+  const updated: FiscalPointOfSale = {
+    ...pos,
+    registrationStatus: input.status,
+    ...(input.evidenceRef ? { registrationEvidenceRef: input.evidenceRef } : {}),
+    ...(input.status === "VERIFIED" ? { verifiedAt: now, verifiedBy: input.actorId } : {}),
+    ...(input.status === "REJECTED" && input.rejectionReason
+      ? { rejectionReason: input.rejectionReason }
+      : {}),
+    updatedAt: now,
+    revision: pos.revision + 1,
+  };
+  await deps.pointsOfSale.save(updated);
+  return updated;
 }
 
 export async function listPointsOfSale(deps: PointOfSaleDeps, tenantId: string, fiscalEntityId: string): Promise<FiscalPointOfSale[]> {

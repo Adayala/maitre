@@ -6,6 +6,8 @@ export type BillingCycle = "MONTHLY" | "ANNUALLY";
 export interface Subscription {
   id: string;
   tenantId: string;
+  /** Fiscal owner represented by this subscription; null only for legacy records awaiting explicit migration. */
+  subscriberFiscalEntityId?: string;
   planCode: string;
   status: SubscriptionStatus;
   billingCycle: BillingCycle;

@@ -9,7 +9,9 @@
     "build": "tsc -b",
     "test": "node --test dist/test/"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@maitre/arca-client": "*"
+  },
   "devDependencies": {
     "typescript": "^5.5.4"
   }

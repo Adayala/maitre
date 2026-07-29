@@ -23,11 +23,36 @@ import { createTemplate, publishTemplate } from "../application/template-command
 import { buildFiscalQrCode } from "../domain/fiscal-qr-code.js";
 import { OverlappingTaxRateError, NoEffectiveTaxRateError } from "../domain/tax-rate.js";
 import { InvalidInvoiceTransitionError, InvoiceNotCreditableError, InvalidInvoiceTemplateTransitionError } from "../index.js";
+import { PointOfSaleRegistrationError, assertCanEmit } from "../domain/fiscal-point-of-sale.js";
 
 const NOW = new Date("2026-07-20T12:00:00.000Z");
 const clock = () => NOW;
 const TENANT = "t1";
 const FE = "fe1";
+
+test("production emission requires verified ARCA point-of-sale registration", () => {
+  assert.throws(
+    () =>
+      assertCanEmit(
+        {
+          id: "pos-prod",
+          tenantId: TENANT,
+          fiscalEntityId: FE,
+          environment: "PRODUCTION",
+          officialCode: "1",
+          issuingSystem: "WSFEV1",
+          registrationStatus: "DECLARED",
+          allowedVoucherTypes: ["FACTURA_A"],
+          status: "ACTIVE",
+          revision: 1,
+          createdAt: NOW,
+          updatedAt: NOW,
+        },
+        "FACTURA_A",
+      ),
+    PointOfSaleRegistrationError,
+  );
+});
 
 function makeDeps(): InvoiceDeps & { outbox: FakeOutboxRepository; pointsOfSale: FakePointOfSaleRepository } {
   return {

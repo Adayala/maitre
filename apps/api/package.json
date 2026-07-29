@@ -11,11 +11,13 @@
     "test": "node --test dist/test/"
   },
   "dependencies": {
+    "@maitre/arca-client": "*",
     "@fastify/cors": "^9.0.1",
     "@maitre/adapter-identity-supabase-auth": "*",
     "@maitre/adapter-persistence-memory": "*",
     "@maitre/adapter-persistence-supabase": "*",
     "@maitre/audit": "*",
+    "@maitre/fiscal": "*",
     "@maitre/catalog": "*",
     "@maitre/contracts": "*",
     "@maitre/identity": "*",

@@ -41,6 +41,9 @@ export class SimulatedArcaAdapter implements ArcaAdapterPort {
   // timeout / ambiguous-outcome path here, so the caller never sees
   // PENDING_RECONCILIATION from this adapter.
   async authorize(request: ArcaAuthorizationRequest): Promise<ArcaAuthorizationResult> {
+    if (request.environment === "PRODUCTION") {
+      throw new Error("The simulated ARCA adapter is forbidden for production vouchers");
+    }
     // A clearly-fake 14-digit CAE, prefixed so it can never be mistaken for a
     // real one. 14 digits matches AFIP's CAE length purely for shape parity.
     const digits = BigInt("0x" + randomBytes(8).toString("hex")).toString().padStart(14, "0").slice(-14);
@@ -49,9 +52,24 @@ export class SimulatedArcaAdapter implements ArcaAdapterPort {
     const caeExpiresAt = new Date(issuedAt.getTime() + this.caeValidityDays * 24 * 60 * 60 * 1000);
     return {
       outcome: "AUTHORIZED",
+      assignedNumber: request.number,
       cae,
       caeExpiresAt,
       providerRef: `SIMULATED:${request.environment}:${request.pointOfSaleCode}:${request.voucherType}:${request.number}`,
+    };
+  }
+
+  async reconcile(request: {
+    environment: ArcaAuthorizationRequest["environment"];
+    pointOfSaleCode: string;
+    voucherType: ArcaAuthorizationRequest["voucherType"];
+    number: number;
+  }): Promise<ArcaAuthorizationResult> {
+    return {
+      outcome: "PENDING_RECONCILIATION",
+      assignedNumber: request.number,
+      providerRef: `SIMULATED:${request.environment}:${request.pointOfSaleCode}:${request.voucherType}:${request.number}`,
+      rejectionReason: "Simulated authorizations cannot be reconciled with ARCA",
     };
   }
 }

@@ -6,6 +6,8 @@
     "types": ["node"]
   },
   "references": [
+    { "path": "../../packages/arca-client" },
+    { "path": "../../packages/modules/fiscal" },
     { "path": "../../packages/contracts" },
     { "path": "../../packages/modules/organization" },
     { "path": "../../packages/modules/identity" },

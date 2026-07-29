@@ -43,6 +43,7 @@ import {
   InMemoryDiscountRepository,
   InMemoryDiscountApplicationRepository,
   InMemoryInvoiceRepository,
+  InMemoryAuthorizationAttemptRepository,
   InMemoryFiscalPointOfSaleRepository,
   InMemoryFiscalPrinterRepository,
   InMemoryFiscalCertificateRepository,
@@ -105,6 +106,7 @@ import {
   SupabaseDiscountRepository,
   SupabaseDiscountApplicationRepository,
   SupabaseInvoiceRepository,
+  SupabaseAuthorizationAttemptRepository,
   SupabaseFiscalPointOfSaleRepository,
   SupabaseFiscalPrinterRepository,
   SupabaseFiscalCertificateRepository,
@@ -217,6 +219,7 @@ import {
 } from "@maitre/cash";
 import {
   SimulatedArcaAdapter,
+  Wsfev1ArcaAdapter,
   createPointOfSale,
   createTaxRate,
   publishTaxRate,
@@ -227,7 +230,18 @@ import {
   type InvoiceTemplateRepositoryPort,
   type TaxRateRepositoryPort,
   type ArcaAdapterPort,
+  type AuthorizationAttemptRepositoryPort,
 } from "@maitre/fiscal";
+import {
+  FetchArcaHttpTransport,
+  ForgeCmsSigner,
+  MemoryWsaaTicketCache,
+  WsaaClient,
+  Wsfev1Client,
+  ArcaError,
+  type ArcaEnvironment,
+  type ArcaCredentialProvider,
+} from "@maitre/arca-client";
 import type {
   EmploymentRepositoryPort,
   WorkShiftRepositoryPort,
@@ -291,6 +305,7 @@ export interface Container {
   discounts: DiscountRepositoryPort;
   discountApplications: DiscountApplicationRepositoryPort;
   invoices: InvoiceRepositoryPort;
+  authorizationAttempts: AuthorizationAttemptRepositoryPort;
   fiscalPointsOfSale: FiscalPointOfSaleRepositoryPort;
   fiscalPrinters: FiscalPrinterRepositoryPort;
   fiscalCertificates: FiscalCertificateRepositoryPort;
@@ -649,6 +664,7 @@ interface Repositories {
   discounts: DiscountRepositoryPort;
   discountApplications: DiscountApplicationRepositoryPort;
   invoices: InvoiceRepositoryPort;
+  authorizationAttempts: AuthorizationAttemptRepositoryPort;
   fiscalPointsOfSale: FiscalPointOfSaleRepositoryPort;
   fiscalPrinters: FiscalPrinterRepositoryPort;
   fiscalCertificates: FiscalCertificateRepositoryPort;
@@ -738,6 +754,7 @@ function buildRepositories(): Repositories {
       discounts: new SupabaseDiscountRepository(client),
       discountApplications: new SupabaseDiscountApplicationRepository(client),
       invoices: new SupabaseInvoiceRepository(client),
+      authorizationAttempts: new SupabaseAuthorizationAttemptRepository(client),
       fiscalPointsOfSale: new SupabaseFiscalPointOfSaleRepository(client),
       fiscalPrinters: new SupabaseFiscalPrinterRepository(client),
       fiscalCertificates: new SupabaseFiscalCertificateRepository(client),
@@ -803,6 +820,7 @@ function buildRepositories(): Repositories {
     discounts: new InMemoryDiscountRepository(),
     discountApplications: new InMemoryDiscountApplicationRepository(),
     invoices: new InMemoryInvoiceRepository(),
+    authorizationAttempts: new InMemoryAuthorizationAttemptRepository(),
     fiscalPointsOfSale: new InMemoryFiscalPointOfSaleRepository(),
     fiscalPrinters: new InMemoryFiscalPrinterRepository(),
     fiscalCertificates: new InMemoryFiscalCertificateRepository(),
@@ -1504,24 +1522,85 @@ async function ensureSeed(repos: Repositories): Promise<void> {
   }
 }
 
+function pemFromEnvironment(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new ArcaError(`${name} is required for the WSFEv1 driver`, {
+      kind: "CONFIGURATION",
+    });
+  }
+  return value.replaceAll("\\n", "\n");
+}
+
+function buildArcaCredentialProvider(): ArcaCredentialProvider {
+  return {
+    async getCredentials({ environment, representedCuit }) {
+      const prefix = environment === "homologation" ? "ARCA_HOMOLOGATION" : "ARCA_PRODUCTION";
+      const configuredCuit = process.env[`${prefix}_CUIT`];
+      if (configuredCuit && configuredCuit !== representedCuit) {
+        throw new ArcaError(
+          `Configured ${prefix}_CUIT cannot represent the requested fiscal entity`,
+          { kind: "CONFIGURATION" },
+        );
+      }
+      return {
+        representedCuit,
+        certificatePem: pemFromEnvironment(`${prefix}_CERTIFICATE_PEM`),
+        privateKeyPem: pemFromEnvironment(`${prefix}_PRIVATE_KEY_PEM`),
+      };
+    },
+  };
+}
+
 /**
- * SPEC-145 — FISCAL_ARCA_DRIVER selects the ARCA authorization adapter. Only
- * "simulated" exists today (the default): a local, offline SimulatedArcaAdapter
- * that returns FAKE CAE values and NEVER contacts AFIP/ARCA. A future real
- * WSAA/WSFEv1 adapter implements the same ArcaAdapterPort and is selected here
- * (e.g. "wsfev1") without touching Invoice's domain/application code. See the
- * prominent warning at the top of SimulatedArcaAdapter — issuing invoices with
- * these fake CAE values in production is illegal.
+ * SPEC-145 — FISCAL_ARCA_DRIVER selects the authorization adapter.
+ * Unknown/invalid real-driver configuration fails closed: it never falls back
+ * to fake CAEs. The issue workflow applies the production registration gate.
  */
 function buildArcaAdapter(): ArcaAdapterPort {
   const driver = process.env["FISCAL_ARCA_DRIVER"] ?? "simulated";
-  // No real adapter exists yet, so any value resolves to the simulation. The
-  // switch shape mirrors PERSISTENCE_DRIVER/AUTH_DRIVER for a future swap.
-  if (driver !== "simulated") {
-    // eslint-disable-next-line no-console
-    console.warn(`FISCAL_ARCA_DRIVER="${driver}" is not implemented; falling back to the SIMULATED (fake CAE) adapter`);
+  if (driver === "simulated") {
+    return new SimulatedArcaAdapter();
   }
-  return new SimulatedArcaAdapter();
+  if (driver !== "wsfev1") {
+    throw new ArcaError(`Unsupported FISCAL_ARCA_DRIVER="${driver}"`, {
+      kind: "CONFIGURATION",
+    });
+  }
+
+  const transport = new FetchArcaHttpTransport({
+    timeoutMs: Number.parseInt(process.env["ARCA_HTTP_TIMEOUT_MS"] ?? "15000", 10),
+  });
+  const signer = new ForgeCmsSigner();
+  const cache = new MemoryWsaaTicketCache();
+  const credentials = buildArcaCredentialProvider();
+  const clients = new Map<string, Wsfev1Client>();
+
+  return new Wsfev1ArcaAdapter({
+    clientFor({ cuit, environment }) {
+      const arcaEnvironment: ArcaEnvironment =
+        environment === "HOMOLOGATION" ? "homologation" : "production";
+      const key = `${arcaEnvironment}:${cuit}`;
+      const existing = clients.get(key);
+      if (existing) return existing;
+      const wsaa = new WsaaClient({
+        environment: arcaEnvironment,
+        representedCuit: cuit,
+        transport,
+        credentials,
+        signer,
+        cache,
+      });
+      const client = new Wsfev1Client({
+        environment: arcaEnvironment,
+        representedCuit: cuit,
+        transport,
+        tickets: wsaa,
+      });
+      clients.set(key, client);
+      return client;
+    },
+  });
 }
 
 /**
