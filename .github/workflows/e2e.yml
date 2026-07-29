@@ -15,9 +15,47 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  quality:
+    name: Quality gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20.19.0
+          cache: npm
+      - run: npm ci
+      - name: Static quality and architecture
+        run: |
+          npm run format:check
+          npm run lint
+          npm run typecheck
+          npm run deps:check
+          npm run sdd:validate
+      - name: Unit tests and coverage
+        run: npm run test:coverage
+      - name: Security controls
+        run: |
+          npm run secrets:scan
+          npm run security:audit
+      - name: Frontend bundle budgets
+        run: npm run performance:budget
+      - name: Generate software bill of materials
+        run: npm sbom --sbom-format cyclonedx > maitre-sbom.json
+      - uses: actions/upload-artifact@v7
+        with:
+          name: quality-evidence-${{ github.run_attempt }}
+          path: |
+            maitre-sbom.json
+            coverage/
+          if-no-files-found: ignore
+          retention-days: 14
+
   playwright:
     name: E2E · ${{ matrix.label }}
     runs-on: ubuntu-24.04
+    container: mcr.microsoft.com/playwright:v1.62.0-noble
     timeout-minutes: 20
 
     strategy:
@@ -50,14 +88,11 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 20.19.0
           cache: npm
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
 
       - name: Build API
         run: npm run build --workspace apps/api
@@ -83,3 +118,41 @@ jobs:
             test-results/
           if-no-files-found: ignore
           retention-days: 7
+
+  deploy:
+    name: Deploy · ${{ matrix.name }}
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [quality, playwright]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: api
+            project_id: prj_gAFxIYi8bL5TkpbwpoBYlRyaHqZk
+          - name: web
+            project_id: prj_9qxMJEtIMVtq8k43SuzVTqsYewgd
+          - name: kitchen
+            project_id: prj_DRbMDZIlV9NrPZApEw2CHVxnZD1K
+          - name: waiter
+            project_id: prj_np4ZH8Whi8gfoTj9MuTGoojBOEcH
+          - name: cashier
+            project_id: prj_VBaKDObIvmSTKWuD2eJsyegtoxni
+          - name: host
+            project_id: prj_QMdvmmgsDT9S6os663n4vOv8BpeH
+          - name: customer
+            project_id: prj_MpM495erYWa5cbtprfEYQTjKCX0r
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: team_cvlEbUCNF87Ldam2yzMhKBkc
+      VERCEL_PROJECT_ID: ${{ matrix.project_id }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20.19.0
+      - name: Deploy after all required checks
+        run: |
+          npx --yes vercel@57 pull --yes --environment=production --token="$VERCEL_TOKEN"
+          npx --yes vercel@57 deploy --prod --yes --token="$VERCEL_TOKEN"

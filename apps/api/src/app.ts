@@ -2,6 +2,8 @@ import Fastify, { type FastifyInstance } from "fastify";
 import cors from "@fastify/cors";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
+import helmet from "@fastify/helmet";
+import rateLimit from "@fastify/rate-limit";
 import { buildContainer, type Container } from "./composition/container.js";
 import { registerHealthRoutes } from "./routes/health.js";
 import { registerMeRoutes } from "./routes/me.js";
@@ -54,17 +56,36 @@ import { registerInvoiceTemplateRoutes } from "./routes/invoice-templates.js";
 // SPEC-211 — app.ts instantiates and wires plugins/routes without listen().
 // server.ts (local/process) and api/serverless.ts (Vercel) both consume this.
 export async function buildApp(container?: Container): Promise<FastifyInstance> {
-  const app = Fastify({ logger: true, trustProxy: true });
+  const app = Fastify({
+    logger: true,
+    bodyLimit: 1_048_576,
+    trustProxy: resolveTrustProxy(),
+    requestTimeout: 30_000,
+    connectionTimeout: 10_000,
+  });
   const resolvedContainer = container ?? (await buildContainer());
 
-  // SPEC-210 topology: browser -> Maitre API. The browser sends only a
-  // bearer token (no cookies), so an open CORS policy here doesn't grant
-  // cross-origin credential access — it just lets apps/web (or any other
-  // client) call this API from a different origin during local dev.
+  await app.register(helmet, {
+    // Swagger UI needs inline assets. Product frontends define their CSP at
+    // their own delivery boundary; all other API security headers remain on.
+    contentSecurityPolicy: false,
+  });
+  const rateLimitOptions = {
+    global: true,
+    // Tests inject their container and may execute hundreds of requests in a
+    // single process; production composition keeps the defensive default.
+    max: container || process.env["APP_ENV"] === "test" ? 10_000 : 300,
+    timeWindow: "1 minute",
+    ...(process.env["APP_ENV"] === "e2e" ? { allowList: ["127.0.0.1"] } : {}),
+  };
+  await app.register(rateLimit, rateLimitOptions);
+
   await app.register(cors, {
-    origin: true,
+    origin: resolveCorsOrigins(),
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Tenant-Id", "X-Branch-Id"],
+    credentials: false,
+    maxAge: 600,
   });
 
   // API documentation — most routes validate with a manual Zod .parse() inside
@@ -128,4 +149,25 @@ export async function buildApp(container?: Container): Promise<FastifyInstance> 
   await registerInvoiceTemplateRoutes(app, resolvedContainer);
 
   return app;
+}
+
+function resolveCorsOrigins(): true | string[] {
+  const configured = process.env["CORS_ALLOWED_ORIGINS"]
+    ?.split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+  if (configured?.length) return configured;
+  if (process.env["APP_ENV"] === "production") {
+    throw new Error("CORS_ALLOWED_ORIGINS must be configured in production");
+  }
+  return true;
+}
+
+function resolveTrustProxy(): boolean | number {
+  if (process.env["TRUST_PROXY"] !== "true") return false;
+  const hops = Number(process.env["TRUST_PROXY_HOPS"] ?? "1");
+  if (!Number.isInteger(hops) || hops < 1) {
+    throw new Error("TRUST_PROXY_HOPS must be a positive integer");
+  }
+  return hops;
 }
