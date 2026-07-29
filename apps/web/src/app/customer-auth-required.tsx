@@ -6,7 +6,13 @@ export function CustomerAuthRequired({ children }: { children: JSX.Element }) {
   const location = useLocation();
 
   if (isLoading) {
-    return <p role="status">Verificando sesión…</p>;
+    return (
+      <section className="auth-gate-card" role="status" aria-live="polite">
+        <span>Acceso cliente</span>
+        <strong>Verificando tu sesión…</strong>
+        <p>Estamos confirmando si ya tenés acceso para continuar con la reserva o ver tus visitas.</p>
+      </section>
+    );
   }
 
   if (!accessToken) {

@@ -40,6 +40,37 @@ export function PublicMenuPage() {
   const categories = liveMenuData?.categories ?? [];
   const products = categories.flatMap((category) => category.products ?? []);
   const menuSnapshot = liveMenuData ? new Date(liveMenuData.menu.asOf).toLocaleString("es-AR") : "—";
+  const menuChecklist = [
+    { label: "El menú público cargó correctamente", done: Boolean(liveMenuData) },
+    { label: "Hay categorías visibles para explorar", done: categories.length > 0 },
+    { label: "Hay productos concretos para evaluar", done: products.length > 0 },
+  ];
+  const menuPending = menuChecklist.filter((step) => !step.done).map((step) => step.label);
+  const menuRoutes = [
+    {
+      badge: "Siguiente acción",
+      title: "Reservar desde el menú",
+      description: "Si ya encontraste una propuesta que te interesa, podés pasar directo al flujo de reserva.",
+      to: "/public/reservations/new",
+      cta: "Reservar ahora",
+      accent: true,
+      prefetch: reservePrefetchProps,
+    },
+    {
+      badge: "Comparar opciones",
+      title: "Revisar sucursales",
+      description: "Útil para elegir mejor la sede antes de cerrar una salida.",
+      to: "/public/branches",
+      cta: "Ver sucursales",
+    },
+    {
+      badge: "Discovery",
+      title: "Explorar promociones",
+      description: "Si todavía estás evaluando la propuesta, podés complementar el menú con campañas vigentes.",
+      to: "/public/promotions",
+      cta: "Ver promociones",
+    },
+  ];
 
   return (
     <section className="public-page" aria-labelledby="public-menu-heading">
@@ -75,6 +106,46 @@ export function PublicMenuPage() {
         </p>
       ) : liveMenuData ? (
         <>
+          <article className="public-card">
+            <h2>Siguiente paso recomendado</h2>
+            <div className="public-checklist">
+              {menuChecklist.map((step) => (
+                <div key={step.label} className={`public-check-item ${step.done ? "public-check-item--done" : ""}`}>
+                  <strong>{step.done ? "✓" : "•"}</strong>
+                  <span>{step.label}</span>
+                </div>
+              ))}
+            </div>
+            <p className="public-field-hint">
+              {menuPending.length > 0
+                ? `Todavía falta contexto porque no quedó resuelto: ${menuPending.join(", ")}.`
+                : "Ya tenés contexto suficiente para pasar a sucursales, promos o reserva."}
+            </p>
+          </article>
+
+          <article className="public-card">
+            <h2>Qué hacer después de mirar la carta</h2>
+            <div className="public-route-grid">
+              {menuRoutes.map((route) => (
+                <Link
+                  key={route.to}
+                  to={route.to}
+                  className={`public-route-card ${route.accent ? "public-route-card--accent" : ""}`}
+                  {...(route.prefetch ?? {})}
+                >
+                  <div className="public-route-meta">
+                    <span className={`public-route-badge ${route.accent ? "public-route-badge--accent" : ""}`}>
+                      {route.badge}
+                    </span>
+                    <h3>{route.title}</h3>
+                  </div>
+                  <p>{route.description}</p>
+                  <span className="public-route-link">{route.cta}</span>
+                </Link>
+              ))}
+            </div>
+          </article>
+
           <article className="public-card">
             <h2>{liveMenuData.menu.name}</h2>
             <p>Slug: {liveMenuData.menu.slug}</p>
@@ -128,6 +199,9 @@ export function PublicMenuPage() {
       ) : (
         <div className="public-card">
           <p>No hay un menú público visible ahora.</p>
+          <p className="public-field-hint">
+            Mientras tanto, podés seguir por sucursales o promociones para no cortar la exploración del cliente.
+          </p>
         </div>
       )}
 

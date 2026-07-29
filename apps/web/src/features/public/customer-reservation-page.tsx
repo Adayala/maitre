@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../app/auth-context.js";
 import { useTenantContext } from "../../app/tenant-context.js";
@@ -149,12 +149,37 @@ export function CustomerReservationPage() {
     { label: "Sucursal elegida", done: Boolean(selectedBranchId) },
     { label: "Horario cargado", done: Boolean(startAt) },
   ];
+  const reservationPending = reservationChecklist.filter((step) => !step.done).map((step) => step.label);
   const reserveNextAction = getReservationNextAction({
     accessToken: Boolean(accessToken),
     resolvedTenantId,
     selectedBranch,
     availability: availabilityQuery.data?.data.available ?? null,
   });
+  const decisionRoutes = [
+    {
+      badge: "Necesitás contexto",
+      title: "Volver a sucursales",
+      description: "Si todavía no definiste bien la sede, conviene resolverlo antes de seguir cargando la visita.",
+      to: "/public/branches",
+      cta: "Ver sucursales",
+    },
+    {
+      badge: "Querés validar antes",
+      title: "Consultar disponibilidad pública",
+      description: "Podés volver al resumen público si todavía estás comparando momento y sede antes de reservar.",
+      to: "/public/availability",
+      cta: "Ver disponibilidad",
+    },
+    {
+      badge: "Ya tenés historial",
+      title: "Ir a mis reservas",
+      description: "Si ya reservaste antes, podés revisar o gestionar tus reservas existentes sin rehacer todo el flujo.",
+      to: "/public/reservations",
+      cta: "Ver mis reservas",
+      prefetch: reservationsPrefetchProps,
+    },
+  ];
 
   return (
     <section className="public-page" aria-labelledby="customer-reservation-heading">
@@ -188,6 +213,34 @@ export function CustomerReservationPage() {
               <strong>{step.done ? "✓" : "•"}</strong>
               <span>{step.label}</span>
             </div>
+          ))}
+        </div>
+        <p className="public-field-hint">
+          {reservationPending.length > 0
+            ? `Todavía falta resolver: ${reservationPending.join(", ")}.`
+            : "La base del flujo ya está lista para validar disponibilidad real y confirmar."}
+        </p>
+      </article>
+
+      <article className="public-card">
+        <h2>Atajos según tu situación</h2>
+        <div className="public-route-grid">
+          {decisionRoutes.map((route) => (
+            <Link
+              key={route.to}
+              to={route.to}
+              className={`public-route-card ${route.to === "/public/reservations" ? "public-route-card--accent" : ""}`}
+              {...(route.prefetch ?? {})}
+            >
+              <div className="public-route-meta">
+                <span className={`public-route-badge ${route.to === "/public/reservations" ? "public-route-badge--accent" : ""}`}>
+                  {route.badge}
+                </span>
+                <h3>{route.title}</h3>
+              </div>
+              <p>{route.description}</p>
+              <span className="public-route-link">{route.cta}</span>
+            </Link>
           ))}
         </div>
       </article>

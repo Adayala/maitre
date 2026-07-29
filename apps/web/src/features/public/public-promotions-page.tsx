@@ -41,6 +41,42 @@ export function PublicPromotionsPage() {
     "Chequeá si te conviene por sede, horario o tipo de visita.",
     "Cuando ya decidiste, pasá a reserva o seguí explorando menú.",
   ];
+  const promotionsChecklist = [
+    { label: "Hay campañas visibles para discovery", done: PUBLIC_PROMOTIONS.length > 0 },
+    { label: "Cada promo deriva a un siguiente paso claro", done: PUBLIC_PROMOTIONS.every((promotion) => Boolean(promotion.to)) },
+    {
+      label: "Existe una salida directa a reserva",
+      done: PUBLIC_PROMOTIONS.some((promotion) => promotion.to === "/public/reservations/new"),
+    },
+  ];
+  const promotionsPending = promotionsChecklist
+    .filter((step) => !step.done)
+    .map((step) => step.label);
+  const promotionRoutes = [
+    {
+      badge: "Conversión",
+      title: "Reservar con intención clara",
+      description: "Si la promoción ya convenció al cliente, este es el siguiente paso más corto.",
+      to: "/public/reservations/new",
+      cta: "Reservar ahora",
+      accent: true,
+      prefetch: reservePrefetchProps,
+    },
+    {
+      badge: "Comparación",
+      title: "Volver al menú",
+      description: "Sirve para contrastar la promo con la carta real antes de decidir.",
+      to: "/public/menu",
+      cta: "Explorar menú",
+    },
+    {
+      badge: "Elección de sede",
+      title: "Revisar sucursales",
+      description: "Ideal para confirmar en qué sede conviene aprovechar la propuesta.",
+      to: "/public/branches",
+      cta: "Ver sucursales",
+    },
+  ];
 
   return (
     <section className="public-page" aria-labelledby="public-promotions-heading">
@@ -65,6 +101,46 @@ export function PublicPromotionsPage() {
           ))}
         </div>
       </div>
+
+      <article className="public-card">
+        <h2>Siguiente paso recomendado</h2>
+        <div className="public-checklist">
+          {promotionsChecklist.map((step) => (
+            <div key={step.label} className={`public-check-item ${step.done ? "public-check-item--done" : ""}`}>
+              <strong>{step.done ? "✓" : "•"}</strong>
+              <span>{step.label}</span>
+            </div>
+          ))}
+        </div>
+        <p className="public-field-hint">
+          {promotionsPending.length > 0
+            ? `Todavía falta cerrar: ${promotionsPending.join(", ")}.`
+            : "La experiencia ya deja claro cómo pasar de discovery a comparación o reserva."}
+        </p>
+      </article>
+
+      <article className="public-card">
+        <h2>Cómo avanzar desde una promoción</h2>
+        <div className="public-route-grid">
+          {promotionRoutes.map((route) => (
+            <Link
+              key={route.to}
+              to={route.to}
+              className={`public-route-card ${route.accent ? "public-route-card--accent" : ""}`}
+              {...(route.prefetch ?? {})}
+            >
+              <div className="public-route-meta">
+                <span className={`public-route-badge ${route.accent ? "public-route-badge--accent" : ""}`}>
+                  {route.badge}
+                </span>
+                <h3>{route.title}</h3>
+              </div>
+              <p>{route.description}</p>
+              <span className="public-route-link">{route.cta}</span>
+            </Link>
+          ))}
+        </div>
+      </article>
 
       <div className="public-card-grid">
         {PUBLIC_PROMOTIONS.map((promotion) => (

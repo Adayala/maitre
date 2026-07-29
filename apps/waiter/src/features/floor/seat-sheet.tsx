@@ -45,6 +45,12 @@ export function SeatSheet({
   }
 
   const tableCount = 1 + extraTableIds.length;
+  const seatChecklist = [
+    { label: "Mesa principal definida", done: Boolean(primaryTable.id) },
+    { label: "Cantidad de comensales cargada", done: guestCount > 0 },
+    { label: "Capacidad extendida revisada", done: extraTableIds.length === 0 || tableCount > 1 },
+  ];
+  const seatPending = seatChecklist.filter((step) => !step.done).map((step) => step.label);
   const errorMsg =
     mutation.error instanceof ApiError
       ? mutation.error.problem.title
@@ -61,6 +67,26 @@ export function SeatSheet({
           Sentar en mesa {primaryTable.number}
           {tableCount > 1 && <span className="sheet-title-badge">{tableCount} mesas</span>}
         </h2>
+        <p className="sheet-sub">
+          Revisá comensales y combinación de mesas antes de abrir la visita en el salón.
+        </p>
+
+        <div className="sheet-guidance">
+          <strong>Chequeo rápido antes de sentar</strong>
+          <div className="sheet-checklist">
+            {seatChecklist.map((step) => (
+              <div key={step.label} className={`sheet-check ${step.done ? "sheet-check--done" : ""}`}>
+                <strong>{step.done ? "✓" : "•"}</strong>
+                <span>{step.label}</span>
+              </div>
+            ))}
+          </div>
+          <p className="sheet-hint">
+            {seatPending.length > 0
+              ? `Todavía conviene revisar: ${seatPending.join(", ")}.`
+              : "Todo listo para abrir la visita y pasar a la mesa."}
+          </p>
+        </div>
 
         <div className="stepper-block">
           <span className="stepper-label">Comensales</span>
@@ -103,6 +129,9 @@ export function SeatSheet({
                 </button>
               ))}
             </div>
+            <p className="sheet-hint">
+              Sumá mesas sólo si el grupo realmente necesita más capacidad o mejor distribución.
+            </p>
           </div>
         )}
 

@@ -33,10 +33,11 @@ export function OverviewPage() {
     : [];
   const nextStep = data ? getOverviewNextStep(data.data) : null;
   const quickLinks = data ? getOverviewQuickLinks(data.data) : [];
+  const ownerControlFronts = data ? getOwnerControlFronts(data.data) : [];
 
   return (
     <section aria-labelledby="overview-heading" className="overview-page">
-      <h1 id="overview-heading">Overview</h1>
+      <h1 id="overview-heading">Resumen del tenant</h1>
       <StateView
         isLoading={isLoading}
         error={error as Error | null}
@@ -80,13 +81,32 @@ export function OverviewPage() {
               </article>
             ) : null}
 
+            {ownerControlFronts.length > 0 ? (
+              <article className="overview-card">
+                <h2>Frentes del owner</h2>
+                <div className="owner-stage-grid">
+                  {ownerControlFronts.map((front) => (
+                    <Link
+                      key={front.to}
+                      className={`owner-stage-card owner-stage-card--${front.tone}`}
+                      to={front.to}
+                    >
+                      <span>{front.label}</span>
+                      <strong>{front.title}</strong>
+                      <p>{front.detail}</p>
+                    </Link>
+                  ))}
+                </div>
+              </article>
+            ) : null}
+
             <dl className="kpi-grid">
               <div>
                 <dt>Tenant</dt>
                 <dd>{data.data.setup.tenantName ?? "Sin nombre"}</dd>
               </div>
               <div>
-                <dt>Estado setup</dt>
+                <dt>Estado de puesta en marcha</dt>
                 <dd>{data.data.setup.status}</dd>
               </div>
               <div>
@@ -108,7 +128,7 @@ export function OverviewPage() {
               </article>
             ) : (
               <article className="overview-card">
-                <h2>Snapshot operativo</h2>
+                <h2>Foto operativa</h2>
                 <dl className="kpi-grid">
                   <div>
                     <dt>Visitas abiertas</dt>
@@ -174,7 +194,7 @@ function getOverviewPriority(payload: OverviewResponse["data"]) {
   if (payload.operations.status === "UNAVAILABLE") {
     return {
       tone: "info" as const,
-      title: "El setup existe, pero la operación todavía no expone métricas",
+      title: "La puesta en marcha existe, pero la operación todavía no expone métricas",
       message: payload.operations.reason ?? "Todavía no hay snapshot operativo disponible para este tenant.",
     };
   }
@@ -218,9 +238,9 @@ function getOverviewNextStep(payload: OverviewResponse["data"]) {
   if (payload.operations.status === "UNAVAILABLE") {
     return {
       eyebrow: "Checklist de base",
-      label: "Revisar setup",
+      label: "Revisar puesta en marcha",
       detail: "Comprobá qué parte del tenant sigue incompleta para habilitar métricas operativas.",
-      message: "Todavía no hay snapshot operativo; conviene revisar el setup antes de seguir expandiendo.",
+      message: "Todavía no hay foto operativa; conviene revisar la puesta en marcha antes de seguir expandiendo.",
       to: "/setup",
     };
   }
@@ -273,4 +293,43 @@ function getOverviewQuickLinks(payload: OverviewResponse["data"]) {
   ];
 
   return links;
+}
+
+function getOwnerControlFronts(payload: OverviewResponse["data"]) {
+  return [
+    {
+      to: "/setup",
+      label: "Base",
+      title: payload.setup.status,
+      detail:
+        payload.setup.branchCount === 0
+          ? "Todavía falta estructura mínima para operar con sedes reales."
+          : "Revisá el checklist transversal antes de seguir expandiendo el tenant.",
+      tone: payload.setup.branchCount === 0 ? "warning" : "info",
+    },
+    {
+      to: "/users",
+      label: "Equipo",
+      title: "Gobernar accesos",
+      detail: "Validá quién administra el tenant y quién va a operar cada app.",
+      tone: "info",
+    },
+    {
+      to: "/profiles",
+      label: "Operación",
+      title: payload.operations.status === "UNAVAILABLE" ? "Perfiles por revisar" : "Apps en uso",
+      detail:
+        payload.operations.status === "UNAVAILABLE"
+          ? "Todavía no hay snapshot operativo; esta vista ayuda a entender qué superficies faltan habilitar."
+          : "Con operación visible, podés contrastar roles y apps del restaurante.",
+      tone: payload.operations.status === "UNAVAILABLE" ? "warning" : "success",
+    },
+    {
+      to: "/settings",
+      label: "Gobierno",
+      title: "Parámetros del tenant",
+      detail: "Ordená qué configuraciones siguen siendo conceptuales y cuáles ya impactan apps reales.",
+      tone: "info",
+    },
+  ] as const;
 }

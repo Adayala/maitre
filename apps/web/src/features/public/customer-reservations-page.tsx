@@ -67,6 +67,52 @@ export function CustomerReservationsPage() {
     hasHistory: historyReservations.length > 0,
     nextReservationStatus: nextReservation?.status ?? null,
   });
+  const reservationsChecklist = [
+    { label: "Hay una próxima reserva para seguir", done: Boolean(nextReservation) },
+    { label: "La próxima reserva quedó identificada", done: Boolean(nextReservation?.id) },
+    { label: "Existe historial para reutilizar contexto", done: historyReservations.length > 0 },
+  ];
+  const reservationsPending = reservationsChecklist
+    .filter((step) => !step.done)
+    .map((step) => step.label);
+  const reservationRoutes = [
+    nextReservation
+      ? {
+          badge: "Seguimiento inmediato",
+          title: "Abrir la próxima reserva",
+          description:
+            nextReservation.status === "PENDING"
+              ? "Conviene revisar si cambió de estado antes de la visita."
+              : "Entrá al detalle para reconfirmar fecha, sede y notas cargadas.",
+          to: `/public/reservations/${nextReservation.id}`,
+          cta: "Ver próxima reserva",
+          accent: true,
+          prefetch: detailPrefetchProps,
+        }
+      : {
+          badge: "Sin próxima visita",
+          title: "Crear una nueva reserva",
+          description: "Si querés volver a planificar una visita, este es el siguiente paso natural.",
+          to: "/public/reservations/new",
+          cta: "Reservar ahora",
+          accent: true,
+          prefetch: reservePrefetchProps,
+        },
+    {
+      badge: "Planificación",
+      title: "Ver disponibilidad pública",
+      description: "Útil si querés comparar horarios antes de confirmar una nueva salida.",
+      to: "/public/availability",
+      cta: "Consultar disponibilidad",
+    },
+    {
+      badge: "Contexto",
+      title: "Explorar sucursales",
+      description: "Si cambió el plan, podés volver a revisar sedes y elegir una mejor opción.",
+      to: "/public/branches",
+      cta: "Ver sucursales",
+    },
+  ];
 
   return (
     <section className="public-page" aria-labelledby="customer-reservations-heading">
@@ -89,6 +135,52 @@ export function CustomerReservationsPage() {
           <span>
             <strong>Estado próximo:</strong> {nextReservation ? reservationStatusLabel(nextReservation.status) : "Sin próxima reserva"}
           </span>
+        </div>
+      </article>
+
+      <article className="public-card">
+        <h2>Siguiente paso recomendado</h2>
+        <div className="public-detail-list">
+          <span>
+            <strong>{reservationsNextAction.title}</strong>
+          </span>
+          <span>{reservationsNextAction.message}</span>
+        </div>
+        <div className="public-checklist">
+          {reservationsChecklist.map((step) => (
+            <div key={step.label} className={`public-check-item ${step.done ? "public-check-item--done" : ""}`}>
+              <strong>{step.done ? "✓" : "•"}</strong>
+              <span>{step.label}</span>
+            </div>
+          ))}
+        </div>
+        <p className="public-field-hint">
+          {reservationsPending.length > 0
+            ? `Todavía no está resuelto: ${reservationsPending.join(", ")}.`
+            : "Ya tenés contexto suficiente para seguir una reserva o decidir la próxima visita."}
+        </p>
+      </article>
+
+      <article className="public-card">
+        <h2>Atajos según tu situación</h2>
+        <div className="public-route-grid">
+          {reservationRoutes.map((route) => (
+            <Link
+              key={route.to}
+              to={route.to}
+              className={`public-route-card ${route.accent ? "public-route-card--accent" : ""}`}
+              {...(route.prefetch ?? {})}
+            >
+              <div className="public-route-meta">
+                <span className={`public-route-badge ${route.accent ? "public-route-badge--accent" : ""}`}>
+                  {route.badge}
+                </span>
+                <h3>{route.title}</h3>
+              </div>
+              <p>{route.description}</p>
+              <span className="public-route-link">{route.cta}</span>
+            </Link>
+          ))}
         </div>
       </article>
 

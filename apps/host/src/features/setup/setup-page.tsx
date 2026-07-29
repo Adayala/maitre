@@ -25,6 +25,41 @@ export function SetupPage() {
     { label: "Empresa resuelta", done: Boolean(selectedTenantId) },
     { label: "Sucursal lista para recibir", done: step === "branch" ? branches.length > 0 : false },
   ];
+  const pendingChecklist = checklist.filter((item) => !item.done).map((item) => item.label);
+  const setupRoutes =
+    step === "tenant"
+      ? [
+          {
+            eyebrow: "Paso inmediato",
+            title: "Elegir la empresa correcta",
+            detail: "Esto define el restaurante sobre el que va a trabajar recepción en este dispositivo.",
+            onClick: () => undefined,
+            disabled: true,
+          },
+          {
+            eyebrow: "Si el usuario no corresponde",
+            title: "Cerrar sesión",
+            detail: "Útil si el equipo quedó abierto con una cuenta que no debería usar el host actual.",
+            onClick: () => void signOut(),
+            disabled: false,
+          },
+        ]
+      : [
+          {
+            eyebrow: "Paso inmediato",
+            title: "Elegir la sucursal del turno",
+            detail: "La recepción sólo va a operar reservas, waitlist y mesas de la sede que selecciones acá.",
+            onClick: () => undefined,
+            disabled: true,
+          },
+          {
+            eyebrow: "Volver atrás",
+            title: "Cambiar empresa",
+            detail: "Si el contexto de tenant es incorrecto, conviene corregirlo antes de entrar al panel host.",
+            onClick: () => selectTenant(""),
+            disabled: tenants.length <= 1,
+          },
+        ];
 
   return (
     <main className="setup">
@@ -53,6 +88,31 @@ export function SetupPage() {
             </div>
           ))}
         </div>
+
+        <article className="setup-panel">
+          <p className="setup-eyebrow">Qué conviene hacer ahora</p>
+          <strong>{summary.title}</strong>
+          <p>
+            {pendingChecklist.length > 0
+              ? `Todavía falta resolver: ${pendingChecklist.join(", ")}.`
+              : "La configuración base ya quedó encaminada; sólo resta confirmar la selección visible."}
+          </p>
+          <div className="setup-options">
+            {setupRoutes.map((route) => (
+              <button
+                key={route.title}
+                type="button"
+                className="option-btn"
+                onClick={route.onClick}
+                disabled={route.disabled}
+              >
+                <span className="option-sub">{route.eyebrow}</span>
+                <span>{route.title}</span>
+                <span className="option-sub">{route.detail}</span>
+              </button>
+            ))}
+          </div>
+        </article>
 
         {step === "tenant" ? (
           <StateView

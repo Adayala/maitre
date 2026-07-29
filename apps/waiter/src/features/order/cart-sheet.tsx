@@ -41,6 +41,12 @@ export function CartSheet({
 
   const busy = changeQty.isPending || removeItem.isPending;
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+  const cartChecklist = [
+    { label: "El borrador tiene productos", done: itemCount > 0 },
+    { label: "Las cantidades ya fueron revisadas", done: itemCount === 0 ? false : true },
+    { label: "Las líneas a borrar ya están definidas", done: !busy },
+  ];
+  const cartPending = cartChecklist.filter((step) => !step.done).map((step) => step.label);
 
   return (
     <div className="sheet-root" role="dialog" aria-modal="true" aria-label="Pedido actual">
@@ -52,6 +58,23 @@ export function CartSheet({
           <span className="sheet-title-badge">{itemCount}</span>
         </h2>
         <p className="sheet-sub">Podés ajustar cantidades o quitar líneas antes de enviar a cocina.</p>
+
+        <div className="sheet-guidance">
+          <strong>Chequeo rápido del borrador</strong>
+          <div className="sheet-checklist">
+            {cartChecklist.map((step) => (
+              <div key={step.label} className={`sheet-check ${step.done ? "sheet-check--done" : ""}`}>
+                <strong>{step.done ? "✓" : "•"}</strong>
+                <span>{step.label}</span>
+              </div>
+            ))}
+          </div>
+          <p className="sheet-hint">
+            {cartPending.length > 0
+              ? `Todavía conviene revisar: ${cartPending.join(", ")}.`
+              : "El borrador ya está listo para seguir agregando o volver al envío."}
+          </p>
+        </div>
 
         <ul className="cart-list">
           {items.map((item) => {

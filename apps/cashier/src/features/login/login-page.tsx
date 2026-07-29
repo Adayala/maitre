@@ -1,5 +1,7 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useAuth, isSupabaseConfigured } from "../../app/auth-context.js";
+
+const SUBMIT_FAILSAFE_MS = 12_000;
 
 export function LoginPage() {
   const { signInWithPassword, signInWithToken } = useAuth();
@@ -8,6 +10,7 @@ export function LoginPage() {
   const [fixtureToken, setFixtureToken] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submitTimerRef = useRef<number | null>(null);
   const checklist = [
     "Abrir caja, seguir cobros y controlar cierres desde una sola pantalla.",
     "Tener a mano sesiones, checks abiertos y conciliación sin cambiar de app.",
@@ -28,15 +31,34 @@ export function LoginPage() {
     },
   ];
 
+  useEffect(() => {
+    return () => {
+      if (submitTimerRef.current !== null) {
+        window.clearTimeout(submitTimerRef.current);
+      }
+    };
+  }, []);
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
     setIsSubmitting(true);
+    if (submitTimerRef.current !== null) {
+      window.clearTimeout(submitTimerRef.current);
+    }
+    submitTimerRef.current = window.setTimeout(() => {
+      setIsSubmitting(false);
+      setError("El login no respondió. Probá de nuevo.");
+    }, SUBMIT_FAILSAFE_MS);
     try {
       await signInWithPassword(email, password);
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo iniciar sesión");
     } finally {
+      if (submitTimerRef.current !== null) {
+        window.clearTimeout(submitTimerRef.current);
+        submitTimerRef.current = null;
+      }
       setIsSubmitting(false);
     }
   }
@@ -98,6 +120,22 @@ export function LoginPage() {
               <button type="submit" className="btn btn--primary btn--xl" disabled={isSubmitting}>
                 {isSubmitting ? "Ingresando…" : "Ingresar"}
               </button>
+              {isSubmitting ? (
+                <button
+                  type="button"
+                  className="btn btn--ghost btn--xl"
+                  onClick={() => {
+                    if (submitTimerRef.current !== null) {
+                      window.clearTimeout(submitTimerRef.current);
+                      submitTimerRef.current = null;
+                    }
+                    setIsSubmitting(false);
+                    setError("Login cancelado. Podés reintentar.");
+                  }}
+                >
+                  Cancelar intento
+                </button>
+              ) : null}
             </form>
           ) : (
             <div className="login-fixture login-form-card">
