@@ -31,6 +31,8 @@ Kitchen cubre del mismo modo el ciclo operativo completo de una comanda en el KD
 del handoff.
 Ordering se verifica desde Floor con una visita ocupada: el mozo abre cuenta y borrador, navega el
 menú, agrega cantidad y nota a un producto y envía el pedido a cocina.
+Reservations se verifica desde Host: recepción identifica o crea al huésped, carga la reserva,
+envía el contrato esperado a la API y comprueba que la nueva entrada aparezca en la agenda.
 
 En GitHub Actions cada aplicación es un job de matriz independiente, con build, ejecución y
 artifacts propios. `fail-fast` está deshabilitado: un fallo de Host no impide obtener evidencia de
