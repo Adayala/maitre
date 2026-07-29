@@ -28,6 +28,32 @@ function ownerHeaders(container: Container, tenantId: string) {
   return { authorization: `Bearer ${container.demoAccessToken}`, "x-tenant-id": tenantId };
 }
 
+async function openCashSession(
+  app: Awaited<ReturnType<typeof buildApp>>,
+  container: Container,
+  tenantId: string,
+  branchId: string,
+) {
+  const registers = await container.cashRegisters.listByBranch(
+    tenantId,
+    branchId,
+  );
+  const register = registers[0]!;
+  const response = await app.inject({
+    method: "POST",
+    url: `/v1/cash-registers/${register.id}/sessions`,
+    headers: ownerHeaders(container, tenantId),
+    payload: {
+      currency: "ARS",
+      businessDate: "2026-07-29",
+      timezone: "America/Argentina/Buenos_Aires",
+      openingAmountMinorUnits: 0,
+    },
+  });
+  assert.equal(response.statusCode, 201);
+  return response.json().data as { id: string };
+}
+
 async function seedForeignServicePeriod(container: Container) {
   const now = new Date();
   const tenantId = randomUUID();
@@ -410,6 +436,7 @@ serialTest("Check + Payment: add line, capture payment, settle", async () => {
   const { tenantId, branchId } = await getContext(container);
   const app = await buildApp(container);
   const tableId = randomUUID();
+  await openCashSession(app, container, tenantId, branchId);
 
   const create = await app.inject({
     method: "POST",
@@ -506,6 +533,49 @@ serialTest("Check + Payment: add line, capture payment, settle", async () => {
   assert.equal(capture.statusCode, 200);
   assert.equal(capture.json().data.revision, 2);
   assert.equal(capture.json().data.status, "CAPTURED");
+
+  const registers = await container.cashRegisters.listByBranch(
+    tenantId,
+    branchId,
+  );
+  const register = registers[0]!;
+  const cashSession =
+    await container.cashSessions.findLiveByRegisterAndCurrency(
+      tenantId,
+      register.id,
+      "ARS",
+    );
+  assert.ok(cashSession);
+  const cashMovements = await container.cashMovements.listBySession(
+    tenantId,
+    cashSession!.id,
+  );
+  const paymentMovements = cashMovements.filter(
+    (movement) =>
+      movement.sourceReference === `FLOOR_PAYMENT:${payment.id}`,
+  );
+  assert.equal(paymentMovements.length, 1);
+  assert.equal(paymentMovements[0]!.type, "CASH_SALE");
+  assert.equal(paymentMovements[0]!.amountMinorUnits, 1000);
+
+  const captureRetry = await app.inject({
+    method: "POST",
+    url: `/v1/payments/${payment.id}/capture`,
+    headers: ownerHeaders(container, tenantId),
+  });
+  assert.equal(captureRetry.statusCode, 200);
+  assert.equal(captureRetry.json().data.status, "CAPTURED");
+  const movementsAfterRetry = await container.cashMovements.listBySession(
+    tenantId,
+    cashSession!.id,
+  );
+  assert.equal(
+    movementsAfterRetry.filter(
+      (movement) =>
+        movement.sourceReference === `FLOOR_PAYMENT:${payment.id}`,
+    ).length,
+    1,
+  );
 
   const byVisit = await app.inject({
     method: "GET",
@@ -742,7 +812,7 @@ serialTest("Payments API: refund and over-capture validation", async () => {
     method: "POST",
     url: `/v1/checks/${check.id}/payments`,
     headers: { ...ownerHeaders(container, tenantId), "x-branch-id": branchId },
-    payload: { amountMinorUnits: 1000, currency: "ARS", method: "CASH", idempotencyKey: "idem-floor-refund" },
+    payload: { amountMinorUnits: 1000, currency: "ARS", method: "CARD", idempotencyKey: "idem-floor-refund" },
   });
   assert.equal(createPayment.statusCode, 201);
   const payment = createPayment.json().data;
@@ -1683,6 +1753,120 @@ serialTest("Table statuses list returns OCCUPIED and PAYING projections for acti
   assert.equal(paying!.status, "PAYING");
   assert.equal(paying!.relatedVisitId, payingVisitId);
   assert.ok(!Number.isNaN(Date.parse(paying!.asOf)));
+  await app.close();
+});
+
+serialTest("Single and branch table status share AVAILABLE, RESERVED, OCCUPIED and PAYING projections", async () => {
+  const container = await buildContainer();
+  const { tenantId, branchId } = await getContext(container);
+  const app = await buildApp(container);
+  const headers = ownerHeaders(container, tenantId);
+  const salons = await container.salons.listByBranch(tenantId, branchId);
+  const salon = salons[0]!;
+  const now = new Date();
+  const tableId = randomUUID();
+
+  await container.tables.save({
+    id: tableId,
+    tenantId,
+    branchId,
+    salonId: salon.id,
+    number: "TS-1",
+    capacity: 4,
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  const available = await app.inject({
+    method: "GET",
+    url: `/v1/tables/${tableId}/status`,
+    headers,
+  });
+  assert.equal(available.statusCode, 200);
+  assert.equal(available.json().data.tableId, tableId);
+  assert.equal(available.json().data.status, "AVAILABLE");
+  assert.ok(!Number.isNaN(Date.parse(available.json().data.asOf)));
+
+  const reservationId = randomUUID();
+  await container.reservations.save({
+    id: reservationId,
+    tenantId,
+    branchId,
+    partySize: 2,
+    startAt: new Date(now.getTime() - 60_000),
+    durationMinutes: 30,
+    source: "HOST",
+    status: "CONFIRMED",
+    tableIds: [tableId],
+    revision: 1,
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  const reserved = await app.inject({
+    method: "GET",
+    url: `/v1/tables/${tableId}/status`,
+    headers,
+  });
+  assert.equal(reserved.statusCode, 200);
+  assert.equal(reserved.json().data.status, "RESERVED");
+  assert.equal(
+    reserved.json().data.relatedReservationId,
+    reservationId,
+  );
+
+  const visitResponse = await app.inject({
+    method: "POST",
+    url: "/v1/visits",
+    headers,
+    payload: { branchId, tableIds: [tableId], guestCount: 2 },
+  });
+  assert.equal(visitResponse.statusCode, 201);
+  const visitId = visitResponse.json().data.id as string;
+
+  const occupied = await app.inject({
+    method: "GET",
+    url: `/v1/tables/${tableId}/status`,
+    headers,
+  });
+  assert.equal(occupied.statusCode, 200);
+  assert.equal(occupied.json().data.status, "OCCUPIED");
+  assert.equal(occupied.json().data.relatedVisitId, visitId);
+
+  const checkResponse = await app.inject({
+    method: "POST",
+    url: `/v1/visits/${visitId}/check`,
+    headers,
+    payload: { currency: "ARS" },
+  });
+  assert.equal(checkResponse.statusCode, 201);
+  const checkId = checkResponse.json().data.id as string;
+
+  const requestPayment = await app.inject({
+    method: "POST",
+    url: `/v1/checks/${checkId}/request-payment`,
+    headers,
+  });
+  assert.equal(requestPayment.statusCode, 200);
+
+  const paying = await app.inject({
+    method: "GET",
+    url: `/v1/tables/${tableId}/status`,
+    headers,
+  });
+  assert.equal(paying.statusCode, 200);
+  assert.equal(paying.json().data.status, "PAYING");
+
+  const branchStatuses = await app.inject({
+    method: "GET",
+    url: `/v1/branches/${branchId}/table-statuses`,
+    headers,
+  });
+  assert.equal(branchStatuses.statusCode, 200);
+  const row = branchStatuses
+    .json()
+    .data.find((status: { tableId: string }) => status.tableId === tableId);
+  assert.equal(row.status, "PAYING");
   await app.close();
 });
 

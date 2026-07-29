@@ -1,11 +1,8 @@
 // SPEC-051 — TableStatus projection.
 //
-// SCOPE NOTE (approved simplification): TableStatus is NOT a stored
-// entity — it's a pure computed projection. Precedence per spec is
-// BLOCKED > OCCUPIED/PAYING > CLEANING > RESERVED > AVAILABLE, but this
-// implementation can only derive OCCUPIED/PAYING/AVAILABLE — BLOCKED,
-// CLEANING and RESERVED require the Reservations domain (Fase 2 #2) and
-// manual floor-ops features that don't exist yet.
+// TableStatus is not stored: it is a pure projection over authoritative
+// Floor inputs. Reservations and future operational blocks are composed by
+// the API projection layer so this domain module stays independent.
 
 import type { Occupancy } from "./occupancy.js";
 import type { Check } from "./check.js";
@@ -22,6 +19,7 @@ export interface TableStatusProjection {
   tableId: string;
   status: TableStatusValue;
   relatedVisitId?: string;
+  relatedReservationId?: string;
   asOf: Date;
 }
 

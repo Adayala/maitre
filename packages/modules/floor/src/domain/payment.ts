@@ -4,9 +4,8 @@
 // no async provider callback flow, no PENDING_RECONCILIATION status, no
 // provider webhook dedup. Refund is a single optional sub-record
 // {amountMinorUnits, status}, not a separate ledger entity with partial
-// multi-refund reconciliation. Cash CAPTURED payments should eventually
-// emit exactly one CashMovement (SPEC-124+, Cash domain doesn't exist
-// yet) — left as a TODO comment at the capture use case.
+// multi-refund reconciliation. The API composition root records exactly one
+// CashMovement for each CASH payment after capture.
 
 export type PaymentMethod = "CASH" | "CARD" | "OTHER";
 export type PaymentStatus = "PENDING" | "AUTHORIZED" | "CAPTURED" | "FAILED" | "VOID";
