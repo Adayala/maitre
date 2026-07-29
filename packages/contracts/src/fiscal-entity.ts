@@ -23,6 +23,8 @@ export const fiscalEntitySchema = z.object({
   id: z.string().uuid(),
   tenantId: z.string().uuid(),
   cuit: z.string().regex(cuitPattern),
+  legalName: z.string().trim().min(3).max(200).optional(),
+  displayName: z.string().trim().min(1).max(200).optional(),
   name: z.string().trim().min(3).max(200),
   legalAddress: z.string().trim().min(1).max(300).optional(),
   fiscalAddress: z.string().trim().min(1).max(300).optional(),

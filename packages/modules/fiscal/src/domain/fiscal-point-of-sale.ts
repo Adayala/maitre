@@ -14,13 +14,31 @@
 import type { FiscalEnvironment, VoucherType } from "./invoice.js";
 
 export type FiscalPointOfSaleStatus = "ACTIVE" | "INACTIVE";
+export type ArcaRegistrationStatus = "DECLARED" | "VERIFIED" | "REJECTED" | "INACTIVE";
+export type FiscalIssuingSystem =
+  | "WSFEV1"
+  | "CONTROLLER_FISCAL"
+  | "COMPROBANTES_EN_LINEA"
+  | "OTHER";
 
 export interface FiscalPointOfSale {
   id: string;
   tenantId: string;
   fiscalEntityId: string;
+  /** Physical/operational branch whose ARCA domicile owns this point of sale. */
+  branchId?: string;
   environment: FiscalEnvironment;
   officialCode: string;
+  arcaDomicileCode?: string;
+  arcaDomicileLabel?: string;
+  issuingSystem?: FiscalIssuingSystem;
+  registrationStatus?: ArcaRegistrationStatus;
+  registrationEvidenceRef?: string;
+  declaredAt?: Date;
+  declaredBy?: string;
+  verifiedAt?: Date;
+  verifiedBy?: string;
+  rejectionReason?: string;
   allowedVoucherTypes: VoucherType[];
   status: FiscalPointOfSaleStatus;
   revision: number;
@@ -53,7 +71,17 @@ export class VoucherTypeNotAllowedError extends Error {
 
 export function assertCanEmit(pos: FiscalPointOfSale, voucherType: VoucherType): void {
   if (pos.status !== "ACTIVE") throw new PointOfSaleInactiveError(pos.id);
+  if (pos.environment === "PRODUCTION" && pos.registrationStatus !== "VERIFIED") {
+    throw new PointOfSaleRegistrationError(pos.id, pos.registrationStatus);
+  }
   if (!pos.allowedVoucherTypes.includes(voucherType)) {
     throw new VoucherTypeNotAllowedError(voucherType, pos.id);
+  }
+}
+
+export class PointOfSaleRegistrationError extends Error {
+  constructor(id: string, status: ArcaRegistrationStatus | undefined) {
+    super(`FiscalPointOfSale ${id} is ${status ?? "UNREGISTERED"}; production emission requires VERIFIED registration`);
+    this.name = "PointOfSaleRegistrationError";
   }
 }

@@ -10,6 +10,7 @@ export type BillingCycle = z.infer<typeof billingCycleSchema>;
 export const subscriptionSchema = z.object({
   id: z.string().uuid(),
   tenantId: z.string().uuid(),
+  subscriberFiscalEntityId: z.string().uuid().optional(),
   planCode: z.string().min(1),
   status: subscriptionStatusSchema,
   billingCycle: billingCycleSchema,

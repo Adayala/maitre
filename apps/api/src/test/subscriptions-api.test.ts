@@ -94,6 +94,72 @@ test("GET /v1/subscriptions/:tenantId returns the seeded subscription", async ()
   await app.close();
 });
 
+test("PATCH /v1/subscriptions/fiscal-owner associates the tenant fiscal entity and audits it", async () => {
+  const container = await buildContainer();
+  const tenantId = await getTenantId(container);
+  const fiscalEntities = await container.fiscalEntities.listByTenant(tenantId);
+  const fiscalEntity = fiscalEntities[0]!;
+  const app = await buildApp(container);
+
+  const response = await app.inject({
+    method: "PATCH",
+    url: "/v1/subscriptions/fiscal-owner",
+    headers: {
+      authorization: `Bearer ${container.demoAccessToken}`,
+      "x-tenant-id": tenantId,
+    },
+    payload: {
+      subscriberFiscalEntityId: fiscalEntity.id,
+      reason: "Asignación del titular fiscal de la suscripción",
+    },
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.json().data.subscriberFiscalEntityId, fiscalEntity.id);
+  const reloaded = await container.subscriptions.findByTenantId(tenantId);
+  assert.equal(reloaded?.subscriberFiscalEntityId, fiscalEntity.id);
+  const auditPage = await container.auditLogs.query({
+    tenantId,
+    resourceType: "SUBSCRIPTION_FISCAL_OWNER",
+  });
+  assert.equal(auditPage.items.length, 1);
+  const newState = auditPage.items[0]?.newState as
+    | Record<string, unknown>
+    | null
+    | undefined;
+  assert.equal(
+    newState?.["subscriberFiscalEntityId"],
+    fiscalEntity.id,
+  );
+  assert.equal(
+    newState?.["reason"],
+    "Asignación del titular fiscal de la suscripción",
+  );
+  await app.close();
+});
+
+test("PATCH /v1/subscriptions/fiscal-owner rejects an unknown fiscal entity", async () => {
+  const container = await buildContainer();
+  const tenantId = await getTenantId(container);
+  const app = await buildApp(container);
+  const response = await app.inject({
+    method: "PATCH",
+    url: "/v1/subscriptions/fiscal-owner",
+    headers: {
+      authorization: `Bearer ${container.demoAccessToken}`,
+      "x-tenant-id": tenantId,
+    },
+    payload: {
+      subscriberFiscalEntityId: "00000000-0000-0000-0000-000000000099",
+      reason: "Prueba de entidad inexistente",
+    },
+  });
+
+  assert.equal(response.statusCode, 404);
+  assert.equal(response.json().title, "FiscalEntity not found");
+  await app.close();
+});
+
 test("GET /v1/subscriptions/:tenantId for a different tenant returns 404", async () => {
   const container = await buildContainer();
   const tenantId = await getTenantId(container);

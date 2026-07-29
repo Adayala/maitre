@@ -11,7 +11,7 @@
 // the Check's lines into `lines` and passes `sourceCheckId`/`sourceCheckRevision`.
 // This is a direct read snapshotted at create time, not a transactional saga.
 
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import {
   type Invoice,
   type InvoiceLineItem,
@@ -31,6 +31,8 @@ import type {
   FiscalPointOfSaleRepositoryPort,
   TaxRateRepositoryPort,
   ArcaAdapterPort,
+  ArcaAuthorizationRequest,
+  AuthorizationAttemptRepositoryPort,
 } from "./ports.js";
 import type { OutboxPort } from "./outbox.js";
 import { invoiceValidatedEvent, invoiceAuthorizedEvent } from "./events.js";
@@ -48,6 +50,7 @@ export interface InvoiceDeps {
   taxRates: TaxRateRepositoryPort;
   arca: ArcaAdapterPort;
   outbox: OutboxPort;
+  authorizationAttempts?: AuthorizationAttemptRepositoryPort;
   now?: () => Date;
 }
 
@@ -150,6 +153,21 @@ export interface IssueInvoiceInput {
   correlationId?: string;
 }
 
+function groupVat(invoice: Invoice): ArcaAuthorizationRequest["vatBreakdown"] {
+  const grouped = new Map<string, { taxableBaseMinorUnits: number; taxAmountMinorUnits: number }>();
+  for (const line of invoice.lineItems) {
+    if (line.taxTreatment !== "TAXED") continue;
+    const current = grouped.get(line.taxOfficialCode) ?? {
+      taxableBaseMinorUnits: 0,
+      taxAmountMinorUnits: 0,
+    };
+    current.taxableBaseMinorUnits += line.taxableBaseMinorUnits;
+    current.taxAmountMinorUnits += line.taxAmountMinorUnits;
+    grouped.set(line.taxOfficialCode, current);
+  }
+  return [...grouped.entries()].map(([officialCode, values]) => ({ officialCode, ...values }));
+}
+
 // SPEC-144 — the ONLY command that can move DRAFT|VALIDATED -> AUTHORIZED|REJECTED.
 // AUTHORIZATION_PENDING is a transient conceptual state within this synchronous
 // call (the simulated adapter never leaves it pending). Number is assigned only
@@ -174,6 +192,20 @@ export async function issueInvoice(deps: InvoiceDeps, input: IssueInvoiceInput):
     invoice.voucherType,
   );
   const candidateNumber = (maxNumber ?? 0) + 1;
+  let associatedVoucher: ArcaAuthorizationRequest["associatedVoucher"];
+  if (invoice.linkedInvoiceId) {
+    const original = await loadInvoice(deps, input.tenantId, invoice.linkedInvoiceId);
+    if (original.number == null) {
+      throw new Error(`Associated invoice ${original.id} has no authorized number`);
+    }
+    const originalPos = await deps.pointsOfSale.findById(input.tenantId, original.pointOfSaleId);
+    if (!originalPos) throw notFound("FiscalPointOfSale", original.pointOfSaleId);
+    associatedVoucher = {
+      voucherType: original.voucherType,
+      pointOfSaleCode: originalPos.officialCode,
+      number: original.number,
+    };
+  }
 
   const result = await deps.arca.authorize({
     tenantId: input.tenantId,
@@ -184,8 +216,71 @@ export async function issueInvoice(deps: InvoiceDeps, input: IssueInvoiceInput):
     number: candidateNumber,
     cuit: input.cuit,
     currency: invoice.currency,
-    amountMinorUnits: invoice.totals.grossMinorUnits,
+    issuedAt: now,
+    recipientDocumentType: invoice.recipient?.documentType ?? (invoice.recipient?.taxId ? 80 : 99),
+    recipientDocumentNumber: invoice.recipient?.taxId ?? "0",
+    ...(invoice.recipient?.vatConditionId != null
+      ? { recipientVatConditionId: invoice.recipient.vatConditionId }
+      : {}),
+    taxableBaseMinorUnits: invoice.totals.taxableBaseMinorUnits,
+    nonTaxedBaseMinorUnits: invoice.totals.nonTaxedBaseMinorUnits,
+    exemptBaseMinorUnits: invoice.totals.exemptBaseMinorUnits,
+    taxAmountMinorUnits: invoice.totals.taxAmountMinorUnits,
+    grossMinorUnits: invoice.totals.grossMinorUnits,
+    vatBreakdown: groupVat(invoice),
+    ...(associatedVoucher ? { associatedVoucher } : {}),
   });
+
+  const attemptedNumber = result.assignedNumber ?? candidateNumber;
+  if (deps.authorizationAttempts) {
+    const requestHash = createHash("sha256")
+      .update(
+        JSON.stringify({
+          invoiceId: invoice.id,
+          revision: invoice.revision,
+          number: attemptedNumber,
+          totals: invoice.totals,
+        }),
+      )
+      .digest("hex");
+    await deps.authorizationAttempts.save({
+      id: randomUUID(),
+      tenantId: input.tenantId,
+      invoiceId: invoice.id,
+      fiscalEntityId: invoice.fiscalEntityId,
+      pointOfSaleId: invoice.pointOfSaleId,
+      environment: invoice.environment,
+      voucherType: invoice.voucherType,
+      requestedNumber: attemptedNumber,
+      requestHash,
+      status:
+        result.outcome === "AUTHORIZED"
+          ? "AUTHORIZED"
+          : result.outcome === "REJECTED"
+            ? "REJECTED"
+            : "PENDING_RECONCILIATION",
+      ...(result.providerRef ? { providerRef: result.providerRef } : {}),
+      ...(result.rejectionReason ? { rejectionReason: result.rejectionReason } : {}),
+      createdAt: now,
+      dispatchedAt: now,
+      ...(result.outcome !== "PENDING_RECONCILIATION" ? { resolvedAt: now } : {}),
+      updatedAt: now,
+    });
+  }
+
+  if (result.outcome === "PENDING_RECONCILIATION") {
+    const pending: Invoice = {
+      ...invoice,
+      status: "PENDING_RECONCILIATION",
+      number: result.assignedNumber ?? candidateNumber,
+      authorizationProviderRef: result.providerRef ?? null,
+      rejectionReason: result.rejectionReason ?? null,
+      updatedAt: now,
+      revision: invoice.revision + 1,
+    };
+    await deps.invoices.save(pending);
+    return pending;
+  }
 
   if (result.outcome === "REJECTED") {
     // No number consumed on rejection (no reuse, no gap). REJECTED is terminal.
@@ -204,7 +299,7 @@ export async function issueInvoice(deps: InvoiceDeps, input: IssueInvoiceInput):
   const authorized: Invoice = {
     ...invoice,
     status: "AUTHORIZED",
-    number: candidateNumber,
+    number: result.assignedNumber ?? candidateNumber,
     cae: result.cae ?? null,
     caeExpiresAt: result.caeExpiresAt ?? null,
     authorizationProviderRef: result.providerRef ?? null,
@@ -217,12 +312,83 @@ export async function issueInvoice(deps: InvoiceDeps, input: IssueInvoiceInput):
   return authorized;
 }
 
-// SPEC-144 :reconcile — no-op in this MVP. The simulated adapter always resolves
-// synchronously, so no invoice is ever left PENDING_RECONCILIATION. Returns the
-// invoice unchanged; a real adapter would query the provider by logical identity
-// here and resolve to AUTHORIZED|REJECTED.
-export async function reconcileInvoice(deps: InvoiceDeps, input: { tenantId: string; id: string }): Promise<Invoice> {
-  return loadInvoice(deps, input.tenantId, input.id);
+export async function reconcileInvoice(
+  deps: InvoiceDeps,
+  input: { tenantId: string; id: string; cuit: string; correlationId?: string },
+): Promise<Invoice> {
+  const invoice = await loadInvoice(deps, input.tenantId, input.id);
+  if (invoice.status !== "PENDING_RECONCILIATION" || invoice.number == null) {
+    return invoice;
+  }
+  if (!deps.arca.reconcile) {
+    throw new Error("The configured ARCA adapter does not support reconciliation");
+  }
+  const pos = await deps.pointsOfSale.findById(input.tenantId, invoice.pointOfSaleId);
+  if (!pos) throw notFound("FiscalPointOfSale", invoice.pointOfSaleId);
+  const result = await deps.arca.reconcile({
+    cuit: input.cuit,
+    environment: invoice.environment,
+    pointOfSaleCode: pos.officialCode,
+    voucherType: invoice.voucherType,
+    number: invoice.number,
+  });
+  const now = nowFrom(deps);
+  const attempt = await deps.authorizationAttempts?.findLatestByInvoice(
+    input.tenantId,
+    invoice.id,
+  );
+  if (attempt) {
+    await deps.authorizationAttempts!.save({
+      ...attempt,
+      status:
+        result.outcome === "AUTHORIZED"
+          ? "AUTHORIZED"
+          : result.outcome === "REJECTED"
+            ? "REJECTED"
+            : "PENDING_RECONCILIATION",
+      ...(result.providerRef ? { providerRef: result.providerRef } : {}),
+      ...(result.rejectionReason ? { rejectionReason: result.rejectionReason } : {}),
+      ...(result.outcome !== "PENDING_RECONCILIATION" ? { resolvedAt: now } : {}),
+      updatedAt: now,
+    });
+  }
+  if (result.outcome === "PENDING_RECONCILIATION") {
+    const pending: Invoice = {
+      ...invoice,
+      authorizationProviderRef: result.providerRef ?? invoice.authorizationProviderRef ?? null,
+      rejectionReason: result.rejectionReason ?? invoice.rejectionReason ?? null,
+      updatedAt: now,
+      revision: invoice.revision + 1,
+    };
+    await deps.invoices.save(pending);
+    return pending;
+  }
+  if (result.outcome === "REJECTED") {
+    const rejected: Invoice = {
+      ...invoice,
+      status: "REJECTED",
+      authorizationProviderRef: result.providerRef ?? invoice.authorizationProviderRef ?? null,
+      rejectionReason: result.rejectionReason ?? "ARCA reports the voucher as rejected",
+      updatedAt: now,
+      revision: invoice.revision + 1,
+    };
+    await deps.invoices.save(rejected);
+    return rejected;
+  }
+  const authorized: Invoice = {
+    ...invoice,
+    status: "AUTHORIZED",
+    cae: result.cae ?? null,
+    caeExpiresAt: result.caeExpiresAt ?? null,
+    authorizationProviderRef: result.providerRef ?? invoice.authorizationProviderRef ?? null,
+    rejectionReason: null,
+    authorizedAt: now,
+    updatedAt: now,
+    revision: invoice.revision + 1,
+  };
+  await deps.invoices.save(authorized);
+  await deps.outbox.append(invoiceAuthorizedEvent(authorized, input.correlationId ?? randomUUID()));
+  return authorized;
 }
 
 const CREDIT_NOTE_FOR: Record<string, VoucherType> = {

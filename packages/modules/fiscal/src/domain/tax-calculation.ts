@@ -61,6 +61,7 @@ export function computeLineItem(input: TaxLineInput, rate: TaxRate): InvoiceLine
     unitNetMinorUnits: input.unitNetMinorUnits,
     discountsAppliedMinorUnits: discounts,
     taxRateVersion: rate.normativeSourceVersion,
+    taxOfficialCode: rate.officialCode,
     taxTreatment: rate.treatment,
     taxableBaseMinorUnits: taxableBase,
     exemptBaseMinorUnits: exemptBase,

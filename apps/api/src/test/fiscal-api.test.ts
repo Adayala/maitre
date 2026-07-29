@@ -125,6 +125,88 @@ serialTest("Fiscal API: create invoice from a Check, validate, issue with fake C
   assert.ok(issuedInvoice.caeExpiresAt);
 });
 
+serialTest("Fiscal API: creates a branch-owned ARCA point of sale and verifies registration", async () => {
+  const container = await buildContainer();
+  const { tenantId, branchId, fiscalEntityId } = await getContext(container);
+  const app = await buildApp(container);
+  const headers = ownerHeaders(container, tenantId);
+  const branch = await container.branches.findById(tenantId, branchId);
+  assert.ok(branch);
+  await container.branches.save({
+    ...branch,
+    fiscalEntityId,
+    updatedAt: new Date(),
+  });
+
+  const created = await app.inject({
+    method: "POST",
+    url: "/v1/fiscal-points-of-sale",
+    headers,
+    payload: {
+      fiscalEntityId,
+      branchId,
+      environment: "PRODUCTION",
+      officialCode: "23",
+      arcaDomicileCode: "DOM-ARCA-1",
+      arcaDomicileLabel: "Casa central",
+      issuingSystem: "WSFEV1",
+      allowedVoucherTypes: ["FACTURA_A"],
+    },
+  });
+  assert.equal(created.statusCode, 201);
+  const pos = created.json().data;
+  assert.equal(pos.branchId, branchId);
+  assert.equal(pos.registrationStatus, "DECLARED");
+  assert.equal(pos.arcaDomicileCode, "DOM-ARCA-1");
+
+  const withoutEvidence = await app.inject({
+    method: "POST",
+    url: `/v1/fiscal-points-of-sale/${pos.id}/registration`,
+    headers,
+    payload: { status: "VERIFIED" },
+  });
+  assert.equal(withoutEvidence.statusCode, 400);
+
+  const verified = await app.inject({
+    method: "POST",
+    url: `/v1/fiscal-points-of-sale/${pos.id}/registration`,
+    headers,
+    payload: {
+      status: "VERIFIED",
+      evidenceRef: "arca://registration/23",
+    },
+  });
+  assert.equal(verified.statusCode, 200);
+  assert.equal(verified.json().data.registrationStatus, "VERIFIED");
+  assert.equal(verified.json().data.registrationEvidenceRef, "arca://registration/23");
+  assert.ok(verified.json().data.verifiedAt);
+});
+
+serialTest("Fiscal API: rejects a point of sale whose branch has another fiscal owner", async () => {
+  const container = await buildContainer();
+  const { tenantId, branchId, fiscalEntityId } = await getContext(container);
+  const app = await buildApp(container);
+  const response = await app.inject({
+    method: "POST",
+    url: "/v1/fiscal-points-of-sale",
+    headers: ownerHeaders(container, tenantId),
+    payload: {
+      fiscalEntityId,
+      branchId,
+      environment: "HOMOLOGATION",
+      officialCode: "24",
+      arcaDomicileCode: "DOM-ARCA-2",
+      allowedVoucherTypes: ["FACTURA_A"],
+    },
+  });
+
+  assert.equal(response.statusCode, 400);
+  assert.equal(
+    response.json().title,
+    "Branch must be explicitly associated with the same fiscal entity",
+  );
+});
+
 serialTest("Fiscal API: a second invoice on the same POS+voucherType gets number 2", async () => {
   const container = await buildContainer();
   const { tenantId, branchId, fiscalEntityId } = await getContext(container);

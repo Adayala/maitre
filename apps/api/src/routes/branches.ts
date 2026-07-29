@@ -35,6 +35,7 @@ const patchBranchBodySchema = z.object({
   contactEmail: z.string().email().optional(),
   contactPhone: z.string().optional(),
   status: z.enum(["ACTIVE", "INACTIVE", "ARCHIVED"]).optional(),
+  fiscalEntityId: z.string().uuid().nullable().optional(),
 });
 
 function toResponse(branch: Branch) {
@@ -109,9 +110,33 @@ export async function registerBranchRoutes(
       if (!branch) return sendProblem(reply, correlationId, notFound("Branch"));
 
       const body = omitUndefined(patchBranchBodySchema.parse(req.body));
-      let updated: Branch = { ...branch, ...body, updatedAt: new Date() };
+      if (body.fiscalEntityId) {
+        const fiscalEntity = await container.fiscalEntities.findById(
+          ctx.tenantId,
+          body.fiscalEntityId,
+        );
+        if (!fiscalEntity) {
+          return sendProblem(reply, correlationId, badRequest("Unknown fiscalEntityId"));
+        }
+      }
+      const { fiscalEntityId: previousFiscalEntityId, ...branchWithoutFiscalEntity } = branch;
+      const { fiscalEntityId, ...bodyWithoutFiscalEntity } = body;
+      const base = fiscalEntityId === null ? branchWithoutFiscalEntity : branch;
+      let updated: Branch = {
+        ...base,
+        ...bodyWithoutFiscalEntity,
+        ...(typeof fiscalEntityId === "string" ? { fiscalEntityId } : {}),
+        updatedAt: new Date(),
+      };
       if (body.status && body.status !== branch.status) {
-        updated = { ...transitionBranch(branch, body.status, new Date()), ...body };
+        const transitioned = transitionBranch(branch, body.status, new Date());
+        const { fiscalEntityId: transitionedFiscalEntityId, ...transitionedWithoutFiscalEntity } =
+          transitioned;
+        updated = {
+          ...(fiscalEntityId === null ? transitionedWithoutFiscalEntity : transitioned),
+          ...bodyWithoutFiscalEntity,
+          ...(typeof fiscalEntityId === "string" ? { fiscalEntityId } : {}),
+        };
       }
       await container.branches.save(updated);
       return toResponse(updated);

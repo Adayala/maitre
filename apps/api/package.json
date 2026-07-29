@@ -19,6 +19,7 @@
     "@maitre/adapter-identity-supabase-auth": "*",
     "@maitre/adapter-persistence-memory": "*",
     "@maitre/adapter-persistence-supabase": "*",
+    "@maitre/arca-client": "*",
     "@maitre/audit": "*",
     "@maitre/cash": "*",
     "@maitre/catalog": "*",

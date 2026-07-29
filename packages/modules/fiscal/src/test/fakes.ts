@@ -5,6 +5,7 @@ import type { FiscalCertificate } from "../domain/fiscal-certificate.js";
 import type { InvoiceTemplate } from "../domain/invoice-template.js";
 import type { TaxRate } from "../domain/tax-rate.js";
 import type {
+  AuthorizationAttemptRepositoryPort,
   InvoiceRepositoryPort,
   FiscalPointOfSaleRepositoryPort,
   FiscalPrinterRepositoryPort,
@@ -12,6 +13,7 @@ import type {
   InvoiceTemplateRepositoryPort,
   TaxRateRepositoryPort,
 } from "../application/ports.js";
+import type { AuthorizationAttempt } from "../domain/authorization-attempt.js";
 import type { OutboxPort, OutboxRecord } from "../application/outbox.js";
 
 export class FakeInvoiceRepository implements InvoiceRepositoryPort {
@@ -49,6 +51,27 @@ export class FakeInvoiceRepository implements InvoiceRepositoryPort {
     const i = this.items.findIndex((x) => x.id === invoice.id);
     if (i >= 0) this.items[i] = invoice;
     else this.items.push(invoice);
+  }
+}
+
+export class FakeAuthorizationAttemptRepository
+  implements AuthorizationAttemptRepositoryPort
+{
+  readonly items: AuthorizationAttempt[] = [];
+
+  async findLatestByInvoice(tenantId: string, invoiceId: string) {
+    return (
+      [...this.items]
+        .reverse()
+        .find((attempt) => attempt.tenantId === tenantId && attempt.invoiceId === invoiceId) ??
+      null
+    );
+  }
+
+  async save(attempt: AuthorizationAttempt) {
+    const index = this.items.findIndex((item) => item.id === attempt.id);
+    if (index >= 0) this.items[index] = attempt;
+    else this.items.push(attempt);
   }
 }
 

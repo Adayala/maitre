@@ -8,6 +8,8 @@ interface FiscalEntityRow {
   tenant_id: string;
   cuit: string;
   name: string;
+  legal_name: string | null;
+  display_name: string | null;
   legal_address: string | null;
   fiscal_address: string | null;
   activity_code: string | null;
@@ -40,6 +42,8 @@ function fromRow(row: FiscalEntityRow): FiscalEntity {
     id: row.id,
     tenantId: row.tenant_id,
     cuit: row.cuit,
+    legalName: row.legal_name ?? row.name,
+    ...(row.display_name !== null ? { displayName: row.display_name } : {}),
     name: row.name,
     ...(row.legal_address !== null ? { legalAddress: row.legal_address } : {}),
     ...(row.fiscal_address !== null ? { fiscalAddress: row.fiscal_address } : {}),
@@ -76,6 +80,8 @@ function toRow(entity: FiscalEntity): FiscalEntityRow {
     id: entity.id,
     tenant_id: entity.tenantId,
     cuit: entity.cuit,
+    legal_name: entity.legalName ?? entity.name,
+    display_name: entity.displayName ?? null,
     name: entity.name,
     legal_address: entity.legalAddress ?? null,
     fiscal_address: entity.fiscalAddress ?? null,

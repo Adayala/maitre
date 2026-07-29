@@ -17,6 +17,7 @@ export interface CreateFiscalEntityInput {
   tenantId: string;
   cuit: string;
   name: string;
+  displayName?: string;
   taxCondition: TaxCondition;
   legalAddress?: string;
   fiscalAddress?: string;
@@ -62,6 +63,8 @@ export async function createFiscalEntity(
     id: randomUUID(),
     tenantId: input.tenantId,
     cuit,
+    legalName: input.name,
+    ...(input.displayName !== undefined ? { displayName: input.displayName } : {}),
     name: input.name,
     ...(input.legalAddress !== undefined ? { legalAddress: input.legalAddress } : {}),
     ...(input.fiscalAddress !== undefined ? { fiscalAddress: input.fiscalAddress } : {}),

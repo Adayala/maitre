@@ -50,6 +50,7 @@ export * from "./cash-reconciliation-repository.js";
 export * from "./discount-repository.js";
 export * from "./discount-application-repository.js";
 export * from "./invoice-repository.js";
+export * from "./authorization-attempt-repository.js";
 export * from "./fiscal-point-of-sale-repository.js";
 export * from "./fiscal-printer-repository.js";
 export * from "./fiscal-certificate-repository.js";

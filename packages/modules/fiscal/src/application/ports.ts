@@ -4,6 +4,7 @@ import type { FiscalPrinter } from "../domain/fiscal-printer.js";
 import type { FiscalCertificate } from "../domain/fiscal-certificate.js";
 import type { InvoiceTemplate } from "../domain/invoice-template.js";
 import type { TaxRate } from "../domain/tax-rate.js";
+import type { AuthorizationAttempt } from "../domain/authorization-attempt.js";
 
 export interface InvoiceRepositoryPort {
   findById(tenantId: string, id: string): Promise<Invoice | null>;
@@ -20,6 +21,11 @@ export interface InvoiceRepositoryPort {
     voucherType: VoucherType,
   ): Promise<number | null>;
   save(invoice: Invoice): Promise<void>;
+}
+
+export interface AuthorizationAttemptRepositoryPort {
+  findLatestByInvoice(tenantId: string, invoiceId: string): Promise<AuthorizationAttempt | null>;
+  save(attempt: AuthorizationAttempt): Promise<void>;
 }
 
 export interface FiscalPointOfSaleRepositoryPort {
@@ -76,11 +82,30 @@ export interface ArcaAuthorizationRequest {
   number: number;
   cuit: string;
   currency: string;
-  amountMinorUnits: number;
+  issuedAt: Date;
+  recipientDocumentType: number;
+  recipientDocumentNumber: string;
+  recipientVatConditionId?: number;
+  taxableBaseMinorUnits: number;
+  nonTaxedBaseMinorUnits: number;
+  exemptBaseMinorUnits: number;
+  taxAmountMinorUnits: number;
+  grossMinorUnits: number;
+  vatBreakdown: Array<{
+    officialCode: string;
+    taxableBaseMinorUnits: number;
+    taxAmountMinorUnits: number;
+  }>;
+  associatedVoucher?: {
+    voucherType: VoucherType;
+    pointOfSaleCode: string;
+    number: number;
+  };
 }
 
 export interface ArcaAuthorizationResult {
-  outcome: "AUTHORIZED" | "REJECTED";
+  outcome: "AUTHORIZED" | "REJECTED" | "PENDING_RECONCILIATION";
+  assignedNumber?: number;
   cae?: string;
   caeExpiresAt?: Date;
   providerRef?: string;
@@ -89,4 +114,11 @@ export interface ArcaAuthorizationResult {
 
 export interface ArcaAdapterPort {
   authorize(request: ArcaAuthorizationRequest): Promise<ArcaAuthorizationResult>;
+  reconcile?(request: {
+    cuit: string;
+    environment: FiscalEnvironment;
+    pointOfSaleCode: string;
+    voucherType: VoucherType;
+    number: number;
+  }): Promise<ArcaAuthorizationResult>;
 }

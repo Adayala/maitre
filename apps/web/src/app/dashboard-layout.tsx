@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { to: "/branches", label: "Sucursales" },
   { to: "/users", label: "Usuarios y perfiles" },
   { to: "/subscription", label: "Suscripción" },
+  { to: "/fiscal", label: "Fiscal / ARCA" },
   { to: "/audit", label: "Auditoría" },
   { to: "/settings", label: "Configuración" },
 ];

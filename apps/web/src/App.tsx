@@ -16,6 +16,7 @@ const BrandsPage = lazyNamed(() => import("./features/brands/brands-page.js"), "
 const BranchesPage = lazyNamed(() => import("./features/branches/branches-page.js"), "BranchesPage");
 const UsersPage = lazyNamed(() => import("./features/users/users-page.js"), "UsersPage");
 const SubscriptionPage = lazyNamed(() => import("./features/subscription/subscription-page.js"), "SubscriptionPage");
+const FiscalSettingsPage = lazyNamed(() => import("./features/fiscal/fiscal-settings-page.js"), "FiscalSettingsPage");
 const AuditLogsPage = lazyNamed(() => import("./features/audit/audit-logs-page.js"), "AuditLogsPage");
 const SettingsPage = lazyNamed(() => import("./features/settings/settings-page.js"), "SettingsPage");
 const PublicHomePage = lazyNamed(() => import("./features/public/public-home-page.js"), "PublicHomePage");
@@ -113,6 +114,7 @@ export function App() {
                 <Route path="branches" element={withSuspense(<BranchesPage />)} />
                 <Route path="users" element={withSuspense(<UsersPage />)} />
                 <Route path="subscription" element={withSuspense(<SubscriptionPage />)} />
+                <Route path="fiscal" element={withSuspense(<FiscalSettingsPage />)} />
                 <Route path="audit" element={withSuspense(<AuditLogsPage />)} />
                 <Route path="settings" element={withSuspense(<SettingsPage />)} />
                 <Route path="profiles" element={<Navigate to="/users" replace />} />

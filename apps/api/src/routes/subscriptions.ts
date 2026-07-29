@@ -20,6 +20,7 @@ import type { Container } from "../composition/container.js";
 import { requireTenantContext, requirePermission } from "../http/request-context.js";
 import { sendProblem, notFound, badRequest } from "../http/problem-details.js";
 import { omitUndefined } from "../http/omit-undefined.js";
+import { recordAuditLog } from "@maitre/audit";
 
 // SPEC-031 — Subscriptions API.
 const upgradeBodySchema = z.object({
@@ -47,10 +48,64 @@ const accessQuerySchema = z.object({
   branchId: z.string().uuid().optional(),
 });
 
+const fiscalOwnerBodySchema = z.object({
+  subscriberFiscalEntityId: z.string().uuid(),
+  reason: z.string().trim().min(3).max(500),
+});
+
 export async function registerSubscriptionRoutes(
   app: FastifyInstance,
   container: Container,
 ): Promise<void> {
+  app.patch("/v1/subscriptions/fiscal-owner", async (req, reply) => {
+    const correlationId = randomUUID();
+    try {
+      const ctx = await requireTenantContext(container, req);
+      requirePermission(ctx, "fiscalEntity:update");
+      const body = fiscalOwnerBodySchema.parse(req.body);
+      const fiscalEntity = await container.fiscalEntities.findById(
+        ctx.tenantId,
+        body.subscriberFiscalEntityId,
+      );
+      if (!fiscalEntity) {
+        return sendProblem(reply, correlationId, notFound("FiscalEntity"));
+      }
+      const subscription = await container.subscriptions.findByTenantId(ctx.tenantId);
+      if (!subscription) return sendProblem(reply, correlationId, notFound("Subscription"));
+      const updated = {
+        ...subscription,
+        subscriberFiscalEntityId: fiscalEntity.id,
+        updatedAt: new Date(),
+      };
+      await container.subscriptions.save(updated);
+      await recordAuditLog(
+        { auditLogs: container.auditLogs },
+        {
+          tenantId: ctx.tenantId,
+          actorType: "USER",
+          actorId: ctx.userId,
+          action: "UPDATE",
+          resourceType: "SUBSCRIPTION_FISCAL_OWNER",
+          resourceId: subscription.id,
+          previousState: {
+            subscriberFiscalEntityId: subscription.subscriberFiscalEntityId ?? null,
+          },
+          newState: {
+            subscriberFiscalEntityId: fiscalEntity.id,
+            reason: body.reason,
+          },
+          correlationId,
+        },
+      );
+      return { data: updated };
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return sendProblem(reply, correlationId, badRequest(err.message));
+      }
+      return sendProblem(reply, correlationId, err);
+    }
+  });
+
   app.get<{ Params: { tenantId: string } }>(
     "/v1/subscriptions/:tenantId",
     async (req, reply) => {
