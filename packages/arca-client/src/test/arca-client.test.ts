@@ -228,6 +228,39 @@ test("WSFEv1 normalizes an approved CAE and observations", async () => {
   assert.doesNotMatch(transport.requests[0]?.body ?? "", /undefined/);
 });
 
+test("WSFEv1 normalizes the authorization fields returned by FECompConsultar", async () => {
+  const transport = new QueueTransport([
+    ok(
+      '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body>' +
+        "<FECompConsultarResponse><FECompConsultarResult><ResultGet>" +
+        "<Concepto>1</Concepto><DocTipo>99</DocTipo><DocNro>0</DocNro>" +
+        "<CbteDesde>143</CbteDesde><CbteHasta>143</CbteHasta><CbteFch>20260729</CbteFch>" +
+        "<Resultado>A</Resultado><CodAutorizacion>76123456789012</CodAutorizacion>" +
+        "<EmisionTipo>CAE</EmisionTipo><FchVto>20260808</FchVto>" +
+        "</ResultGet></FECompConsultarResult></FECompConsultarResponse>" +
+        "</soap:Body></soap:Envelope>",
+    ),
+  ]);
+  const client = new Wsfev1Client({
+    environment: "homologation",
+    representedCuit: "30712345678",
+    transport,
+    tickets: { getTicket: async () => ticket },
+    clock,
+  });
+
+  const result = await client.consultVoucher({
+    pointOfSale: 3,
+    voucherType: 6,
+    voucherNumber: 143,
+  });
+
+  assert.equal(result.found, true);
+  assert.equal(result.detail?.result, "A");
+  assert.equal(result.detail?.cae, "76123456789012");
+  assert.equal(result.detail?.caeExpirationDate, "20260808");
+});
+
 test("a transport failure during CAE authorization is marked ambiguous", async () => {
   const transport = new QueueTransport([new Error("socket closed")]);
   const client = new Wsfev1Client({
