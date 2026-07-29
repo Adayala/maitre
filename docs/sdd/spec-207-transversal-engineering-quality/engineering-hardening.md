@@ -17,6 +17,17 @@ Este documento es el contrato operativo de calidad, seguridad, performance y ent
 | Ownership | CODEOWNERS, plantilla de PR y política de reporte privado | `.github/CODEOWNERS`, `SECURITY.md` |
 | Entrega | deploy de `main` depende del gate de calidad y de las seis suites E2E | workflow `End-to-end` |
 
+## Regla obligatoria para features nuevas
+
+`AGENTS.md` establece la Definition of Done para todos los agentes del proyecto:
+
+- 100% de statements, branches, functions y lines sobre todo código nuevo o modificado;
+- cobertura Playwright completa para toda parte visual, granularizada por aplicación;
+- estados happy path, loading, empty, validación, error, permisos, responsive, accesibilidad e integración incluidos cuando correspondan;
+- prohibido bajar thresholds, excluir archivos o eliminar assertions para obtener un PASS.
+
+Una feature no puede declararse terminada mientras falte evidencia de estas condiciones. La cuarentena histórica descrita debajo no autoriza deuda nueva.
+
 ## Pipeline
 
 Cada pull request dispara:
