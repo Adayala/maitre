@@ -184,6 +184,8 @@ function detailXml(detail: WsfeCaeDetailRequest): string {
 function parseDetail(value: unknown): WsfeCaeDetailResult {
   const row = record(value);
   const result = text(row["Resultado"], "R");
+  const authorizationCode = text(row["CAE"] ?? row["CodAutorizacion"]);
+  const authorizationExpiresAt = text(row["CAEFchVto"] ?? row["FchVto"]);
   return {
     concept: integer(row["Concepto"]),
     recipientDocumentType: integer(row["DocTipo"]),
@@ -192,8 +194,10 @@ function parseDetail(value: unknown): WsfeCaeDetailResult {
     voucherTo: integer(row["CbteHasta"]),
     voucherDate: text(row["CbteFch"]),
     result: result === "A" || result === "P" ? result : "R",
-    ...(text(row["CAE"]) ? { cae: text(row["CAE"]) } : {}),
-    ...(text(row["CAEFchVto"]) ? { caeExpirationDate: text(row["CAEFchVto"]) } : {}),
+    ...(authorizationCode ? { cae: authorizationCode } : {}),
+    ...(authorizationExpiresAt
+      ? { caeExpirationDate: authorizationExpiresAt }
+      : {}),
     observations: messages(row, "Observaciones", "Obs"),
   };
 }
