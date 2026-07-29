@@ -11,6 +11,33 @@ const ports = {
   guest: 5279,
 };
 
+const webapps = {
+  dash: {
+    command: `npm run preview --workspace apps/web -- --host ${host} --port ${ports.dash} --strictPort`,
+    url: `http://${host}:${ports.dash}/login`,
+  },
+  cash: {
+    command: `npm run preview --workspace apps/cashier -- --host ${host} --port ${ports.cash} --strictPort`,
+    url: `http://${host}:${ports.cash}`,
+  },
+  kitchen: {
+    command: `npm run preview --workspace apps/kitchen -- --host ${host} --port ${ports.kitchen} --strictPort`,
+    url: `http://${host}:${ports.kitchen}`,
+  },
+  floor: {
+    command: `npm run preview --workspace apps/waiter -- --host ${host} --port ${ports.floor} --strictPort`,
+    url: `http://${host}:${ports.floor}`,
+  },
+  host: {
+    command: `npm run preview --workspace apps/host -- --host ${host} --port ${ports.host} --strictPort`,
+    url: `http://${host}:${ports.host}`,
+  },
+  guest: {
+    command: `npm run preview --workspace apps/customer -- --host ${host} --port ${ports.guest} --strictPort`,
+    url: `http://${host}:${ports.guest}`,
+  },
+};
+
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
@@ -28,59 +55,7 @@ export default defineConfig({
     timezoneId: "America/Argentina/Buenos_Aires",
   },
   expect: { timeout: 10_000 },
-  webServer: [
-    {
-      name: "api",
-      command: `PORT=${ports.api} npm run start --workspace apps/api`,
-      url: `http://${host}:${ports.api}/health/ready`,
-      timeout: 30_000,
-      reuseExistingServer: false,
-      stdout: "pipe",
-      stderr: "pipe",
-    },
-    {
-      name: "dash",
-      command: `npm run preview --workspace apps/web -- --host ${host} --port ${ports.dash} --strictPort`,
-      url: `http://${host}:${ports.dash}/login`,
-      timeout: 30_000,
-      reuseExistingServer: false,
-    },
-    {
-      name: "cash",
-      command: `npm run preview --workspace apps/cashier -- --host ${host} --port ${ports.cash} --strictPort`,
-      url: `http://${host}:${ports.cash}`,
-      timeout: 30_000,
-      reuseExistingServer: false,
-    },
-    {
-      name: "kitchen",
-      command: `npm run preview --workspace apps/kitchen -- --host ${host} --port ${ports.kitchen} --strictPort`,
-      url: `http://${host}:${ports.kitchen}`,
-      timeout: 30_000,
-      reuseExistingServer: false,
-    },
-    {
-      name: "floor",
-      command: `npm run preview --workspace apps/waiter -- --host ${host} --port ${ports.floor} --strictPort`,
-      url: `http://${host}:${ports.floor}`,
-      timeout: 30_000,
-      reuseExistingServer: false,
-    },
-    {
-      name: "host",
-      command: `npm run preview --workspace apps/host -- --host ${host} --port ${ports.host} --strictPort`,
-      url: `http://${host}:${ports.host}`,
-      timeout: 30_000,
-      reuseExistingServer: false,
-    },
-    {
-      name: "guest",
-      command: `npm run preview --workspace apps/customer -- --host ${host} --port ${ports.guest} --strictPort`,
-      url: `http://${host}:${ports.guest}`,
-      timeout: 30_000,
-      reuseExistingServer: false,
-    },
-  ],
+  webServer: webServersFor(process.env["E2E_APP"]),
   projects: [
     appProject("dash", ports.dash, "Desktop Chrome"),
     appProject("host", ports.host, "iPad (gen 7)"),
@@ -90,6 +65,35 @@ export default defineConfig({
     appProject("guest", ports.guest, "Pixel 7"),
   ],
 });
+
+function webServersFor(selectedApp) {
+  const appNames = selectedApp ? [selectedApp] : Object.keys(webapps);
+  const selectedWebapps = appNames.map((name) => {
+    const server = webapps[name];
+    if (!server) {
+      throw new Error(`Unknown E2E_APP "${name}"`);
+    }
+    return {
+      name,
+      ...server,
+      timeout: 30_000,
+      reuseExistingServer: false,
+    };
+  });
+
+  return [
+    {
+      name: "api",
+      command: `PORT=${ports.api} npm run start --workspace apps/api`,
+      url: `http://${host}:${ports.api}/health/ready`,
+      timeout: 30_000,
+      reuseExistingServer: false,
+      stdout: "pipe",
+      stderr: "pipe",
+    },
+    ...selectedWebapps,
+  ];
+}
 
 function appProject(name, port, deviceName) {
   return {
