@@ -26,6 +26,9 @@ probar accidentalmente un proceso ajeno.
 Los smokes iniciales validan carga, routing y estructura accesible sin autenticación. Floor además
 incluye un recorrido autenticado determinista que intercepta la API: verifica estados y filtros de
 mesa y abre una Visit desde una mesa libre, sin depender de estado manual ni de Supabase remoto.
+Kitchen cubre del mismo modo el ciclo operativo completo de una comanda en el KDS:
+`RECEIVED → CLAIMED → IN_PROGRESS → READY → COMPLETED`, incluida la desaparición de la cola luego
+del handoff.
 
 En GitHub Actions cada aplicación es un job de matriz independiente, con build, ejecución y
 artifacts propios. `fail-fast` está deshabilitado: un fallo de Host no impide obtener evidencia de

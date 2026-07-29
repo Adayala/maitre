@@ -17,7 +17,7 @@
 ### CAD-110-03 — Realtime y polling distribuyen hints, pero la autoridad sigue en el workflow persistido
 
 - [ ] hints perdidos o tardíos no degradan la autoridad;
-- [ ] polling/refetch recupera gaps;
+- [x] polling/refetch recupera gaps y cada mutación invalida inmediatamente la cola;
 - [ ] la proyección visible converge con el workflow persistido.
 
 ### CAD-110-04 — Las correcciones manuales, force transitions y bloqueos requieren permiso, reason y auditoría
