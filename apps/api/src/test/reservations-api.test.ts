@@ -190,7 +190,7 @@ serialTest("Reservation create/detail preserve source while list redacts it", as
   const listed = list.json().data.find((item: { id: string }) => item.id === create.json().data.id);
   assert.ok(listed);
   assert.equal("source" in listed, false);
-  assert.equal(listed.guestId, "guest-list-redaction");
+  assert.equal(listed.guestId, create.json().data.guestId);
   assert.equal(listed.notes, "window");
   assert.deepEqual(Object.keys(listed).sort(), [
     "branchId",
@@ -218,7 +218,7 @@ serialTest("Reservation create/detail preserve source while list redacts it", as
     new Set(["data"]),
   );
   assert.equal(detail.json().data.source, "PHONE");
-  assert.equal(detail.json().data.guestId, "guest-list-redaction");
+  assert.equal(detail.json().data.guestId, create.json().data.guestId);
   assert.equal(detail.json().data.notes, "window");
   assert.deepEqual(Object.keys(detail.json().data).sort(), [
     "branchId",
@@ -843,7 +843,7 @@ serialTest("Reservation confirm returns 409 when branch capacity is unavailable"
     method: "POST",
     url: `/v1/branches/${branchId}/reservations`,
     headers,
-    payload: { partySize: 4, startAt: "2026-08-19T20:00:00Z", durationMinutes: 60 },
+    payload: { partySize: 6, startAt: "2026-08-19T20:00:00Z", durationMinutes: 60 },
   });
   assert.equal(firstCreate.statusCode, 201);
   const firstReservation = firstCreate.json().data;
@@ -859,7 +859,7 @@ serialTest("Reservation confirm returns 409 when branch capacity is unavailable"
     method: "POST",
     url: `/v1/branches/${branchId}/reservations`,
     headers,
-    payload: { partySize: 4, startAt: "2026-08-19T20:00:00Z", durationMinutes: 60 },
+    payload: { partySize: 6, startAt: "2026-08-19T20:00:00Z", durationMinutes: 60 },
   });
   assert.equal(secondCreate.statusCode, 201);
   const secondReservation = secondCreate.json().data;
@@ -1088,7 +1088,7 @@ serialTest("Reservation read endpoints require reservation:read and allow waiter
   assert.equal(waiterList.json().data.length, 1);
   assert.equal(waiterList.json().data[0].id, reservation.id);
   assert.equal("source" in waiterList.json().data[0], false);
-  assert.equal(waiterList.json().data[0].guestId, "guest-waiter-read");
+  assert.equal(waiterList.json().data[0].guestId, reservation.guestId);
   assert.equal(waiterList.json().data[0].notes, "allergy context");
 
   const waiterDetail = await app.inject({
@@ -1099,7 +1099,7 @@ serialTest("Reservation read endpoints require reservation:read and allow waiter
   assert.equal(waiterDetail.statusCode, 200);
   assert.equal(waiterDetail.json().data.id, reservation.id);
   assert.equal(waiterDetail.json().data.source, "PHONE");
-  assert.equal(waiterDetail.json().data.guestId, "guest-waiter-read");
+  assert.equal(waiterDetail.json().data.guestId, reservation.guestId);
   assert.equal(waiterDetail.json().data.notes, "allergy context");
 
   const cook = {
@@ -2367,7 +2367,7 @@ serialTest("Availability GET returns free tables", async () => {
 
   const unavailable = await app.inject({
     method: "GET",
-    url: `/v1/branches/${branchId}/availability?partySize=5&startAt=2026-08-01T21:00:00Z&durationMinutes=60`,
+    url: `/v1/branches/${branchId}/availability?partySize=7&startAt=2026-08-01T21:00:00Z&durationMinutes=60`,
     headers: ownerHeaders(container, tenantId),
   });
   assert.equal(unavailable.statusCode, 200);

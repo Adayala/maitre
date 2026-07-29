@@ -54,9 +54,9 @@ Los límites iniciales están en `tooling/performance/budgets.json` y se miden s
 El coverage nativo de Node empieza como evidencia, no como umbral global: imponer 80 % sobre un baseline desconocido incentiva tests de bajo valor. La siguiente iteración debe registrar el baseline y bloquear regresión sobre código nuevo. Las journeys autenticadas y transversales deben agregarse bajo la aplicación dueña y etiquetarse; no deben volver a crear un job monolítico.
 
 Al activar el runner se descubrieron cinco suites API con fallos previos de contrato/fixtures.
-`kitchen-api` y `ordering-api` fueron reconciliadas con sus representaciones y fixtures vigentes y
-volvieron al quality gate. Las tres restantes (`organization-api`, `reservations-api` y
-`workforce-api`) siguen en una cuarentena explícita en `run-node-tests.mjs`; las otras 76 suites
+`kitchen-api`, `ordering-api` y `reservations-api` fueron reconciliadas con sus representaciones y
+fixtures vigentes y volvieron al quality gate. Las dos restantes (`organization-api` y
+`workforce-api`) siguen en una cuarentena explícita en `run-node-tests.mjs`; las otras 77 suites
 bloquean CI. Sacarlas requiere corregir la implementación o actualizar cada contrato con su spec,
 nunca borrar assertions. La cuarentena es deuda P0 y cualquier suite nueva queda incluida por
 defecto.
