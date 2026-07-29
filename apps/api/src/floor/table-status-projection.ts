@@ -62,6 +62,7 @@ export async function projectTableStatus(
     ? {
         tableId: table.id,
         status: "RESERVED",
+        relatedReservationId: reservation.id,
         asOf: now,
       }
     : floorProjection;

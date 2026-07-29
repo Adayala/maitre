@@ -1787,8 +1787,9 @@ serialTest("Single and branch table status share AVAILABLE, RESERVED, OCCUPIED a
   assert.equal(available.json().data.status, "AVAILABLE");
   assert.ok(!Number.isNaN(Date.parse(available.json().data.asOf)));
 
+  const reservationId = randomUUID();
   await container.reservations.save({
-    id: randomUUID(),
+    id: reservationId,
     tenantId,
     branchId,
     partySize: 2,
@@ -1809,6 +1810,10 @@ serialTest("Single and branch table status share AVAILABLE, RESERVED, OCCUPIED a
   });
   assert.equal(reserved.statusCode, 200);
   assert.equal(reserved.json().data.status, "RESERVED");
+  assert.equal(
+    reserved.json().data.relatedReservationId,
+    reservationId,
+  );
 
   const visitResponse = await app.inject({
     method: "POST",

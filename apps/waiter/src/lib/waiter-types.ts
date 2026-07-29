@@ -35,6 +35,7 @@ export interface TableStatusProjection {
   tableId: string;
   status: TableStatusValue;
   relatedVisitId?: string;
+  relatedReservationId?: string;
   asOf: string;
 }
 

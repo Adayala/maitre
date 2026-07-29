@@ -23,9 +23,9 @@ Los puertos dedicados al harness son: API `3101`, Dash `5273`, Cash `5274`, Kitc
 Floor `5276`, Host `5278` y Guest `5279`. Un puerto ocupado falla de forma explícita para evitar
 probar accidentalmente un proceso ajeno.
 
-Los smokes iniciales validan carga, routing y estructura accesible sin autenticación. Los próximos
-casos deben provisionar datos por API y usar fixtures de sesión por rol; no deben depender de
-estado manual ni de un Supabase remoto.
+Los smokes iniciales validan carga, routing y estructura accesible sin autenticación. Floor además
+incluye un recorrido autenticado determinista que intercepta la API: verifica estados y filtros de
+mesa y abre una Visit desde una mesa libre, sin depender de estado manual ni de Supabase remoto.
 
 En GitHub Actions cada aplicación es un job de matriz independiente, con build, ejecución y
 artifacts propios. `fail-fast` está deshabilitado: un fallo de Host no impide obtener evidencia de

@@ -17,10 +17,9 @@ import { parsePagination, paginate } from "../http/pagination.js";
 import { omitUndefined } from "../http/omit-undefined.js";
 import { projectTableStatus } from "../floor/table-status-projection.js";
 
-// SPEC-012 — Tables API. Status is DERIVED (never persisted); until Floor
-// (SPEC-057+) and Reservations (SPEC-095+) exist, no visit/reservation state
-// is available, so every table currently resolves to AVAILABLE or BLOCKED
-// (BLOCKED/CLEANING are the only inputs this route can source today).
+// SPEC-012 — Tables API. Status is derived and never persisted. CRUD
+// responses retain the Organization-level default; the dedicated status
+// endpoint uses the live Floor + Reservations projection.
 const createTableBodySchema = z.object({
   salonId: z.string().uuid(),
   number: z.string().min(1).max(10),
