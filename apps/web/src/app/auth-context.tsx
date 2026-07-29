@@ -7,6 +7,7 @@ interface AuthState {
   email: string | null;
   isLoading: boolean;
   signInWithPassword: (email: string, password: string) => Promise<void>;
+  signInWithGoogle: (next?: string) => Promise<void>;
   signInWithToken: (token: string) => void;
   signOut: () => Promise<void>;
 }
@@ -39,7 +40,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (!shouldHydrateAuth || authHydrationState !== "idle") {
+    if (!shouldHydrateAuth) {
+      setAuthHydrationState("ready");
       return;
     }
 
@@ -55,21 +57,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        const { data } = await supabase.auth.getSession();
-        if (!isActive) return;
-
-        if (data.session) {
-          setAccessToken(data.session.access_token);
-          setEmail(data.session.user.email ?? null);
-        }
-
         const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+          if (!isActive) return;
           setAccessToken(session?.access_token ?? null);
           setEmail(session?.user.email ?? null);
           setAuthHydrationState("ready");
         });
 
         unsubscribe = () => subscription.subscription.unsubscribe();
+        const { data } = await supabase.auth.getSession();
+        if (!isActive) return;
+        setAccessToken(data.session?.access_token ?? null);
+        setEmail(data.session?.user.email ?? null);
         setAuthHydrationState("ready");
       })
       .catch(() => {
@@ -82,12 +81,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isActive = false;
       unsubscribe();
     };
-  }, [authHydrationState, shouldHydrateAuth]);
+  }, [shouldHydrateAuth]);
 
   async function signInWithPassword(signInEmail: string, password: string) {
     const supabase = await getSupabaseClient();
     if (!supabase) throw new Error("Supabase Auth is not configured (VITE_SUPABASE_URL missing)");
     const { error } = await supabase.auth.signInWithPassword({ email: signInEmail, password });
+    if (error) throw error;
+  }
+
+  async function signInWithGoogle(next = "/") {
+    const supabase = await getSupabaseClient();
+    if (!supabase) throw new Error("Supabase Auth no está configurado");
+    const callback = new URL("/login", window.location.origin);
+    callback.searchParams.set("next", next.startsWith("/") ? next : "/");
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: callback.toString() },
+    });
     if (error) throw error;
   }
 
@@ -111,7 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ accessToken, email, isLoading, signInWithPassword, signInWithToken, signOut }}
+      value={{ accessToken, email, isLoading, signInWithPassword, signInWithGoogle, signInWithToken, signOut }}
     >
       {children}
     </AuthContext.Provider>

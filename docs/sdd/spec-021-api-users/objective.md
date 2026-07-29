@@ -5,6 +5,9 @@
 Gestionar invitaciones, perfiles mínimos y Memberships dentro del tenant autenticado sin exponer
 credenciales, tenants ajenos ni convertir User global en autoridad de acceso.
 
+La administración presenta usuarios y perfiles operativos en una única superficie para invitar,
+consultar y editar accesos sin navegar entre catálogos desconectados.
+
 ## Criterios de aceptación
 
 ### CAD-021-01 — `POST /v1/users/invitations` deriva tenant del contexto y nunca expone el token en claro
@@ -36,3 +39,8 @@ mediante esta API.
 
 401/403/404/409/412/422, auditoría y aislamiento cubren acceso a otro tenant, self-escalation, roles no
 delegables y usuario global preexistente.
+
+### CAD-021-07 — Usuarios y perfiles se gestionan en una única superficie
+
+La UI lista usuarios junto con su estado y perfiles asignados, permite invitar y editar los campos
+habilitados, y ofrece el catálogo de perfiles como ayuda contextual dentro de la misma pantalla.

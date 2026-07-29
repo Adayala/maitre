@@ -45,3 +45,10 @@
 - [ ] los resultados de automatización y revisión manual quedan adjuntos al cambio;
 - [ ] la revisión manual se ejecuta en flujos críticos aprobados;
 - [ ] la aceptación no depende sólo de automatización.
+
+### CAD-212-07 — Cada app expresa su rol sin perder el lenguaje compartido
+
+- [ ] Customer, Waiter, Host, Kitchen, Cashier y Dash son distinguibles por jerarquía y firma visual;
+- [ ] foco, estados críticos y acciones mantienen significado consistente entre superficies;
+- [ ] toda animación nueva respeta `prefers-reduced-motion`;
+- [ ] temas claros y oscuros mantienen contraste AA y targets de al menos 44×44 CSS px.

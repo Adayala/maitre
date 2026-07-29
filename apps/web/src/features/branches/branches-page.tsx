@@ -1,6 +1,9 @@
+import { useEffect, useState, type FormEvent } from "react";
 import { useTenantQuery } from "../../lib/use-tenant-query.js";
 import { StateView } from "../../components/state-view.js";
-import { Link } from "react-router-dom";
+import { apiRequest } from "../../lib/api-client.js";
+import { useAuth } from "../../app/auth-context.js";
+import { useTenantContext } from "../../app/tenant-context.js";
 
 interface Branch {
   id: string;
@@ -10,12 +13,42 @@ interface Branch {
   timezone: string;
 }
 
+interface BrandOption { id: string; name: string }
+interface Salon { id: string; branchId: string; name: string; capacity: number; description?: string; status: "ACTIVE" | "INACTIVE" }
+
 export function BranchesPage() {
+  const { accessToken } = useAuth();
+  const { selectedTenantId } = useTenantContext();
   const { data, isLoading, error, refetch } = useTenantQuery<{ data: Branch[] }>(
     "branches",
     "/v1/branches",
   );
   const branches = data?.data ?? [];
+  const { data: brandsData } = useTenantQuery<{ data: BrandOption[] }>("brands-for-branches", "/v1/brands");
+  const brands = brandsData?.data ?? [];
+  const [selectedBranchId, setSelectedBranchId] = useState("");
+  const { data: salonsData, refetch: refetchSalons } = useTenantQuery<{ data: Salon[] }>(
+    `salons-${selectedBranchId}`,
+    `/v1/salons?branchId=${encodeURIComponent(selectedBranchId)}`,
+    { enabled: Boolean(accessToken && selectedTenantId && selectedBranchId) },
+  );
+  const salons = salonsData?.data ?? [];
+  const [brandId, setBrandId] = useState("");
+  const [name, setName] = useState("");
+  const [code, setCode] = useState("");
+  const [timezone, setTimezone] = useState("America/Argentina/Buenos_Aires");
+  const [salonName, setSalonName] = useState("");
+  const [salonCapacity, setSalonCapacity] = useState(40);
+  const [isSaving, setIsSaving] = useState(false);
+  const [mutationError, setMutationError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!brandId && brands[0]) setBrandId(brands[0].id);
+  }, [brandId, brands]);
+
+  useEffect(() => {
+    if (!selectedBranchId && branches[0]) setSelectedBranchId(branches[0].id);
+  }, [branches, selectedBranchId]);
   const activeBranches = branches.filter((branch) => isBranchActive(branch.status));
   const inactiveBranches = branches.filter((branch) => !isBranchActive(branch.status));
   const uniqueTimezones = new Set(branches.map((branch) => branch.timezone));
@@ -26,68 +59,39 @@ export function BranchesPage() {
     { label: "Zona horaria definida", done: branches.every((branch) => branch.timezone.trim().length > 0) && branches.length > 0 },
     { label: "Sucursal operable", done: activeBranches.length > 0 },
   ];
-  const pendingChecklist = checklist.filter((step) => !step.done).map((step) => step.label);
-  const nextStep = getBranchesNextStep({
-    total: branches.length,
-    active: activeBranches.length,
-    inactive: inactiveBranches.length,
-  });
-  const branchQuickLinks = [
-    {
-      eyebrow: "Base",
-      label: "Resumen · Puesta en marcha",
-      detail: "Revisar si la estructura del tenant ya soporta abrir y operar sedes reales.",
-      to: "/setup",
-    },
-    {
-      eyebrow: "Equipo",
-      label: "Usuarios · Perfiles",
-      detail: "Validar qué personas y perfiles van a usar cada sucursal en operación.",
-      to: "/users",
-    },
-    {
-      eyebrow: "Experiencia",
-      label: "Cliente · Host",
-      detail: "Cruzar si las sucursales visibles ya sostienen discovery público y recepción operativa.",
-      to: "/profiles",
-    },
-  ];
-  const branchStageCards = [
-    {
-      label: "Crear",
-      title: branches.length > 0 ? `${branches.length} sede(s) visible(s)` : "Falta primera sede",
-      detail:
-        branches.length > 0
-          ? "La red de sucursales ya existe dentro del tenant."
-          : "Sin una sede cargada no hay dónde aterrizar la operación real.",
-      tone: branches.length > 0 ? "success" : "warning",
-      to: "/branches",
-    },
-    {
-      label: "Habilitar",
-      title: activeBranches.length > 0 ? `${activeBranches.length} operable(s)` : "Ninguna activa",
-      detail:
-        activeBranches.length > 0
-          ? "Ya hay al menos una sucursal lista para soportar flujo operativo."
-          : "Conviene habilitar una sede antes de abrir más superficies.",
-      tone: activeBranches.length > 0 ? "success" : "warning",
-      to: "/branches",
-    },
-    {
-      label: "Asignar",
-      title: "Equipo por sede",
-      detail: "El siguiente control útil es validar qué perfiles y personas usan cada sucursal.",
-      tone: "info",
-      to: "/users",
-    },
-    {
-      label: "Operar",
-      title: "Apps y experiencia",
-      detail: "Después toca cruzar sedes con customer, host y superficies operativas.",
-      tone: "info",
-      to: "/profiles",
-    },
-  ] as const;
+
+  async function mutate(path: string, method: "POST" | "PATCH" | "DELETE", body?: unknown) {
+    if (!accessToken || !selectedTenantId) return;
+    setMutationError(null);
+    setIsSaving(true);
+    try {
+      await apiRequest(path, { accessToken, tenantId: selectedTenantId, method, ...(body !== undefined ? { body } : {}) });
+      await refetch();
+      if (selectedBranchId) await refetchSalons();
+    } catch (err) {
+      setMutationError(err instanceof Error ? err.message : "No se pudo guardar el cambio");
+      throw err;
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function createBranch(e: FormEvent) {
+    e.preventDefault();
+    try {
+      await mutate("/v1/branches", "POST", { brandId, name, code, timezone });
+      setName("");
+      setCode("");
+    } catch { /* error is displayed by mutate */ }
+  }
+
+  async function createSalon(e: FormEvent) {
+    e.preventDefault();
+    try {
+      await mutate("/v1/salons", "POST", { branchId: selectedBranchId, name: salonName, capacity: salonCapacity });
+      setSalonName("");
+    } catch { /* error is displayed by mutate */ }
+  }
 
   return (
     <section aria-labelledby="branches-heading" className="overview-page">
@@ -95,11 +99,23 @@ export function BranchesPage() {
       <StateView
         isLoading={isLoading}
         error={error as Error | null}
-        isEmpty={branches.length === 0}
-        emptyMessage="Todavía no hay sucursales creadas."
         onRetry={() => void refetch()}
       >
-        {branches.length > 0 && (
+        <>
+          <article className="overview-card">
+            <h2>Nueva sucursal</h2>
+            {brands.length > 0 ? (
+              <form className="user-management-form" onSubmit={createBranch}>
+                <label>Marca<select required value={brandId} onChange={(event) => setBrandId(event.target.value)}>{brands.map((brand) => <option key={brand.id} value={brand.id}>{brand.name}</option>)}</select></label>
+                <label>Nombre<input required value={name} onChange={(event) => setName(event.target.value)} /></label>
+                <label>Código<input required value={code} onChange={(event) => setCode(event.target.value.toUpperCase())} /></label>
+                <label>Zona horaria<input required value={timezone} onChange={(event) => setTimezone(event.target.value)} /></label>
+                <button type="submit" disabled={isSaving}>Crear sucursal</button>
+              </form>
+            ) : <p>Primero necesitás crear una marca.</p>}
+            {mutationError ? <p role="alert" className="login-error">{mutationError}</p> : null}
+          </article>
+        {branches.length > 0 ? (
           <>
             <article className={`overview-priority overview-priority--${summary.tone}`}>
               <div className="overview-priority__copy">
@@ -138,35 +154,6 @@ export function BranchesPage() {
                   </div>
                 ))}
               </div>
-              <p>
-                {pendingChecklist.length > 0
-                  ? `Todavía conviene resolver: ${pendingChecklist.join(", ")}.`
-                  : "La lectura base de sedes ya está completa y lista para seguir afinando operación y experiencia pública."}
-              </p>
-            </article>
-
-            <article className="overview-card">
-              <h2>Siguiente paso recomendado</h2>
-              <div className="overview-link-grid">
-                <Link className="overview-link-card overview-link-card--primary" to={nextStep.to}>
-                  <span>{nextStep.eyebrow}</span>
-                  <strong>{nextStep.label}</strong>
-                  <p>{nextStep.detail}</p>
-                </Link>
-              </div>
-            </article>
-
-            <article className="overview-card">
-              <h2>Ciclo de sedes</h2>
-              <div className="owner-stage-grid">
-                {branchStageCards.map((card) => (
-                  <Link key={card.label} className={`owner-stage-card owner-stage-card--${card.tone}`} to={card.to}>
-                    <span>{card.label}</span>
-                    <strong>{card.title}</strong>
-                    <p>{card.detail}</p>
-                  </Link>
-                ))}
-              </div>
             </article>
 
             <section className="profile-module-grid" aria-label="Resumen de sucursales">
@@ -189,19 +176,6 @@ export function BranchesPage() {
             </section>
 
             <article className="overview-card">
-              <h2>Atajos relacionados</h2>
-              <div className="overview-link-grid">
-                {branchQuickLinks.map((link) => (
-                  <Link key={link.label} className="overview-link-card" to={link.to}>
-                    <span>{link.eyebrow}</span>
-                    <strong>{link.label}</strong>
-                    <p>{link.detail}</p>
-                  </Link>
-                ))}
-              </div>
-            </article>
-
-            <article className="overview-card">
               <h2>Detalle tabular</h2>
               <table>
                 <caption className="sr-only">Listado de sucursales</caption>
@@ -211,6 +185,7 @@ export function BranchesPage() {
                     <th scope="col">Código</th>
                     <th scope="col">Zona horaria</th>
                     <th scope="col">Estado</th>
+                    <th scope="col">Gestionar</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -220,13 +195,40 @@ export function BranchesPage() {
                       <td>{branch.code}</td>
                       <td>{branch.timezone}</td>
                       <td>{branch.status}</td>
+                      <td><select value={isBranchActive(branch.status) ? "ACTIVE" : "INACTIVE"} disabled={isSaving} onChange={(event) => void mutate(`/v1/branches/${branch.id}`, "PATCH", { status: event.target.value }).catch(() => undefined)}><option value="ACTIVE">Activa</option><option value="INACTIVE">Inactiva</option></select></td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </article>
           </>
-        )}
+        ) : <article className="overview-priority overview-priority--warning"><div className="overview-priority__copy"><strong>Todavía no hay sucursales</strong><p>Creá una para habilitar salones y operación.</p></div></article>}
+
+          <article className="overview-card">
+            <h2>Salones</h2>
+            {branches.length > 0 ? (
+              <>
+                <label className="organization-selector">Sucursal<select value={selectedBranchId} onChange={(event) => setSelectedBranchId(event.target.value)}>{branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.name}</option>)}</select></label>
+                <form className="user-management-form" onSubmit={createSalon}>
+                  <label>Nombre<input required value={salonName} onChange={(event) => setSalonName(event.target.value)} /></label>
+                  <label>Capacidad<input required type="number" min={1} value={salonCapacity} onChange={(event) => setSalonCapacity(Number(event.target.value))} /></label>
+                  <button type="submit" disabled={isSaving}>Crear salón</button>
+                </form>
+                <div className="profile-module-grid organization-list">
+                  {salons.map((salon) => (
+                    <article className="profile-card" key={salon.id}>
+                      <label>Nombre<input defaultValue={salon.name} onBlur={(event) => { const nextName = event.target.value.trim(); if (nextName && nextName !== salon.name) void mutate(`/v1/salons/${salon.id}`, "PATCH", { name: nextName }).catch(() => undefined); }} /></label>
+                      <label>Capacidad<input type="number" min={1} defaultValue={salon.capacity} onBlur={(event) => { const capacity = Number(event.target.value); if (capacity !== salon.capacity) void mutate(`/v1/salons/${salon.id}`, "PATCH", { capacity }).catch(() => undefined); }} /></label>
+                      <label>Estado<select value={salon.status} onChange={(event) => void mutate(`/v1/salons/${salon.id}`, "PATCH", { status: event.target.value }).catch(() => undefined)}><option value="ACTIVE">Activo</option><option value="INACTIVE">Inactivo</option></select></label>
+                      {salon.status === "ACTIVE" ? <button type="button" disabled={isSaving} onClick={() => void mutate(`/v1/salons/${salon.id}`, "DELETE").catch(() => undefined)}>Desactivar salón</button> : null}
+                    </article>
+                  ))}
+                  {salons.length === 0 ? <p>No hay salones en esta sucursal.</p> : null}
+                </div>
+              </>
+            ) : <p>Creá una sucursal antes de administrar salones.</p>}
+          </article>
+        </>
       </StateView>
     </section>
   );
@@ -284,49 +286,5 @@ function getBranchesSummary(total: number, active: number, inactive: number) {
     tone: "success" as const,
     title: "Estructura de sucursales lista",
     message: "Las sedes visibles ya muestran base suficiente para seguir afinando experiencia pública y operación interna.",
-  };
-}
-
-function getBranchesNextStep({
-  total,
-  active,
-  inactive,
-}: {
-  total: number;
-  active: number;
-  inactive: number;
-}) {
-  if (total === 0) {
-    return {
-      eyebrow: "Expansión",
-      label: "Crear primera sucursal",
-      detail: "Sin una sede cargada no se puede conectar discovery, reservas, host, floor ni caja con una operación real.",
-      to: "/branches",
-    };
-  }
-
-  if (active === 0) {
-    return {
-      eyebrow: "Habilitación",
-      label: "Activar una sede operable",
-      detail: "La estructura existe, pero todavía falta que al menos una sucursal quede lista para soportar operación visible.",
-      to: "/branches",
-    };
-  }
-
-  if (inactive > 0) {
-    return {
-      eyebrow: "Normalización",
-      label: "Revisar sedes pendientes",
-      detail: "Conviene resolver estados incompletos antes de tratarlas como sedes usables por apps operativas o customer.",
-      to: "/branches",
-    };
-  }
-
-  return {
-    eyebrow: "Siguiente control",
-    label: "Cruzar sedes con perfiles y apps",
-    detail: "Con las sucursales operables, el próximo paso útil es validar qué perfiles y superficies van a consumir cada sede.",
-    to: "/profiles",
   };
 }

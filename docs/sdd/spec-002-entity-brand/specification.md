@@ -5,6 +5,10 @@
 Brand es una identidad comercial dentro de un tenant. Agrupa sucursales y puede publicar defaults
 explícitos para presentación o catálogos, sin absorber capacidades, fiscalidad ni configuración abierta.
 
+La personalización completa no se guarda como `config` abierto dentro de Brand: se modela mediante
+el agregado versionado `BrandPresentation` de SPEC-232. Brand mantiene referencias estables a su
+logo/defaults actuales por compatibilidad, mientras la resolución efectiva usa el snapshot publicado.
+
 ## Schema JSON
 
 ```json

@@ -1,6 +1,6 @@
 create table if not exists workforce_break_adjustments (
   id uuid primary key,
-  tenant_id uuid not null references public.tenants(id) on delete cascade,
+  tenant_id uuid not null references public.organization_tenants(id) on delete cascade,
   break_log_id uuid not null references workforce_break_logs(id) on delete cascade,
   before_opened_at timestamptz null,
   before_closed_at timestamptz null,

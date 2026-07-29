@@ -15,6 +15,7 @@ export class ServiceNotFoundError extends Error {
 export interface RemoveServiceInput {
   subscriptionId: string;
   serviceId: string;
+  scopeRefId?: string | null;
   correlationId?: string;
 }
 
@@ -35,6 +36,7 @@ export async function removeService(
   const existing = await deps.subscriptionItems.findByServiceId(
     input.subscriptionId,
     input.serviceId,
+    input.scopeRefId ?? null,
   );
   if (!existing) throw new ServiceNotFoundError(input.serviceId, input.subscriptionId);
 

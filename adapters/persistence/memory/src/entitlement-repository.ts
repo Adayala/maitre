@@ -10,4 +10,12 @@ export class InMemoryEntitlementRepository implements EntitlementRepositoryPort 
   async save(entitlement: Entitlement): Promise<void> {
     this.byId.set(entitlement.id, entitlement);
   }
+
+  async deleteByResource(subscriptionId: string, resource: string): Promise<void> {
+    for (const [id, entitlement] of this.byId) {
+      if (entitlement.subscriptionId === subscriptionId && entitlement.resource === resource) {
+        this.byId.delete(id);
+      }
+    }
+  }
 }

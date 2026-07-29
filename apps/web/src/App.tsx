@@ -1,11 +1,12 @@
 import { Suspense, lazy, type ComponentType, type ReactNode } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { AuthProvider } from "./app/auth-context.js";
-import { TenantProvider } from "./app/tenant-context.js";
+import { AuthProvider, useAuth } from "./app/auth-context.js";
+import { TenantProvider, useTenantContext } from "./app/tenant-context.js";
 import { DashboardLayout } from "./app/dashboard-layout.js";
 import { PublicLayout } from "./app/public-layout.js";
 import { CustomerAuthRequired } from "./app/customer-auth-required.js";
+import { BrandPresentationProvider } from "../../../packages/brand-presentation/src/index.js";
 
 const queryClient = new QueryClient();
 const LoginPage = lazyNamed(() => import("./features/login/login-page.js"), "LoginPage");
@@ -17,7 +18,6 @@ const UsersPage = lazyNamed(() => import("./features/users/users-page.js"), "Use
 const SubscriptionPage = lazyNamed(() => import("./features/subscription/subscription-page.js"), "SubscriptionPage");
 const AuditLogsPage = lazyNamed(() => import("./features/audit/audit-logs-page.js"), "AuditLogsPage");
 const SettingsPage = lazyNamed(() => import("./features/settings/settings-page.js"), "SettingsPage");
-const ProfilesPage = lazyNamed(() => import("./features/profiles/profiles-page.js"), "ProfilesPage");
 const PublicHomePage = lazyNamed(() => import("./features/public/public-home-page.js"), "PublicHomePage");
 const PublicMenuPage = lazyNamed(() => import("./features/public/public-menu-page.js"), "PublicMenuPage");
 const PublicBranchesPage = lazyNamed(
@@ -49,12 +49,19 @@ const CustomerReservationDetailPage = lazyNamed(
   "CustomerReservationDetailPage",
 );
 
+function BrandTheme({ children }: { children: ReactNode }) {
+  const { accessToken } = useAuth();
+  const { selectedTenantId } = useTenantContext();
+  return <BrandPresentationProvider apiUrl={import.meta.env["VITE_API_URL"] ?? "http://localhost:3001"} accessToken={accessToken} tenantId={selectedTenantId} surface="DASH">{children}</BrandPresentationProvider>;
+}
+
 export function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthProvider>
           <TenantProvider>
+            <BrandTheme>
             <a href="#main-content" className="skip-link">
               Saltar al contenido principal
             </a>
@@ -108,9 +115,10 @@ export function App() {
                 <Route path="subscription" element={withSuspense(<SubscriptionPage />)} />
                 <Route path="audit" element={withSuspense(<AuditLogsPage />)} />
                 <Route path="settings" element={withSuspense(<SettingsPage />)} />
-                <Route path="profiles" element={withSuspense(<ProfilesPage />)} />
+                <Route path="profiles" element={<Navigate to="/users" replace />} />
               </Route>
             </Routes>
+            </BrandTheme>
           </TenantProvider>
         </AuthProvider>
       </BrowserRouter>

@@ -10,9 +10,16 @@ export class InMemorySubscriptionItemRepository implements SubscriptionItemRepos
   async findByServiceId(
     subscriptionId: string,
     serviceId: string,
+    scopeRefId: string | null = null,
   ): Promise<SubscriptionItem | null> {
     for (const i of this.byId.values()) {
-      if (i.subscriptionId === subscriptionId && i.serviceId === serviceId) return i;
+      if (
+        i.subscriptionId === subscriptionId &&
+        i.serviceId === serviceId &&
+        (i.scopeRefId ?? null) === scopeRefId
+      ) {
+        return i;
+      }
     }
     return null;
   }

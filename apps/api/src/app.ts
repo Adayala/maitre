@@ -1,10 +1,13 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import cors from "@fastify/cors";
+import swagger from "@fastify/swagger";
+import swaggerUi from "@fastify/swagger-ui";
 import { buildContainer, type Container } from "./composition/container.js";
 import { registerHealthRoutes } from "./routes/health.js";
 import { registerMeRoutes } from "./routes/me.js";
 import { registerTenantRoutes } from "./routes/tenants.js";
 import { registerBrandRoutes } from "./routes/brands.js";
+import { registerBrandPresentationRoutes } from "./routes/brand-presentations.js";
 import { registerFiscalEntityRoutes } from "./routes/fiscal-entities.js";
 import { registerBranchRoutes } from "./routes/branches.js";
 import { registerSalonRoutes } from "./routes/salons.js";
@@ -51,7 +54,7 @@ import { registerInvoiceTemplateRoutes } from "./routes/invoice-templates.js";
 // SPEC-211 — app.ts instantiates and wires plugins/routes without listen().
 // server.ts (local/process) and api/serverless.ts (Vercel) both consume this.
 export async function buildApp(container?: Container): Promise<FastifyInstance> {
-  const app = Fastify({ logger: true });
+  const app = Fastify({ logger: true, trustProxy: true });
   const resolvedContainer = container ?? (await buildContainer());
 
   // SPEC-210 topology: browser -> Maitre API. The browser sends only a
@@ -60,14 +63,27 @@ export async function buildApp(container?: Container): Promise<FastifyInstance> 
   // client) call this API from a different origin during local dev.
   await app.register(cors, {
     origin: true,
-    methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Tenant-Id", "X-Branch-Id"],
   });
+
+  // API documentation — most routes validate with a manual Zod .parse() inside
+  // the handler rather than a Fastify route `schema`, so this generates a
+  // real, browsable endpoint catalog (path/method per route) without detailed
+  // per-route request/response bodies. Served at /docs, separate from /v1/*.
+  await app.register(swagger, {
+    openapi: {
+      info: { title: "Maitre API", version: "0.0.1" },
+      servers: [{ url: "/" }],
+    },
+  });
+  await app.register(swaggerUi, { routePrefix: "/docs" });
 
   await registerHealthRoutes(app, resolvedContainer);
   await registerMeRoutes(app, resolvedContainer);
   await registerTenantRoutes(app, resolvedContainer);
   await registerBrandRoutes(app, resolvedContainer);
+  await registerBrandPresentationRoutes(app, resolvedContainer);
   await registerFiscalEntityRoutes(app, resolvedContainer);
   await registerBranchRoutes(app, resolvedContainer);
   await registerSalonRoutes(app, resolvedContainer);

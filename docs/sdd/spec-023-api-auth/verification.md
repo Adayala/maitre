@@ -39,3 +39,10 @@
 - [ ] la misma suite contractual pasa para el adaptador real y un fake determinista;
 - [ ] el reemplazo del proveedor no modifica casos de uso ni dominio;
 - [ ] los checkboxes sólo se completan con enlaces a tests, resultados del spike, ADR aprobada y evidencia de configuración por ambiente.
+
+### CAD-023-07 — Google OAuth no amplía autorización
+
+- [ ] la UI inicia Google OAuth sólo cuando Supabase está configurado;
+- [ ] el retorno usa una URL allowlisted;
+- [ ] una identidad Google sin Membership no accede a un tenant;
+- [ ] roles, tenant y sucursal continúan resolviéndose exclusivamente desde Maitre.

@@ -53,4 +53,13 @@ export class SupabaseEntitlementRepository implements EntitlementRepositoryPort 
     const { error } = await this.client.from(TABLE).upsert(toRow(entitlement));
     if (error) throw error;
   }
+
+  async deleteByResource(subscriptionId: string, resource: string): Promise<void> {
+    const { error } = await this.client
+      .from(TABLE)
+      .delete()
+      .eq("subscription_id", subscriptionId)
+      .eq("resource", resource);
+    if (error) throw error;
+  }
 }

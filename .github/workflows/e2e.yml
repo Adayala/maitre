@@ -1,0 +1,85 @@
+name: End-to-end
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  playwright:
+    name: E2E · ${{ matrix.label }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: dash
+            label: Dash
+            workspace: apps/web
+          - app: host
+            label: Host
+            workspace: apps/host
+          - app: floor
+            label: Floor
+            workspace: apps/waiter
+          - app: kitchen
+            label: Kitchen
+            workspace: apps/kitchen
+          - app: cash
+            label: Cash
+            workspace: apps/cashier
+          - app: guest
+            label: Guest
+            workspace: apps/customer
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Build API
+        run: npm run build --workspace apps/api
+
+      - name: Build ${{ matrix.label }}
+        run: npm run build --workspace ${{ matrix.workspace }}
+        env:
+          VITE_API_URL: http://127.0.0.1:3101
+
+      - name: Run ${{ matrix.label }} end-to-end tests
+        run: npm run test:e2e:run -- --project=${{ matrix.app }}
+        env:
+          CI: "true"
+          E2E_APP: ${{ matrix.app }}
+
+      - name: Upload Playwright evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-${{ matrix.app }}-${{ github.run_attempt }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7

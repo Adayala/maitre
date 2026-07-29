@@ -7,9 +7,8 @@ const NAV_ITEMS = [
   { to: "/setup", label: "Setup" },
   { to: "/brands", label: "Marcas" },
   { to: "/branches", label: "Sucursales" },
-  { to: "/users", label: "Usuarios" },
+  { to: "/users", label: "Usuarios y perfiles" },
   { to: "/subscription", label: "Suscripción" },
-  { to: "/profiles", label: "Perfiles" },
   { to: "/audit", label: "Auditoría" },
   { to: "/settings", label: "Configuración" },
 ];

@@ -10,10 +10,14 @@
   "scripts": {
     "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
+    "test:e2e": "VITE_API_URL=http://127.0.0.1:3101 npm run build && playwright test --tsconfig tests/e2e/tsconfig.json",
+    "test:e2e:run": "playwright test --tsconfig tests/e2e/tsconfig.json",
+    "test:e2e:smoke": "VITE_API_URL=http://127.0.0.1:3101 npm run build && playwright test --tsconfig tests/e2e/tsconfig.json --grep @smoke",
     "typecheck": "tsc -b --pretty",
     "dev:api": "npm run dev --workspace apps/api"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.0",
     "typescript": "^5.5.4"
   },
   "packageManager": "pnpm@11.5.2+sha512.71c631e382066efc25625d5cf029075de07b61b37f6e27350fbd84b1bda5864c8c1967adc280776b45c30a715c0359a3be08fef42d5bb09e2b99029979692916"

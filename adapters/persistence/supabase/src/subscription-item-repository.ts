@@ -7,6 +7,8 @@ interface SubscriptionItemRow {
   id: string;
   subscription_id: string;
   service_id: string;
+  catalog_item_code: string | null;
+  scope_ref_id: string | null;
   status: string;
   quantity: number;
   unit_price: number;
@@ -19,6 +21,8 @@ function fromRow(row: SubscriptionItemRow): SubscriptionItem {
     id: row.id,
     subscriptionId: row.subscription_id,
     serviceId: row.service_id,
+    catalogItemCode: row.catalog_item_code,
+    scopeRefId: row.scope_ref_id,
     status: row.status as SubscriptionItem["status"],
     quantity: row.quantity,
     unitPrice: row.unit_price,
@@ -32,6 +36,8 @@ function toRow(item: SubscriptionItem): SubscriptionItemRow {
     id: item.id,
     subscription_id: item.subscriptionId,
     service_id: item.serviceId,
+    catalog_item_code: item.catalogItemCode ?? item.serviceId,
+    scope_ref_id: item.scopeRefId ?? null,
     status: item.status,
     quantity: item.quantity,
     unit_price: item.unitPrice,
@@ -55,13 +61,15 @@ export class SupabaseSubscriptionItemRepository implements SubscriptionItemRepos
   async findByServiceId(
     subscriptionId: string,
     serviceId: string,
+    scopeRefId: string | null = null,
   ): Promise<SubscriptionItem | null> {
-    const { data, error } = await this.client
+    let query = this.client
       .from(TABLE)
       .select("*")
       .eq("subscription_id", subscriptionId)
-      .eq("service_id", serviceId)
-      .maybeSingle();
+      .eq("service_id", serviceId);
+    query = scopeRefId ? query.eq("scope_ref_id", scopeRefId) : query.is("scope_ref_id", null);
+    const { data, error } = await query.maybeSingle();
     if (error) throw error;
     return data ? fromRow(data as SubscriptionItemRow) : null;
   }

@@ -9,7 +9,7 @@ const SUBMIT_FAILSAFE_MS = 12_000;
 // fixture-token field is offered only when Supabase Auth isn't configured in
 // the local build.
 export function LoginPage() {
-  const { accessToken, signInWithPassword, signInWithToken } = useAuth();
+  const { accessToken, signInWithPassword, signInWithGoogle, signInWithToken } = useAuth();
   const [searchParams] = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -66,6 +66,17 @@ export function LoginPage() {
     }
   }
 
+  async function handleGoogleSignIn() {
+    setError(null);
+    setIsSubmitting(true);
+    try {
+      await signInWithGoogle(next);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo continuar con Google");
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <main className="login-page">
       <section className="login-card">
@@ -93,6 +104,10 @@ export function LoginPage() {
         {isSupabaseConfigured ? (
           <form onSubmit={handleSubmit} aria-label="Iniciar sesión" className="login-form-card">
             <h2>{isCustomerMode ? "Ingresar para reservar" : "Ingresar al dashboard"}</h2>
+            <button type="button" className="auth-provider-button" onClick={() => void handleGoogleSignIn()} disabled={isSubmitting}>
+              Continuar con Google
+            </button>
+            <p className="auth-divider"><span>o ingresá con email</span></p>
             <label htmlFor="email">Email</label>
             <input
               id="email"

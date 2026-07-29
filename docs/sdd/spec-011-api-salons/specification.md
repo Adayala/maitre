@@ -8,7 +8,7 @@ Request:
 {
   "branchId": "uuid",
   "name": "string (1-50)",
-  "maxCapacity": "integer (máx huéspedes en salón)",
+  "capacity": "integer (máx huéspedes en salón)",
   "description": "string | null"
 }
 
@@ -18,7 +18,7 @@ Response (201):
     "id": "uuid",
     "branchId": "uuid",
     "name": "...",
-    "maxCapacity": 50,
+    "capacity": 50,
     "createdAt": "ISO8601"
   }
 }
@@ -30,7 +30,7 @@ Filtrar por branchId.
 Response (200):
 ```json
 {
-  "data": [{ id, name, max_capacity }, ...],
+  "data": [{ id, name, capacity }, ...],
   "meta": { "total": 3 }
 }
 ```
@@ -39,12 +39,22 @@ Response (200):
 Incluye mesas del salón.
 
 ### PATCH /salons/:id (Actualizar)
-Campos: name, maxCapacity, description
+Campos: name, capacity, description
 
 Response (200): Salón actualizado
+
+### DELETE /salons/:id (Desactivar)
+
+Baja lógica: cambia el salón a `INACTIVE` y conserva mesas e historial. Response (204).
 
 ## Autorización
 
 - POST /salons → OWNER, ADMIN
 - GET /salons → OWNER, ADMIN, MANAGER
 - PATCH /salons/:id → OWNER, ADMIN
+- DELETE /salons/:id → OWNER, ADMIN
+
+## Superficie de backoffice
+
+La gestión de salones vive dentro de `/branches`: selector de sucursal, listado, alta y edición de
+nombre/capacidad. Si no hay sucursal, el formulario explica que debe crearse una primero.

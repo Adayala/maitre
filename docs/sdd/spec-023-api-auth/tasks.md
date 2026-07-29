@@ -13,3 +13,5 @@
 - [ ] Añadir suite negativa de tokens y aislamiento Tenant A/B.
 - [ ] Auditar logs, traces, sourcemaps y bundle del browser para secretos.
 - [ ] Publicar evidencia en `verification.md` antes de cambiar el status.
+- [x] Añadir inicio/registro con Google al cliente React mediante el SDK de Supabase.
+- [ ] Habilitar Google y registrar redirects exactos en cada proyecto Supabase.

@@ -1,7 +1,7 @@
 create table if not exists workforce_time_export_jobs (
   id uuid primary key,
-  tenant_id uuid not null references tenants(id) on delete cascade,
-  branch_id uuid not null references branches(id) on delete cascade,
+  tenant_id uuid not null references organization_tenants(id) on delete cascade,
+  branch_id uuid not null references organization_branches(id) on delete cascade,
   status text not null check (status in ('REQUESTED')),
   format text not null check (format in ('CSV')),
   from_at timestamptz not null,
@@ -9,7 +9,7 @@ create table if not exists workforce_time_export_jobs (
   reason text not null,
   requested_at timestamptz not null,
   step_up_at timestamptz not null,
-  requested_by_user_id uuid not null references users(id) on delete restrict,
+  requested_by_user_id uuid not null references identity_users(id) on delete restrict,
   manifest jsonb not null default '{}'::jsonb
 );
 

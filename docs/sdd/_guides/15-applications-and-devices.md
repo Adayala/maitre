@@ -91,6 +91,21 @@ Admin técnico       —                          Connect
 - **Kitchen:** Marcar plato como listo en 1 tap.
 - **Cash:** Procesar pago en 4 taps máximo.
 
+### 6. Identidad visual por rol
+
+Las aplicaciones comparten semántica de estados, foco, accesibilidad y contexto, pero no deben
+parecer copias temáticas de un mismo dashboard. La forma visual refuerza el ambiente de uso:
+
+- **Guest / Customer:** editorial cálida y gobernada por la presentación publicada de la marca.
+- **Floor / Waiter:** brutalismo táctil, números grandes y contraste inmediato para operar mesas.
+- **Host:** profundidad espacial y señales hospitalarias para llegadas, espera y asignación.
+- **Kitchen:** superficie industrial de alta visibilidad para urgencia, tiempos y despacho.
+- **Cashier:** jerarquía numérica y precisión de libro mayor para dinero, diferencias y cierre.
+- **Dash:** composición editorial de control para lectura, configuración y decisión.
+
+El branding multi-tenant aporta identidad, logos, fotografía y tipografía. No puede alterar colores
+críticos, foco, contraste ni códigos operativos cuyo significado deba permanecer estable.
+
 ## Contratos técnicos mínimos
 
 ### Guest ↔ Backend

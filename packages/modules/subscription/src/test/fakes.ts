@@ -1,10 +1,12 @@
 import type { Subscription } from "../domain/subscription.js";
 import type { SubscriptionItem } from "../domain/subscription-item.js";
 import type { Entitlement } from "../domain/entitlement.js";
+import type { CatalogItem } from "../domain/catalog-item.js";
 import type {
   SubscriptionRepositoryPort,
   SubscriptionItemRepositoryPort,
   EntitlementRepositoryPort,
+  CatalogRepositoryPort,
 } from "../application/ports.js";
 import type { OutboxPort, OutboxRecord } from "../application/outbox.js";
 
@@ -28,10 +30,17 @@ export class FakeSubscriptionItemRepository implements SubscriptionItemRepositor
   async listBySubscription(subscriptionId: string) {
     return this.items.filter((i) => i.subscriptionId === subscriptionId);
   }
-  async findByServiceId(subscriptionId: string, serviceId: string) {
+  async findByServiceId(
+    subscriptionId: string,
+    serviceId: string,
+    scopeRefId: string | null = null,
+  ) {
     return (
       this.items.find(
-        (i) => i.subscriptionId === subscriptionId && i.serviceId === serviceId,
+        (i) =>
+          i.subscriptionId === subscriptionId &&
+          i.serviceId === serviceId &&
+          (i.scopeRefId ?? null) === scopeRefId,
       ) ?? null
     );
   }
@@ -43,7 +52,7 @@ export class FakeSubscriptionItemRepository implements SubscriptionItemRepositor
 }
 
 export class FakeEntitlementRepository implements EntitlementRepositoryPort {
-  private readonly items: Entitlement[] = [];
+  private items: Entitlement[] = [];
   async listBySubscription(subscriptionId: string) {
     return this.items.filter((e) => e.subscriptionId === subscriptionId);
   }
@@ -51,6 +60,21 @@ export class FakeEntitlementRepository implements EntitlementRepositoryPort {
     const i = this.items.findIndex((e) => e.id === entitlement.id);
     if (i >= 0) this.items[i] = entitlement;
     else this.items.push(entitlement);
+  }
+  async deleteByResource(subscriptionId: string, resource: string) {
+    this.items = this.items.filter(
+      (item) => item.subscriptionId !== subscriptionId || item.resource !== resource,
+    );
+  }
+}
+
+export class FakeCatalogRepository implements CatalogRepositoryPort {
+  constructor(private readonly items: CatalogItem[] = []) {}
+  async listActive() {
+    return this.items.filter((i) => i.isActive);
+  }
+  async findByCode(code: string) {
+    return this.items.find((i) => i.code === code) ?? null;
   }
 }
 
