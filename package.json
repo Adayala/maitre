@@ -1,5 +1,6 @@
 {
   "name": "maitre",
+  "version": "0.0.1",
   "private": true,
   "workspaces": [
     "apps/*",
@@ -9,7 +10,18 @@
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
+    "deps:check": "depcruise --config dependency-cruiser.config.cjs apps packages adapters",
+    "format:check": "prettier --check eslint.config.mjs dependency-cruiser.config.cjs tooling tests/e2e .github",
+    "format:write": "prettier --write eslint.config.mjs dependency-cruiser.config.cjs tooling tests/e2e .github",
+    "lint": "eslint apps packages adapters tests tooling --max-warnings 0",
+    "performance:budget": "node tooling/performance/check-bundles.mjs",
+    "sdd:validate": "node tooling/quality/validate-docs.mjs",
+    "secrets:scan": "node tooling/security/scan-secrets.mjs",
+    "security:audit": "node tooling/security/audit-dependencies.mjs",
     "test": "npm run test --workspaces --if-present",
+    "test:unit": "npm run build && npm run test:unit:run",
+    "test:unit:run": "node tooling/quality/run-node-tests.mjs",
+    "test:coverage": "npm run build && node tooling/quality/run-node-tests.mjs --coverage",
     "test:e2e": "VITE_API_URL=http://127.0.0.1:3101 npm run build && playwright test --tsconfig tests/e2e/tsconfig.json",
     "test:e2e:run": "playwright test --tsconfig tests/e2e/tsconfig.json",
     "test:e2e:smoke": "VITE_API_URL=http://127.0.0.1:3101 npm run build && playwright test --tsconfig tests/e2e/tsconfig.json --grep @smoke",
@@ -17,8 +29,19 @@
     "dev:api": "npm run dev --workspace apps/api"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.11.0",
+    "@eslint/js": "10.0.1",
     "@playwright/test": "^1.62.0",
-    "typescript": "^5.5.4"
+    "dependency-cruiser": "17.4.3",
+    "eslint": "10.8.0",
+    "globals": "17.4.0",
+    "prettier": "3.8.2",
+    "typescript": "^5.5.4",
+    "typescript-eslint": "8.65.0"
   },
-  "packageManager": "pnpm@11.5.2+sha512.71c631e382066efc25625d5cf029075de07b61b37f6e27350fbd84b1bda5864c8c1967adc280776b45c30a715c0359a3be08fef42d5bb09e2b99029979692916"
+  "engines": {
+    "node": ">=20.19.0 <21",
+    "npm": ">=10.8.0 <11"
+  },
+  "packageManager": "npm@10.8.2"
 }

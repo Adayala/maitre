@@ -90,9 +90,9 @@ La implementación inicial usa **React.js**, **Node.js** y **Vercel**, mantenien
 
 | Doc | Propósito | Lector | Estado |
 | --- | --- | --- | --- |
-| [15-applications-and-devices.md](15-applications-and-devices.md) | 6 apps, dispositivos, mobile-first, capacidades offline | Product, UX, Engineering | ✅ MVP ready |
-| [16-api-specifications.md](16-api-specifications.md) | Contratos HTTP de cada API: método, path, request/response | Backend Engineering, Frontend | ✅ MVP ready |
-| [17-event-specifications.md](17-event-specifications.md) | Eventos que publican/consumen los dominios: estructura, payload, consumidores | Backend Engineering, Integration | ✅ MVP ready |
+| [15-applications-and-devices.md](../sdd/_guides/15-applications-and-devices.md) | 6 apps, dispositivos, mobile-first, capacidades offline | Product, UX, Engineering | ✅ MVP ready |
+| [16-api-specifications.md](../sdd/_guides/16-api-specifications.md) | Contratos HTTP de cada API: método, path, request/response | Backend Engineering, Frontend | ✅ MVP ready |
+| [17-event-specifications.md](../sdd/_guides/17-event-specifications.md) | Eventos que publican/consumen los dominios: estructura, payload, consumidores | Backend Engineering, Integration | ✅ MVP ready |
 
 ---
 
@@ -101,16 +101,16 @@ La implementación inicial usa **React.js**, **Node.js** y **Vercel**, mantenien
 ### Si eres **Frontend (Guest, Floor, Kitchen, Dash)**
 
 1. Lee [05-domain-glossary.md](05-domain-glossary.md) — entiende términos.
-2. Lee [15-applications-and-devices.md](15-applications-and-devices.md) — tu app, dispositivo, flujos.
-3. Lee [16-api-specifications.md](16-api-specifications.md) — contrato con backend.
+2. Lee [15-applications-and-devices.md](../sdd/_guides/15-applications-and-devices.md) — tu app, dispositivo, flujos.
+3. Lee [16-api-specifications.md](../sdd/_guides/16-api-specifications.md) — contrato con backend.
 4. Lee [07-core-journeys.md](07-core-journeys.md) — recorridos de usuario.
 
 ### Si eres **Backend (cualquier dominio)**
 
 1. Lee [05-domain-glossary.md](05-domain-glossary.md) — lenguaje ubicuo.
 2. Lee [06-domain-model.md](06-domain-model.md) — entidades y estados de tu contexto.
-3. Lee [16-api-specifications.md](16-api-specifications.md) — APIs que expones.
-4. Lee [17-event-specifications.md](17-event-specifications.md) — eventos que publicas/consumes.
+3. Lee [16-api-specifications.md](../sdd/_guides/16-api-specifications.md) — APIs que expones.
+4. Lee [17-event-specifications.md](../sdd/_guides/17-event-specifications.md) — eventos que publicas/consumes.
 5. Lee [10-architecture-principles.md](10-architecture-principles.md) — patrones globales.
 6. Usa [18-architecture-components-design-views.md](18-architecture-components-design-views.md) para conectar las specs con la estructura real del repo.
 
@@ -120,7 +120,7 @@ La implementación inicial usa **React.js**, **Node.js** y **Vercel**, mantenien
 2. Lee [01-product-principles.md](01-product-principles.md) — cómo decidimos.
 3. Lee [03-service-catalog.md](03-service-catalog.md) — qué vendemos.
 4. Lee [07-core-journeys.md](07-core-journeys.md) — experiencias principales.
-5. Lee [15-applications-and-devices.md](15-applications-and-devices.md) — cómo se materializan.
+5. Lee [15-applications-and-devices.md](../sdd/_guides/15-applications-and-devices.md) — cómo se materializan.
 
 ### Si eres **Lead técnico**
 

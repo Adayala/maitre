@@ -11,16 +11,16 @@
   },
   "dependencies": {
     "@maitre/contracts": "*",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "@supabase/supabase-js": "^2.45.4",
     "@tanstack/react-query": "^5.59.0",
-    "@supabase/supabase-js": "^2.45.4"
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.0",
-    "@vitejs/plugin-react": "^4.3.2",
+    "@vitejs/plugin-react": "6.0.4",
     "typescript": "^5.5.4",
-    "vite": "^5.4.8"
+    "vite": "8.1.5"
   }
 }
