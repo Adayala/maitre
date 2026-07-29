@@ -75,8 +75,9 @@ export interface CapturePaymentInput {
 
 // POST /v1/payments/:id/capture — enforces total captured (net of
 // refunds) does not exceed check balance + tip.
-// TODO(Cash domain, SPEC-124+): a CASH capture should emit exactly one
-// CashMovement here once the Cash module exists — not modeled yet.
+// Cash ledger integration belongs to the API composition root so this module
+// remains independent from Cash. The orchestrator records exactly one
+// CashMovement using the Payment id as source reference.
 export async function capturePayment(deps: PaymentDeps, input: CapturePaymentInput): Promise<Payment> {
   const payment = await deps.payments.findById(input.tenantId, input.paymentId);
   if (!payment) throw new Error(`Payment ${input.paymentId} not found`);
