@@ -7,12 +7,12 @@ Contrato transversal de calidad para todo cambio de Maitre.
 | **ID** | SPEC-207 |
 | **Tipo** | Transversal |
 | **Dominio** | Platform / Engineering |
-| **Estado** | DRAFT |
-| **Readiness** | BLOCKED |
+| **Estado** | ACTIVE |
+| **Readiness** | IMPLEMENTED |
 | **Review target** | READY_FOR_I0_REVIEW |
 | **Prioridad** | P0 |
-| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
-| **Blockers** | Asignar owner y reviewer |
+| **Owner / Reviewer** | `@Adayala` / `@fabianaguero` |
+| **Blockers** | La protección de `main` requiere permisos admin del repositorio |
 | **Fase** | Todas, antes del primer código productivo |
 
 ## Propósito
@@ -29,3 +29,4 @@ Hacer verificable que cada implementación parte de una spec aprobada, conserva 
 - [Verificación](verification.md)
 - [Decisiones y excepciones](notes.md)
 - [Matriz de quality gates](quality-gates.md)
+- [Hardening implementado y operación](engineering-hardening.md)

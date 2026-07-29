@@ -1,0 +1,8 @@
+{
+  "apps/cashier": { "javascriptGzipKb": 150, "cssGzipKb": 12 },
+  "apps/customer": { "javascriptGzipKb": 150, "cssGzipKb": 12 },
+  "apps/host": { "javascriptGzipKb": 150, "cssGzipKb": 12 },
+  "apps/kitchen": { "javascriptGzipKb": 150, "cssGzipKb": 12 },
+  "apps/waiter": { "javascriptGzipKb": 150, "cssGzipKb": 12 },
+  "apps/web": { "javascriptGzipKb": 185, "cssGzipKb": 12 }
+}
