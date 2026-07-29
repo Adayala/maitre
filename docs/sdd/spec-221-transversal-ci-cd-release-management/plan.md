@@ -4,13 +4,13 @@
 
 1. Auditar visibilidad/plan, branch protection y ownership Vercel/GitHub.
 2. Definir Conventional PR title + squash merge.
-3. Crear workflows reutilizables y check agregador siempre ejecutable.
-4. Configurar cache/concurrency/path impact seguros.
-5. Publicar reports y metadata por SHA.
+3. [Parcial] Crear workflows de Quality, CodeQL, E2E y deploy; falta el check agregador.
+4. [Implementado] Configurar cache, concurrency y selección conservadora por impacto.
+5. [Parcial] Publicar coverage/SBOM y metadata por SHA; falta inventario unificado de releases.
 
 ## Fase 2 — Deploy
 
-1. Conectar Preview y staged Production/demo a Vercel.
+1. [Parcial] Conectar deploy desde `main` a Vercel; faltan Preview y promoción staged sin rebuild.
 2. Deshabilitar auto-asignación de dominio y probar promoción sin rebuild.
 3. Implementar smoke/synthetic post-deploy.
 4. Automatizar expiración de previews.

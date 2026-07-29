@@ -77,6 +77,7 @@ La arquitectura mantiene dominio, datos e integraciones desacoplados de Vercel p
 - [Seguridad, privacidad y aislamiento multi-tenant](docs/sdd/spec-219-transversal-security-privacy/)
 - [Ciclo de vida, backups y disaster recovery](docs/sdd/spec-220-transversal-data-lifecycle-disaster-recovery/)
 - [CI/CD y gestión de releases](docs/sdd/spec-221-transversal-ci-cd-release-management/)
+- [Operación y despliegue en Vercel](DEPLOYMENT.md)
 - [Alcance y secuencia del MVP](docs/sdd/spec-222-transversal-mvp-scope-delivery-plan/)
 - [Distribución de estado en tiempo real](docs/sdd/spec-223-transversal-realtime-state-distribution/)
 - [Estrategia de testing y datos de prueba](docs/sdd/spec-224-transversal-testing-test-data/)
@@ -97,7 +98,14 @@ La arquitectura mantiene dominio, datos e integraciones desacoplados de Vercel p
 
 ## Estado del repositorio
 
-Este repositorio contiene actualmente la definición funcional, estratégica y técnica de Maitre. Las especificaciones actúan como contrato para las futuras implementaciones de backend, frontend, integraciones y pruebas.
+Este repositorio contiene las especificaciones y la implementación activa de Maitre: API, seis
+aplicaciones web, módulos de dominio, adaptadores, migraciones y pruebas automatizadas. Las
+especificaciones siguen actuando como contrato de la implementación.
+
+Los pull requests ejecutan Quality, CodeQL y los E2E afectados. Después de un merge a `main`, el
+workflow `End-to-end` despliega en Vercel únicamente la API o las aplicaciones alcanzadas por el
+cambio; los cambios compartidos usan una selección conservadora completa. Consulta
+[Operación y despliegue en Vercel](DEPLOYMENT.md).
 
 ## Estado operativo local actual
 

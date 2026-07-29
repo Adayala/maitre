@@ -5,29 +5,29 @@ Platform Owner y reviewer. No incluye ni solicita valores sensibles por Git, iss
 
 ## Datos que debe confirmar el custodio
 
-| Dato | Clasificación | Registro permitido |
-| --- | --- | --- |
-| Organización y project slug de Supabase | interno no secreto | documentación/config metadata |
-| Project ref y región | interno no secreto | documentación/config metadata |
-| Organización/team y project name de Vercel | interno no secreto | documentación/config metadata |
-| Repo/branch vinculados y production branch | interno no secreto | documentación |
-| Plan/tier efectivo y owners de billing | interno sensible | registro operativo restringido, sin medios de pago |
-| Cuotas/alertas observadas | interno no secreto | provider register SPEC-208 |
-| Emails/roles de miembros | PII/acceso | consola del provider; documento sólo roles/owners acordados |
-| URLs públicas/issuer/JWKS | configuración pública | variables allowlisted/inventario |
-| Publishable browser key | pública pero controlada | Vercel env; no hardcode innecesario |
-| DB URLs/passwords/service-role/private keys | secreto | sólo secret store del provider/CI autorizado |
+| Dato                                        | Clasificación           | Registro permitido                                          |
+| ------------------------------------------- | ----------------------- | ----------------------------------------------------------- |
+| Organización y project slug de Supabase     | interno no secreto      | documentación/config metadata                               |
+| Project ref y región                        | interno no secreto      | documentación/config metadata                               |
+| Organización/team y project name de Vercel  | interno no secreto      | documentación/config metadata                               |
+| Repo/branch vinculados y production branch  | interno no secreto      | documentación                                               |
+| Plan/tier efectivo y owners de billing      | interno sensible        | registro operativo restringido, sin medios de pago          |
+| Cuotas/alertas observadas                   | interno no secreto      | provider register SPEC-208                                  |
+| Emails/roles de miembros                    | PII/acceso              | consola del provider; documento sólo roles/owners acordados |
+| URLs públicas/issuer/JWKS                   | configuración pública   | variables allowlisted/inventario                            |
+| Publishable browser key                     | pública pero controlada | Vercel env; no hardcode innecesario                         |
+| DB URLs/passwords/service-role/private keys | secreto                 | sólo secret store del provider/CI autorizado                |
 
 Si se comparte accidentalmente un secreto fuera del canal autorizado, se detiene el handoff, se
 rota/revoca y se registra el incidente sin copiar el valor.
 
 ## Roles mínimos
 
-| Sistema | Custodio | Platform Owner | Reviewer |
-| --- | --- | --- | --- |
-| GitHub repo/integration | administra instalación y alcance | valida branch/deploy mapping | revisa least privilege |
-| Vercel | configura proyecto/env vars/domains | valida builds/deploys/budgets | revisa aislamiento/secret exposure |
-| Supabase | configura proyecto/Auth/DB | valida migrations/runtime/restore | revisa RLS, access y exit strategy |
+| Sistema                 | Custodio                            | Platform Owner                    | Reviewer                           |
+| ----------------------- | ----------------------------------- | --------------------------------- | ---------------------------------- |
+| GitHub repo/integration | administra instalación y alcance    | valida branch/deploy mapping      | revisa least privilege             |
+| Vercel                  | configura proyecto/env vars/domains | valida builds/deploys/budgets     | revisa aislamiento/secret exposure |
+| Supabase                | configura proyecto/Auth/DB          | valida migrations/runtime/restore | revisa RLS, access y exit strategy |
 
 El custodio puede ejecutar acciones de consola, pero ADR-002 y los contratos de plataforma
 requieren reviewers independientes según `ownership-review-matrix.md`.
@@ -52,10 +52,14 @@ requieren reviewers independientes según `ownership-review-matrix.md`.
 
 ### 3. Vincular GitHub y Vercel
 
-- Instalar integración sólo para `Adayala/maitre`, no todos los repos por defecto.
+- El delivery autoritativo usa GitHub Actions y un `VERCEL_TOKEN` almacenado como repository
+  secret; no requiere la Vercel GitHub App.
+- Limitar el token al team/proyectos necesarios y rotarlo sin registrarlo en evidencia.
 - Vercel project apunta al root/build definido por ADR-003 cuando sea aceptada.
-- Production branch: `main`; previews se aíslan y nunca reciben secretos productivos.
-- Requerir checks/gates antes de promover; auto-deploy no equivale a release aprobada.
+- Sólo un push a `main`, después de Quality y E2E, ejecuta deploy productivo. Pull requests no
+  reciben el secreto ni despliegan mediante este workflow.
+- Los previews futuros se aíslan y nunca reciben secretos productivos.
+- La selección de proyectos se deriva de paths versionados con fallback completo.
 - Confirmar que logs/build artifacts no imprimen variables.
 
 ### 4. Inyectar configuración
@@ -127,19 +131,19 @@ Sin pedir secretos por este medio:
 
 Información no secreta recibida:
 
-| Campo | Estado |
-| --- | --- |
-| Supabase project ref | `hnemqtlpxqwqjligyksr` |
-| Supabase public URL | `https://hnemqtlpxqwqjligyksr.supabase.co` |
-| Publishable key | recibida; no persistida en Git |
-| Secret key | expuesta por canal no autorizado; no persistida y requiere revocación/rotación |
-| Direct database hostname | identificado; password no recibido/persistido |
-| Región | pendiente |
-| Tier efectivo | pendiente de confirmar Free |
-| Pooled runtime connection | pendiente |
-| Direct migration connection | pendiente de carga segura |
-| Vercel organization/project | pendiente |
-| Custodian/owner/reviewer | pendiente de aceptación |
+| Campo                       | Estado                                                                         |
+| --------------------------- | ------------------------------------------------------------------------------ |
+| Supabase project ref        | `hnemqtlpxqwqjligyksr`                                                         |
+| Supabase public URL         | `https://hnemqtlpxqwqjligyksr.supabase.co`                                     |
+| Publishable key             | recibida; no persistida en Git                                                 |
+| Secret key                  | expuesta por canal no autorizado; no persistida y requiere revocación/rotación |
+| Direct database hostname    | identificado; password no recibido/persistido                                  |
+| Región                      | pendiente                                                                      |
+| Tier efectivo               | pendiente de confirmar Free                                                    |
+| Pooled runtime connection   | pendiente                                                                      |
+| Direct migration connection | pendiente de carga segura                                                      |
+| Vercel organization/project | pendiente                                                                      |
+| Custodian/owner/reviewer    | pendiente de aceptación                                                        |
 
 La cadena compartida conserva el placeholder `[YOUR-PASSWORD]`; no es una credencial funcional y
 no debe completarse en documentación. El custodio carga las conexiones reales directamente en
