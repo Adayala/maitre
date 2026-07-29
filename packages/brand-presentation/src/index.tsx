@@ -1,13 +1,30 @@
-import { createContext, useContext, useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import type { BrandPresentationDocument } from "@maitre/contracts";
+
+declare const __MAITRE_BUILD_INFO__: {
+  commitSha: string;
+  deployedAt: string;
+  environment: string;
+};
 
 export const PLATFORM_PRESENTATION: BrandPresentationDocument = {
   schemaVersion: 1,
   identity: { displayName: "Maitre" },
   assets: {},
   colors: {
-    primary: "#2B5CAD", canvas: "#FFFFFF", surface: "#FFFFFF", text: "#1A1A1A",
-    mutedText: "#595959", border: "#D0D0D0",
+    primary: "#2B5CAD",
+    canvas: "#FFFFFF",
+    surface: "#FFFFFF",
+    text: "#1A1A1A",
+    mutedText: "#595959",
+    border: "#D0D0D0",
   },
   typography: {},
   shape: { radius: "medium", elevation: "subtle" },
@@ -28,15 +45,24 @@ export function applyBrandPresentation(document: BrandPresentationDocument) {
     "--brand-text": colors.text,
     "--brand-muted-text": colors.mutedText,
     "--brand-border": colors.border,
-    "--brand-font-heading": document.typography.heading ? `${document.typography.heading.family}, ${document.typography.heading.fallback}` : undefined,
-    "--brand-font-body": document.typography.body ? `${document.typography.body.family}, ${document.typography.body.fallback}` : undefined,
-    "--brand-hero-image": document.assets.hero ? `url("${document.assets.hero.url}")` : undefined,
+    "--brand-font-heading": document.typography.heading
+      ? `${document.typography.heading.family}, ${document.typography.heading.fallback}`
+      : undefined,
+    "--brand-font-body": document.typography.body
+      ? `${document.typography.body.family}, ${document.typography.body.fallback}`
+      : undefined,
+    "--brand-hero-image": document.assets.hero
+      ? `url("${document.assets.hero.url}")`
+      : undefined,
   };
-  Object.entries(variables).forEach(([key, value]) => { if (value) root.style.setProperty(key, value); });
+  Object.entries(variables).forEach(([key, value]) => {
+    if (value) root.style.setProperty(key, value);
+  });
   root.dataset["brandPresentation"] = "active";
   const favicon = document.assets.favicon?.url;
   if (favicon) {
-    let link = window.document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+    let link =
+      window.document.querySelector<HTMLLinkElement>('link[rel="icon"]');
     if (!link) {
       link = window.document.createElement("link");
       link.rel = "icon";
@@ -44,12 +70,15 @@ export function applyBrandPresentation(document: BrandPresentationDocument) {
     }
     link.href = favicon;
   }
-  if (document.identity.displayName) window.document.title = document.identity.displayName;
+  if (document.identity.displayName)
+    window.document.title = document.identity.displayName;
 }
 
 export function clearBrandPresentation() {
   const root = window.document.documentElement;
-  [...root.style].filter((key) => key.startsWith("--brand-")).forEach((key) => root.style.removeProperty(key));
+  [...root.style]
+    .filter((key) => key.startsWith("--brand-"))
+    .forEach((key) => root.style.removeProperty(key));
   delete root.dataset["brandPresentation"];
 }
 
@@ -78,19 +107,34 @@ export function BrandPresentationProvider(props: ProviderProps) {
       return;
     }
     const controller = new AbortController();
-    void (props.accessToken
-      ? resolveAuthenticatedPresentation(props, controller.signal)
-      : resolvePublicPresentation(props, controller.signal))
+    void (
+      props.accessToken
+        ? resolveAuthenticatedPresentation(props, controller.signal)
+        : resolvePublicPresentation(props, controller.signal)
+    )
       .then((document) => document ?? PLATFORM_PRESENTATION)
-      .then((document) => { setPresentation(document); applyBrandPresentation(document); })
+      .then((document) => {
+        setPresentation(document);
+        applyBrandPresentation(document);
+      })
       .catch((error) => {
         if ((error as Error).name !== "AbortError") {
           setPresentation(PLATFORM_PRESENTATION);
           applyBrandPresentation(PLATFORM_PRESENTATION);
         }
       });
-    return () => { controller.abort(); clearBrandPresentation(); };
-  }, [props.apiUrl, props.accessToken, props.tenantId, props.branchId, props.brandId, props.surface]);
+    return () => {
+      controller.abort();
+      clearBrandPresentation();
+    };
+  }, [
+    props.apiUrl,
+    props.accessToken,
+    props.tenantId,
+    props.branchId,
+    props.brandId,
+    props.surface,
+  ]);
 
   const style = {
     "--color-accent": presentation.colors.primary,
@@ -109,7 +153,9 @@ export function BrandPresentationProvider(props: ProviderProps) {
     backgroundColor: presentation.colors.canvas,
     color: presentation.colors.text,
     minHeight: "100vh",
-    fontFamily: presentation.typography.body ? `${presentation.typography.body.family}, ${presentation.typography.body.fallback}` : undefined,
+    fontFamily: presentation.typography.body
+      ? `${presentation.typography.body.family}, ${presentation.typography.body.fallback}`
+      : undefined,
   } as CSSProperties;
   const template = presentation.templates[props.surface];
   return (
@@ -121,30 +167,130 @@ export function BrandPresentationProvider(props: ProviderProps) {
         data-brand-template={template?.templateId ?? "default"}
         data-brand-variant={template?.variant}
       >
-        {props.surface !== "PUBLIC_HOME" ? <BrandSignature document={presentation} /> : null}
+        {props.surface !== "PUBLIC_HOME" ? (
+          <BrandSignature document={presentation} />
+        ) : null}
         {props.children}
+        <DeploymentBuildStamp />
       </div>
     </BrandPresentationContext.Provider>
   );
 }
 
-async function resolveAuthenticatedPresentation(props: ProviderProps, signal: AbortSignal) {
-  return resolveBrandId(props, signal)
-      .then(async (brandId) => {
-        if (!brandId) return PLATFORM_PRESENTATION;
-        const query = new URLSearchParams({ surface: props.surface });
-        if (props.branchId) query.set("branchId", props.branchId);
-        const response = await fetch(`${props.apiUrl}/v1/brands/${brandId}/presentation/effective?${query}`, {
-          headers: { Authorization: `Bearer ${props.accessToken}`, "X-Tenant-Id": props.tenantId! },
-          signal,
-        });
-        if (!response.ok) throw new Error("presentation-unavailable");
-        const payload = await response.json() as { data: { document: BrandPresentationDocument } };
-        return payload.data.document;
-      });
+function DeploymentBuildStamp() {
+  const info =
+    typeof __MAITRE_BUILD_INFO__ === "undefined"
+      ? {
+          commitSha: "unknown",
+          deployedAt: "unknown",
+          environment: "development",
+        }
+      : __MAITRE_BUILD_INFO__;
+  const shortCommit =
+    info.commitSha === "unknown" ? "sin commit" : info.commitSha.slice(0, 7);
+  const deployedAt = new Date(info.deployedAt);
+  const readableDate = Number.isNaN(deployedAt.getTime())
+    ? info.deployedAt
+    : new Intl.DateTimeFormat("es-AR", {
+        dateStyle: "medium",
+        timeStyle: "short",
+        timeZone: "UTC",
+      }).format(deployedAt);
+  const commitUrl =
+    info.commitSha === "unknown"
+      ? null
+      : `https://github.com/Adayala/maitre/commit/${info.commitSha}`;
+
+  return (
+    <details
+      style={{
+        bottom: 8,
+        color: "var(--muted, #595959)",
+        fontFamily:
+          "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+        fontSize: 10,
+        position: "fixed",
+        right: 10,
+        zIndex: 9998,
+      }}
+    >
+      <summary
+        aria-label={`Información de versión: commit ${shortCommit}`}
+        style={{
+          background:
+            "color-mix(in srgb, var(--surface, #fff) 92%, transparent)",
+          border: "1px solid var(--border, #d0d0d0)",
+          borderRadius: 999,
+          cursor: "pointer",
+          listStyle: "none",
+          padding: "4px 8px",
+        }}
+      >
+        build {shortCommit}
+      </summary>
+      <div
+        style={{
+          background: "var(--surface, #fff)",
+          border: "1px solid var(--border, #d0d0d0)",
+          borderRadius: 8,
+          bottom: 28,
+          boxShadow: "0 8px 24px #00000020",
+          minWidth: 230,
+          padding: 10,
+          position: "absolute",
+          right: 0,
+        }}
+      >
+        <strong style={{ color: "var(--text, #1a1a1a)" }}>
+          Versión desplegada
+        </strong>
+        <div style={{ marginTop: 6 }}>
+          Commit:{" "}
+          {commitUrl ? (
+            <a href={commitUrl} rel="noreferrer" target="_blank">
+              {shortCommit}
+            </a>
+          ) : (
+            shortCommit
+          )}
+        </div>
+        <div>Deploy: {readableDate} UTC</div>
+        <div>Entorno: {info.environment}</div>
+      </div>
+    </details>
+  );
 }
 
-async function resolvePublicPresentation(props: ProviderProps, signal: AbortSignal) {
+async function resolveAuthenticatedPresentation(
+  props: ProviderProps,
+  signal: AbortSignal,
+) {
+  return resolveBrandId(props, signal).then(async (brandId) => {
+    if (!brandId) return PLATFORM_PRESENTATION;
+    const query = new URLSearchParams({ surface: props.surface });
+    if (props.branchId) query.set("branchId", props.branchId);
+    const response = await fetch(
+      `${props.apiUrl}/v1/brands/${brandId}/presentation/effective?${query}`,
+      {
+        headers: {
+          Authorization: `Bearer ${props.accessToken}`,
+          "X-Tenant-Id": props.tenantId!,
+        },
+        signal,
+      },
+    );
+    if (!response.ok) throw new Error("presentation-unavailable");
+    const payload = (await response.json()) as {
+      data: { document: BrandPresentationDocument };
+    };
+    return payload.data.document;
+  });
+}
+
+async function resolvePublicPresentation(
+  props: ProviderProps,
+  signal: AbortSignal,
+) {
   if (!props.tenantId || !props.brandId) return null;
   const query = new URLSearchParams({ surface: props.surface });
   const response = await fetch(
@@ -152,7 +298,9 @@ async function resolvePublicPresentation(props: ProviderProps, signal: AbortSign
     { signal },
   );
   if (!response.ok) return null;
-  const payload = await response.json() as { data: { document: BrandPresentationDocument } };
+  const payload = (await response.json()) as {
+    data: { document: BrandPresentationDocument };
+  };
   return payload.data.document;
 }
 
@@ -160,40 +308,84 @@ async function resolveBrandId(props: ProviderProps, signal: AbortSignal) {
   if (props.brandId) return props.brandId;
   const path = props.branchId ? `/v1/branches/${props.branchId}` : "/v1/brands";
   const response = await fetch(`${props.apiUrl}${path}`, {
-    headers: { Authorization: `Bearer ${props.accessToken}`, "X-Tenant-Id": props.tenantId! },
+    headers: {
+      Authorization: `Bearer ${props.accessToken}`,
+      "X-Tenant-Id": props.tenantId!,
+    },
     signal,
   });
   if (!response.ok) return null;
-  const payload = await response.json() as { data: { brandId?: string } | Array<{ id: string }> };
-  return Array.isArray(payload.data) ? payload.data[0]?.id ?? null : payload.data.brandId ?? null;
+  const payload = (await response.json()) as {
+    data: { brandId?: string } | Array<{ id: string }>;
+  };
+  return Array.isArray(payload.data)
+    ? (payload.data[0]?.id ?? null)
+    : (payload.data.brandId ?? null);
 }
 
-export function BrandMark({ document, className }: { document: BrandPresentationDocument; className?: string }) {
+export function BrandMark({
+  document,
+  className,
+}: {
+  document: BrandPresentationDocument;
+  className?: string;
+}) {
   const logo = document.assets.logo?.url;
-  return logo
-    ? <img className={className} src={logo} alt={document.identity.displayName ?? "Marca"} />
-    : <span className={className}>{document.identity.shortName ?? document.identity.displayName ?? "Maitre"}</span>;
+  return logo ? (
+    <img
+      className={className}
+      src={logo}
+      alt={document.identity.displayName ?? "Marca"}
+    />
+  ) : (
+    <span className={className}>
+      {document.identity.shortName ?? document.identity.displayName ?? "Maitre"}
+    </span>
+  );
 }
 
 function BrandSignature({ document }: { document: BrandPresentationDocument }) {
-  const name = document.identity.shortName ?? document.identity.displayName ?? "Maitre";
+  const name =
+    document.identity.shortName ?? document.identity.displayName ?? "Maitre";
   const logo = document.assets.logoCompact?.url ?? document.assets.logo?.url;
   return (
     <aside
       aria-label={`Marca activa: ${name}`}
       style={{
-        alignItems: "center", background: document.colors.surface ?? "#FFFFFF",
-        border: `1px solid ${document.colors.border ?? "#D0D0D0"}`, borderRadius: "0 0 0 12px",
-        color: document.colors.text ?? "#1A1A1A", display: "flex", gap: 10, padding: "8px 12px",
-        position: "fixed", right: 0, top: 0, zIndex: 9999, boxShadow: "0 4px 16px #00000018",
+        alignItems: "center",
+        background: document.colors.surface ?? "#FFFFFF",
+        border: `1px solid ${document.colors.border ?? "#D0D0D0"}`,
+        borderRadius: "0 0 0 12px",
+        color: document.colors.text ?? "#1A1A1A",
+        display: "flex",
+        gap: 10,
+        padding: "8px 12px",
+        position: "fixed",
+        right: 0,
+        top: 0,
+        zIndex: 9999,
+        boxShadow: "0 4px 16px #00000018",
       }}
     >
-      {logo
-        ? <img src={logo} alt="" style={{ display: "block", height: 34, maxWidth: 96, objectFit: "contain" }} />
-        : null}
+      {logo ? (
+        <img
+          src={logo}
+          alt=""
+          style={{
+            display: "block",
+            height: 34,
+            maxWidth: 96,
+            objectFit: "contain",
+          }}
+        />
+      ) : null}
       <span>
         <strong style={{ display: "block", fontSize: 13 }}>{name}</strong>
-        {document.identity.tagline ? <small style={{ display: "block", maxWidth: 260 }}>{document.identity.tagline}</small> : null}
+        {document.identity.tagline ? (
+          <small style={{ display: "block", maxWidth: 260 }}>
+            {document.identity.tagline}
+          </small>
+        ) : null}
       </span>
     </aside>
   );

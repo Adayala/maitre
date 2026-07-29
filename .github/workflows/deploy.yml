@@ -37,5 +37,8 @@ jobs:
 
       - name: Deploy ${{ matrix.name }} to Vercel
         run: |
+          DEPLOYED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           npx --yes vercel@57 pull --yes --environment=production --token="$VERCEL_TOKEN"
-          npx --yes vercel@57 deploy --prod --yes --token="$VERCEL_TOKEN"
+          npx --yes vercel@57 deploy --prod --yes --token="$VERCEL_TOKEN" \
+            --build-env VITE_GIT_COMMIT_SHA="$GITHUB_SHA" \
+            --build-env VITE_DEPLOYED_AT="$DEPLOYED_AT"

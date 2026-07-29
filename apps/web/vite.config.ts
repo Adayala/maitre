@@ -1,7 +1,9 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { deploymentBuildInfoDefine } from "../../tooling/deployment/vite-build-info.js";
 
 export default defineConfig({
+  define: deploymentBuildInfoDefine(),
   plugins: [react()],
   build: {
     rollupOptions: {
@@ -12,7 +14,8 @@ export default defineConfig({
           if (id.includes("react-router")) return "router";
           if (id.includes("@tanstack/react-query")) return "query";
           if (id.includes("@supabase")) return "supabase";
-          if (id.includes("react-dom") || id.includes("/react/")) return "react-core";
+          if (id.includes("react-dom") || id.includes("/react/"))
+            return "react-core";
         },
       },
     },
