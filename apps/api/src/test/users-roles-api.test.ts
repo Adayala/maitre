@@ -198,6 +198,30 @@ test("PATCH /v1/users/:id updates the display name", async () => {
   await app.close();
 });
 
+test("PATCH /v1/users/:id updates the authoritative membership profile and status", async () => {
+  const container = await buildContainer();
+  const tenantId = await getTenantId(container);
+  const app = await buildApp(container);
+  const owner = await container.users.findByExternalIdentity("fixture", "demo-owner");
+  const response = await app.inject({
+    method: "PATCH",
+    url: `/v1/users/${owner!.id}`,
+    headers: {
+      authorization: `Bearer ${container.demoAccessToken}`,
+      "x-tenant-id": tenantId,
+    },
+    payload: { roleIds: ["role_employee"], membershipStatus: "SUSPENDED" },
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.json().data.status, "SUSPENDED");
+  assert.deepEqual(response.json().data.roleIds, ["role_employee"]);
+  const memberships = await container.memberships.listByUser(owner!.id);
+  assert.equal(memberships[0]?.status, "SUSPENDED");
+  assert.deepEqual(memberships[0]?.roleIds, ["role_employee"]);
+  await app.close();
+});
+
 test("GET /v1/roles lists the predefined role catalog", async () => {
   const container = await buildContainer();
   const tenantId = await getTenantId(container);

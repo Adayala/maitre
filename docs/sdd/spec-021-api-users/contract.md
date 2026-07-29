@@ -15,6 +15,9 @@ vincula identidad de forma idempotente; no expone CRUD de credenciales del prove
 | `PATCH /v1/users/{userId}` | modifica perfil permitido o estado de membership |
 | `DELETE /v1/users/{userId}` | no existe como eliminación física; usar revoke/deactivate |
 
+El walking skeleton puede exponer `POST /v1/users` como alias temporal de invitación hasta completar
+la entrega de emails. La UI no afirma que el correo fue enviado si no hay proveedor configurado.
+
 ## Invitación
 
 Entrada: email, roles, alcances por sucursal y locale opcional. Tenant viene del contexto. Usa
@@ -42,3 +45,4 @@ tenant, roles/alcances previos/nuevos y correlation ID.
 - Negativos de otro tenant, self-escalation y rol no delegable.
 - Revocación efectiva y datos minimizados.
 - OpenAPI, Problem Details, auditoría e idempotencia verificadas.
+- Usuarios y catálogo de perfiles aparecen combinados en `/users`.

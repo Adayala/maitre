@@ -2,6 +2,9 @@ import {
   InMemoryTenantRepository,
   InMemoryBranchRepository,
   InMemoryBrandRepository,
+  InMemoryBrandPresentationRepository,
+  InMemoryBrandAssetRepository,
+  InMemoryBrandAssetStorage,
   InMemoryFiscalEntityRepository,
   InMemorySalonRepository,
   InMemoryTableRepository,
@@ -45,12 +48,17 @@ import {
   InMemoryFiscalCertificateRepository,
   InMemoryInvoiceTemplateRepository,
   InMemoryTaxRateRepository,
+  InMemoryCatalogItemRepository,
+  InMemoryCatalogPackageRepository,
   FixtureSessionVerificationPort,
 } from "@maitre/adapter-persistence-memory";
 import {
   createSupabaseClient,
   SupabaseTenantRepository,
   SupabaseBrandRepository,
+  SupabaseBrandPresentationRepository,
+  SupabaseBrandAssetRepository,
+  SupabaseBrandAssetStorage,
   SupabaseFiscalEntityRepository,
   SupabaseBranchRepository,
   SupabaseSalonRepository,
@@ -102,6 +110,8 @@ import {
   SupabaseFiscalCertificateRepository,
   SupabaseInvoiceTemplateRepository,
   SupabaseTaxRateRepository,
+  SupabaseCatalogItemRepository,
+  SupabaseCatalogPackageRepository,
 } from "@maitre/adapter-persistence-supabase";
 import {
   createTenant,
@@ -112,6 +122,10 @@ import {
   createFiscalEntity,
   type TenantRepositoryPort,
   type BrandRepositoryPort,
+  type BrandPresentationRepositoryPort,
+  type BrandAssetRepositoryPort,
+  type BrandAssetStoragePort,
+  type BrandPresentation,
   type FiscalEntityRepositoryPort,
   type BranchRepositoryPort,
   type SalonRepositoryPort,
@@ -127,10 +141,16 @@ import {
 import { SupabaseSessionVerificationPort } from "@maitre/adapter-identity-supabase-auth";
 import {
   createSubscription,
+  addService,
+  addQuantityItem,
+  type CatalogItem,
+  type CatalogPackage,
   type SubscriptionRepositoryPort,
   type SubscriptionItemRepositoryPort,
   type EntitlementRepositoryPort,
   type QuotaRepositoryPort,
+  type CatalogRepositoryPort,
+  type CatalogPackageRepositoryPort,
 } from "@maitre/subscription";
 import {
   createMenu,
@@ -228,6 +248,9 @@ export interface Container {
   tenants: TenantRepositoryPort;
   branches: BranchRepositoryPort;
   brands: BrandRepositoryPort;
+  brandPresentations: BrandPresentationRepositoryPort;
+  brandAssets: BrandAssetRepositoryPort;
+  brandAssetStorage: BrandAssetStoragePort;
   fiscalEntities: FiscalEntityRepositoryPort;
   salons: SalonRepositoryPort;
   tables: TableRepositoryPort;
@@ -236,6 +259,8 @@ export interface Container {
   outbox: OutboxPort;
   subscriptions: SubscriptionRepositoryPort;
   subscriptionItems: SubscriptionItemRepositoryPort;
+  catalog: CatalogRepositoryPort;
+  catalogPackages: CatalogPackageRepositoryPort;
   entitlements: EntitlementRepositoryPort;
   quotas: QuotaRepositoryPort;
   menus: MenuRepositoryPort;
@@ -292,6 +317,7 @@ export interface Container {
 // missing) instead of minting a fresh Tenant on every process boot.
 const DEMO_TENANT_ID = "00000000-0000-0000-0000-000000000001";
 const DEMO_BRAND_ID = "00000000-0000-0000-0000-000000000002";
+const DEMO_PRESENTATION_ID = "00000000-0000-0000-0000-000000000020";
 const DEMO_BRANCH_ID = "00000000-0000-0000-0000-000000000003";
 const DEMO_SALON_ID = "00000000-0000-0000-0000-000000000004";
 const DEMO_TABLE_ID = "00000000-0000-0000-0000-000000000005";
@@ -304,6 +330,246 @@ const DEMO_MENU_ID = "00000000-0000-0000-0000-000000000009";
 const DEMO_CATEGORY_ID = "00000000-0000-0000-0000-00000000000a";
 const DEMO_PRODUCT_ID = "00000000-0000-0000-0000-00000000000b";
 const DEMO_ACCESS_TOKEN = "demo-token";
+
+const catalogItem = (
+  code: string,
+  name: string,
+  billingType: CatalogItem["billingType"],
+  billingScope: CatalogItem["billingScope"],
+  unitPrice: number,
+  dependsOn: string[] = [],
+): CatalogItem => ({
+  code,
+  name,
+  description: catalogDescription(code, name),
+  benefits: catalogBenefits(code),
+  billingType,
+  billingScope,
+  unitPrice,
+  currency: "ARS",
+  period: "MONTHLY",
+  dependsOn,
+  isActive: true,
+  version: 2,
+});
+
+const CATALOG_PURPOSE: Record<string, string> = {
+  CORE: "centraliza la estructura del negocio, usuarios, permisos, auditoría y configuración común de Maitre",
+  BRANCHES: "permite administrar sucursales adicionales dentro del mismo tenant con datos y operación aislados",
+  IDENTITY: "gestiona accesos, roles y permisos para que cada persona vea y opere solamente lo que le corresponde",
+  CONNECT: "integra Maitre con sistemas externos y automatiza el intercambio de información operativa",
+  FLOOR: "digitaliza el salón, las mesas, ocupaciones, visitas, pedidos y precuentas de cada sucursal",
+  SEATS: "define la capacidad simultánea habilitada del salón y acompaña el crecimiento de cada sucursal",
+  RESERVATIONS: "organiza agenda, disponibilidad, reservas, confirmaciones, señas, cancelaciones y lista de espera",
+  SHIFTS: "planifica jornadas, dotaciones, horarios y asignaciones del equipo por sucursal",
+  SHIFT_SLOTS: "habilita franjas operativas diferenciadas como desayuno, almuerzo, merienda y cena",
+  WAITERS: "habilita al personal de salón que puede recibir asignaciones y operar mesas durante el servicio",
+  CASHIERS: "habilita cajeros o cajas concurrentes para registrar y controlar movimientos de dinero",
+  KITCHEN: "coordina comandas, estaciones, preparación, estados y despacho entre salón y cocina",
+  QR_MENU: "publica una carta digital actualizada con categorías, productos, precios e información del menú",
+  QR_ORDERING: "permite que el cliente realice pedidos desde la mesa con aprobación y seguimiento operativo",
+  GUEST: "consolida perfiles, preferencias e historial de clientes para brindar una atención más personalizada",
+  DELIVERY: "organiza pedidos para entrega, estados de preparación y seguimiento del despacho",
+  INVENTORY: "controla existencias, movimientos y disponibilidad de insumos vinculados a la operación",
+  CASH: "administra cajas, aperturas, cierres, movimientos y conciliaciones por sucursal",
+  BILLING: "gestiona documentos comerciales y facturación por entidad fiscal",
+  PAYMENTS: "unifica el registro y la conciliación de distintos medios de pago",
+  PAYLANDING: "genera páginas y enlaces de cobro para reservas, delivery y cuentas pendientes",
+  ARCA: "automatiza la autorización fiscal y la emisión electrónica integrada con ARCA",
+  IVA: "ordena registración, reportes y conciliación de IVA por entidad fiscal",
+  FEEDBACK: "captura opiniones del cliente y las convierte en señales accionables para el equipo",
+  REPUTATION: "centraliza reputación y reseñas para detectar problemas y oportunidades de mejora",
+  CRM: "organiza segmentos, comunicaciones y relación comercial con clientes frecuentes",
+  LOYALTY: "crea beneficios y recompensas para aumentar recurrencia y valor de cada cliente",
+  AI_ASSISTANT: "ofrece asistencia contextual para consultar datos y resolver tareas con lenguaje natural",
+  AI_FORECAST: "anticipa demanda y carga operativa utilizando el historial del negocio",
+  AI_PROMISE: "estima compromisos realistas de reserva, preparación y atención según capacidad disponible",
+  AI_KITCHEN: "detecta cuellos de botella y recomienda prioridades para mejorar tiempos de cocina",
+  AI_AHEAD: "anticipa riesgos operativos combinando información de salón, reservas y cocina",
+  AI_AUTOPILOT: "ejecuta acciones operativas autorizadas bajo políticas, límites y trazabilidad definidos",
+};
+
+const CATALOG_BENEFITS: Record<string, string[]> = {
+  CORE: ["Unifica la configuración del negocio", "Mantiene permisos y auditoría centralizados"],
+  BRANCHES: ["Separa la operación por sucursal", "Consolida la gestión del grupo"],
+  IDENTITY: ["Reduce accesos indebidos", "Simplifica altas, bajas y cambios de rol"],
+  CONNECT: ["Evita carga duplicada de datos", "Sincroniza sistemas externos con Maitre"],
+  FLOOR: ["Agiliza la rotación de mesas", "Da visibilidad del salón en tiempo real"],
+  SEATS: ["Ajusta la capacidad habilitada por sucursal", "Define límites operativos claros"],
+  RESERVATIONS: ["Ordena la demanda antes del servicio", "Reduce ausencias y sobreventa"],
+  SHIFTS: ["Alinea dotación y demanda", "Facilita el control de jornadas"],
+  SHIFT_SLOTS: ["Separa la operación por franja horaria", "Mejora la planificación diaria"],
+  WAITERS: ["Controla quién puede operar mesas", "Facilita asignaciones de salón"],
+  CASHIERS: ["Controla cajas concurrentes", "Define responsables de cada turno"],
+  KITCHEN: ["Reduce demoras y comandas perdidas", "Coordina prioridades de preparación"],
+  QR_MENU: ["Mantiene precios y productos actualizados", "Evita reimpresiones de carta"],
+  QR_ORDERING: ["Reduce tiempos de toma de pedido", "Permite seguimiento desde la mesa"],
+  GUEST: ["Recuerda preferencias del cliente", "Mejora la personalización del servicio"],
+  DELIVERY: ["Ordena preparación y despacho", "Da seguimiento a cada entrega"],
+  INVENTORY: ["Previene faltantes de insumos", "Mejora el control de movimientos"],
+  CASH: ["Trazabilidad de aperturas y cierres", "Reduce diferencias de caja"],
+  BILLING: ["Centraliza documentos comerciales", "Separa la facturación por entidad fiscal"],
+  PAYMENTS: ["Unifica medios de pago", "Simplifica conciliaciones"],
+  PAYLANDING: ["Permite cobrar antes o después del servicio", "Reduce pagos pendientes"],
+  ARCA: ["Evita carga fiscal duplicada", "Acelera la emisión de comprobantes"],
+  IVA: ["Ordena información impositiva", "Facilita conciliación y control"],
+  FEEDBACK: ["Detecta problemas rápidamente", "Prioriza mejoras basadas en clientes"],
+  REPUTATION: ["Centraliza reseñas externas", "Identifica tendencias de satisfacción"],
+  CRM: ["Segmenta clientes por comportamiento", "Mejora la relevancia de comunicaciones"],
+  LOYALTY: ["Aumenta la recurrencia", "Reconoce a los clientes frecuentes"],
+  AI_ASSISTANT: ["Acelera consultas operativas", "Reduce tiempo buscando información"],
+  AI_FORECAST: ["Anticipa picos de demanda", "Mejora la planificación de recursos"],
+  AI_PROMISE: ["Evita promesas difíciles de cumplir", "Ajusta tiempos a la capacidad real"],
+  AI_KITCHEN: ["Detecta cuellos de botella", "Mejora prioridades de preparación"],
+  AI_AHEAD: ["Alerta riesgos antes del servicio", "Conecta señales de salón, reservas y cocina"],
+  AI_AUTOPILOT: ["Automatiza acciones repetitivas autorizadas", "Conserva control y trazabilidad"],
+};
+
+function catalogDescription(code: string, name: string) {
+  const connectorProvider = code.startsWith("PAYLANDING.")
+    ? code.replace("PAYLANDING.", "").replaceAll("_", " ")
+    : null;
+  const purpose =
+    CATALOG_PURPOSE[code] ??
+    (connectorProvider
+      ? `Conecta PayLanding con ${connectorProvider} para procesar cobros con ese proveedor`
+      : `${name} agrega una capacidad especializada a la operación`);
+  return `${purpose.charAt(0).toUpperCase()}${purpose.slice(1)}.`;
+}
+
+function catalogBenefits(code: string): string[] {
+  if (code.startsWith("AI_")) {
+    return CATALOG_BENEFITS[code] ?? [];
+  }
+  if (code.startsWith("PAYLANDING.")) {
+    return [
+      "Ofrece ese medio de pago al cliente",
+      "Registra el estado del cobro en Maitre",
+    ];
+  }
+  return CATALOG_BENEFITS[code] ?? [];
+}
+
+const SEED_CATALOG_ITEMS: CatalogItem[] = [
+  catalogItem("CORE", "Maitre Core", "SERVICE", "TENANT", 15_000),
+  catalogItem("BRANCHES", "Maitre Branches", "QUANTITY", "TENANT", 8_000, ["CORE"]),
+  catalogItem("IDENTITY", "Maitre Identity", "SERVICE", "TENANT", 0, ["CORE"]),
+  catalogItem("CONNECT", "Maitre Connect", "SERVICE", "BRANCH", 3_000, ["CORE"]),
+  catalogItem("FLOOR", "Maitre Floor", "SERVICE", "BRANCH", 6_000, ["CORE", "BRANCHES"]),
+  catalogItem("SEATS", "Plazas", "QUANTITY", "BRANCH", 500, ["FLOOR"]),
+  catalogItem("RESERVATIONS", "Maitre Reservations", "SERVICE", "BRANCH", 4_000, ["CORE", "BRANCHES"]),
+  catalogItem("SHIFTS", "Maitre Shifts", "SERVICE", "BRANCH", 3_000, ["CORE", "BRANCHES"]),
+  catalogItem("SHIFT_SLOTS", "Turnos", "QUANTITY", "BRANCH", 300, ["SHIFTS"]),
+  catalogItem("WAITERS", "Mozos", "QUANTITY", "BRANCH", 1_200, ["FLOOR"]),
+  catalogItem("CASHIERS", "Cajeros", "QUANTITY", "BRANCH", 1_500, ["CASH"]),
+  catalogItem("KITCHEN", "Maitre Kitchen", "SERVICE", "BRANCH", 5_000, ["FLOOR"]),
+  catalogItem("QR_MENU", "Maitre QR Menu", "SERVICE", "BRANCH", 2_000, ["CORE"]),
+  catalogItem("QR_ORDERING", "Maitre QR Ordering", "SERVICE", "BRANCH", 3_000, ["QR_MENU"]),
+  catalogItem("GUEST", "Maitre Guest", "SERVICE", "BRANCH", 2_000, ["CORE"]),
+  catalogItem("DELIVERY", "Maitre Delivery", "SERVICE", "BRANCH", 4_000, ["CORE"]),
+  catalogItem("INVENTORY", "Maitre Inventory", "SERVICE", "BRANCH", 5_000, ["CORE"]),
+  catalogItem("CASH", "Maitre Cash", "SERVICE", "BRANCH", 3_500, ["CORE"]),
+  catalogItem("BILLING", "Maitre Billing", "SERVICE", "FISCAL_ENTITY", 5_000, ["CORE"]),
+  catalogItem("PAYMENTS", "Maitre Payments", "SERVICE", "TENANT", 4_000, ["CASH"]),
+  catalogItem("PAYLANDING", "Maitre PayLanding", "SERVICE", "TENANT", 3_000, ["PAYMENTS"]),
+  catalogItem("PAYLANDING.MERCADOPAGO", "PayLanding — Mercado Pago", "SERVICE", "CONNECTOR", 0, ["PAYLANDING"]),
+  catalogItem("PAYLANDING.NARANJA_X", "PayLanding — Naranja X", "SERVICE", "CONNECTOR", 0, ["PAYLANDING"]),
+  catalogItem("PAYLANDING.MODO", "PayLanding — MODO", "SERVICE", "CONNECTOR", 0, ["PAYLANDING"]),
+  catalogItem("PAYLANDING.TODO_PAGO", "PayLanding — Todo Pago", "SERVICE", "CONNECTOR", 0, ["PAYLANDING"]),
+  catalogItem("ARCA", "Maitre ARCA", "SERVICE", "FISCAL_ENTITY", 7_000, ["BILLING"]),
+  catalogItem("IVA", "Maitre IVA", "SERVICE", "FISCAL_ENTITY", 4_000, ["BILLING"]),
+  catalogItem("FEEDBACK", "Maitre Feedback", "SERVICE", "BRANCH", 2_500, ["CORE"]),
+  catalogItem("REPUTATION", "Maitre Reputation", "SERVICE", "BRANCH", 3_500, ["CORE"]),
+  catalogItem("CRM", "Maitre CRM", "SERVICE", "BRAND", 4_500, ["CORE"]),
+  catalogItem("LOYALTY", "Maitre Loyalty", "SERVICE", "BRAND", 4_000, ["CRM"]),
+  catalogItem("AI_ASSISTANT", "Maitre AI Assistant", "SERVICE", "TENANT", 8_000, ["CORE"]),
+  catalogItem("AI_FORECAST", "Maitre AI Forecast", "SERVICE", "BRANCH", 7_000, ["CORE"]),
+  catalogItem("AI_PROMISE", "Maitre AI Promise", "SERVICE", "BRANCH", 7_000, ["RESERVATIONS"]),
+  catalogItem("AI_KITCHEN", "Maitre AI Kitchen", "SERVICE", "BRANCH", 7_000, ["KITCHEN"]),
+  catalogItem("AI_AHEAD", "Maitre Ahead", "SERVICE", "BRANCH", 10_000, ["FLOOR", "RESERVATIONS", "KITCHEN"]),
+  catalogItem("AI_AUTOPILOT", "Maitre Autopilot", "SERVICE", "BRANCH", 12_000, ["AI_AHEAD"]),
+];
+
+const SEED_CATALOG_PACKAGES: CatalogPackage[] = [
+  {
+    code: "BASE_OPERATIVA",
+    name: "Base Operativa",
+    tagline: "Lo mínimo indispensable para comenzar a operar",
+    description:
+      "Una configuración inicial para digitalizar una sucursal pequeña: estructura central, salón, capacidad para veinte comensales y control básico de caja.",
+    benefits: [
+      "Menor inversión mensual para iniciar",
+      "Operación centralizada de salón y caja",
+      "Base preparada para agregar módulos sin migraciones",
+    ],
+    items: [
+      { catalogItemCode: "CORE" },
+      { catalogItemCode: "BRANCHES", quantity: 1 },
+      { catalogItemCode: "FLOOR" },
+      { catalogItemCode: "SEATS", quantity: 20 },
+      { catalogItemCode: "CASH" },
+    ],
+    isActive: true,
+    sortOrder: 10,
+    version: 1,
+  },
+  {
+    code: "ESENCIAL",
+    name: "Esencial",
+    tagline: "Más capacidad comercial a un precio accesible",
+    description:
+      "Pensado para restaurantes en crecimiento que necesitan reservas, carta QR y una dotación inicial de salón y caja, manteniendo una configuración simple.",
+    benefits: [
+      "Reduce tareas manuales de reservas y atención",
+      "Incluye una experiencia digital para el cliente",
+      "Acompaña un equipo inicial de cuatro mozos y un cajero",
+    ],
+    items: [
+      { catalogItemCode: "CORE" },
+      { catalogItemCode: "BRANCHES", quantity: 1 },
+      { catalogItemCode: "FLOOR" },
+      { catalogItemCode: "SEATS", quantity: 40 },
+      { catalogItemCode: "CASH" },
+      { catalogItemCode: "RESERVATIONS" },
+      { catalogItemCode: "QR_MENU" },
+      { catalogItemCode: "WAITERS", quantity: 4 },
+      { catalogItemCode: "CASHIERS", quantity: 1 },
+    ],
+    isActive: true,
+    sortOrder: 20,
+    version: 1,
+  },
+  {
+    code: "GESTION_INTEGRAL",
+    name: "Gestión Integral",
+    tagline: "Operación conectada para equipos con mayor volumen",
+    description:
+      "Una propuesta intermedia completa que conecta salón, reservas, turnos, cocina, pedidos QR y caja para coordinar el servicio de punta a punta.",
+    benefits: [
+      "Visibilidad integral desde la reserva hasta el cierre de caja",
+      "Mejor coordinación entre salón y cocina",
+      "Capacidad inicial para ochenta plazas, ocho mozos y dos cajeros",
+    ],
+    items: [
+      { catalogItemCode: "CORE" },
+      { catalogItemCode: "BRANCHES", quantity: 1 },
+      { catalogItemCode: "FLOOR" },
+      { catalogItemCode: "SEATS", quantity: 80 },
+      { catalogItemCode: "CASH" },
+      { catalogItemCode: "RESERVATIONS" },
+      { catalogItemCode: "SHIFTS" },
+      { catalogItemCode: "SHIFT_SLOTS", quantity: 3 },
+      { catalogItemCode: "WAITERS", quantity: 8 },
+      { catalogItemCode: "CASHIERS", quantity: 2 },
+      { catalogItemCode: "KITCHEN" },
+      { catalogItemCode: "QR_MENU" },
+      { catalogItemCode: "QR_ORDERING" },
+    ],
+    isActive: true,
+    sortOrder: 30,
+    version: 1,
+  },
+];
 // Demo public MENU_READ capability for manual QR-menu curl testing against the
 // seeded demo Menu. Only its SHA-256 hash is stored (hash-at-rest); the raw
 // token below is the value a client presents to GET /public/menu/:token. Fixed
@@ -340,6 +606,9 @@ interface Repositories {
   tenants: TenantRepositoryPort;
   branches: BranchRepositoryPort;
   brands: BrandRepositoryPort;
+  brandPresentations: BrandPresentationRepositoryPort;
+  brandAssets: BrandAssetRepositoryPort;
+  brandAssetStorage: BrandAssetStoragePort;
   fiscalEntities: FiscalEntityRepositoryPort;
   salons: SalonRepositoryPort;
   tables: TableRepositoryPort;
@@ -348,6 +617,8 @@ interface Repositories {
   outbox: OutboxPort;
   subscriptions: SubscriptionRepositoryPort;
   subscriptionItems: SubscriptionItemRepositoryPort;
+  catalog: CatalogRepositoryPort;
+  catalogPackages: CatalogPackageRepositoryPort;
   entitlements: EntitlementRepositoryPort;
   quotas: QuotaRepositoryPort;
   menus: MenuRepositoryPort;
@@ -424,6 +695,9 @@ function buildRepositories(): Repositories {
       tenants: new SupabaseTenantRepository(client),
       branches: new SupabaseBranchRepository(client),
       brands: new SupabaseBrandRepository(client),
+      brandPresentations: new SupabaseBrandPresentationRepository(client),
+      brandAssets: new SupabaseBrandAssetRepository(client),
+      brandAssetStorage: new SupabaseBrandAssetStorage(client),
       fiscalEntities: new SupabaseFiscalEntityRepository(client),
       salons: new SupabaseSalonRepository(client),
       tables: new SupabaseTableRepository(client),
@@ -432,6 +706,8 @@ function buildRepositories(): Repositories {
       outbox: new SupabaseOutboxRepository(client),
       subscriptions: new SupabaseSubscriptionRepository(client),
       subscriptionItems: new SupabaseSubscriptionItemRepository(client),
+      catalog: new SupabaseCatalogItemRepository(client),
+      catalogPackages: new SupabaseCatalogPackageRepository(client),
       entitlements: new SupabaseEntitlementRepository(client),
       quotas: new SupabaseQuotaRepository(client),
       menus: new SupabaseMenuRepository(client),
@@ -483,6 +759,9 @@ function buildRepositories(): Repositories {
     tenants: new InMemoryTenantRepository(),
     branches: new InMemoryBranchRepository(),
     brands: new InMemoryBrandRepository(),
+    brandPresentations: new InMemoryBrandPresentationRepository(),
+    brandAssets: new InMemoryBrandAssetRepository(),
+    brandAssetStorage: new InMemoryBrandAssetStorage(),
     fiscalEntities: new InMemoryFiscalEntityRepository(),
     salons: new InMemorySalonRepository(),
     tables: new InMemoryTableRepository(),
@@ -491,6 +770,9 @@ function buildRepositories(): Repositories {
     outbox: new InMemoryOutboxRepository(),
     subscriptions: new InMemorySubscriptionRepository(),
     subscriptionItems: new InMemorySubscriptionItemRepository(),
+    // seed real llega en la Task 8 (SEED_CATALOG_ITEMS)
+    catalog: new InMemoryCatalogItemRepository(SEED_CATALOG_ITEMS),
+    catalogPackages: new InMemoryCatalogPackageRepository(SEED_CATALOG_PACKAGES),
     entitlements: new InMemoryEntitlementRepository(),
     quotas: new InMemoryQuotaRepository(),
     menus: new InMemoryMenuRepository(),
@@ -571,6 +853,85 @@ async function ensureSeed(repos: Repositories): Promise<void> {
         config: { language: "es", currency: tenant.defaultCurrency },
       },
     );
+  }
+
+  const demoAssets = [
+    { id: "00000000-0000-0000-0000-000000000021", kind: "LOGO" as const, file: "logo.svg", mimeType: "image/svg+xml", width: 640, height: 180 },
+    { id: "00000000-0000-0000-0000-000000000022", kind: "LOGO_DARK" as const, file: "logo-dark.svg", mimeType: "image/svg+xml", width: 640, height: 180 },
+    { id: "00000000-0000-0000-0000-000000000023", kind: "FAVICON" as const, file: "favicon.svg", mimeType: "image/svg+xml", width: 128, height: 128 },
+    { id: "00000000-0000-0000-0000-000000000024", kind: "HERO" as const, file: "hero.png", mimeType: "image/png", width: 1664, height: 936 },
+  ];
+  for (const definition of demoAssets) {
+    if (await repos.brandAssets.findById(tenant.id, brand.id, definition.id)) continue;
+    const bytes = await readFile(new URL(`../../assets/demo-brand/${definition.file}`, import.meta.url));
+    const storagePath = `tenants/${tenant.id}/brands/${brand.id}/${definition.kind.toLowerCase()}/${definition.id}/${definition.file}`;
+    await repos.brandAssetStorage.put(storagePath, bytes, definition.mimeType);
+    await repos.brandAssets.save({
+      id: definition.id, tenantId: tenant.id, brandId: brand.id, kind: definition.kind,
+      storageBucket: "brand-assets", storagePath,
+      publicUrl: `/public/tenants/${tenant.id}/brands/${brand.id}/assets/${definition.id}`,
+      mimeType: definition.mimeType, sizeBytes: bytes.byteLength,
+      checksum: createHash("sha256").update(bytes).digest("hex"),
+      width: definition.width, height: definition.height, status: "READY",
+      createdAt: now, createdBy: DEMO_USER_ID,
+    });
+  }
+
+  if (!(await repos.brandPresentations.findPublished(tenant.id, brand.id))) {
+    const presentation: BrandPresentation = {
+      id: DEMO_PRESENTATION_ID,
+      tenantId: tenant.id,
+      brandId: brand.id,
+      revision: 1,
+      status: "PUBLISHED",
+      document: {
+        schemaVersion: 1,
+        identity: {
+          displayName: "Casa Maitre",
+          shortName: "Casa Maitre",
+          tagline: "Cocina porteña, servicio contemporáneo",
+        },
+        assets: {
+          logo: { assetId: demoAssets[0]!.id, kind: "LOGO", url: `/public/tenants/${tenant.id}/brands/${brand.id}/assets/${demoAssets[0]!.id}`, mimeType: "image/svg+xml", checksum: "demo-logo-v1", width: 640, height: 180 },
+          logoDark: { assetId: demoAssets[1]!.id, kind: "LOGO_DARK", url: `/public/tenants/${tenant.id}/brands/${brand.id}/assets/${demoAssets[1]!.id}`, mimeType: "image/svg+xml", checksum: "demo-logo-dark-v1", width: 640, height: 180 },
+          favicon: { assetId: demoAssets[2]!.id, kind: "FAVICON", url: `/public/tenants/${tenant.id}/brands/${brand.id}/assets/${demoAssets[2]!.id}`, mimeType: "image/svg+xml", checksum: "demo-favicon-v1", width: 128, height: 128 },
+          hero: { assetId: demoAssets[3]!.id, kind: "HERO", url: `/public/tenants/${tenant.id}/brands/${brand.id}/assets/${demoAssets[3]!.id}`, mimeType: "image/png", checksum: "demo-hero-v1", width: 1664, height: 936 },
+        },
+        colors: {
+          primary: "#A63D2F",
+          secondary: "#24352E",
+          accent: "#D49A4A",
+          canvas: "#F7F1E7",
+          surface: "#FFFDF8",
+          text: "#211D19",
+          mutedText: "#655E56",
+          border: "#D9CDBD",
+        },
+        typography: {
+          heading: { family: "Georgia", fallback: "Georgia, serif", weights: [400, 700] },
+          body: { family: "Inter", fallback: "system-ui, sans-serif", weights: [400, 600, 700] },
+          numeric: { family: "Inter", fallback: "ui-monospace, monospace", weights: [600, 700] },
+          scale: "comfortable",
+        },
+        shape: { radius: "medium", elevation: "subtle" },
+        templates: {
+          PUBLIC_HOME: { templateId: "image-led", variant: "warm" },
+          MENU: { templateId: "visual", variant: "editorial" },
+          RESERVATION: { templateId: "guided" },
+          WAITER: { templateId: "comfortable" },
+          HOST: { templateId: "floor-first" },
+          KITCHEN: { templateId: "high-contrast" },
+          CASHIER: { templateId: "compact" },
+          DASH: { templateId: "standard" },
+        },
+        content: { locale: "es-AR" },
+      },
+      createdAt: now,
+      createdBy: DEMO_USER_ID,
+      publishedAt: now,
+      publishedBy: DEMO_USER_ID,
+    };
+    await repos.brandPresentations.save(presentation);
   }
 
   let branch = await repos.branches.findById(tenant.id, DEMO_BRANCH_ID);
@@ -678,18 +1039,57 @@ async function ensureSeed(repos: Repositories): Promise<void> {
     );
   }
 
-  const subscription = await repos.subscriptions.findById(DEMO_SUBSCRIPTION_ID);
+  for (const item of SEED_CATALOG_ITEMS) {
+    const existing = await repos.catalog.findByCode(item.code);
+    if (!existing || existing.version < item.version) {
+      await (repos.catalog as CatalogRepositoryPort & { save(item: CatalogItem): Promise<void> }).save(item);
+    }
+  }
+  for (const catalogPackage of SEED_CATALOG_PACKAGES) {
+    const existing = await repos.catalogPackages.findByCode(catalogPackage.code);
+    if (!existing || existing.version < catalogPackage.version) {
+      await repos.catalogPackages.save(catalogPackage);
+    }
+  }
+
+  let subscription = await repos.subscriptions.findById(DEMO_SUBSCRIPTION_ID);
   if (!subscription) {
-    await createSubscription(
+    subscription = await createSubscription(
       {
         subscriptions: repos.subscriptions,
         subscriptionItems: repos.subscriptionItems,
         entitlements: repos.entitlements,
+        catalog: repos.catalog,
         now: () => now,
       },
       { id: DEMO_SUBSCRIPTION_ID, tenantId: tenant.id, planCode: "PROFESSIONAL" },
     );
   }
+
+  const itemDeps = {
+    subscriptions: repos.subscriptions,
+    subscriptionItems: repos.subscriptionItems,
+    catalog: repos.catalog,
+    entitlements: repos.entitlements,
+    outbox: repos.outbox,
+    now: () => now,
+  };
+  const ensureService = async (serviceId: string, scopeRefId?: string) => {
+    const existing = await repos.subscriptionItems.findByServiceId(DEMO_SUBSCRIPTION_ID, serviceId, scopeRefId ?? null);
+    if (!existing) await addService(itemDeps, { subscriptionId: DEMO_SUBSCRIPTION_ID, serviceId, ...(scopeRefId ? { scopeRefId } : {}) });
+  };
+  const ensureQuantity = async (catalogItemCode: string, quantity: number, scopeRefId?: string) => {
+    const existing = await repos.subscriptionItems.findByServiceId(DEMO_SUBSCRIPTION_ID, catalogItemCode, scopeRefId ?? null);
+    if (!existing) await addQuantityItem(itemDeps, { subscriptionId: DEMO_SUBSCRIPTION_ID, catalogItemCode, quantity, ...(scopeRefId ? { scopeRefId } : {}) });
+  };
+  await ensureService("CORE");
+  await ensureQuantity("BRANCHES", 1);
+  await ensureService("FLOOR", DEMO_BRANCH_ID);
+  await ensureQuantity("SEATS", 12, DEMO_BRANCH_ID);
+  await ensureQuantity("WAITERS", 8, DEMO_BRANCH_ID);
+  await ensureQuantity("CASHIERS", 3, DEMO_BRANCH_ID);
+  await ensureService("RESERVATIONS", DEMO_BRANCH_ID);
+  await ensureService("QR_MENU", DEMO_BRANCH_ID);
 
   let menu = await repos.menus.findById(tenant.id, DEMO_MENU_ID);
   if (!menu) {
@@ -1139,7 +1539,11 @@ function buildSessionVerifier(): SessionVerificationPort {
   if (driver === "supabase") {
     const url = process.env["SUPABASE_URL"];
     if (!url) throw new Error("SUPABASE_URL must be set for AUTH_DRIVER=supabase");
-    return new SupabaseSessionVerificationPort(url);
+    return new SupabaseSessionVerificationPort(url, {
+      ...(process.env["SUPABASE_PUBLISHABLE_KEY"]
+        ? { apiKey: process.env["SUPABASE_PUBLISHABLE_KEY"] }
+        : {}),
+    });
   }
   return new FixtureSessionVerificationPort();
 }
@@ -1169,3 +1573,5 @@ export async function buildContainer(): Promise<Container> {
     demoQrMenuToken: DEMO_QR_MENU_TOKEN,
   };
 }
+import { createHash } from "node:crypto";
+import { readFile } from "node:fs/promises";

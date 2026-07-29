@@ -37,7 +37,9 @@ Comprar capacidad y crear la sucursal son acciones relacionadas, pero diferentes
 ## 3. Reserva remota
 
 ```text
-Seleccionar sucursal
+Explorar propuesta pública
+→ seleccionar sucursal
+→ iniciar sesión cuando decide reservar
 → fecha, hora y cantidad
 → calcular capacidad
 → retener disponibilidad

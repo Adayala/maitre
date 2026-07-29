@@ -6,17 +6,19 @@ import {
   FakeSubscriptionRepository,
   FakeSubscriptionItemRepository,
   FakeEntitlementRepository,
+  FakeCatalogRepository,
 } from "./fakes.js";
 
 const now = new Date("2026-05-01T00:00:00Z");
 
-test("createSubscription creates a TRIAL subscription and calculates entitlements", async () => {
+test("createSubscription creates a TRIAL subscription with no entitlements when no services are contracted", async () => {
   const subscriptions = new FakeSubscriptionRepository();
   const subscriptionItems = new FakeSubscriptionItemRepository();
   const entitlements = new FakeEntitlementRepository();
+  const catalog = new FakeCatalogRepository();
 
   const subscription = await createSubscription(
-    { subscriptions, subscriptionItems, entitlements, now: () => now },
+    { subscriptions, subscriptionItems, entitlements, catalog, now: () => now },
     { tenantId: "tenant-1", planCode: "STARTER" },
   );
 
@@ -24,18 +26,18 @@ test("createSubscription creates a TRIAL subscription and calculates entitlement
   assert.equal(subscription.planCode, "STARTER");
 
   const savedEntitlements = await entitlements.listBySubscription(subscription.id);
-  const branches = savedEntitlements.find((e) => e.resource === "branches");
-  assert.equal(branches?.hardLimit, 1);
+  assert.equal(savedEntitlements.length, 0);
 });
 
 test("createSubscription rejects an unknown plan code", async () => {
   const subscriptions = new FakeSubscriptionRepository();
   const subscriptionItems = new FakeSubscriptionItemRepository();
   const entitlements = new FakeEntitlementRepository();
+  const catalog = new FakeCatalogRepository();
 
   await assert.rejects(
     createSubscription(
-      { subscriptions, subscriptionItems, entitlements, now: () => now },
+      { subscriptions, subscriptionItems, entitlements, catalog, now: () => now },
       { tenantId: "tenant-1", planCode: "BOGUS" },
     ),
     UnknownPlanError,

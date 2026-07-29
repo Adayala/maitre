@@ -45,6 +45,14 @@ interface FloorPriority {
   onAction: () => void;
 }
 
+interface FloorFocusCard {
+  label: string;
+  value: number;
+  detail: string;
+  active: boolean;
+  onClick: () => void;
+}
+
 const STATUS_META: Record<TableStatusValue, { label: string; cls: string; icon: string }> = {
   AVAILABLE: { label: "Libre", cls: "s-available", icon: "○" },
   OCCUPIED: { label: "Ocupada", cls: "s-occupied", icon: "●" },
@@ -155,6 +163,43 @@ export function FloorPage() {
     statusFilter,
     setStatusFilter,
   });
+  const floorChecklist = [
+    { label: "Pagos bajo control", done: payingCount === 0 },
+    { label: "Mesas ocupadas monitoreadas", done: occupiedCount === 0 || statusFilter === "OCCUPIED" },
+    { label: "Reservas anticipadas revisadas", done: reservedCount === 0 || statusFilter === "RESERVED" },
+    { label: "Capacidad libre visible", done: availableCount > 0 },
+  ];
+  const floorPending = floorChecklist.filter((step) => !step.done).map((step) => step.label);
+  const floorFocusCards: FloorFocusCard[] = [
+    {
+      label: "Pagando",
+      value: payingCount,
+      detail: "Cerrar y liberar rotación",
+      active: statusFilter === "PAYING",
+      onClick: () => setStatusFilter((current) => (current === "PAYING" ? "ALL" : "PAYING")),
+    },
+    {
+      label: "Ocupadas",
+      value: occupiedCount,
+      detail: "Seguir servicio en curso",
+      active: statusFilter === "OCCUPIED",
+      onClick: () => setStatusFilter((current) => (current === "OCCUPIED" ? "ALL" : "OCCUPIED")),
+    },
+    {
+      label: "Reservadas",
+      value: reservedCount,
+      detail: "Preparar próximas llegadas",
+      active: statusFilter === "RESERVED",
+      onClick: () => setStatusFilter((current) => (current === "RESERVED" ? "ALL" : "RESERVED")),
+    },
+    {
+      label: "Libres",
+      value: availableCount,
+      detail: "Capacidad para sentar ya",
+      active: statusFilter === "AVAILABLE",
+      onClick: () => setStatusFilter((current) => (current === "AVAILABLE" ? "ALL" : "AVAILABLE")),
+    },
+  ];
 
   return (
     <div className="screen">
@@ -220,6 +265,53 @@ export function FloorPage() {
               <span>Libres</span>
               <strong>{availableCount}</strong>
             </button>
+            <button
+              type="button"
+              className="waiter-kpi-card"
+              onClick={() => setStatusFilter((current) => (current === "RESERVED" ? "ALL" : "RESERVED"))}
+            >
+              <span>Reservadas</span>
+              <strong>{reservedCount}</strong>
+            </button>
+          </section>
+
+          <section className="waiter-guidance" aria-label="Guía operativa del salón">
+            <article className="waiter-guidance-card">
+              <span className="waiter-guidance-eyebrow">Chequeo de recorrido</span>
+              <strong>Qué conviene revisar ahora</strong>
+              <div className="waiter-checklist">
+                {floorChecklist.map((step) => (
+                  <div key={step.label} className={`waiter-check ${step.done ? "waiter-check--done" : ""}`}>
+                    <strong>{step.done ? "✓" : "•"}</strong>
+                    <span>{step.label}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="waiter-guidance-note">
+                {floorPending.length > 0
+                  ? `Todavía conviene pasar por: ${floorPending.join(", ")}.`
+                  : "El salón está balanceado para seguir servicio normal."}
+              </p>
+            </article>
+
+            <article className="waiter-guidance-card">
+              <span className="waiter-guidance-eyebrow">Atajos de piso</span>
+              <strong>Entrá directo al frente más útil</strong>
+              <div className="waiter-focus-grid">
+                {floorFocusCards.map((card) => (
+                  <button
+                    key={card.label}
+                    type="button"
+                    className={`waiter-focus-card ${card.active ? "waiter-focus-card--active" : ""}`}
+                    onClick={card.onClick}
+                  >
+                    <span>{card.label}</span>
+                    <strong>{card.value}</strong>
+                    <p>{card.detail}</p>
+                  </button>
+                ))}
+              </div>
+            </article>
           </section>
 
           {query.data?.limited && (
@@ -231,7 +323,7 @@ export function FloorPage() {
 
           <div className="waiter-toolbar">
             <div className="waiter-segmented">
-              {(["ALL", "AVAILABLE", "OCCUPIED", "PAYING"] as const).map((value) => (
+              {(["ALL", "AVAILABLE", "OCCUPIED", "PAYING", "RESERVED"] as const).map((value) => (
                 <button
                   key={value}
                   type="button"

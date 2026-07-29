@@ -1,6 +1,8 @@
 // SPEC-029 — Entitlement domain model.
 
-export type EntitlementResource = "branches" | "users" | "orders" | "api_calls" | "storage";
+// Kept for backward-compat imports; resources are now dynamic strings
+// derived from the catalog (e.g. "SEATS[branch-palermo]"), not a fixed union.
+export type EntitlementResource = string;
 
 export interface Entitlement {
   id: string;

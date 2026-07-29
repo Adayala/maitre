@@ -6,3 +6,6 @@
 - [ ] Aprobar idempotencia, lifecycle y revocación de Membership.
 - [ ] Materializar fixtures y contract tests después de aprobación.
 - [ ] Implementar sólo después de `READY_FOR_IMPLEMENTATION`.
+- [x] Unificar Usuarios y Perfiles en una sola superficie de backoffice.
+- [x] Añadir alta básica y edición de nombre/estado contra el walking skeleton.
+- [x] Mantener `/profiles` como redirect compatible a `/users`.

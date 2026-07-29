@@ -18,3 +18,6 @@
 - [ ] Medir duración, coverage y tests lentos.
 - [ ] Mapear cada suite al script raíz único de SPEC-207.
 - [ ] Probar filtros affected contra cambios en contratos, config y lockfile.
+- [ ] Aprobar el diseño y las decisiones pendientes del harness E2E reproducible.
+- [ ] Implementar lifecycle hermético, proyectos por aplicación y journeys cross-app.
+- [ ] Conectar `test:e2e` como dependencia dura del deploy y verificar identidad del artefacto.

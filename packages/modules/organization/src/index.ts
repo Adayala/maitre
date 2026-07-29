@@ -1,6 +1,7 @@
 export * from "./domain/tenant.js";
 export * from "./domain/branch.js";
 export * from "./domain/brand.js";
+export * from "./domain/brand-presentation.js";
 export * from "./domain/fiscal-entity.js";
 export * from "./domain/salon.js";
 export * from "./domain/table.js";

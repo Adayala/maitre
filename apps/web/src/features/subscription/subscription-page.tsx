@@ -1,11 +1,17 @@
 import { useAuth } from "../../app/auth-context.js";
 import { useTenantContext } from "../../app/tenant-context.js";
-import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../../lib/api-client.js";
 import { StateView } from "../../components/state-view.js";
 
 interface SubscriptionResponse {
-  data: { planCode: string; status: string; currentPeriodEnd: string };
+  data: {
+    planCode: string;
+    status: string;
+    currentPeriodEnd: string;
+    items: SubscriptionItemResponse[];
+  };
 }
 
 interface EntitlementsResponse {
@@ -15,9 +21,104 @@ interface EntitlementsResponse {
   };
 }
 
+interface SubscriptionItemResponse {
+  id: string;
+  serviceId: string;
+  scopeRefId?: string | null;
+  status: "ACTIVE" | "INACTIVE";
+  quantity: number;
+}
+
+interface CatalogItemResponse {
+  code: string;
+  name: string;
+  description: string;
+  benefits: string[];
+  billingType: "SERVICE" | "QUANTITY";
+  billingScope: "TENANT" | "BRAND" | "FISCAL_ENTITY" | "BRANCH" | "POS" | "CONNECTOR";
+  unitPrice: number;
+  currency: string;
+  dependsOn: string[];
+  isActive: boolean;
+}
+
+interface CatalogPackageResponse {
+  code: string;
+  name: string;
+  tagline: string;
+  description: string;
+  benefits: string[];
+  items: { catalogItemCode: string; quantity?: number }[];
+  isActive: boolean;
+  sortOrder: number;
+}
+
+const CATALOG_CATEGORIES = [
+  {
+    label: "Base de plataforma",
+    slug: "platform",
+    codes: ["CORE", "BRANCHES", "IDENTITY", "CONNECT"],
+  },
+  {
+    label: "Operación gastronómica",
+    slug: "operations",
+    codes: [
+      "FLOOR",
+      "SEATS",
+      "RESERVATIONS",
+      "SHIFTS",
+      "SHIFT_SLOTS",
+      "WAITERS",
+      "CASHIERS",
+      "KITCHEN",
+      "QR_MENU",
+      "QR_ORDERING",
+      "GUEST",
+      "DELIVERY",
+      "INVENTORY",
+    ],
+  },
+  {
+    label: "Caja y fiscalidad",
+    slug: "billing",
+    codes: [
+      "CASH",
+      "BILLING",
+      "PAYMENTS",
+      "PAYLANDING",
+      "PAYLANDING.MERCADOPAGO",
+      "PAYLANDING.NARANJA_X",
+      "PAYLANDING.MODO",
+      "PAYLANDING.TODO_PAGO",
+      "ARCA",
+      "IVA",
+    ],
+  },
+  {
+    label: "Experiencia y crecimiento",
+    slug: "growth",
+    codes: ["FEEDBACK", "REPUTATION", "CRM", "LOYALTY"],
+  },
+  {
+    label: "Inteligencia",
+    slug: "intelligence",
+    codes: [
+      "AI_ASSISTANT",
+      "AI_FORECAST",
+      "AI_PROMISE",
+      "AI_KITCHEN",
+      "AI_AHEAD",
+      "AI_AUTOPILOT",
+    ],
+  },
+] as const;
+
 export function SubscriptionPage() {
   const { accessToken } = useAuth();
-  const { selectedTenantId } = useTenantContext();
+  const { selectedTenantId, me } = useTenantContext();
+  const queryClient = useQueryClient();
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const [scopeRefs, setScopeRefs] = useState<Record<string, string>>({});
 
   const subscriptionQuery = useQuery({
     queryKey: ["subscription", selectedTenantId],
@@ -39,11 +140,122 @@ export function SubscriptionPage() {
     enabled: Boolean(accessToken && selectedTenantId),
   });
 
-  const isLoading = subscriptionQuery.isLoading || entitlementsQuery.isLoading;
-  const error = subscriptionQuery.error ?? entitlementsQuery.error;
+  const catalogQuery = useQuery({
+    queryKey: ["subscription-catalog"],
+    queryFn: () =>
+      apiRequest<{ data: CatalogItemResponse[] }>("/v1/subscription-catalog", {
+        accessToken: accessToken!,
+        tenantId: selectedTenantId!,
+      }),
+    enabled: Boolean(accessToken && selectedTenantId),
+  });
+  const packagesQuery = useQuery({
+    queryKey: ["subscription-packages"],
+    queryFn: () =>
+      apiRequest<{ data: CatalogPackageResponse[] }>("/v1/subscription-packages", {
+        accessToken: accessToken!,
+        tenantId: selectedTenantId!,
+      }),
+    enabled: Boolean(accessToken && selectedTenantId),
+  });
+
+  const invalidateSubscriptionData = () => {
+    void queryClient.invalidateQueries({ queryKey: ["subscription", selectedTenantId] });
+    void queryClient.invalidateQueries({ queryKey: ["entitlements", selectedTenantId] });
+  };
+  const itemMutation = useMutation({
+    mutationFn: ({
+      path,
+      method,
+      body,
+    }: {
+      path: string;
+      method: "POST" | "PATCH" | "DELETE";
+      body?: unknown;
+    }) =>
+      apiRequest(path, {
+        method,
+        accessToken: accessToken!,
+        tenantId: selectedTenantId!,
+        ...(body !== undefined ? { body } : {}),
+      }),
+    onSuccess: invalidateSubscriptionData,
+  });
+  const packageMutation = useMutation({
+    mutationFn: async (catalogPackage: CatalogPackageResponse) => {
+      for (const packageItem of catalogPackage.items) {
+        const definition = catalog.find((item) => item.code === packageItem.catalogItemCode);
+        if (!definition) throw new Error(`No existe ${packageItem.catalogItemCode} en el catálogo`);
+        const scopeRefs =
+          definition.billingScope === "TENANT"
+            ? [null]
+            : definition.billingScope === "BRANCH"
+              ? tenantBranches.map((branch) => branch.id)
+              : [];
+        if (scopeRefs.length === 0) {
+          throw new Error(
+            `${definition.name} requiere un alcance ${definition.billingScope} que el paquete no puede resolver automáticamente`,
+          );
+        }
+        for (const scopeRefId of scopeRefs) {
+          const existing = activeItems.find(
+            (item) =>
+              item.serviceId === definition.code &&
+              (definition.billingScope === "TENANT" || item.scopeRefId === scopeRefId),
+          );
+          if (
+            existing &&
+            definition.billingType === "QUANTITY" &&
+            existing.quantity !== (packageItem.quantity ?? 1)
+          ) {
+            await apiRequest(`/v1/subscriptions/${selectedTenantId}/items/${existing.id}`, {
+              method: "PATCH",
+              accessToken: accessToken!,
+              tenantId: selectedTenantId!,
+              body: { quantity: packageItem.quantity ?? 1 },
+            });
+          } else if (!existing) {
+            await apiRequest(`/v1/subscriptions/${selectedTenantId}/items`, {
+              method: "POST",
+              accessToken: accessToken!,
+              tenantId: selectedTenantId!,
+              body: {
+                catalogItemCode: definition.code,
+                ...(definition.billingType === "QUANTITY"
+                  ? { quantity: packageItem.quantity ?? 1 }
+                  : {}),
+                ...(scopeRefId ? { scopeRefId } : {}),
+              },
+            });
+          }
+        }
+      }
+    },
+    onSuccess: invalidateSubscriptionData,
+  });
+
+  const isLoading =
+    subscriptionQuery.isLoading ||
+    entitlementsQuery.isLoading ||
+    catalogQuery.isLoading ||
+    packagesQuery.isLoading;
+  const error =
+    subscriptionQuery.error ?? entitlementsQuery.error ?? catalogQuery.error ?? packagesQuery.error;
   const subscription = subscriptionQuery.data?.data;
+  const catalog = catalogQuery.data?.data ?? [];
+  const catalogPackages = packagesQuery.data?.data ?? [];
   const entitlements = entitlementsQuery.data?.data.entitlements ?? [];
   const quotas = entitlementsQuery.data?.data.quotas ?? [];
+  const tenantBranches = me?.tenants.find((tenant) => tenant.id === selectedTenantId)?.branches ?? [];
+  const activeItems = subscription?.items.filter((item) => item.status === "ACTIVE") ?? [];
+  const estimatedMonthlyTotal = useMemo(
+    () =>
+      activeItems.reduce((total, activeItem) => {
+        const definition = catalog.find((item) => item.code === activeItem.serviceId);
+        return total + (definition?.unitPrice ?? 0) * activeItem.quantity;
+      }, 0),
+    [activeItems, catalog],
+  );
   const alertResources = entitlements.filter((entitlement) => {
     const quota = quotas.find((item) => item.resource === entitlement.resource);
     return quota ? quota.used >= entitlement.hardLimit : false;
@@ -69,6 +281,8 @@ export function SubscriptionPage() {
         onRetry={() => {
           void subscriptionQuery.refetch();
           void entitlementsQuery.refetch();
+          void catalogQuery.refetch();
+          void packagesQuery.refetch();
         }}
       >
         {subscription && entitlementsQuery.data && (
@@ -112,6 +326,232 @@ export function SubscriptionPage() {
                   </div>
                 ))}
               </div>
+            </article>
+
+            <article className="overview-card">
+              <div className="overview-priority__copy">
+                <span className="overview-priority__eyebrow">App store interno</span>
+                <h2>Catálogo de servicios</h2>
+                <p>
+                  Estimado mensual activo:{" "}
+                  <strong>{formatMoney(estimatedMonthlyTotal, "ARS")}</strong>
+                </p>
+              </div>
+              <section aria-labelledby="subscription-packages-heading">
+                <h3 id="subscription-packages-heading">Paquetes recomendados</h3>
+                <p>
+                  Elegí una configuración inicial y después ajustá cada servicio de forma
+                  independiente.
+                </p>
+                <p>
+                  El paquete configura el tenant completo. Los servicios de sucursal se aplican a
+                  todas las sucursales actuales.
+                </p>
+                <div className="profile-module-grid">
+                  {catalogPackages.map((catalogPackage) => {
+                    const packagePrice = catalogPackage.items.reduce((total, packageItem) => {
+                      const definition = catalog.find(
+                        (item) => item.code === packageItem.catalogItemCode,
+                      );
+                      return (
+                        total +
+                        (definition?.unitPrice ?? 0) *
+                          (definition?.billingType === "QUANTITY"
+                            ? packageItem.quantity ?? 1
+                            : 1) *
+                          (definition?.billingScope === "BRANCH"
+                            ? Math.max(tenantBranches.length, 1)
+                            : 1)
+                      );
+                    }, 0);
+                    return (
+                      <article key={catalogPackage.code} className="profile-card">
+                        <p className="profile-eyebrow">{catalogPackage.tagline}</p>
+                        <h2>{catalogPackage.name}</h2>
+                        <p>
+                          Estimado: <strong>{formatMoney(packagePrice, "ARS")} / mes</strong>
+                        </p>
+                        <details>
+                          <summary>Ver descripción y beneficios</summary>
+                          <p>{catalogPackage.description}</p>
+                          <ul>
+                            {catalogPackage.benefits.map((benefit) => (
+                              <li key={benefit}>{benefit}</li>
+                            ))}
+                          </ul>
+                          <p>
+                            Incluye{" "}
+                            {catalogPackage.items
+                              .map((item) => {
+                                const name =
+                                  catalog.find(
+                                    (definition) => definition.code === item.catalogItemCode,
+                                  )?.name ?? item.catalogItemCode;
+                                return item.quantity ? `${name} × ${item.quantity}` : name;
+                              })
+                              .join(", ")}
+                          </p>
+                        </details>
+                        <button
+                          type="button"
+                          disabled={packageMutation.isPending || tenantBranches.length === 0}
+                          onClick={() => packageMutation.mutate(catalogPackage)}
+                        >
+                          Configurar este paquete
+                        </button>
+                      </article>
+                    );
+                  })}
+                </div>
+              </section>
+              {CATALOG_CATEGORIES.map((category) => {
+                const categoryItems = catalog.filter((item) =>
+                  (category.codes as readonly string[]).includes(item.code),
+                );
+                if (categoryItems.length === 0) return null;
+                return (
+                  <section key={category.label} aria-labelledby={`catalog-${category.slug}`}>
+                    <h3 id={`catalog-${category.slug}`}>{category.label}</h3>
+                    <div className="profile-module-grid">
+                      {categoryItems.map((item) => {
+                        const scopeRef = scopeRefs[item.code] ?? defaultScopeRef(item, tenantBranches);
+                        const activeItem = activeItems.find(
+                          (candidate) =>
+                            candidate.serviceId === item.code &&
+                            (item.billingScope === "TENANT" ||
+                              (candidate.scopeRefId ?? "") === scopeRef),
+                        );
+                        const quantity = quantities[item.code] ?? activeItem?.quantity ?? 1;
+                        const needsScope = item.billingScope !== "TENANT";
+                        return (
+                          <article key={item.code} className="profile-card">
+                            <p className="profile-eyebrow">
+                              {item.billingType === "QUANTITY" ? "Por cantidad" : "Servicio"} ·{" "}
+                              {item.billingScope}
+                            </p>
+                            <h2>{item.name}</h2>
+                            <p>{formatMoney(item.unitPrice, item.currency)} / mes</p>
+                            <details>
+                              <summary>Ver descripción y beneficios</summary>
+                              <p>{item.description}</p>
+                              <ul>
+                                {item.benefits.map((benefit) => (
+                                  <li key={benefit}>{benefit}</li>
+                                ))}
+                              </ul>
+                              {item.dependsOn.length > 0 ? (
+                                <p>Requiere: {item.dependsOn.join(", ")}</p>
+                              ) : null}
+                            </details>
+                            {item.billingScope === "BRANCH" ? (
+                              <label>
+                                Sucursal
+                                <select
+                                  value={scopeRef}
+                                  onChange={(event) =>
+                                    setScopeRefs((current) => ({
+                                      ...current,
+                                      [item.code]: event.target.value,
+                                    }))
+                                  }
+                                >
+                                  <option value="">Seleccionar</option>
+                                  {tenantBranches.map((branch) => (
+                                    <option key={branch.id} value={branch.id}>
+                                      {branch.name}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+                            ) : needsScope ? (
+                              <label>
+                                ID de alcance ({item.billingScope})
+                                <input
+                                  value={scopeRef}
+                                  onChange={(event) =>
+                                    setScopeRefs((current) => ({
+                                      ...current,
+                                      [item.code]: event.target.value,
+                                    }))
+                                  }
+                                  placeholder="UUID del recurso"
+                                />
+                              </label>
+                            ) : null}
+                            {item.billingType === "QUANTITY" ? (
+                              <label>
+                                Cantidad
+                                <input
+                                  type="number"
+                                  min={1}
+                                  step={1}
+                                  value={quantity}
+                                  onChange={(event) =>
+                                    setQuantities((current) => ({
+                                      ...current,
+                                      [item.code]: Math.max(1, Number(event.target.value) || 1),
+                                    }))
+                                  }
+                                />
+                              </label>
+                            ) : null}
+                            <p>
+                              Total:{" "}
+                              <strong>
+                                {formatMoney(
+                                  item.unitPrice *
+                                    (item.billingType === "QUANTITY" ? quantity : 1),
+                                  item.currency,
+                                )}
+                              </strong>
+                            </p>
+                            <button
+                              type="button"
+                              disabled={itemMutation.isPending || (needsScope && !scopeRef)}
+                              onClick={() => {
+                                if (activeItem) {
+                                  if (
+                                    item.billingType === "QUANTITY" &&
+                                    activeItem.quantity !== quantity
+                                  ) {
+                                    itemMutation.mutate({
+                                      path: `/v1/subscriptions/${selectedTenantId}/items/${activeItem.id}`,
+                                      method: "PATCH",
+                                      body: { quantity },
+                                    });
+                                  } else {
+                                    itemMutation.mutate({
+                                      path: `/v1/subscriptions/${selectedTenantId}/items/${activeItem.id}`,
+                                      method: "DELETE",
+                                    });
+                                  }
+                                  return;
+                                }
+                                itemMutation.mutate({
+                                  path: `/v1/subscriptions/${selectedTenantId}/items`,
+                                  method: "POST",
+                                  body: {
+                                    catalogItemCode: item.code,
+                                    ...(item.billingType === "QUANTITY" ? { quantity } : {}),
+                                    ...(needsScope ? { scopeRefId: scopeRef } : {}),
+                                  },
+                                });
+                              }}
+                            >
+                              {activeItem
+                                ? item.billingType === "QUANTITY" &&
+                                  activeItem.quantity !== quantity
+                                  ? "Actualizar cantidad"
+                                  : "Desactivar"
+                                : "Activar"}
+                            </button>
+                          </article>
+                        );
+                      })}
+                    </div>
+                  </section>
+                );
+              })}
             </article>
 
             <section className="profile-module-grid" aria-label="Límites por recurso">
@@ -173,6 +613,21 @@ export function SubscriptionPage() {
 function formatDate(value: string) {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? "—" : date.toLocaleDateString("es-AR");
+}
+
+function formatMoney(value: number, currency: string) {
+  return new Intl.NumberFormat("es-AR", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+function defaultScopeRef(
+  item: CatalogItemResponse,
+  branches: { id: string; code: string; name: string }[],
+) {
+  return item.billingScope === "BRANCH" && branches.length === 1 ? branches[0]!.id : "";
 }
 
 function getSubscriptionSummary(status: string, alertCount: number, nearLimitCount: number) {

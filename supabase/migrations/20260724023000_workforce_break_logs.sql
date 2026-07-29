@@ -1,6 +1,6 @@
 create table if not exists workforce_break_logs (
   id uuid primary key,
-  tenant_id uuid not null references public.tenants(id) on delete cascade,
+  tenant_id uuid not null references public.organization_tenants(id) on delete cascade,
   time_entry_id uuid not null references workforce_time_entries(id) on delete cascade,
   break_type text not null check (break_type in ('MEAL', 'REST', 'OTHER')),
   paid_classification text not null check (paid_classification in ('PAID', 'UNPAID')),

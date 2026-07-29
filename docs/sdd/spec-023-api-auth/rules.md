@@ -14,3 +14,5 @@
 - **AUTH-012:** la lógica de aplicación depende del puerto, no del SDK de Supabase.
 - **AUTH-013:** toda ruta protegida rechaza por defecto la ausencia de contexto autenticado.
 - **AUTH-014:** claims de metadata editables por el cliente nunca conceden autorización.
+- **AUTH-015:** Google OAuth autentica identidad, pero no crea Membership, roles ni scopes internos.
+- **AUTH-016:** el redirect OAuth debe pertenecer a la allowlist exacta de cada ambiente.

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="180" viewBox="0 0 640 180" role="img" aria-labelledby="title">
+  <title id="title">Casa Maitre</title>
+  <rect width="640" height="180" rx="28" fill="#24352e"/>
+  <g transform="translate(36 26)">
+    <circle cx="64" cy="64" r="58" fill="#d49a4a"/>
+    <path d="M30 76c18-42 50-50 72-35-14 1-25 8-31 18 20-7 35 1 43 13-26-4-45 5-56 29-8-13-17-20-28-25Z" fill="#24352e"/>
+    <path d="M42 104h45" stroke="#a63d2f" stroke-width="8" stroke-linecap="round"/>
+  </g>
+  <text x="174" y="82" fill="#fffdf8" font-family="Georgia,serif" font-size="52" font-weight="700">Casa Maitre</text>
+  <text x="177" y="122" fill="#d9cdbd" font-family="system-ui,sans-serif" font-size="18" letter-spacing="3">COCINA PORTEÑA</text>
+</svg>

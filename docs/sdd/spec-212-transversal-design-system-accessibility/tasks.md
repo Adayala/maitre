@@ -17,3 +17,15 @@
 - [ ] Ejecutar revisión manual con teclado, lector de pantalla, zoom y touch.
 - [ ] Validar login, selector y Dash en teléfono/tablet/desktop objetivo I0.
 - [ ] Documentar excepciones y deuda de accesibilidad con owner y vencimiento.
+
+## Incremento visual por rol — 2026-07-28
+
+- [x] Definir una dirección visual diferenciada para Customer, Waiter, Host, Kitchen, Cashier y Dash.
+- [x] Implementar capas finales `modern.css` en las cinco apps internas.
+- [x] Separar la home pública Customer del acceso y los paneles de cuenta.
+- [x] Incorporar foco visible y reducción de movimiento en las nuevas capas.
+- [x] Compilar las seis apps y validar manualmente viewports representativos.
+- [x] Desplegar y verificar las URLs productivas en Vercel.
+- [ ] Automatizar screenshots y pruebas axe/teclado por superficie.
+- [ ] Consolidar tokens estables en `packages/design-tokens`.
+- [ ] Reducir duplicación histórica de `global.css` sin alterar flujos operativos.

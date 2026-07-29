@@ -13,7 +13,7 @@ export class ApiError extends Error {
 export interface RequestOptions {
   accessToken: string;
   tenantId?: string;
-  method?: "GET" | "POST" | "PATCH" | "DELETE";
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
 }
 

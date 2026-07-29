@@ -66,6 +66,14 @@ Las claves pueden cachearse con TTL y refresh controlado. Ante issuer, audience,
 
 El browser usa el proveedor. Maitre no expone `/auth/login` ni `/auth/refresh` propios en I0. Los mensajes visibles no deben permitir enumerar cuentas.
 
+El login ofrece email/contraseña y Google OAuth. Para Google, el browser llama
+`signInWithOAuth({ provider: "google" })` y usa como `redirectTo` únicamente el origen actual o una
+URL configurada en la allowlist de Supabase. La misma acción sirve para registro o ingreso.
+
+Google autentica identidad, pero no concede autorización. Un cliente puede autocrear su identidad;
+un integrante del staff debe tener un User vinculado y una Membership previamente invitada. Email
+o metadata del proveedor nunca crean roles, tenant ni branch scopes.
+
 ### Logout
 
 El cliente elimina su sesión local y solicita revocación al proveedor cuando esté soportada. La API considera inválido todo request sin access token vigente; logout no sustituye expiraciones cortas ni revocación.

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "apps/api/api/serverless.ts": {
+      "maxDuration": 30,
+      "includeFiles": "apps/api/assets/demo-brand/**"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/apps/api/api/serverless"
+    }
+  ]
+}

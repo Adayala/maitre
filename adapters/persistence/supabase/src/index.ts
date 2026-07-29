@@ -1,6 +1,7 @@
 export * from "./client.js";
 export * from "./tenant-repository.js";
 export * from "./brand-repository.js";
+export * from "./brand-presentation-repository.js";
 export * from "./fiscal-entity-repository.js";
 export * from "./branch-repository.js";
 export * from "./salon-repository.js";
@@ -10,6 +11,8 @@ export * from "./membership-repository.js";
 export * from "./outbox-repository.js";
 export * from "./subscription-repository.js";
 export * from "./subscription-item-repository.js";
+export * from "./catalog-item-repository.js";
+export * from "./catalog-package-repository.js";
 export * from "./entitlement-repository.js";
 export * from "./quota-repository.js";
 export * from "./menu-repository.js";

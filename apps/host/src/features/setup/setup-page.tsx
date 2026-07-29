@@ -17,6 +17,14 @@ export function SetupPage() {
   const activeTenant = tenants.find((t) => t.id === selectedTenantId) ?? null;
   const branches = activeTenant?.branches ?? [];
   const step: "tenant" | "branch" = !selectedTenantId ? "tenant" : "branch";
+  const summary = getSetupSummary(step, {
+    tenantCount: tenants.length,
+    branchCount: branches.length,
+  });
+  const checklist = [
+    { label: "Empresa resuelta", done: Boolean(selectedTenantId) },
+    { label: "Sucursal lista para recibir", done: step === "branch" ? branches.length > 0 : false },
+  ];
 
   return (
     <main className="setup">
@@ -25,10 +33,26 @@ export function SetupPage() {
           <span aria-hidden="true">🧭</span>
           <h1>Configurar host</h1>
         </div>
+
+        <article className="setup-panel">
+          <p className="setup-eyebrow">Arranque de recepción</p>
+          <strong>{summary.title}</strong>
+          <p>{summary.message}</p>
+        </article>
+
         <ol className="setup-steps" aria-hidden="true">
           <li className={step === "tenant" ? "on" : selectedTenantId ? "done" : ""}>Empresa</li>
           <li className={step === "branch" ? "on" : selectedBranchId ? "done" : ""}>Sucursal</li>
         </ol>
+
+        <div className="setup-checklist" aria-label="Estado de configuración">
+          {checklist.map((item) => (
+            <div key={item.label} className={`setup-check ${item.done ? "setup-check--done" : ""}`}>
+              <strong>{item.done ? "✓" : "•"}</strong>
+              <span>{item.label}</span>
+            </div>
+          ))}
+        </div>
 
         {step === "tenant" ? (
           <StateView
@@ -41,6 +65,7 @@ export function SetupPage() {
             emptyMessage="Tu usuario no tiene empresas asignadas."
           >
             <h2 className="setup-q">Elegí la empresa</h2>
+            <p className="setup-hint">Primero definimos qué restaurante o tenant va a atender este dispositivo de host.</p>
             <div className="setup-options">
               {tenants.map((t) => (
                 <button key={t.id} type="button" className="option-btn" onClick={() => selectTenant(t.id)}>
@@ -54,6 +79,7 @@ export function SetupPage() {
         {step === "branch" ? (
           <>
             <h2 className="setup-q">Elegí la sucursal de trabajo</h2>
+            <p className="setup-hint">Ahora definimos en qué sede va a operar recepción durante el turno.</p>
             <StateView
               isLoading={isLoading}
               error={error ?? null}
@@ -86,4 +112,21 @@ export function SetupPage() {
       </div>
     </main>
   );
+}
+
+function getSetupSummary(
+  step: "tenant" | "branch",
+  counts: { tenantCount: number; branchCount: number },
+) {
+  if (step === "tenant") {
+    return {
+      title: "Primero elegí la empresa",
+      message: `Hay ${counts.tenantCount} empresa(s) visible(s) para tu usuario. Esta selección define el contexto de recepción.`,
+    };
+  }
+
+  return {
+    title: "Último paso: fijar la sucursal del turno",
+    message: `La empresa ya quedó resuelta. Tenés ${counts.branchCount} sucursal(es) disponibles para entrar al panel host correcto.`,
+  };
 }

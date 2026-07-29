@@ -47,6 +47,9 @@ Los tokens constituyen la fuente de verdad y se nombran por intención, no por v
 
 Los componentes no usan colores hexadecimales, sombras o `z-index` arbitrarios. Los temas sobrescriben tokens semánticos, no la estructura del componente.
 
+SPEC-232 define los tokens de marca publicados por tenant/brand y su aplicación multiapp. Los tokens
+de estado crítico, foco y contraste permanecen gobernados por este sistema de diseño.
+
 ## 3. Accesibilidad
 
 La conformidad objetivo es WCAG 2.2 nivel AA para flujos completos.
@@ -88,6 +91,25 @@ El diseño es mobile-first y fluido. Los breakpoints responden al contenido, no 
 | Connect, computadora | configuración guiada, permisos y diagnóstico |
 
 Las tablas deben ofrecer una representación útil en pantallas angostas; no se permite ocultar datos esenciales sin una alternativa. Kitchen puede adoptar un tema de alta visibilidad validado, pero no se asume dark mode como solución universal.
+
+### Dirección visual por superficie
+
+La coherencia de la suite no implica que todas las apps sean variaciones de la misma grilla de
+tarjetas. Comparten tokens semánticos, accesibilidad, estados y comportamiento; cada rol adopta una
+firma visual compatible con su contexto:
+
+| Superficie | Dirección | Firma visual | Prioridad |
+| --- | --- | --- | --- |
+| Customer | Editorial cálida y marcaria | fotografía, tipografía de marca y contenido respirado | descubrimiento y conversión |
+| Waiter | Brutalismo táctil | rail ácido, números grandes y bloques de estado | selección rápida de mesa y pedido |
+| Host | Espacial y hospitalaria | profundidad suave, señales coral y estados orbitales | llegada, espera y asignación |
+| Kitchen | Industrial de alta visibilidad | grilla técnica, rail de peligro y datos monoespaciados | urgencia y despacho |
+| Cashier | Libro mayor contemporáneo | rail menta, jerarquía numérica y paneles precisos | dinero, diferencias y cierre |
+| Dash | Editorial de control | navegación tinta, títulos amplios y grilla asimétrica | lectura, configuración y decisión |
+
+Las firmas visuales no alteran el significado de colores críticos ni reducen contraste, targets o
+densidad útil. El movimiento es breve, informativo y desactivable mediante
+`prefers-reduced-motion`.
 
 ## 6. Componentes React.js
 

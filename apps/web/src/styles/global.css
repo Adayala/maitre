@@ -6,6 +6,222 @@
   --color-accent: #2b5cad;
 }
 
+/* ==========================================================================
+   2026 visual direction — CONTROL EDITION
+   Editorial management cockpit with an ink rail and asymmetric content frame.
+   ========================================================================== */
+:root {
+  --bg: #f2efe7;
+  --surface: #fffdf8;
+  --surface-muted: #e9e4da;
+  --text: #15181f;
+  --muted: #62656b;
+  --border: #c9c3b8;
+  --primary: #2457ff;
+  --primary-strong: #1537b8;
+  --success: #087f5b;
+  --warning: #b25d00;
+  --danger: #c92a2a;
+  --radius: 4px;
+  --shadow: 10px 10px 0 rgba(21, 24, 31, 0.09);
+}
+
+body {
+  background:
+    linear-gradient(90deg, #15181f 0 12px, transparent 12px),
+    radial-gradient(circle at 94% 2%, rgba(36, 87, 255, 0.12), transparent 25rem),
+    var(--bg);
+  font-family: "Avenir Next", Avenir, "Segoe UI", system-ui, sans-serif;
+}
+
+.dash-shell {
+  grid-template-columns: minmax(210px, 260px) 1fr;
+  grid-template-rows: 82px 1fr;
+}
+
+.dash-header {
+  border-bottom: 2px solid #15181f;
+  background: rgba(242, 239, 231, 0.9);
+  backdrop-filter: blur(18px);
+}
+
+.dash-brand {
+  font-size: 1.35rem;
+  font-weight: 950;
+  letter-spacing: -0.055em;
+  text-transform: uppercase;
+}
+
+.dash-brand::after {
+  content: " / CONTROL";
+  color: var(--primary);
+}
+
+.dash-nav {
+  border-right: 2px solid #15181f;
+  background: #15181f;
+  color: #fffdf8;
+}
+
+.dash-nav ul {
+  gap: 5px;
+  padding: 22px 16px;
+}
+
+.dash-nav a {
+  min-height: 48px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  color: #d7d6d1;
+  font-weight: 750;
+  transition: transform 180ms ease, background 180ms ease, color 180ms ease;
+}
+
+.dash-nav a:hover {
+  transform: translateX(5px);
+  color: #fff;
+}
+
+.dash-nav a.active {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #fff;
+}
+
+.dash-main {
+  max-width: 1560px;
+  padding: clamp(22px, 3vw, 48px);
+}
+
+.overview-page > h1,
+.profiles-hero h1 {
+  max-width: 14ch;
+  margin-bottom: 1.3rem;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2.4rem, 5vw, 5.4rem);
+  font-weight: 500;
+  letter-spacing: -0.065em;
+  line-height: .92;
+}
+
+.overview-card,
+.overview-priority,
+.profile-card,
+.login-copy,
+.login-form-card {
+  border: 1.5px solid #15181f;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.overview-priority {
+  position: relative;
+  overflow: hidden;
+  border-left: 10px solid var(--primary);
+}
+
+.overview-priority::after {
+  content: "";
+  position: absolute;
+  width: 160px;
+  aspect-ratio: 1;
+  right: -80px;
+  top: -80px;
+  border: 22px solid rgba(36, 87, 255, 0.08);
+  border-radius: 50%;
+}
+
+.overview-priority__eyebrow,
+.profile-eyebrow,
+.kpi-grid dt {
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.kpi-grid {
+  gap: 10px;
+}
+
+.kpi-grid > div {
+  min-height: 132px;
+  border: 1.5px solid #15181f;
+  border-radius: 2px;
+  background: var(--surface);
+}
+
+.kpi-grid dd {
+  color: var(--primary);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: clamp(1.65rem, 3vw, 2.8rem);
+  letter-spacing: -0.06em;
+}
+
+.overview-link-card,
+.profile-card {
+  transition: transform 190ms ease, box-shadow 190ms ease;
+}
+
+.overview-link-card:hover,
+.profile-card:hover {
+  transform: translate(-4px, -4px);
+  box-shadow: 14px 14px 0 rgba(21, 24, 31, 0.13);
+}
+
+button,
+.public-cta {
+  border-radius: 2px;
+  font-weight: 800;
+}
+
+:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 3px;
+}
+
+@media (max-width: 760px) {
+  .dash-shell {
+    display: block;
+  }
+
+  .dash-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .dash-nav {
+    border-right: 0;
+    border-bottom: 2px solid #15181f;
+    overflow-x: auto;
+  }
+
+  .dash-nav ul {
+    display: flex;
+    width: max-content;
+    padding: 10px 16px;
+  }
+
+  .overview-page > h1,
+  .profiles-hero h1 {
+    font-size: clamp(2.25rem, 13vw, 4rem);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .overview-card,
+  .overview-priority,
+  .profile-card {
+    animation: control-edition-in 420ms cubic-bezier(.2,.8,.2,1) both;
+  }
+
+  @keyframes control-edition-in {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --color-bg: #121212;
@@ -117,6 +333,26 @@ button {
   color: #c0392b;
 }
 
+.auth-provider-button {
+  min-height: 2.75rem;
+  font-weight: 700;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+  opacity: 0.75;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  border-top: 1px solid var(--color-border);
+}
+
 .dash-shell {
   display: grid;
   grid-template-columns: 14rem 1fr;
@@ -191,6 +427,123 @@ td {
   border-bottom: 1px solid var(--color-border);
 }
 
+.user-management-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.8rem;
+  align-items: end;
+}
+
+.user-management-form label {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.user-management-form input,
+.user-management-form select,
+.user-table-actions select,
+.overview-card table select,
+.organization-selector select,
+.organization-list input,
+.organization-list select {
+  min-height: 2.65rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  background: var(--color-bg);
+  color: var(--color-fg);
+}
+
+.organization-selector {
+  display: grid;
+  gap: 0.35rem;
+  max-width: 28rem;
+  margin-bottom: 1rem;
+}
+
+.organization-list {
+  margin-top: 1rem;
+}
+
+.organization-list label {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.brand-editor {
+  display: grid;
+  gap: 1rem;
+}
+
+.brand-editor__header,
+.brand-editor__actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.brand-editor__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1rem;
+}
+
+.brand-editor__grid > section {
+  display: grid;
+  align-content: start;
+  gap: 0.65rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+}
+
+.brand-editor label {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.brand-editor input {
+  min-height: 2.5rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.45rem;
+  background: var(--color-bg);
+  color: var(--color-fg);
+}
+
+.brand-color-field {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.brand-color-field input[type="color"] {
+  width: 4rem;
+  padding: 0.2rem;
+}
+
+.brand-preview img {
+  max-width: 12rem;
+  max-height: 5rem;
+  object-fit: contain;
+}
+
+.brand-preview .brand-preview__hero {
+  width: 100%;
+  max-width: none;
+  max-height: 11rem;
+  border-radius: 0.65rem;
+  object-fit: cover;
+}
+
+.user-table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
@@ -241,15 +594,15 @@ td {
 }
 
 .overview-priority--success {
-  background: color-mix(in srgb, #2fa86b 12%, white);
+  background: color-mix(in srgb, var(--color-bg) 88%, #2fa86b 12%);
 }
 
 .overview-priority--warning {
-  background: color-mix(in srgb, #f59e0b 14%, white);
+  background: color-mix(in srgb, var(--color-bg) 86%, #f59e0b 14%);
 }
 
 .overview-priority--info {
-  background: color-mix(in srgb, var(--color-accent) 10%, white);
+  background: color-mix(in srgb, var(--color-bg) 90%, var(--color-accent) 10%);
 }
 
 .overview-priority__copy {
@@ -281,20 +634,56 @@ td {
   padding: 0.8rem 0.9rem;
   border-radius: 0.65rem;
   border: 1px solid var(--color-border);
-  background: color-mix(in srgb, var(--color-bg-soft, #f6f7f9) 70%, white);
+  background: color-mix(in srgb, var(--color-bg) 96%, var(--color-accent) 4%);
+  color: var(--color-fg);
 }
 
 .overview-check strong {
-  color: var(--color-fg-muted, inherit);
+  color: color-mix(in srgb, var(--color-fg) 70%, transparent);
 }
 
 .overview-check--done {
   border-color: color-mix(in srgb, #2fa86b 35%, var(--color-border));
-  background: color-mix(in srgb, #2fa86b 10%, white);
+  background: color-mix(in srgb, var(--color-bg) 90%, #2fa86b 10%);
 }
 
 .overview-check--done strong {
   color: #1f7c4e;
+}
+
+.overview-link-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+}
+
+.overview-link-card {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  color: inherit;
+  text-decoration: none;
+  background: color-mix(in srgb, var(--color-bg) 96%, var(--color-accent) 4%);
+}
+
+.overview-link-card span {
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.75;
+}
+
+.overview-link-card p {
+  margin: 0;
+  opacity: 0.82;
+}
+
+.overview-link-card--primary {
+  border-color: color-mix(in srgb, var(--color-accent) 40%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent) 10%, var(--color-bg));
 }
 
 .setup-checklist {
@@ -394,7 +783,7 @@ td {
   padding: 0.85rem 0.95rem;
   border-radius: 0.75rem;
   border: 1px solid var(--color-border);
-  background: color-mix(in srgb, var(--color-bg-soft, #f6f7f9) 75%, white);
+  background: color-mix(in srgb, var(--color-bg) 96%, var(--color-accent) 4%);
 }
 
 .public-journey-pill span {
@@ -430,12 +819,12 @@ td {
   border: 1px solid var(--color-border);
   text-decoration: none;
   color: inherit;
-  background: color-mix(in srgb, var(--color-bg-soft, #f6f7f9) 65%, white);
+  background: color-mix(in srgb, var(--color-bg) 96%, var(--color-accent) 4%);
 }
 
 .public-route-card--accent {
   border-color: color-mix(in srgb, var(--color-accent) 35%, var(--color-border));
-  background: color-mix(in srgb, var(--color-accent) 8%, white);
+  background: color-mix(in srgb, var(--color-bg) 92%, var(--color-accent) 8%);
 }
 
 .public-route-meta {
@@ -479,7 +868,7 @@ td {
 .public-info-card {
   display: grid;
   gap: 0.65rem;
-  background: color-mix(in srgb, var(--color-accent) 6%, white);
+  background: color-mix(in srgb, var(--color-bg) 94%, var(--color-accent) 6%);
 }
 
 .public-detail-list {
@@ -501,7 +890,8 @@ td {
   padding: 0.75rem 0.85rem;
   border-radius: 0.65rem;
   border: 1px solid var(--color-border);
-  background: color-mix(in srgb, var(--color-bg-soft, #f6f7f9) 70%, white);
+  background: color-mix(in srgb, var(--color-bg) 96%, var(--color-accent) 4%);
+  color: var(--color-fg);
 }
 
 .public-check-item strong {
@@ -510,7 +900,7 @@ td {
 
 .public-check-item--done {
   border-color: color-mix(in srgb, var(--color-accent) 35%, var(--color-border));
-  background: color-mix(in srgb, var(--color-accent) 8%, white);
+  background: color-mix(in srgb, var(--color-bg) 92%, var(--color-accent) 8%);
 }
 
 .public-check-item--done strong {
@@ -539,14 +929,14 @@ td {
   padding: 0 0.85rem;
   border-radius: 999px;
   border: 1px solid var(--color-border);
-  background: color-mix(in srgb, var(--color-bg-soft, #f6f7f9) 75%, white);
+  background: color-mix(in srgb, var(--color-bg) 96%, var(--color-accent) 4%);
   color: inherit;
   font: inherit;
 }
 
 .public-chip--active {
   border-color: color-mix(in srgb, var(--color-accent) 45%, var(--color-border));
-  background: color-mix(in srgb, var(--color-accent) 12%, white);
+  background: color-mix(in srgb, var(--color-bg) 88%, var(--color-accent) 12%);
 }
 
 .public-form {
@@ -652,7 +1042,7 @@ td {
   height: 2rem;
   padding: 0 0.65rem;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--color-border) 55%, white);
+  background: color-mix(in srgb, var(--color-bg) 55%, var(--color-border) 45%);
   font-weight: 700;
 }
 
@@ -669,7 +1059,7 @@ td {
   padding: 1rem;
   border-radius: 0.75rem;
   border: 1px solid var(--color-border);
-  background: color-mix(in srgb, var(--color-bg-soft, #f6f7f9) 65%, white);
+  background: color-mix(in srgb, var(--color-bg) 96%, var(--color-accent) 4%);
 }
 
 .public-reservation-card--upcoming {
@@ -706,21 +1096,21 @@ td {
 }
 
 .public-status-pill--pending {
-  background: color-mix(in srgb, #f59e0b 14%, white);
+  background: color-mix(in srgb, var(--color-bg) 86%, #f59e0b 14%);
 }
 
 .public-status-pill--confirmed,
 .public-status-pill--seated {
-  background: color-mix(in srgb, var(--color-accent) 12%, white);
+  background: color-mix(in srgb, var(--color-bg) 88%, var(--color-accent) 12%);
 }
 
 .public-status-pill--completed {
-  background: color-mix(in srgb, #2fa86b 14%, white);
+  background: color-mix(in srgb, var(--color-bg) 86%, #2fa86b 14%);
 }
 
 .public-status-pill--cancelled,
 .public-status-pill--no_show {
-  background: color-mix(in srgb, #c0392b 12%, white);
+  background: color-mix(in srgb, var(--color-bg) 88%, #c0392b 12%);
 }
 
 .public-reservation-empty {

@@ -50,3 +50,9 @@ Response (200): Sucursal actualizada
 - POST /branches → OWNER, ADMIN (respeta max_branches del plan)
 - GET /branches → OWNER, ADMIN, MANAGER
 - PATCH /branches/:id → OWNER, ADMIN
+
+## Superficie de backoffice
+
+`/branches` incluye alta y edición de sucursales. El alta permite seleccionar una marca existente,
+definir código y zona horaria. La misma pantalla incorpora la gestión de salones de la sucursal
+seleccionada.

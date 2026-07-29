@@ -3,7 +3,7 @@
 
 create table if not exists workforce_employments (
   id uuid primary key,
-  tenant_id uuid not null references public.tenants(id) on delete cascade,
+  tenant_id uuid not null references public.organization_tenants(id) on delete cascade,
   person_ref text not null,
   employee_code text not null,
   relationship_type text not null check (relationship_type in ('EMPLOYEE', 'CONTRACTOR', 'TEMPORARY')),
@@ -18,14 +18,14 @@ create table if not exists workforce_employments (
 
 create table if not exists workforce_work_shifts (
   id uuid primary key,
-  tenant_id uuid not null references public.tenants(id) on delete cascade,
-  branch_id uuid not null references public.branches(id) on delete restrict,
+  tenant_id uuid not null references public.organization_tenants(id) on delete cascade,
+  branch_id uuid not null references public.organization_branches(id) on delete restrict,
   timezone text not null,
   business_date date not null,
   starts_at_utc timestamptz not null,
   ends_at_utc timestamptz not null,
   labor_policy_version text not null,
-  service_period_id uuid null references public.service_periods(id) on delete set null,
+  service_period_id uuid null references public.floor_service_periods(id) on delete set null,
   status text not null check (status in ('DRAFT', 'PUBLISHED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED')),
   revision integer not null default 0,
   created_at timestamptz not null,
@@ -43,8 +43,8 @@ create unique index if not exists uq_work_shifts_branch_active
 
 create table if not exists workforce_shift_assignments (
   id uuid primary key,
-  tenant_id uuid not null references public.tenants(id) on delete cascade,
-  branch_id uuid not null references public.branches(id) on delete restrict,
+  tenant_id uuid not null references public.organization_tenants(id) on delete cascade,
+  branch_id uuid not null references public.organization_branches(id) on delete restrict,
   work_shift_id uuid not null references workforce_work_shifts(id) on delete cascade,
   employment_id uuid not null references workforce_employments(id) on delete restrict,
   role_code text not null,
@@ -61,8 +61,8 @@ create table if not exists workforce_shift_assignments (
 
 create table if not exists workforce_time_entries (
   id uuid primary key,
-  tenant_id uuid not null references public.tenants(id) on delete cascade,
-  branch_id uuid not null references public.branches(id) on delete restrict,
+  tenant_id uuid not null references public.organization_tenants(id) on delete cascade,
+  branch_id uuid not null references public.organization_branches(id) on delete restrict,
   employment_id uuid not null references workforce_employments(id) on delete restrict,
   shift_assignment_id uuid null references workforce_shift_assignments(id) on delete set null,
   status text not null check (status in ('OPEN', 'CLOSED')),
@@ -91,7 +91,7 @@ create unique index if not exists uq_time_entries_open_per_employment
 
 create table if not exists workforce_time_adjustments (
   id uuid primary key,
-  tenant_id uuid not null references public.tenants(id) on delete cascade,
+  tenant_id uuid not null references public.organization_tenants(id) on delete cascade,
   time_entry_id uuid not null references workforce_time_entries(id) on delete cascade,
   before_clock_in_at timestamptz null,
   before_clock_out_at timestamptz null,

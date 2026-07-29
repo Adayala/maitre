@@ -11,6 +11,7 @@ Establecer un contrato de autenticación seguro y desacoplado que permita usar S
 3. Maitre vincula el subject externo con un `User` global y resuelve Membership, roles y sucursales desde su base de datos.
 4. Un token válido autentica identidad, pero nunca concede tenant, rol, sucursal ni entitlement por sí solo.
 5. Cambiar de proveedor no modifica las reglas del dominio ni los handlers de aplicación.
+6. El cliente ofrece acceso con Google mediante Supabase Auth cuando el proveedor está habilitado.
 
 ## Fuera de alcance I0
 
@@ -19,6 +20,7 @@ Establecer un contrato de autenticación seguro y desacoplado que permita usar S
 - emitir un segundo JWT de sesión;
 - MFA, SSO empresarial o federation personalizada;
 - autorización basada en metadata editable por el cliente.
+- convertir una identidad Google autenticada en Membership interna sin invitación previa.
 
 ## Criterios de aceptación
 
@@ -51,3 +53,9 @@ ni bundle del browser.
 
 Provider outage/JWKS rotation falla cerrado y la suite contractual permite reemplazar el adapter sin
 cambiar dominio/casos de uso.
+
+### CAD-023-07 — Google permite registro/login sin conceder acceso interno implícito
+
+El browser inicia OAuth con Google mediante el SDK del proveedor y una URL de retorno allowlisted.
+Los clientes pueden crear su identidad; el personal sólo accede al backoffice cuando una Membership
+autoritativa ya lo habilita.

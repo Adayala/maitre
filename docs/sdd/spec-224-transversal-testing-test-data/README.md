@@ -37,5 +37,6 @@ Contrato transversal para obtener evidencia confiable con tests rápidos, manten
 - [Tareas](tasks.md)
 - [Verificación](verification.md)
 - [Decisiones](notes.md)
+- [Diseño del harness E2E reproducible](e2e-harness.md)
 
 La ejecución CI y sus comandos pertenecen a la [matriz de SPEC-207](../spec-207-transversal-engineering-quality/quality-gates.md); esta spec define qué evidencia producen los tests.

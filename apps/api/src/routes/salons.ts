@@ -20,6 +20,7 @@ const patchSalonBodySchema = z.object({
   name: z.string().trim().min(1).max(50).optional(),
   capacity: z.number().int().positive().optional(),
   description: z.string().optional(),
+  status: z.enum(["ACTIVE", "INACTIVE"]).optional(),
 });
 
 function toResponse(salon: Salon) {
@@ -100,6 +101,26 @@ export async function registerSalonRoutes(
       if (err instanceof z.ZodError) {
         return sendProblem(reply, correlationId, badRequest(err.message));
       }
+      return sendProblem(reply, correlationId, err);
+    }
+  });
+
+  app.delete<{ Params: { id: string } }>("/v1/salons/:id", async (req, reply) => {
+    const correlationId = randomUUID();
+    try {
+      const ctx = await requireTenantContext(container, req);
+      requirePermission(ctx, "salon:write");
+      const salon = await container.salons.findById(ctx.tenantId, req.params.id);
+      if (!salon) return sendProblem(reply, correlationId, notFound("Salon"));
+      await container.salons.save({
+        ...salon,
+        status: "INACTIVE",
+        updatedAt: new Date(),
+        updatedBy: ctx.userId,
+      });
+      reply.code(204);
+      return null;
+    } catch (err) {
       return sendProblem(reply, correlationId, err);
     }
   });

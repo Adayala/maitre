@@ -36,6 +36,160 @@
   --safe-b: env(safe-area-inset-bottom, 0px);
 }
 
+/* ==========================================================================
+   2026 visual direction — ARRIVAL ORBIT
+   A spatial reception board: soft depth, coral signals and orbiting states.
+   ========================================================================== */
+:root {
+  --bg: #171225;
+  --surface: #221b34;
+  --surface-2: #2b2241;
+  --surface-3: #352a4d;
+  --border: #55456e;
+  --text: #fff9ef;
+  --muted: #c0b5cf;
+  --primary: #ff775f;
+  --success: #73e2a7;
+  --danger: #ff5f7f;
+  --radius: 24px;
+  --radius-sm: 16px;
+  --shadow: 0 24px 55px rgba(8, 4, 18, 0.42);
+  --font: "Avenir Next", Avenir, "Segoe UI", system-ui, sans-serif;
+}
+
+body {
+  background:
+    radial-gradient(circle at 12% 8%, rgba(255, 119, 95, 0.2), transparent 28rem),
+    radial-gradient(circle at 92% 36%, rgba(126, 87, 194, 0.3), transparent 32rem),
+    linear-gradient(145deg, #171225, #0f0c18 70%);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 14vh -8rem auto auto;
+  width: 22rem;
+  aspect-ratio: 1;
+  border: 1px solid rgba(255, 119, 95, 0.18);
+  border-radius: 50%;
+  box-shadow: 0 0 0 4rem rgba(255, 119, 95, 0.035), 0 0 0 9rem rgba(255, 119, 95, 0.025);
+  pointer-events: none;
+}
+
+.app-header {
+  min-height: 88px;
+  margin: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 22px;
+  background: rgba(34, 27, 52, 0.78);
+  backdrop-filter: blur(24px);
+  box-shadow: var(--shadow);
+}
+
+.hdr-logo {
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 0 7px rgba(255, 119, 95, 0.14);
+}
+
+.hdr-title,
+.host-hero-title {
+  font-weight: 850;
+  letter-spacing: -0.045em;
+}
+
+.host-grid,
+.cashier-grid {
+  gap: 1.15rem;
+}
+
+.cashier-card,
+.cashier-kpi-strip,
+.host-form-panel,
+.host-reservation-card,
+.host-table-card,
+.login-panel,
+.login-form-card {
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: var(--radius);
+  background:
+    radial-gradient(circle at 100% 0, rgba(255, 119, 95, 0.1), transparent 12rem),
+    rgba(34, 27, 52, 0.88);
+  box-shadow: var(--shadow);
+}
+
+.cashier-card--hero {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(120deg, #ff775f, #9b5de5);
+  color: #171225;
+}
+
+.cashier-card--hero::after {
+  content: "";
+  position: absolute;
+  width: 180px;
+  aspect-ratio: 1;
+  right: -55px;
+  bottom: -75px;
+  border: 22px solid rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+}
+
+.host-reservation-card {
+  border-left: 5px solid var(--primary);
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+
+.host-reservation-card:hover,
+.host-table-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 30px 65px rgba(8, 4, 18, 0.55);
+}
+
+.host-status,
+.host-preset-chip,
+.cashier-session-pill {
+  border-radius: 999px;
+}
+
+.host-table-card {
+  min-height: 126px;
+}
+
+.host-table-card strong {
+  font-size: clamp(1.35rem, 4vw, 2rem);
+}
+
+.btn {
+  border-radius: 999px;
+  font-weight: 800;
+}
+
+.btn--primary {
+  background: var(--primary);
+  color: #171225;
+  box-shadow: 0 10px 24px rgba(255, 119, 95, 0.25);
+}
+
+:focus-visible {
+  outline: 3px solid #ffd166;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .host-reservation-card,
+  .host-table-card,
+  .cashier-card {
+    animation: arrival-orbit-in 440ms cubic-bezier(.2,.8,.2,1) both;
+  }
+
+  @keyframes arrival-orbit-in {
+    from { opacity: 0; transform: translateY(18px) scale(.985); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     --bg: #eef1f5;
@@ -284,6 +438,81 @@ body {
 .owner-card-copy {
   margin: 0.35rem 0 0;
   color: var(--muted);
+}
+
+.host-form-panel {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.95rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.host-checklist {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.host-check {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-3);
+}
+
+.host-check strong {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4rem;
+  color: var(--muted);
+}
+
+.host-check--done {
+  border-color: color-mix(in srgb, var(--success) 40%, transparent);
+  background: color-mix(in srgb, var(--success) 10%, var(--surface-3));
+}
+
+.host-check--done strong {
+  color: var(--success);
+}
+
+.host-preset-group {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.host-preset-label {
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.host-preset-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.host-preset-chip {
+  min-height: 42px;
+  padding: 0 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.host-preset-chip--active {
+  border-color: color-mix(in srgb, var(--primary) 48%, transparent);
+  background: color-mix(in srgb, var(--primary) 16%, var(--surface-2));
 }
 
 .owner-checklist,
@@ -1321,9 +1550,57 @@ p {
   color: var(--available);
   border-color: color-mix(in srgb, var(--available) 50%, transparent);
 }
+.setup-panel {
+  display: grid;
+  gap: 0.45rem;
+  margin-bottom: 1rem;
+  padding: 1rem 1.1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.setup-panel strong,
+.setup-panel p {
+  margin: 0;
+}
+.setup-eyebrow {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  font-weight: 800;
+}
+.setup-checklist {
+  display: grid;
+  gap: 0.55rem;
+  margin-bottom: 1rem;
+}
+.setup-check {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.setup-check strong {
+  color: var(--muted);
+}
+.setup-check--done {
+  border-color: color-mix(in srgb, var(--success) 45%, transparent);
+  background: color-mix(in srgb, var(--success) 12%, var(--surface-2));
+}
+.setup-check--done strong {
+  color: color-mix(in srgb, var(--success) 88%, white);
+}
 .setup-q {
   font-size: 1.2rem;
   margin-bottom: 1rem;
+}
+.setup-hint {
+  margin: -0.45rem 0 1rem;
+  color: var(--muted);
 }
 .setup-options {
   display: flex;

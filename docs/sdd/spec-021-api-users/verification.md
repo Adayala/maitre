@@ -37,3 +37,10 @@
 - [ ] self-escalation, peer escalation y rol no delegable fallan;
 - [ ] errores 401/403/404/409/412/422 coinciden con Problem Details;
 - [ ] los checks requieren evidencia enlazada y no se completan por mera existencia de código.
+
+### CAD-021-07 — La superficie combinada permite comprender y gestionar accesos
+
+- [ ] `/users` muestra usuarios, estados y perfiles asignados;
+- [ ] alta y edición actualizan la lista sin recargar la aplicación;
+- [ ] el catálogo contextual explica las capacidades de cada perfil;
+- [ ] `/profiles` redirige a `/users`.

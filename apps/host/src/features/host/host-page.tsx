@@ -83,6 +83,10 @@ interface SalonDetail extends SalonSummary {
 }
 
 type HostTab = "reservations" | "waitlist" | "availability";
+type TimePreset = { label: string; value: string };
+type TimePresetConfig =
+  | { label: string; hoursOffset: number }
+  | { label: string; dayOffset?: number; fixedHour: number; fixedMinute: number };
 
 const reservationStatuses: Array<ReservationListItem["status"] | "ALL"> = [
   "ALL",
@@ -94,6 +98,9 @@ const reservationStatuses: Array<ReservationListItem["status"] | "ALL"> = [
   "NO_SHOW",
   "EXPIRED",
 ];
+
+const PARTY_SIZE_PRESETS = ["2", "4", "6", "8"];
+const DURATION_PRESETS = ["60", "90", "120"];
 
 export function HostPage() {
   const api = useApi();
@@ -121,6 +128,7 @@ export function HostPage() {
   const [newWaitlistNotes, setNewWaitlistNotes] = useState("");
   const [waitlistSeatSelections, setWaitlistSeatSelections] = useState<Record<string, string[]>>({});
   const [lastActionMessage, setLastActionMessage] = useState<string | null>(null);
+  const timePresets = useMemo(() => buildTimePresets(), []);
 
   const reservationsQuery = useQuery({
     queryKey: ["host-reservations", selectedBranchId, reservationStatus],
@@ -368,6 +376,21 @@ export function HostPage() {
             }
           : null;
 
+  const reservationDraftChecklist = [
+    { label: "Huésped identificado", done: Boolean(newReservationGuestName.trim()) },
+    { label: "Cantidad definida", done: Number(newReservationPartySize) > 0 },
+    { label: "Horario definido", done: Boolean(newReservationStartAt) },
+    { label: "Duración definida", done: Number(newReservationDurationMinutes) > 0 },
+  ];
+  const reservationDraftReady = reservationDraftChecklist.every((step) => step.done);
+  const reservationDraftMissing = reservationDraftChecklist.filter((step) => !step.done).map((step) => step.label);
+  const availabilityActionPlan = [
+    { label: "Cantidad cargada", done: Number(availabilityPartySize) > 0 },
+    { label: "Horario cargado", done: Boolean(availabilityStartAt) },
+    { label: "Duración cargada", done: Number(availabilityDurationMinutes) > 0 },
+    { label: "Mesas sugeridas", done: (availabilityQuery.data?.data.freeTableIds.length ?? 0) > 0 },
+  ];
+
   const refreshAll = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["host-reservations"] }),
@@ -471,6 +494,14 @@ export function HostPage() {
       await refreshAll();
     },
   });
+
+  function copyAvailabilityIntoReservation() {
+    setNewReservationPartySize(availabilityPartySize);
+    setNewReservationStartAt(availabilityStartAt);
+    setNewReservationDurationMinutes(availabilityDurationMinutes);
+    setTab("reservations");
+    setLastActionMessage("Chequeo de disponibilidad copiado al alta de reserva.");
+  }
 
   return (
     <main className="host-app">
@@ -739,6 +770,24 @@ export function HostPage() {
                   <p className="host-card-copy">Alta rápida desde recepción.</p>
                 </div>
               </div>
+              <div className="host-form-panel">
+                <strong>Checklist de alta</strong>
+                <div className="host-checklist">
+                  {reservationDraftChecklist.map((step) => (
+                    <div key={step.label} className={`host-check ${step.done ? "host-check--done" : ""}`}>
+                      <strong>{step.done ? "✓" : "•"}</strong>
+                      <span>{step.label}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className={`cashier-banner ${reservationDraftReady ? "cashier-banner--success" : "cashier-banner--info"}`}>
+                  <span>
+                    {reservationDraftReady
+                      ? "La reserva ya tiene los datos mínimos para cargarse."
+                      : `Todavía falta: ${reservationDraftMissing.join(", ")}.`}
+                  </span>
+                </div>
+              </div>
               <form
                 className="cashier-form"
                 onSubmit={(event) => {
@@ -762,6 +811,21 @@ export function HostPage() {
                   Comensales
                   <input value={newReservationPartySize} onChange={(e) => setNewReservationPartySize(e.target.value)} inputMode="numeric" />
                 </label>
+                <div className="host-preset-group">
+                  <span className="host-preset-label">Atajos de comensales</span>
+                  <div className="host-preset-row">
+                    {PARTY_SIZE_PRESETS.map((preset: string) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        className={`host-preset-chip ${newReservationPartySize === preset ? "host-preset-chip--active" : ""}`}
+                        onClick={() => setNewReservationPartySize(preset)}
+                      >
+                        {preset} pax
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <div className="cashier-banner cashier-banner--info">
                   <span>Recepción guarda el huésped para poder reencontrarlo luego en reservas y waitlist.</span>
                 </div>
@@ -769,10 +833,40 @@ export function HostPage() {
                   Inicio
                   <input type="datetime-local" value={newReservationStartAt} onChange={(e) => setNewReservationStartAt(e.target.value)} />
                 </label>
+                <div className="host-preset-group">
+                  <span className="host-preset-label">Horarios frecuentes</span>
+                  <div className="host-preset-row">
+                    {timePresets.map((preset) => (
+                      <button
+                        key={preset.label}
+                        type="button"
+                        className={`host-preset-chip ${newReservationStartAt === preset.value ? "host-preset-chip--active" : ""}`}
+                        onClick={() => setNewReservationStartAt(preset.value)}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <label>
                   Duración (min)
                   <input value={newReservationDurationMinutes} onChange={(e) => setNewReservationDurationMinutes(e.target.value)} inputMode="numeric" />
                 </label>
+                <div className="host-preset-group">
+                  <span className="host-preset-label">Duración sugerida</span>
+                  <div className="host-preset-row">
+                    {DURATION_PRESETS.map((preset: string) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        className={`host-preset-chip ${newReservationDurationMinutes === preset ? "host-preset-chip--active" : ""}`}
+                        onClick={() => setNewReservationDurationMinutes(preset)}
+                      >
+                        {preset} min
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <label>
                   Notas
                   <input value={newReservationNotes} onChange={(e) => setNewReservationNotes(e.target.value)} placeholder="Cumpleaños, silla alta, etc." />
@@ -1185,19 +1279,75 @@ export function HostPage() {
                   <p className="host-card-copy">Consulta live para una fecha y cantidad de cubiertos.</p>
                 </div>
               </div>
+              <div className="host-form-panel">
+                <strong>Qué revisar antes de prometer un horario</strong>
+                <div className="host-checklist">
+                  {availabilityActionPlan.map((step) => (
+                    <div key={step.label} className={`host-check ${step.done ? "host-check--done" : ""}`}>
+                      <strong>{step.done ? "✓" : "•"}</strong>
+                      <span>{step.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
               <div className="cashier-form">
                 <label>
                   Comensales
                   <input value={availabilityPartySize} onChange={(e) => setAvailabilityPartySize(e.target.value)} inputMode="numeric" />
                 </label>
+                <div className="host-preset-group">
+                  <span className="host-preset-label">Atajos de comensales</span>
+                  <div className="host-preset-row">
+                    {PARTY_SIZE_PRESETS.map((preset: string) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        className={`host-preset-chip ${availabilityPartySize === preset ? "host-preset-chip--active" : ""}`}
+                        onClick={() => setAvailabilityPartySize(preset)}
+                      >
+                        {preset} pax
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <label>
                   Inicio
                   <input type="datetime-local" value={availabilityStartAt} onChange={(e) => setAvailabilityStartAt(e.target.value)} />
                 </label>
+                <div className="host-preset-group">
+                  <span className="host-preset-label">Horarios frecuentes</span>
+                  <div className="host-preset-row">
+                    {timePresets.map((preset) => (
+                      <button
+                        key={preset.label}
+                        type="button"
+                        className={`host-preset-chip ${availabilityStartAt === preset.value ? "host-preset-chip--active" : ""}`}
+                        onClick={() => setAvailabilityStartAt(preset.value)}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <label>
                   Duración (min)
                   <input value={availabilityDurationMinutes} onChange={(e) => setAvailabilityDurationMinutes(e.target.value)} inputMode="numeric" />
                 </label>
+                <div className="host-preset-group">
+                  <span className="host-preset-label">Duración sugerida</span>
+                  <div className="host-preset-row">
+                    {DURATION_PRESETS.map((preset: string) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        className={`host-preset-chip ${availabilityDurationMinutes === preset ? "host-preset-chip--active" : ""}`}
+                        onClick={() => setAvailabilityDurationMinutes(preset)}
+                      >
+                        {preset} min
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </section>
 
@@ -1221,6 +1371,14 @@ export function HostPage() {
                           ? "Hay disponibilidad para ese horario."
                           : "No hay disponibilidad para ese horario."}
                       </span>
+                    </div>
+                    <div className="cashier-quick-actions">
+                      <button type="button" className="btn btn--primary" onClick={copyAvailabilityIntoReservation}>
+                        Pasar a nueva reserva
+                      </button>
+                      <button type="button" className="btn btn--ghost" onClick={() => setTab("reservations")}>
+                        Ir a reservas
+                      </button>
                     </div>
                     <div className="owner-links">
                       {availabilityQuery.data.data.freeTableIds.length > 0 ? (
@@ -1260,6 +1418,31 @@ export function HostPage() {
 function defaultDateTimeLocal() {
   const date = new Date(Date.now() + 60 * 60 * 1000);
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}T${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+}
+
+function buildTimePresets(): TimePreset[] {
+  const now = new Date();
+  const presets: TimePresetConfig[] = [
+    { label: "En 1 h", hoursOffset: 1 },
+    { label: "Hoy 20:30", fixedHour: 20, fixedMinute: 30 },
+    { label: "Hoy 22:00", fixedHour: 22, fixedMinute: 0 },
+    { label: "Mañana 13:00", dayOffset: 1, fixedHour: 13, fixedMinute: 0 },
+    { label: "Mañana 21:00", dayOffset: 1, fixedHour: 21, fixedMinute: 0 },
+  ];
+
+  return presets.map((preset) => {
+    const date = new Date(now);
+    if ("hoursOffset" in preset) {
+      date.setHours(date.getHours() + preset.hoursOffset, 0, 0, 0);
+    } else {
+      date.setDate(date.getDate() + (preset.dayOffset ?? 0));
+      date.setHours(preset.fixedHour, preset.fixedMinute, 0, 0);
+    }
+    return {
+      label: preset.label,
+      value: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}T${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`,
+    };
+  });
 }
 
 function formatDateTime(value: string) {

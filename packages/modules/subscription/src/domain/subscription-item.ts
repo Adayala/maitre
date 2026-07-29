@@ -6,6 +6,8 @@ export interface SubscriptionItem {
   id: string;
   subscriptionId: string;
   serviceId: string;
+  catalogItemCode?: string | null;
+  scopeRefId?: string | null;
   status: SubscriptionItemStatus;
   quantity: number;
   unitPrice: number;
