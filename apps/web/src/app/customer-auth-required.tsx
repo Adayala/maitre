@@ -1,7 +1,8 @@
+import type { ReactElement } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "./auth-context.js";
 
-export function CustomerAuthRequired({ children }: { children: JSX.Element }) {
+export function CustomerAuthRequired({ children }: { children: ReactElement }) {
   const { accessToken, isLoading } = useAuth();
   const location = useLocation();
 
