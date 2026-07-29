@@ -94,15 +94,15 @@ async function transition(
   command: Command,
   to: CommandStatus,
   patch: Partial<Command>,
+  transitionedAt = nowFrom(deps),
 ): Promise<Command> {
   assertCommandTransition(command.status, to);
-  const now = nowFrom(deps);
   const updated: Command = {
     ...command,
     ...patch,
     status: to,
     revision: command.revision + 1,
-    updatedAt: now,
+    updatedAt: transitionedAt,
   };
   await deps.commands.save(updated);
   return updated;
@@ -115,7 +115,7 @@ export async function claimCommand(
 ): Promise<Command> {
   const command = await loadCommand(deps, input.tenantId, input.commandId);
   const now = nowFrom(deps);
-  return transition(deps, command, "CLAIMED", { ownerActorRef: input.actorRef, claimedAt: now });
+  return transition(deps, command, "CLAIMED", { ownerActorRef: input.actorRef, claimedAt: now }, now);
 }
 
 // POST /release — CLAIMED -> RECEIVED (only before production begins), clears owner.
@@ -135,7 +135,7 @@ export async function startCommand(
 ): Promise<Command> {
   const command = await loadCommand(deps, input.tenantId, input.commandId);
   const now = nowFrom(deps);
-  const updated = await transition(deps, command, "IN_PROGRESS", { startedAt: now });
+  const updated = await transition(deps, command, "IN_PROGRESS", { startedAt: now }, now);
   await deps.outbox.append(commandInProgressEvent(updated, now, input.correlationId ?? randomUUID()));
   return updated;
 }
@@ -166,7 +166,7 @@ export async function markCommandReady(
 ): Promise<Command> {
   const command = await loadCommand(deps, input.tenantId, input.commandId);
   const now = nowFrom(deps);
-  const updated = await transition(deps, command, "READY", { readyAt: now });
+  const updated = await transition(deps, command, "READY", { readyAt: now }, now);
   await deps.outbox.append(commandReadyEvent(updated, now, input.correlationId ?? randomUUID()));
   return updated;
 }
@@ -178,7 +178,7 @@ export async function completeCommandHandoff(
 ): Promise<Command> {
   const command = await loadCommand(deps, input.tenantId, input.commandId);
   const now = nowFrom(deps);
-  const updated = await transition(deps, command, "COMPLETED", { completedAt: now });
+  const updated = await transition(deps, command, "COMPLETED", { completedAt: now }, now);
   await deps.outbox.append(commandCompletedEvent(updated, now, input.correlationId ?? randomUUID()));
   return updated;
 }
@@ -207,7 +207,7 @@ export async function cancelCommand(
 ): Promise<Command> {
   const command = await loadCommand(deps, input.tenantId, input.commandId);
   const now = nowFrom(deps);
-  return transition(deps, command, "CANCELLED", { cancelReason: input.reason, cancelledAt: now });
+  return transition(deps, command, "CANCELLED", { cancelReason: input.reason, cancelledAt: now }, now);
 }
 
 export class CommandTerminalError extends InvalidStationStateError {

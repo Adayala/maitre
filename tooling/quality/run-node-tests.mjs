@@ -4,7 +4,6 @@ import { spawnSync } from "node:child_process";
 
 const roots = ["apps", "packages", "adapters"];
 const quarantined = new Set([
-  "apps/api/dist/test/ordering-api.test.js",
   "apps/api/dist/test/organization-api.test.js",
   "apps/api/dist/test/reservations-api.test.js",
   "apps/api/dist/test/workforce-api.test.js",
