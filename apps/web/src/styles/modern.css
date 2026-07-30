@@ -97,6 +97,14 @@ button,.public-cta { border-radius:2px; font-weight:800; }
 .fiscal-badge--rejected { color:#a72828; background:#ffeded; }
 .fiscal-badge--inactive { color:#65666a; background:#ecebe7; }
 .fiscal-pos .button-secondary { margin-top:10px; background:transparent; color:var(--fiscal-ink); }
+.fiscal-documents__intro { max-width:68ch; }
+.fiscal-documents__empty { padding:20px; border:1px dashed #8a8d94; color:#54565c; }
+.fiscal-document-list { display:grid; gap:8px; }
+.fiscal-document-row { display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:20px; align-items:center; padding:14px 0; border-bottom:1px solid #c9c7c0; }
+.fiscal-document-row > div { display:grid; gap:3px; }
+.fiscal-document-row span,.fiscal-document-row small { color:#54565c; font-family:ui-monospace,Consolas,monospace; }
+.fiscal-document-row span { font-size:.7rem; font-weight:800; letter-spacing:.08em; }
+.fiscal-document-row .button-secondary { min-width:128px; }
 @media (max-width:1050px) {
   .fiscal-layout { grid-template-columns:1fr; }
   .fiscal-rail { position:static; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); }
@@ -109,4 +117,6 @@ button,.public-cta { border-radius:2px; font-weight:800; }
   .fiscal-readiness > div { min-height:auto; border-right:0; border-bottom:1px solid var(--fiscal-ink); }
   .fiscal-readiness > div:last-child { border-bottom:0; }
   .fiscal-form__wide { grid-column:auto; }
+  .fiscal-document-row { grid-template-columns:1fr auto; }
+  .fiscal-document-row .button-secondary { grid-column:1 / -1; width:100%; }
 }

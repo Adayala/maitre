@@ -42,3 +42,27 @@ export async function apiRequest<T>(path: string, options: RequestOptions): Prom
   }
   return json as T;
 }
+
+export async function apiDownload(
+  path: string,
+  options: Pick<RequestOptions, "accessToken" | "tenantId">,
+): Promise<{ blob: Blob; fileName: string }> {
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${options.accessToken}`,
+  };
+  if (options.tenantId) headers["X-Tenant-Id"] = options.tenantId;
+
+  const response = await fetch(`${API_URL}${path}`, { headers });
+  if (!response.ok) {
+    const problem = (await response.json()) as {
+      type: string;
+      title: string;
+      correlationId?: string;
+    };
+    throw new ApiError(response.status, problem);
+  }
+  const disposition = response.headers.get("Content-Disposition") ?? "";
+  const fileName =
+    disposition.match(/filename="([^"]+)"/i)?.[1] ?? "comprobante-fiscal.html";
+  return { blob: await response.blob(), fileName };
+}

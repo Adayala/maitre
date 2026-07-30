@@ -17,6 +17,7 @@ test("actualiza el perfil fiscal y declara un punto de venta ARCA", async ({
   const branchId = "00000000-0000-0000-0000-000000000003";
   const fiscalEntityId = "00000000-0000-0000-0000-000000000501";
   const pointOfSaleId = "00000000-0000-0000-0000-000000000502";
+  const invoiceId = "00000000-0000-0000-0000-000000000503";
   const now = "2026-07-29T18:00:00.000Z";
   let legalAddress = "";
   let pointOfSale: Record<string, unknown> | null = null;
@@ -123,6 +124,34 @@ test("actualiza el perfil fiscal y declara un punto de venta ARCA", async ({
         json: { data: pointOfSale ? [pointOfSale] : [] },
       });
     }
+    if (path === "/v1/invoices") {
+      return route.fulfill({
+        json: {
+          data: [
+            {
+              id: invoiceId,
+              voucherType: "FACTURA_A",
+              number: 7,
+              status: "AUTHORIZED",
+              currency: "ARS",
+              totals: { grossMinorUnits: 242000 },
+              authorizedAt: now,
+            },
+          ],
+        },
+      });
+    }
+    if (path === `/v1/invoices/${invoiceId}/document`) {
+      return route.fulfill({
+        headers: {
+          "Access-Control-Expose-Headers": "Content-Disposition, ETag",
+          "Content-Disposition":
+            'attachment; filename="factura-a-00001-00000007.html"',
+          "Content-Type": "text/html; charset=utf-8",
+        },
+        body: "<!doctype html><title>Factura A 00001-00000007</title>",
+      });
+    }
     return route.fulfill({
       status: 404,
       json: { title: "Fixture route not found", status: 404 },
@@ -153,5 +182,14 @@ test("actualiza el perfil fiscal y declara un punto de venta ARCA", async ({
   );
   await expect(page.getByText("PV 0002")).toBeVisible();
   await expect(page.getByText("HOMOLOGATION")).toBeVisible();
+  await expect(page.getByText("FACTURA A · 00000007")).toBeVisible();
+
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Descargar" }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toBe("factura-a-00001-00000007.html");
+  await expect(page.getByRole("status")).toContainText(
+    "Comprobante FACTURA A · 00000007 descargado.",
+  );
   await expectNoSeriousAccessibilityViolations(page);
 });
