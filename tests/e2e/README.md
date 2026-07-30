@@ -48,12 +48,13 @@ envía el contrato esperado a la API y comprueba que la nueva entrada aparezca e
 
 ## Estado de MVP-J-001
 
-El proyecto y el harness ya fallan de forma cerrada, registran manifiesto y
+El proyecto y el harness fallan de forma cerrada, registran manifiesto y
 diagnósticos, crean identidades fixture con roles limitados y usan un cliente
-API black-box. El test de release está intencionalmente rojo en el primer gate
-de producto comprobado: Cash no expone todavía una bandeja de checks pendientes
-ni la captura de un pago asociado. Sólo ofrece sesión, movimientos y
-conciliación. No se simula esa capacidad.
+API black-box. El journey autoritativo recorre las UIs reales para sentar una
+mesa, enviar un pedido, prepararlo y entregarlo en Kitchen, pedir y capturar el
+pago en Cash, cerrar la visita y comprobar que la mesa quedó libre. También
+verifica el pago y su único movimiento de caja, registra evidencia correlacionada
+y prueba que Tenant B no puede leer ni mutar el estado de Tenant A.
 
 `local-memory` sirve para desarrollo y no prueba migraciones ni RLS. El gate de
 release seguirá desactivado hasta disponer de PostgreSQL/Supabase efímero,
