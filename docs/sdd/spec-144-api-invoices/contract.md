@@ -24,3 +24,8 @@ el comprobante como adjunto base64 y propaga `invoice-delivery/{deliveryId}` com
 idempotencia del proveedor. Requiere `RESEND_API_KEY` y `FISCAL_EMAIL_FROM` sólo en servidor.
 `POST /v1/invoice-deliveries/:id/process` ejecuta una entrega del tenant autenticado y exige
 `invoice:issue`; sin configuración falla cerrado y nunca simula un envío exitoso.
+
+El cron interno procesa lotes de hasta diez solicitudes, protegido por `CRON_SECRET`. El schedule
+incluido es diario para ser compatible con Vercel Hobby; Pro o un scheduler externo pueden invocar
+el mismo endpoint cada cinco minutos. Los candidatos se ordenan por antigüedad y un claim
+`PROCESSING` se considera recuperable después de cinco minutos.

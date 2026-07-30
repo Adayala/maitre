@@ -1,5 +1,5 @@
 import type { FastifyInstance, FastifyReply } from "fastify";
-import { randomUUID } from "node:crypto";
+import { randomUUID, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 import {
   createInvoice,
@@ -19,6 +19,7 @@ import {
   renderAuthorizedInvoicePdfDocument,
   queueInvoiceEmailDelivery,
   processInvoiceDelivery,
+  processInvoiceDeliveryBatch,
   ResendInvoiceEmailSender,
   type InvoiceDeliveryDocumentPort,
   type TaxLineInput,
@@ -44,6 +45,7 @@ import {
   notFound,
   conflict,
   badRequest,
+  authenticationRequired,
 } from "../http/problem-details.js";
 
 // SPEC-144/145/147/150/155 — Invoices + FiscalPointOfSale + QR + Export API.
@@ -245,6 +247,14 @@ function configuredEmailSender(): ResendInvoiceEmailSender {
   return new ResendInvoiceEmailSender({ apiKey, from });
 }
 
+function hasCronAuthorization(header: string | undefined): boolean {
+  const secret = process.env["CRON_SECRET"];
+  if (!secret || !header?.startsWith("Bearer ")) return false;
+  const provided = Buffer.from(header.slice(7));
+  const expected = Buffer.from(secret);
+  return provided.length === expected.length && timingSafeEqual(provided, expected);
+}
+
 function mapFiscalError(
   err: unknown,
 ): { kind: "conflict" | "badrequest" | "notfound"; message: string } | null {
@@ -374,6 +384,38 @@ export async function registerInvoiceRoutes(
           return sendProblem(reply, correlationId, badRequest(err.message));
         }
         return sendMapped(reply, correlationId, err, "FiscalPointOfSale");
+      }
+    },
+  );
+
+  app.get(
+    "/internal/fiscal/invoice-deliveries/process",
+    {
+      config: {
+        rateLimit: {
+          max: 10,
+          timeWindow: "1 minute",
+        },
+      },
+    },
+    async (req, reply) => {
+      const correlationId = randomUUID();
+      try {
+        if (!hasCronAuthorization(req.headers.authorization)) {
+          return sendProblem(reply, correlationId, authenticationRequired());
+        }
+        const result = await processInvoiceDeliveryBatch(
+          {
+            deliveries: container.invoiceDeliveries,
+            documents: deliveryDocuments(container),
+            sender: configuredEmailSender(),
+            outbox: container.outbox,
+          },
+          { limit: 10, correlationId },
+        );
+        return { data: result };
+      } catch (err) {
+        return sendProblem(reply, correlationId, err);
       }
     },
   );

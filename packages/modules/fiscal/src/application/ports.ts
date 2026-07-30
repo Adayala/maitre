@@ -36,10 +36,12 @@ export interface InvoiceDeliveryRepositoryPort {
     idempotencyKey: string,
   ): Promise<InvoiceDelivery | null>;
   listByInvoice(tenantId: string, invoiceId: string): Promise<InvoiceDelivery[]>;
+  listProcessable(limit: number, staleBefore: Date): Promise<InvoiceDelivery[]>;
   claimForProcessing(
     tenantId: string,
     id: string,
     updatedAt: Date,
+    staleBefore: Date,
   ): Promise<InvoiceDelivery | null>;
   save(delivery: InvoiceDelivery): Promise<void>;
 }

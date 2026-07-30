@@ -64,13 +64,33 @@ export class SupabaseInvoiceDeliveryRepository
     return (data ?? []).map((row) => fromRow(row as Record<string, unknown>));
   }
 
-  async claimForProcessing(tenantId: string, id: string, updatedAt: Date) {
+  async listProcessable(limit: number, staleBefore: Date) {
+    const { data, error } = await this.client
+      .from(TABLE)
+      .select("*")
+      .or(
+        `status.in.(QUEUED,FAILED),and(status.eq.PROCESSING,updated_at.lt.${staleBefore.toISOString()})`,
+      )
+      .order("created_at")
+      .limit(limit);
+    if (error) throw error;
+    return (data ?? []).map((row) => fromRow(row as Record<string, unknown>));
+  }
+
+  async claimForProcessing(
+    tenantId: string,
+    id: string,
+    updatedAt: Date,
+    staleBefore: Date,
+  ) {
     const { data, error } = await this.client
       .from(TABLE)
       .update({ status: "PROCESSING", updated_at: updatedAt.toISOString() })
       .eq("tenant_id", tenantId)
       .eq("id", id)
-      .in("status", ["QUEUED", "FAILED"])
+      .or(
+        `status.in.(QUEUED,FAILED),and(status.eq.PROCESSING,updated_at.lt.${staleBefore.toISOString()})`,
+      )
       .select("*")
       .maybeSingle();
     if (error) throw error;

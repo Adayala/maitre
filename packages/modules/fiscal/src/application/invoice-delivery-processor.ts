@@ -51,6 +51,7 @@ export async function processInvoiceDelivery(
     input.tenantId,
     input.deliveryId,
     now,
+    new Date(now.getTime() - 5 * 60_000),
   );
   if (!claimed) {
     throw new InvoiceDeliveryAlreadyProcessingError(input.deliveryId);
@@ -98,6 +99,34 @@ export async function processInvoiceDelivery(
     );
     return failed;
   }
+}
+
+export async function processInvoiceDeliveryBatch(
+  deps: Parameters<typeof processInvoiceDelivery>[0],
+  input: { limit: number; correlationId?: string },
+): Promise<{ claimed: number; sent: number; failed: number }> {
+  const limit = Math.max(1, Math.min(input.limit, 25));
+  const now = (deps.now ?? (() => new Date()))();
+  const candidates = await deps.deliveries.listProcessable(
+    limit,
+    new Date(now.getTime() - 5 * 60_000),
+  );
+  let sent = 0;
+  let failed = 0;
+  for (const candidate of candidates) {
+    try {
+      const result = await processInvoiceDelivery(deps, {
+        tenantId: candidate.tenantId,
+        deliveryId: candidate.id,
+        ...(input.correlationId ? { correlationId: input.correlationId } : {}),
+      });
+      if (result.status === "SENT") sent += 1;
+      else if (result.status === "FAILED") failed += 1;
+    } catch (error) {
+      if (!(error instanceof InvoiceDeliveryAlreadyProcessingError)) throw error;
+    }
+  }
+  return { claimed: candidates.length, sent, failed };
 }
 
 export class InvoiceDeliveryAlreadyProcessingError extends Error {
