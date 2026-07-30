@@ -17,12 +17,14 @@ import {
   buildFiscalQrCode,
   renderAuthorizedInvoiceDocument,
   renderAuthorizedInvoicePdfDocument,
+  queueInvoiceEmailDelivery,
   type TaxLineInput,
   type InvoiceDeps,
   InvalidInvoiceTransitionError,
   ImmutableInvoiceError,
   InvoiceNotCreditableError,
   InvoiceDocumentNotRenderableError,
+  InvoiceDeliveryIdempotencyConflictError,
   NoEffectiveTaxRateError,
   DuplicatePointOfSaleError,
   PointOfSaleInactiveError,
@@ -137,6 +139,11 @@ const exportBody = z.object({
   periodTo: z.string().datetime(),
 });
 
+const deliveryBody = z.object({
+  recipientEmail: z.string().email(),
+  format: z.enum(["PDF", "HTML"]).default("PDF"),
+});
+
 function invoiceDeps(container: Container): InvoiceDeps {
   return {
     invoices: container.invoices,
@@ -156,6 +163,7 @@ function mapFiscalError(
     err instanceof ImmutableInvoiceError ||
     err instanceof InvoiceNotCreditableError ||
     err instanceof InvoiceDocumentNotRenderableError ||
+    err instanceof InvoiceDeliveryIdempotencyConflictError ||
     err instanceof DuplicatePointOfSaleError ||
     err instanceof PointOfSaleInactiveError ||
     err instanceof PointOfSaleRegistrationError
@@ -788,6 +796,48 @@ export async function registerInvoiceRoutes(
           return sendMapped(reply, correlationId, err, "Invoice");
         }
       },
+    },
+  );
+
+  app.post<{ Params: { id: string } }>(
+    "/v1/invoices/:id/deliveries",
+    async (req, reply) => {
+      const correlationId = randomUUID();
+      try {
+        const ctx = await requireTenantContext(container, req);
+        requirePermission(ctx, "invoice:issue");
+        const idempotencyKey = req.headers["idempotency-key"];
+        if (typeof idempotencyKey !== "string" || !idempotencyKey.trim()) {
+          return sendProblem(
+            reply,
+            correlationId,
+            badRequest("Idempotency-Key header is required"),
+          );
+        }
+        const body = deliveryBody.parse(req.body);
+        const result = await queueInvoiceEmailDelivery(
+          {
+            invoices: container.invoices,
+            deliveries: container.invoiceDeliveries,
+            outbox: container.outbox,
+          },
+          {
+            tenantId: ctx.tenantId,
+            invoiceId: req.params.id,
+            recipientEmail: body.recipientEmail,
+            format: body.format,
+            idempotencyKey: idempotencyKey.trim(),
+            correlationId,
+          },
+        );
+        reply.code(result.created ? 202 : 200);
+        return { data: result.delivery, meta: { idempotentReplay: !result.created } };
+      } catch (err) {
+        if (err instanceof z.ZodError) {
+          return sendProblem(reply, correlationId, badRequest(err.message));
+        }
+        return sendMapped(reply, correlationId, err, "Invoice");
+      }
     },
   );
 

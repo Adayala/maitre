@@ -20,5 +20,7 @@ export * from "./application/tax-rate-commands.js";
 export * from "./application/invoice-export.js";
 export * from "./application/invoice-document.js";
 export * from "./application/invoice-pdf-document.js";
+export * from "./application/invoice-delivery.js";
+export * from "./domain/invoice-delivery.js";
 export * from "./adapters/simulated-arca-adapter.js";
 export * from "./adapters/wsfev1-arca-adapter.js";

@@ -3,7 +3,10 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { buildApp } from "../app.js";
 import { buildContainer, type Container } from "../composition/container.js";
-import type { FixtureSessionVerificationPort } from "@maitre/adapter-persistence-memory";
+import {
+  InMemoryOutboxRepository,
+  type FixtureSessionVerificationPort,
+} from "@maitre/adapter-persistence-memory";
 
 const DEMO_POS_ID = "00000000-0000-0000-0000-00000000000f";
 const DEMO_CUIT = "20123456786";
@@ -488,6 +491,52 @@ serialTest(
     assert.equal(pdfFirst.headers.etag, pdfSecond.headers.etag);
     assert.equal(pdfFirst.rawPayload.subarray(0, 5).toString(), "%PDF-");
     assert.deepEqual(pdfFirst.rawPayload, pdfSecond.rawPayload);
+  },
+);
+
+serialTest(
+  "Fiscal API: queues invoice email delivery idempotently without email in outbox",
+  async () => {
+    const container = await buildContainer();
+    const { tenantId, branchId, fiscalEntityId } = await getContext(container);
+    const app = await buildApp(container);
+    const headers = ownerHeaders(container, tenantId);
+    const checkId = await seedCheck(container, tenantId, branchId);
+    const invoice = (
+      await createInvoiceFromCheck(container, headers, fiscalEntityId, checkId)
+    ).json().data;
+    await app.inject({
+      method: "POST",
+      url: `/v1/invoices/${invoice.id}/issue`,
+      headers,
+    });
+
+    const request = {
+      method: "POST" as const,
+      url: `/v1/invoices/${invoice.id}/deliveries`,
+      headers: { ...headers, "idempotency-key": "email-invoice-1" },
+      payload: { recipientEmail: "CLIENTE@Example.com", format: "PDF" },
+    };
+    const first = await app.inject(request);
+    const replay = await app.inject(request);
+
+    assert.equal(first.statusCode, 202);
+    assert.equal(replay.statusCode, 200);
+    assert.equal(first.json().data.id, replay.json().data.id);
+    assert.equal(replay.json().meta.idempotentReplay, true);
+    assert.equal(first.json().data.recipientEmail, "cliente@example.com");
+
+    const events = (
+      container.outbox as InMemoryOutboxRepository
+    ).all().filter((record) => record.eventName === "fiscal.invoice-delivery.queued.v1");
+    assert.equal(events.length, 1);
+    assert.doesNotMatch(JSON.stringify(events[0]!.payload), /cliente@example\.com/i);
+
+    const conflictResponse = await app.inject({
+      ...request,
+      payload: { recipientEmail: "otro@example.com", format: "PDF" },
+    });
+    assert.equal(conflictResponse.statusCode, 409);
   },
 );
 
