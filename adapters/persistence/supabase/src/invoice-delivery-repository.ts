@@ -64,6 +64,19 @@ export class SupabaseInvoiceDeliveryRepository
     return (data ?? []).map((row) => fromRow(row as Record<string, unknown>));
   }
 
+  async claimForProcessing(tenantId: string, id: string, updatedAt: Date) {
+    const { data, error } = await this.client
+      .from(TABLE)
+      .update({ status: "PROCESSING", updated_at: updatedAt.toISOString() })
+      .eq("tenant_id", tenantId)
+      .eq("id", id)
+      .in("status", ["QUEUED", "FAILED"])
+      .select("*")
+      .maybeSingle();
+    if (error) throw error;
+    return data ? fromRow(data as Record<string, unknown>) : null;
+  }
+
   async save(delivery: InvoiceDelivery) {
     const { error } = await this.client.from(TABLE).upsert({
       id: delivery.id,

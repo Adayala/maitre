@@ -29,6 +29,20 @@ export class InMemoryInvoiceDeliveryRepository
     );
   }
 
+  async claimForProcessing(tenantId: string, id: string, updatedAt: Date) {
+    const item = await this.findById(tenantId, id);
+    if (!item || (item.status !== "QUEUED" && item.status !== "FAILED")) {
+      return null;
+    }
+    const claimed: InvoiceDelivery = {
+      ...item,
+      status: "PROCESSING",
+      updatedAt,
+    };
+    this.byId.set(id, claimed);
+    return claimed;
+  }
+
   async save(delivery: InvoiceDelivery) {
     this.byId.set(delivery.id, delivery);
   }
