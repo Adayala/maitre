@@ -420,6 +420,18 @@ export async function registerInvoiceRoutes(
     },
   );
 
+  app.get("/v1/invoice-deliveries/summary", async (req, reply) => {
+    const correlationId = randomUUID();
+    try {
+      const ctx = await requireTenantContext(container, req);
+      requirePermission(ctx, "invoice:read");
+      const summary = await container.invoiceDeliveries.getSummary(ctx.tenantId);
+      return { data: summary };
+    } catch (err) {
+      return sendProblem(reply, correlationId, err);
+    }
+  });
+
   app.get<{ Querystring: { fiscalEntityId?: string } }>(
     "/v1/fiscal-points-of-sale",
     async (req, reply) => {

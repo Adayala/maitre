@@ -58,6 +58,22 @@ class DeliveryRepository implements InvoiceDeliveryRepositoryPort {
     ).slice(0, limit);
   }
 
+  async getSummary(tenantId: string) {
+    const items = this.item.tenantId === tenantId ? [this.item] : [];
+    return {
+      tenantId,
+      total: items.length,
+      queued: items.filter((item) => item.status === "QUEUED").length,
+      processing: items.filter((item) => item.status === "PROCESSING").length,
+      sent: items.filter((item) => item.status === "SENT").length,
+      failed: items.filter((item) => item.status === "FAILED").length,
+      oldestPendingAt:
+        items[0]?.status === "QUEUED" || items[0]?.status === "PROCESSING"
+          ? items[0].createdAt
+          : null,
+    };
+  }
+
   async claimForProcessing(
     tenantId: string,
     id: string,

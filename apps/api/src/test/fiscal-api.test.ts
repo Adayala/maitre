@@ -525,6 +525,21 @@ serialTest(
     assert.equal(first.json().data.id, replay.json().data.id);
     assert.equal(replay.json().meta.idempotentReplay, true);
     assert.equal(first.json().data.recipientEmail, "cliente@example.com");
+    const summary = await app.inject({
+      method: "GET",
+      url: "/v1/invoice-deliveries/summary",
+      headers,
+    });
+    assert.equal(summary.statusCode, 200);
+    assert.deepEqual(summary.json().data, {
+      tenantId,
+      total: 1,
+      queued: 1,
+      processing: 0,
+      sent: 0,
+      failed: 0,
+      oldestPendingAt: first.json().data.createdAt,
+    });
 
     const events = (
       container.outbox as InMemoryOutboxRepository

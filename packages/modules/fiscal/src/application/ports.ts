@@ -5,7 +5,10 @@ import type { FiscalCertificate } from "../domain/fiscal-certificate.js";
 import type { InvoiceTemplate } from "../domain/invoice-template.js";
 import type { TaxRate } from "../domain/tax-rate.js";
 import type { AuthorizationAttempt } from "../domain/authorization-attempt.js";
-import type { InvoiceDelivery } from "../domain/invoice-delivery.js";
+import type {
+  InvoiceDelivery,
+  InvoiceDeliverySummary,
+} from "../domain/invoice-delivery.js";
 
 export interface InvoiceRepositoryPort {
   findById(tenantId: string, id: string): Promise<Invoice | null>;
@@ -37,6 +40,7 @@ export interface InvoiceDeliveryRepositoryPort {
   ): Promise<InvoiceDelivery | null>;
   listByInvoice(tenantId: string, invoiceId: string): Promise<InvoiceDelivery[]>;
   listProcessable(limit: number, staleBefore: Date): Promise<InvoiceDelivery[]>;
+  getSummary(tenantId: string): Promise<InvoiceDeliverySummary>;
   claimForProcessing(
     tenantId: string,
     id: string,

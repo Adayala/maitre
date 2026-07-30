@@ -16,3 +16,13 @@ export interface InvoiceDelivery {
   sentAt?: Date | null;
   failureReason?: string | null;
 }
+
+export interface InvoiceDeliverySummary {
+  tenantId: string;
+  total: number;
+  queued: number;
+  processing: number;
+  sent: number;
+  failed: number;
+  oldestPendingAt: Date | null;
+}

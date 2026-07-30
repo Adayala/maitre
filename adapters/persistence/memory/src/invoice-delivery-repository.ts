@@ -41,6 +41,24 @@ export class InMemoryInvoiceDeliveryRepository
       .slice(0, limit);
   }
 
+  async getSummary(tenantId: string) {
+    const items = [...this.byId.values()].filter(
+      (item) => item.tenantId === tenantId,
+    );
+    const pending = items
+      .filter((item) => item.status === "QUEUED" || item.status === "PROCESSING")
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+    return {
+      tenantId,
+      total: items.length,
+      queued: items.filter((item) => item.status === "QUEUED").length,
+      processing: items.filter((item) => item.status === "PROCESSING").length,
+      sent: items.filter((item) => item.status === "SENT").length,
+      failed: items.filter((item) => item.status === "FAILED").length,
+      oldestPendingAt: pending[0]?.createdAt ?? null,
+    };
+  }
+
   async claimForProcessing(
     tenantId: string,
     id: string,

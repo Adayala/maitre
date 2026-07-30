@@ -77,6 +77,41 @@ export class SupabaseInvoiceDeliveryRepository
     return (data ?? []).map((row) => fromRow(row as Record<string, unknown>));
   }
 
+  async getSummary(tenantId: string) {
+    const statuses = ["QUEUED", "PROCESSING", "SENT", "FAILED"] as const;
+    const counts = await Promise.all(
+      statuses.map(async (status) => {
+        const { count, error } = await this.client
+          .from(TABLE)
+          .select("id", { count: "exact", head: true })
+          .eq("tenant_id", tenantId)
+          .eq("status", status);
+        if (error) throw error;
+        return count ?? 0;
+      }),
+    );
+    const { data, error } = await this.client
+      .from(TABLE)
+      .select("created_at")
+      .eq("tenant_id", tenantId)
+      .in("status", ["QUEUED", "PROCESSING"])
+      .order("created_at")
+      .limit(1)
+      .maybeSingle();
+    if (error) throw error;
+    return {
+      tenantId,
+      total: counts.reduce((sum, count) => sum + count, 0),
+      queued: counts[0]!,
+      processing: counts[1]!,
+      sent: counts[2]!,
+      failed: counts[3]!,
+      oldestPendingAt: data
+        ? new Date(String((data as Record<string, unknown>)["created_at"]))
+        : null,
+    };
+  }
+
   async claimForProcessing(
     tenantId: string,
     id: string,
