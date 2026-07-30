@@ -13,7 +13,10 @@ function serialTest(name: string, fn: () => Promise<void> | void) {
 }
 
 async function getContext(container: Container) {
-  const owner = await container.users.findByExternalIdentity("fixture", "demo-owner");
+  const owner = await container.users.findByExternalIdentity(
+    "fixture",
+    "demo-owner",
+  );
   const memberships = await container.memberships.listActiveByUser(owner!.id);
   const tenantId = memberships[0]!.tenantId;
   const branches = await container.branches.listByTenant(tenantId);
@@ -22,14 +25,22 @@ async function getContext(container: Container) {
 }
 
 function ownerHeaders(container: Container, tenantId: string) {
-  return { authorization: `Bearer ${container.demoAccessToken}`, "x-tenant-id": tenantId };
+  return {
+    authorization: `Bearer ${container.demoAccessToken}`,
+    "x-tenant-id": tenantId,
+  };
 }
 
 function sessionsOf(container: Container): FixtureSessionVerificationPort {
   return container.sessions as FixtureSessionVerificationPort;
 }
 
-async function roleHeaders(container: Container, tenantId: string, roleId: string, subject: string) {
+async function roleHeaders(
+  container: Container,
+  tenantId: string,
+  roleId: string,
+  subject: string,
+) {
   const now = new Date();
   await container.users.save({
     id: randomUUID(),
@@ -43,7 +54,8 @@ async function roleHeaders(container: Container, tenantId: string, roleId: strin
   await container.memberships.save({
     id: randomUUID(),
     tenantId,
-    userId: (await container.users.findByExternalIdentity("fixture", subject))!.id,
+    userId: (await container.users.findByExternalIdentity("fixture", subject))!
+      .id,
     status: "ACTIVE",
     branchScopeType: "ALL_BRANCHES",
     roleIds: [roleId],
@@ -63,7 +75,11 @@ async function roleHeaders(container: Container, tenantId: string, roleId: strin
 }
 
 // Seeds a Floor Check directly (the Invoice create flow snapshots it).
-async function seedCheck(container: Container, tenantId: string, branchId: string): Promise<string> {
+async function seedCheck(
+  container: Container,
+  tenantId: string,
+  branchId: string,
+): Promise<string> {
   const now = new Date();
   const id = randomUUID();
   await container.checks.save({
@@ -73,7 +89,11 @@ async function seedCheck(container: Container, tenantId: string, branchId: strin
     visitId: randomUUID(),
     currency: "ARS",
     lines: [
-      { id: randomUUID(), description: "Bife de chorizo", amountMinorUnits: 150000 },
+      {
+        id: randomUUID(),
+        description: "Bife de chorizo",
+        amountMinorUnits: 150000,
+      },
       { id: randomUUID(), description: "Malbec", amountMinorUnits: 50000 },
     ],
     adjustments: [],
@@ -85,236 +105,409 @@ async function seedCheck(container: Container, tenantId: string, branchId: strin
   return id;
 }
 
-async function createInvoiceFromCheck(container: Container, headers: Record<string, string>, fiscalEntityId: string, checkId: string) {
+async function createInvoiceFromCheck(
+  container: Container,
+  headers: Record<string, string>,
+  fiscalEntityId: string,
+  checkId: string,
+) {
   const app = await buildApp(container);
   return app.inject({
     method: "POST",
     url: "/v1/invoices",
     headers,
-    payload: { fiscalEntityId, pointOfSaleId: DEMO_POS_ID, voucherType: "FACTURA_A", currency: "ARS", sourceCheckId: checkId },
+    payload: {
+      fiscalEntityId,
+      pointOfSaleId: DEMO_POS_ID,
+      voucherType: "FACTURA_A",
+      currency: "ARS",
+      sourceCheckId: checkId,
+    },
   });
 }
 
-serialTest("Fiscal API: create invoice from a Check, validate, issue with fake CAE + number 1", async () => {
-  const container = await buildContainer();
-  const { tenantId, branchId, fiscalEntityId } = await getContext(container);
-  const app = await buildApp(container);
-  const headers = ownerHeaders(container, tenantId);
-  const checkId = await seedCheck(container, tenantId, branchId);
+serialTest(
+  "Fiscal API: create invoice from a Check, validate, issue with fake CAE + number 1",
+  async () => {
+    const container = await buildContainer();
+    const { tenantId, branchId, fiscalEntityId } = await getContext(container);
+    const app = await buildApp(container);
+    const headers = ownerHeaders(container, tenantId);
+    const checkId = await seedCheck(container, tenantId, branchId);
 
-  const created = await createInvoiceFromCheck(container, headers, fiscalEntityId, checkId);
-  assert.equal(created.statusCode, 201);
-  const invoice = created.json().data;
-  assert.equal(invoice.status, "DRAFT");
-  // 200000 net, 21% => 42000 tax, 242000 gross.
-  assert.equal(invoice.totals.netMinorUnits, 200000);
-  assert.equal(invoice.totals.taxAmountMinorUnits, 42000);
-  assert.equal(invoice.totals.grossMinorUnits, 242000);
-  assert.equal(invoice.sourceCheckRevision, 2);
-
-  const validated = await app.inject({ method: "POST", url: `/v1/invoices/${invoice.id}/validate`, headers });
-  assert.equal(validated.statusCode, 200);
-  assert.equal(validated.json().data.status, "VALIDATED");
-
-  const issued = await app.inject({ method: "POST", url: `/v1/invoices/${invoice.id}/issue`, headers });
-  assert.equal(issued.statusCode, 200);
-  const issuedInvoice = issued.json().data;
-  assert.equal(issuedInvoice.status, "AUTHORIZED");
-  assert.equal(issuedInvoice.number, 1);
-  assert.ok(String(issuedInvoice.cae).startsWith("SIM"));
-  assert.ok(issuedInvoice.caeExpiresAt);
-});
-
-serialTest("Fiscal API: creates a branch-owned ARCA point of sale and verifies registration", async () => {
-  const container = await buildContainer();
-  const { tenantId, branchId, fiscalEntityId } = await getContext(container);
-  const app = await buildApp(container);
-  const headers = ownerHeaders(container, tenantId);
-  const branch = await container.branches.findById(tenantId, branchId);
-  assert.ok(branch);
-  await container.branches.save({
-    ...branch,
-    fiscalEntityId,
-    updatedAt: new Date(),
-  });
-
-  const created = await app.inject({
-    method: "POST",
-    url: "/v1/fiscal-points-of-sale",
-    headers,
-    payload: {
+    const created = await createInvoiceFromCheck(
+      container,
+      headers,
       fiscalEntityId,
-      branchId,
-      environment: "PRODUCTION",
-      officialCode: "23",
-      arcaDomicileCode: "DOM-ARCA-1",
-      arcaDomicileLabel: "Casa central",
-      issuingSystem: "WSFEV1",
-      allowedVoucherTypes: ["FACTURA_A"],
-    },
-  });
-  assert.equal(created.statusCode, 201);
-  const pos = created.json().data;
-  assert.equal(pos.branchId, branchId);
-  assert.equal(pos.registrationStatus, "DECLARED");
-  assert.equal(pos.arcaDomicileCode, "DOM-ARCA-1");
+      checkId,
+    );
+    assert.equal(created.statusCode, 201);
+    const invoice = created.json().data;
+    assert.equal(invoice.status, "DRAFT");
+    // 200000 net, 21% => 42000 tax, 242000 gross.
+    assert.equal(invoice.totals.netMinorUnits, 200000);
+    assert.equal(invoice.totals.taxAmountMinorUnits, 42000);
+    assert.equal(invoice.totals.grossMinorUnits, 242000);
+    assert.equal(invoice.sourceCheckRevision, 2);
 
-  const withoutEvidence = await app.inject({
-    method: "POST",
-    url: `/v1/fiscal-points-of-sale/${pos.id}/registration`,
-    headers,
-    payload: { status: "VERIFIED" },
-  });
-  assert.equal(withoutEvidence.statusCode, 400);
+    const validated = await app.inject({
+      method: "POST",
+      url: `/v1/invoices/${invoice.id}/validate`,
+      headers,
+    });
+    assert.equal(validated.statusCode, 200);
+    assert.equal(validated.json().data.status, "VALIDATED");
 
-  const verified = await app.inject({
-    method: "POST",
-    url: `/v1/fiscal-points-of-sale/${pos.id}/registration`,
-    headers,
-    payload: {
-      status: "VERIFIED",
-      evidenceRef: "arca://registration/23",
-    },
-  });
-  assert.equal(verified.statusCode, 200);
-  assert.equal(verified.json().data.registrationStatus, "VERIFIED");
-  assert.equal(verified.json().data.registrationEvidenceRef, "arca://registration/23");
-  assert.ok(verified.json().data.verifiedAt);
-});
+    const issued = await app.inject({
+      method: "POST",
+      url: `/v1/invoices/${invoice.id}/issue`,
+      headers,
+    });
+    assert.equal(issued.statusCode, 200);
+    const issuedInvoice = issued.json().data;
+    assert.equal(issuedInvoice.status, "AUTHORIZED");
+    assert.equal(issuedInvoice.number, 1);
+    assert.ok(String(issuedInvoice.cae).startsWith("SIM"));
+    assert.ok(issuedInvoice.caeExpiresAt);
+  },
+);
 
-serialTest("Fiscal API: rejects a point of sale whose branch has another fiscal owner", async () => {
-  const container = await buildContainer();
-  const { tenantId, branchId, fiscalEntityId } = await getContext(container);
-  const app = await buildApp(container);
-  const response = await app.inject({
-    method: "POST",
-    url: "/v1/fiscal-points-of-sale",
-    headers: ownerHeaders(container, tenantId),
-    payload: {
+serialTest(
+  "Fiscal API: creates a branch-owned ARCA point of sale and verifies registration",
+  async () => {
+    const container = await buildContainer();
+    const { tenantId, branchId, fiscalEntityId } = await getContext(container);
+    const app = await buildApp(container);
+    const headers = ownerHeaders(container, tenantId);
+    const branch = await container.branches.findById(tenantId, branchId);
+    assert.ok(branch);
+    await container.branches.save({
+      ...branch,
       fiscalEntityId,
-      branchId,
-      environment: "HOMOLOGATION",
-      officialCode: "24",
-      arcaDomicileCode: "DOM-ARCA-2",
-      allowedVoucherTypes: ["FACTURA_A"],
-    },
-  });
+      updatedAt: new Date(),
+    });
 
-  assert.equal(response.statusCode, 400);
-  assert.equal(
-    response.json().title,
-    "Branch must be explicitly associated with the same fiscal entity",
-  );
-});
+    const created = await app.inject({
+      method: "POST",
+      url: "/v1/fiscal-points-of-sale",
+      headers,
+      payload: {
+        fiscalEntityId,
+        branchId,
+        environment: "PRODUCTION",
+        officialCode: "23",
+        arcaDomicileCode: "DOM-ARCA-1",
+        arcaDomicileLabel: "Casa central",
+        issuingSystem: "WSFEV1",
+        allowedVoucherTypes: ["FACTURA_A"],
+      },
+    });
+    assert.equal(created.statusCode, 201);
+    const pos = created.json().data;
+    assert.equal(pos.branchId, branchId);
+    assert.equal(pos.registrationStatus, "DECLARED");
+    assert.equal(pos.arcaDomicileCode, "DOM-ARCA-1");
 
-serialTest("Fiscal API: a second invoice on the same POS+voucherType gets number 2", async () => {
-  const container = await buildContainer();
-  const { tenantId, branchId, fiscalEntityId } = await getContext(container);
-  const app = await buildApp(container);
-  const headers = ownerHeaders(container, tenantId);
+    const withoutEvidence = await app.inject({
+      method: "POST",
+      url: `/v1/fiscal-points-of-sale/${pos.id}/registration`,
+      headers,
+      payload: { status: "VERIFIED" },
+    });
+    assert.equal(withoutEvidence.statusCode, 400);
 
-  const c1 = await seedCheck(container, tenantId, branchId);
-  const i1 = (await createInvoiceFromCheck(container, headers, fiscalEntityId, c1)).json().data;
-  const issued1 = await app.inject({ method: "POST", url: `/v1/invoices/${i1.id}/issue`, headers });
-  assert.equal(issued1.json().data.number, 1);
+    const verified = await app.inject({
+      method: "POST",
+      url: `/v1/fiscal-points-of-sale/${pos.id}/registration`,
+      headers,
+      payload: {
+        status: "VERIFIED",
+        evidenceRef: "arca://registration/23",
+      },
+    });
+    assert.equal(verified.statusCode, 200);
+    assert.equal(verified.json().data.registrationStatus, "VERIFIED");
+    assert.equal(
+      verified.json().data.registrationEvidenceRef,
+      "arca://registration/23",
+    );
+    assert.ok(verified.json().data.verifiedAt);
+  },
+);
 
-  const c2 = await seedCheck(container, tenantId, branchId);
-  const i2 = (await createInvoiceFromCheck(container, headers, fiscalEntityId, c2)).json().data;
-  const issued2 = await app.inject({ method: "POST", url: `/v1/invoices/${i2.id}/issue`, headers });
-  assert.equal(issued2.json().data.number, 2);
-});
+serialTest(
+  "Fiscal API: rejects a point of sale whose branch has another fiscal owner",
+  async () => {
+    const container = await buildContainer();
+    const { tenantId, branchId, fiscalEntityId } = await getContext(container);
+    const app = await buildApp(container);
+    const response = await app.inject({
+      method: "POST",
+      url: "/v1/fiscal-points-of-sale",
+      headers: ownerHeaders(container, tenantId),
+      payload: {
+        fiscalEntityId,
+        branchId,
+        environment: "HOMOLOGATION",
+        officialCode: "24",
+        arcaDomicileCode: "DOM-ARCA-2",
+        allowedVoucherTypes: ["FACTURA_A"],
+      },
+    });
 
-serialTest("Fiscal API: void-draft before issue, then issue conflicts 409", async () => {
-  const container = await buildContainer();
-  const { tenantId, branchId, fiscalEntityId } = await getContext(container);
-  const app = await buildApp(container);
-  const headers = ownerHeaders(container, tenantId);
-  const checkId = await seedCheck(container, tenantId, branchId);
-  const invoice = (await createInvoiceFromCheck(container, headers, fiscalEntityId, checkId)).json().data;
+    assert.equal(response.statusCode, 400);
+    assert.equal(
+      response.json().title,
+      "Branch must be explicitly associated with the same fiscal entity",
+    );
+  },
+);
 
-  const voided = await app.inject({ method: "POST", url: `/v1/invoices/${invoice.id}/void-draft`, headers });
-  assert.equal(voided.statusCode, 200);
-  assert.equal(voided.json().data.status, "VOIDED_DRAFT");
+serialTest(
+  "Fiscal API: a second invoice on the same POS+voucherType gets number 2",
+  async () => {
+    const container = await buildContainer();
+    const { tenantId, branchId, fiscalEntityId } = await getContext(container);
+    const app = await buildApp(container);
+    const headers = ownerHeaders(container, tenantId);
 
-  const issue = await app.inject({ method: "POST", url: `/v1/invoices/${invoice.id}/issue`, headers });
-  assert.equal(issue.statusCode, 409);
-});
+    const c1 = await seedCheck(container, tenantId, branchId);
+    const i1 = (
+      await createInvoiceFromCheck(container, headers, fiscalEntityId, c1)
+    ).json().data;
+    const issued1 = await app.inject({
+      method: "POST",
+      url: `/v1/invoices/${i1.id}/issue`,
+      headers,
+    });
+    assert.equal(issued1.json().data.number, 1);
 
-serialTest("Fiscal API: credit note references the original without mutating it", async () => {
-  const container = await buildContainer();
-  const { tenantId, branchId, fiscalEntityId } = await getContext(container);
-  const app = await buildApp(container);
-  const headers = ownerHeaders(container, tenantId);
-  const checkId = await seedCheck(container, tenantId, branchId);
-  const invoice = (await createInvoiceFromCheck(container, headers, fiscalEntityId, checkId)).json().data;
-  const original = (await app.inject({ method: "POST", url: `/v1/invoices/${invoice.id}/issue`, headers })).json().data;
+    const c2 = await seedCheck(container, tenantId, branchId);
+    const i2 = (
+      await createInvoiceFromCheck(container, headers, fiscalEntityId, c2)
+    ).json().data;
+    const issued2 = await app.inject({
+      method: "POST",
+      url: `/v1/invoices/${i2.id}/issue`,
+      headers,
+    });
+    assert.equal(issued2.json().data.number, 2);
+  },
+);
 
-  const credit = await app.inject({ method: "POST", url: `/v1/invoices/${invoice.id}/credit`, headers });
-  assert.equal(credit.statusCode, 201);
-  const note = credit.json().data;
-  assert.equal(note.voucherType, "NOTA_CREDITO_A");
-  assert.equal(note.linkedInvoiceId, original.id);
-  assert.equal(note.status, "DRAFT");
+serialTest(
+  "Fiscal API: void-draft before issue, then issue conflicts 409",
+  async () => {
+    const container = await buildContainer();
+    const { tenantId, branchId, fiscalEntityId } = await getContext(container);
+    const app = await buildApp(container);
+    const headers = ownerHeaders(container, tenantId);
+    const checkId = await seedCheck(container, tenantId, branchId);
+    const invoice = (
+      await createInvoiceFromCheck(container, headers, fiscalEntityId, checkId)
+    ).json().data;
 
-  const reloaded = (await app.inject({ method: "GET", url: `/v1/invoices/${original.id}`, headers })).json().data;
-  assert.equal(reloaded.status, "AUTHORIZED");
-  assert.equal(reloaded.number, 1);
-  assert.equal(reloaded.linkedInvoiceId, null);
-});
+    const voided = await app.inject({
+      method: "POST",
+      url: `/v1/invoices/${invoice.id}/void-draft`,
+      headers,
+    });
+    assert.equal(voided.statusCode, 200);
+    assert.equal(voided.json().data.status, "VOIDED_DRAFT");
 
-serialTest("Fiscal API: re-issuing an AUTHORIZED invoice conflicts 409", async () => {
-  const container = await buildContainer();
-  const { tenantId, branchId, fiscalEntityId } = await getContext(container);
-  const app = await buildApp(container);
-  const headers = ownerHeaders(container, tenantId);
-  const checkId = await seedCheck(container, tenantId, branchId);
-  const invoice = (await createInvoiceFromCheck(container, headers, fiscalEntityId, checkId)).json().data;
-  await app.inject({ method: "POST", url: `/v1/invoices/${invoice.id}/issue`, headers });
-  const again = await app.inject({ method: "POST", url: `/v1/invoices/${invoice.id}/issue`, headers });
-  assert.equal(again.statusCode, 409);
-});
+    const issue = await app.inject({
+      method: "POST",
+      url: `/v1/invoices/${invoice.id}/issue`,
+      headers,
+    });
+    assert.equal(issue.statusCode, 409);
+  },
+);
 
-serialTest("Fiscal API: QR payload is deterministic across two calls for an AUTHORIZED invoice", async () => {
-  const container = await buildContainer();
-  const { tenantId, branchId, fiscalEntityId } = await getContext(container);
-  const app = await buildApp(container);
-  const headers = ownerHeaders(container, tenantId);
-  const checkId = await seedCheck(container, tenantId, branchId);
-  const invoice = (await createInvoiceFromCheck(container, headers, fiscalEntityId, checkId)).json().data;
-  await app.inject({ method: "POST", url: `/v1/invoices/${invoice.id}/issue`, headers });
+serialTest(
+  "Fiscal API: credit note references the original without mutating it",
+  async () => {
+    const container = await buildContainer();
+    const { tenantId, branchId, fiscalEntityId } = await getContext(container);
+    const app = await buildApp(container);
+    const headers = ownerHeaders(container, tenantId);
+    const checkId = await seedCheck(container, tenantId, branchId);
+    const invoice = (
+      await createInvoiceFromCheck(container, headers, fiscalEntityId, checkId)
+    ).json().data;
+    const original = (
+      await app.inject({
+        method: "POST",
+        url: `/v1/invoices/${invoice.id}/issue`,
+        headers,
+      })
+    ).json().data;
 
-  const qr1 = (await app.inject({ method: "GET", url: `/v1/invoices/${invoice.id}/qr`, headers })).json().data;
-  const qr2 = (await app.inject({ method: "GET", url: `/v1/invoices/${invoice.id}/qr`, headers })).json().data;
-  assert.equal(qr1.payloadHash, qr2.payloadHash);
-  assert.equal(qr1.canonicalPayload, qr2.canonicalPayload);
-  assert.equal(qr1.payloadHash.length, 64);
-});
+    const credit = await app.inject({
+      method: "POST",
+      url: `/v1/invoices/${invoice.id}/credit`,
+      headers,
+    });
+    assert.equal(credit.statusCode, 201);
+    const note = credit.json().data;
+    assert.equal(note.voucherType, "NOTA_CREDITO_A");
+    assert.equal(note.linkedInvoiceId, original.id);
+    assert.equal(note.status, "DRAFT");
 
-serialTest("Fiscal API: invoice export manifest sums authorized totals", async () => {
-  const container = await buildContainer();
-  const { tenantId, branchId, fiscalEntityId } = await getContext(container);
-  const app = await buildApp(container);
-  const headers = ownerHeaders(container, tenantId);
-  const c1 = await seedCheck(container, tenantId, branchId);
-  const i1 = (await createInvoiceFromCheck(container, headers, fiscalEntityId, c1)).json().data;
-  await app.inject({ method: "POST", url: `/v1/invoices/${i1.id}/issue`, headers });
+    const reloaded = (
+      await app.inject({
+        method: "GET",
+        url: `/v1/invoices/${original.id}`,
+        headers,
+      })
+    ).json().data;
+    assert.equal(reloaded.status, "AUTHORIZED");
+    assert.equal(reloaded.number, 1);
+    assert.equal(reloaded.linkedInvoiceId, null);
+  },
+);
 
-  const res = await app.inject({
-    method: "POST",
-    url: "/v1/invoice-exports",
-    headers,
-    payload: {
-      fiscalEntityId,
-      periodFrom: "2020-01-01T00:00:00.000Z",
-      periodTo: "2100-01-01T00:00:00.000Z",
-    },
-  });
-  assert.equal(res.statusCode, 200);
-  const manifest = res.json().data;
-  assert.equal(manifest.authorizedCount, 1);
-  assert.equal(manifest.grandTotalGrossMinorUnits, 242000);
-  assert.equal(manifest.presented, false);
-});
+serialTest(
+  "Fiscal API: re-issuing an AUTHORIZED invoice conflicts 409",
+  async () => {
+    const container = await buildContainer();
+    const { tenantId, branchId, fiscalEntityId } = await getContext(container);
+    const app = await buildApp(container);
+    const headers = ownerHeaders(container, tenantId);
+    const checkId = await seedCheck(container, tenantId, branchId);
+    const invoice = (
+      await createInvoiceFromCheck(container, headers, fiscalEntityId, checkId)
+    ).json().data;
+    await app.inject({
+      method: "POST",
+      url: `/v1/invoices/${invoice.id}/issue`,
+      headers,
+    });
+    const again = await app.inject({
+      method: "POST",
+      url: `/v1/invoices/${invoice.id}/issue`,
+      headers,
+    });
+    assert.equal(again.statusCode, 409);
+  },
+);
+
+serialTest(
+  "Fiscal API: QR payload is deterministic across two calls for an AUTHORIZED invoice",
+  async () => {
+    const container = await buildContainer();
+    const { tenantId, branchId, fiscalEntityId } = await getContext(container);
+    const app = await buildApp(container);
+    const headers = ownerHeaders(container, tenantId);
+    const checkId = await seedCheck(container, tenantId, branchId);
+    const invoice = (
+      await createInvoiceFromCheck(container, headers, fiscalEntityId, checkId)
+    ).json().data;
+    await app.inject({
+      method: "POST",
+      url: `/v1/invoices/${invoice.id}/issue`,
+      headers,
+    });
+
+    const qr1 = (
+      await app.inject({
+        method: "GET",
+        url: `/v1/invoices/${invoice.id}/qr`,
+        headers,
+      })
+    ).json().data;
+    const qr2 = (
+      await app.inject({
+        method: "GET",
+        url: `/v1/invoices/${invoice.id}/qr`,
+        headers,
+      })
+    ).json().data;
+    assert.equal(qr1.payloadHash, qr2.payloadHash);
+    assert.equal(qr1.canonicalPayload, qr2.canonicalPayload);
+    assert.equal(qr1.payloadHash.length, 64);
+  },
+);
+
+serialTest(
+  "Fiscal API: authorized invoice document downloads deterministic HTML",
+  async () => {
+    const container = await buildContainer();
+    const { tenantId, branchId, fiscalEntityId } = await getContext(container);
+    const app = await buildApp(container);
+    const headers = ownerHeaders(container, tenantId);
+    const checkId = await seedCheck(container, tenantId, branchId);
+    const invoice = (
+      await createInvoiceFromCheck(container, headers, fiscalEntityId, checkId)
+    ).json().data;
+
+    const draftDocument = await app.inject({
+      method: "GET",
+      url: `/v1/invoices/${invoice.id}/document`,
+      headers,
+    });
+    assert.equal(draftDocument.statusCode, 409);
+
+    await app.inject({
+      method: "POST",
+      url: `/v1/invoices/${invoice.id}/issue`,
+      headers,
+    });
+    const first = await app.inject({
+      method: "GET",
+      url: `/v1/invoices/${invoice.id}/document`,
+      headers,
+    });
+    const second = await app.inject({
+      method: "GET",
+      url: `/v1/invoices/${invoice.id}/document`,
+      headers,
+    });
+
+    assert.equal(first.statusCode, 200);
+    assert.match(first.headers["content-type"] ?? "", /^text\/html/);
+    assert.match(first.headers["content-disposition"] ?? "", /^attachment;/);
+    assert.equal(first.headers.etag, second.headers.etag);
+    assert.equal(first.body, second.body);
+    assert.match(first.body, /HOMOLOGACIÓN · SIN VALIDEZ FISCAL PRODUCTIVA/);
+    assert.match(first.body, /CAE/);
+  },
+);
+
+serialTest(
+  "Fiscal API: invoice export manifest sums authorized totals",
+  async () => {
+    const container = await buildContainer();
+    const { tenantId, branchId, fiscalEntityId } = await getContext(container);
+    const app = await buildApp(container);
+    const headers = ownerHeaders(container, tenantId);
+    const c1 = await seedCheck(container, tenantId, branchId);
+    const i1 = (
+      await createInvoiceFromCheck(container, headers, fiscalEntityId, c1)
+    ).json().data;
+    await app.inject({
+      method: "POST",
+      url: `/v1/invoices/${i1.id}/issue`,
+      headers,
+    });
+
+    const res = await app.inject({
+      method: "POST",
+      url: "/v1/invoice-exports",
+      headers,
+      payload: {
+        fiscalEntityId,
+        periodFrom: "2020-01-01T00:00:00.000Z",
+        periodTo: "2100-01-01T00:00:00.000Z",
+      },
+    });
+    assert.equal(res.statusCode, 200);
+    const manifest = res.json().data;
+    assert.equal(manifest.authorizedCount, 1);
+    assert.equal(manifest.grandTotalGrossMinorUnits, 242000);
+    assert.equal(manifest.presented, false);
+  },
+);
 
 serialTest("Fiscal API: create/publish tax rate + resolve", async () => {
   const container = await buildContainer();
@@ -339,34 +532,55 @@ serialTest("Fiscal API: create/publish tax rate + resolve", async () => {
   assert.equal(created.statusCode, 201);
   const rateId = created.json().data.id;
 
-  const published = await app.inject({ method: "POST", url: `/v1/tax-rates/${rateId}/publish`, headers });
+  const published = await app.inject({
+    method: "POST",
+    url: `/v1/tax-rates/${rateId}/publish`,
+    headers,
+  });
   assert.equal(published.statusCode, 200);
   assert.equal(published.json().data.status, "PUBLISHED");
 
-  const resolved = await app.inject({ method: "GET", url: `/v1/tax-rates/resolve?jurisdiction=AR&taxType=IIBB&at=2026-06-01T00:00:00.000Z`, headers });
+  const resolved = await app.inject({
+    method: "GET",
+    url: `/v1/tax-rates/resolve?jurisdiction=AR&taxType=IIBB&at=2026-06-01T00:00:00.000Z`,
+    headers,
+  });
   assert.equal(resolved.statusCode, 200);
   assert.equal(resolved.json().data.resolved.id, rateId);
 });
 
-serialTest("Fiscal API: create fiscal printer + activate + test (no-op)", async () => {
-  const container = await buildContainer();
-  const { tenantId, branchId } = await getContext(container);
-  const app = await buildApp(container);
-  const headers = ownerHeaders(container, tenantId);
+serialTest(
+  "Fiscal API: create fiscal printer + activate + test (no-op)",
+  async () => {
+    const container = await buildContainer();
+    const { tenantId, branchId } = await getContext(container);
+    const app = await buildApp(container);
+    const headers = ownerHeaders(container, tenantId);
 
-  const created = await app.inject({
-    method: "POST",
-    url: "/v1/fiscal-printers",
-    headers,
-    payload: { branchId, provider: "epson", model: "TM-T900", deviceId: "dev-1", capabilities: ["PRINT"] },
-  });
-  assert.equal(created.statusCode, 201);
-  const printerId = created.json().data.id;
+    const created = await app.inject({
+      method: "POST",
+      url: "/v1/fiscal-printers",
+      headers,
+      payload: {
+        branchId,
+        provider: "epson",
+        model: "TM-T900",
+        deviceId: "dev-1",
+        capabilities: ["PRINT"],
+      },
+    });
+    assert.equal(created.statusCode, 201);
+    const printerId = created.json().data.id;
 
-  const test1 = await app.inject({ method: "POST", url: `/v1/fiscal-printers/${printerId}/test`, headers });
-  assert.equal(test1.statusCode, 200);
-  assert.equal(test1.json().data.simulated, true);
-});
+    const test1 = await app.inject({
+      method: "POST",
+      url: `/v1/fiscal-printers/${printerId}/test`,
+      headers,
+    });
+    assert.equal(test1.statusCode, 200);
+    assert.equal(test1.json().data.simulated, true);
+  },
+);
 
 serialTest("Fiscal API: create/publish invoice template", async () => {
   const container = await buildContainer();
@@ -378,27 +592,51 @@ serialTest("Fiscal API: create/publish invoice template", async () => {
     method: "POST",
     url: "/v1/invoice-templates",
     headers,
-    payload: { name: "Default A", contentRef: "ref-1", layoutNormativeVersion: "layout-v1" },
+    payload: {
+      name: "Default A",
+      contentRef: "ref-1",
+      layoutNormativeVersion: "layout-v1",
+    },
   });
   assert.equal(created.statusCode, 201);
   const templateId = created.json().data.id;
 
-  const published = await app.inject({ method: "POST", url: `/v1/invoice-templates/${templateId}/publish`, headers });
+  const published = await app.inject({
+    method: "POST",
+    url: `/v1/invoice-templates/${templateId}/publish`,
+    headers,
+  });
   assert.equal(published.statusCode, 200);
   assert.equal(published.json().data.status, "PUBLISHED");
 });
 
-serialTest("Fiscal API: 403 without permission, 404 for unknown id", async () => {
-  const container = await buildContainer();
-  const { tenantId } = await getContext(container);
-  const app = await buildApp(container);
+serialTest(
+  "Fiscal API: 403 without permission, 404 for unknown id",
+  async () => {
+    const container = await buildContainer();
+    const { tenantId } = await getContext(container);
+    const app = await buildApp(container);
 
-  // role_employee has no fiscal permissions.
-  const employee = await roleHeaders(container, tenantId, "role_employee", "fiscal-nobody");
-  const forbidden = await app.inject({ method: "GET", url: "/v1/invoices", headers: employee });
-  assert.equal(forbidden.statusCode, 403);
+    // role_employee has no fiscal permissions.
+    const employee = await roleHeaders(
+      container,
+      tenantId,
+      "role_employee",
+      "fiscal-nobody",
+    );
+    const forbidden = await app.inject({
+      method: "GET",
+      url: "/v1/invoices",
+      headers: employee,
+    });
+    assert.equal(forbidden.statusCode, 403);
 
-  const owner = ownerHeaders(container, tenantId);
-  const missing = await app.inject({ method: "GET", url: `/v1/invoices/${randomUUID()}`, headers: owner });
-  assert.equal(missing.statusCode, 404);
-});
+    const owner = ownerHeaders(container, tenantId);
+    const missing = await app.inject({
+      method: "GET",
+      url: `/v1/invoices/${randomUUID()}`,
+      headers: owner,
+    });
+    assert.equal(missing.statusCode, 404);
+  },
+);
