@@ -542,7 +542,7 @@ test("authorized invoice document is deterministic, complete and escapes untrust
   assert.match(first.html, /Maitre Test SA/);
   assert.match(first.html, /CAE/);
   assert.match(first.html, new RegExp(qr.payloadHash));
-  assert.doesNotMatch(first.html, /<script>/);
+  assert.doesNotMatch(first.html, /<script\b/i);
   assert.match(first.html, /&lt;script&gt;alert/);
 });
 
