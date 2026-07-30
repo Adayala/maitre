@@ -38940,27 +38940,109 @@
     "/v1/operations/outbox-health": {
       "get": {
         "operationId": "getOperationsOutboxHealth",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-branch-id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-correlation-id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "traceparent",
+            "required": false,
+            "schema": {
+              "pattern": "^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}$",
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "2XX": {
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "counts": {
+                          "additionalProperties": false,
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "expiredLeaseCount": {
+                          "type": "number"
+                        },
+                        "failedCount": {
+                          "type": "number"
+                        },
+                        "observedAt": {
+                          "type": "string"
+                        },
+                        "oldestPendingAgeMs": {
+                          "type": "number"
+                        },
+                        "publishedLast5m": {
+                          "type": "number"
+                        },
+                        "retryCount": {
+                          "type": "number"
+                        },
+                        "scope": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "counts",
+                        "expiredLeaseCount",
+                        "failedCount",
+                        "observedAt",
+                        "oldestPendingAgeMs",
+                        "publishedLast5m",
+                        "retryCount",
+                        "scope"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
                   "type": "object"
                 }
               }
             },
-            "description": "Default Response"
+            "description": "Successful response"
           },
           "default": {
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             },
-            "description": "Default Response"
+            "description": "RFC 9457 problem response"
           }
         },
         "security": [
