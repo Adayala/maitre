@@ -156,7 +156,7 @@ test("PATCH /v1/subscriptions/fiscal-owner rejects an unknown fiscal entity", as
   });
 
   assert.equal(response.statusCode, 404);
-  assert.equal(response.json().title, "FiscalEntity not found");
+  assert.equal(response.json().detail, "FiscalEntity not found");
   await app.close();
 });
 
@@ -175,10 +175,10 @@ test("GET /v1/subscriptions/:tenantId for a different tenant returns 404", async
   assert.equal(response.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(response.json().type, "not-found");
-  assert.equal(response.json().title, "Subscription not found");
+  assert.equal(response.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(response.json().detail, "Subscription not found");
   assert.equal(response.json().status, 404);
   await app.close();
 });
@@ -351,10 +351,10 @@ test("DELETE .../services/:serviceId for an unknown service returns 404", async 
   assert.equal(response.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(response.json().type, "not-found");
-  assert.equal(response.json().title, "Service not found");
+  assert.equal(response.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(response.json().detail, "Service not found");
   assert.equal(response.json().status, 404);
   await app.close();
 });
@@ -378,10 +378,10 @@ test("POST /v1/subscriptions/:id/services hides cross-tenant subscriptions as 40
   assert.equal(response.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(response.json().type, "not-found");
-  assert.equal(response.json().title, "Subscription not found");
+  assert.equal(response.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(response.json().detail, "Subscription not found");
   assert.equal(response.json().status, 404);
   await app.close();
 });
@@ -404,10 +404,10 @@ test("DELETE /v1/subscriptions/:id/services/:serviceId hides cross-tenant subscr
   assert.equal(response.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(response.json().type, "not-found");
-  assert.equal(response.json().title, "Subscription not found");
+  assert.equal(response.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(response.json().detail, "Subscription not found");
   assert.equal(response.json().status, 404);
   await app.close();
 });
@@ -490,10 +490,10 @@ test("POST /v1/subscriptions/upgrade with an unknown plan returns 400", async ()
   assert.equal(response.statusCode, 400);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(response.json().type, "bad-request");
-  assert.equal(response.json().title, 'Unknown plan "BOGUS"');
+  assert.equal(response.json().type, "https://docs.maitre.app/problems/bad-request");
+  assert.equal(response.json().detail, 'Unknown plan "BOGUS"');
   assert.equal(response.json().status, 400);
   await app.close();
 });
@@ -543,10 +543,10 @@ test("POST /v1/subscriptions/upgrade as EMPLOYEE returns 403 (plan:upgrade is OW
   assert.equal(response.statusCode, 403);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(response.json().type, "insufficient-scope");
-  assert.equal(response.json().title, "Insufficient scope");
+  assert.equal(response.json().type, "https://docs.maitre.app/problems/insufficient-scope");
+  assert.equal(response.json().detail, "Insufficient scope");
   assert.equal(response.json().status, 403);
   await app.close();
 });
@@ -569,11 +569,11 @@ test("POST /v1/subscriptions/:id/services validates serviceId, quantity and unit
   assert.equal(emptyServiceId.statusCode, 400);
   assert.deepEqual(
     new Set(Object.keys(emptyServiceId.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(emptyServiceId.json().type, "bad-request");
+  assert.equal(emptyServiceId.json().type, "https://docs.maitre.app/problems/bad-request");
   assert.equal(
-    emptyServiceId.json().title,
+    emptyServiceId.json().detail,
     '[\n  {\n    "code": "too_small",\n    "minimum": 1,\n    "type": "string",\n    "inclusive": true,\n    "exact": false,\n    "message": "String must contain at least 1 character(s)",\n    "path": [\n      "serviceId"\n    ]\n  }\n]',
   );
   assert.equal(emptyServiceId.json().status, 400);
@@ -590,11 +590,11 @@ test("POST /v1/subscriptions/:id/services validates serviceId, quantity and unit
   assert.equal(zeroQuantity.statusCode, 400);
   assert.deepEqual(
     new Set(Object.keys(zeroQuantity.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(zeroQuantity.json().type, "bad-request");
+  assert.equal(zeroQuantity.json().type, "https://docs.maitre.app/problems/bad-request");
   assert.equal(
-    zeroQuantity.json().title,
+    zeroQuantity.json().detail,
     '[\n  {\n    "code": "too_small",\n    "minimum": 0,\n    "type": "number",\n    "inclusive": false,\n    "exact": false,\n    "message": "Number must be greater than 0",\n    "path": [\n      "quantity"\n    ]\n  }\n]',
   );
   assert.equal(zeroQuantity.json().status, 400);
@@ -611,11 +611,11 @@ test("POST /v1/subscriptions/:id/services validates serviceId, quantity and unit
   assert.equal(negativeUnitPrice.statusCode, 400);
   assert.deepEqual(
     new Set(Object.keys(negativeUnitPrice.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(negativeUnitPrice.json().type, "bad-request");
+  assert.equal(negativeUnitPrice.json().type, "https://docs.maitre.app/problems/bad-request");
   assert.equal(
-    negativeUnitPrice.json().title,
+    negativeUnitPrice.json().detail,
     '[\n  {\n    "code": "too_small",\n    "minimum": 0,\n    "type": "number",\n    "inclusive": true,\n    "exact": false,\n    "message": "Number must be greater than or equal to 0",\n    "path": [\n      "unitPrice"\n    ]\n  }\n]',
   );
   assert.equal(negativeUnitPrice.json().status, 400);
@@ -806,11 +806,11 @@ test("POST /v1/subscriptions/upgrade validates billingCycle enum", async () => {
   assert.equal(response.statusCode, 400);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(response.json().type, "bad-request");
+  assert.equal(response.json().type, "https://docs.maitre.app/problems/bad-request");
   assert.equal(
-    response.json().title,
+    response.json().detail,
     `[\n  {\n    "received": "WEEKLY",\n    "code": "invalid_enum_value",\n    "options": [\n      "MONTHLY",\n      "ANNUALLY"\n    ],\n    "path": [\n      "billingCycle"\n    ],\n    "message": "Invalid enum value. Expected 'MONTHLY' | 'ANNUALLY', received 'WEEKLY'"\n  }\n]`,
   );
   assert.equal(response.json().status, 400);

@@ -96,11 +96,11 @@ test("POST /v1/brands/:brandId/menus with a duplicate name/slug returns 409", as
   assert.equal(response.statusCode, 409);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(response.json().type, "conflict");
+  assert.equal(response.json().type, "https://docs.maitre.app/problems/conflict");
   assert.equal(
-    response.json().title,
+    response.json().detail,
     `Menu slug "menu-principal" already exists for brand ${brandId}`,
   );
   assert.equal(response.json().status, 409);

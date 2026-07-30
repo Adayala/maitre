@@ -260,7 +260,7 @@ serialTest(
 
     assert.equal(response.statusCode, 400);
     assert.equal(
-      response.json().title,
+      response.json().detail,
       "Branch must be explicitly associated with the same fiscal entity",
     );
   },

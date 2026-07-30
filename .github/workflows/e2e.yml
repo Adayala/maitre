@@ -56,6 +56,8 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v7
         with:
           node-version: 20.19.0
@@ -70,6 +72,8 @@ jobs:
           npm run deploy:affected:test
           npm run coverage:gate:test
           npm run sdd:validate
+          npm run openapi:check
+          npm run openapi:breaking
       - name: Unit tests and coverage
         run: npm run test:coverage
       - name: Security controls

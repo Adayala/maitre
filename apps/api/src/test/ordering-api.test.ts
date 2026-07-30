@@ -310,9 +310,9 @@ serialTest("Order item cancel and transition endpoints enforce lifecycle and per
   assert.equal(invalidDelivered.statusCode, 409);
   assert.deepEqual(
     new Set(Object.keys(invalidDelivered.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(invalidDelivered.json().type, "conflict");
+  assert.equal(invalidDelivered.json().type, "https://docs.maitre.app/problems/conflict");
   assert.equal(invalidDelivered.json().status, 409);
 
   const now = new Date();
@@ -356,10 +356,10 @@ serialTest("Order item cancel and transition endpoints enforce lifecycle and per
   assert.equal(forbiddenPrep.statusCode, 403);
   assert.deepEqual(
     new Set(Object.keys(forbiddenPrep.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(forbiddenPrep.json().type, "insufficient-scope");
-  assert.equal(forbiddenPrep.json().title, "Insufficient scope");
+  assert.equal(forbiddenPrep.json().type, "https://docs.maitre.app/problems/insufficient-scope");
+  assert.equal(forbiddenPrep.json().detail, "Insufficient scope");
   assert.equal(forbiddenPrep.json().status, 403);
 
   const inPrep = await app.inject({
@@ -402,10 +402,10 @@ serialTest("Order item cancel and transition endpoints enforce lifecycle and per
   assert.equal(forbiddenPreparedCancel.statusCode, 403);
   assert.deepEqual(
     new Set(Object.keys(forbiddenPreparedCancel.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(forbiddenPreparedCancel.json().type, "insufficient-scope");
-  assert.equal(forbiddenPreparedCancel.json().title, "Insufficient scope");
+  assert.equal(forbiddenPreparedCancel.json().type, "https://docs.maitre.app/problems/insufficient-scope");
+  assert.equal(forbiddenPreparedCancel.json().detail, "Insufficient scope");
   assert.equal(forbiddenPreparedCancel.json().status, 403);
 
   const ready = await app.inject({
@@ -506,9 +506,9 @@ serialTest("Order item cancel and transition endpoints enforce lifecycle and per
   assert.equal(cancelAgain.statusCode, 409);
   assert.deepEqual(
     new Set(Object.keys(cancelAgain.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(cancelAgain.json().type, "conflict");
+  assert.equal(cancelAgain.json().type, "https://docs.maitre.app/problems/conflict");
   assert.equal(cancelAgain.json().status, 409);
 
   await app.close();
@@ -542,10 +542,10 @@ serialTest("Order item cancel and transition hide unknown and cross-tenant targe
   assert.equal(unknownTransition.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(unknownTransition.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(unknownTransition.json().type, "not-found");
-  assert.equal(unknownTransition.json().title, "OrderItem not found");
+  assert.equal(unknownTransition.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(unknownTransition.json().detail, "OrderItem not found");
   assert.equal(unknownTransition.json().status, 404);
 
   const unknownCancel = await app.inject({
@@ -557,10 +557,10 @@ serialTest("Order item cancel and transition hide unknown and cross-tenant targe
   assert.equal(unknownCancel.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(unknownCancel.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(unknownCancel.json().type, "not-found");
-  assert.equal(unknownCancel.json().title, "OrderItem not found");
+  assert.equal(unknownCancel.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(unknownCancel.json().detail, "OrderItem not found");
   assert.equal(unknownCancel.json().status, 404);
 
   const otherTenantId = randomUUID();
@@ -598,10 +598,10 @@ serialTest("Order item cancel and transition hide unknown and cross-tenant targe
   assert.equal(crossTenantTransition.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(crossTenantTransition.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(crossTenantTransition.json().type, "not-found");
-  assert.equal(crossTenantTransition.json().title, "OrderItem not found");
+  assert.equal(crossTenantTransition.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(crossTenantTransition.json().detail, "OrderItem not found");
   assert.equal(crossTenantTransition.json().status, 404);
 
   const crossTenantCancel = await app.inject({
@@ -613,10 +613,10 @@ serialTest("Order item cancel and transition hide unknown and cross-tenant targe
   assert.equal(crossTenantCancel.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(crossTenantCancel.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(crossTenantCancel.json().type, "not-found");
-  assert.equal(crossTenantCancel.json().title, "Order not found");
+  assert.equal(crossTenantCancel.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(crossTenantCancel.json().detail, "Order not found");
   assert.equal(crossTenantCancel.json().status, 404);
 
   await app.close();
@@ -745,9 +745,9 @@ serialTest("Order submit rejects an empty draft with 409 conflict", async () => 
   assert.equal(submit.statusCode, 409);
   assert.deepEqual(
     new Set(Object.keys(submit.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(submit.json().type, "conflict");
+  assert.equal(submit.json().type, "https://docs.maitre.app/problems/conflict");
   assert.equal(submit.json().status, 409);
 
   const orderAfter = await app.inject({
