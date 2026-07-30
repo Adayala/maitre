@@ -2,16 +2,19 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { buildApp } from "./app.js";
+import { applyOperationPayloadContracts } from "./openapi-operation-contracts.js";
 
 export async function generateOpenApi(outputPath: string): Promise<void> {
   const app = await buildApp();
   try {
     await app.ready();
-    const document = sortValue(app.swagger()) as Record<string, unknown>;
+    const document = app.swagger() as Record<string, unknown>;
+    applyOperationPayloadContracts(document);
+    const sortedDocument = sortValue(document);
     await mkdir(dirname(outputPath), { recursive: true });
     await writeFile(
       outputPath,
-      `${JSON.stringify(document, null, 2)}\n`,
+      `${JSON.stringify(sortedDocument, null, 2)}\n`,
       "utf8",
     );
   } finally {

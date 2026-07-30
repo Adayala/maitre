@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "approvals": [
+    {
+      "id": "SPEC-215-PROBLEM-DETAILS-MEDIA",
+      "kind": "replace-default-response-media-type",
+      "from": "application/json",
+      "to": "application/problem+json",
+      "pathPrefix": "/v1/",
+      "expiresOn": "2026-09-30",
+      "reason": "Align the generated contract with the RFC 9457 media type already returned by the runtime."
+    },
+    {
+      "id": "SPEC-215-OPERATION-PAYLOAD-MATERIALIZATION",
+      "kind": "materialize-runtime-payload-schema",
+      "pathPrefix": "/v1/",
+      "expiresOn": "2026-09-30",
+      "reason": "Replace the unconstrained shared success schema and placeholder status with payload fields and success statuses already returned by the runtime."
+    }
+  ]
+}

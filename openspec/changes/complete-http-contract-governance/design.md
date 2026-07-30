@@ -26,9 +26,16 @@ non-production environments.
 writes a stable `openapi.json`. Volatile values and non-semantic ordering will be normalized so
 regeneration produces no diff when the contract is unchanged.
 
-Every public route will register Fastify request and response schemas. Shared headers, security
-schemes, envelopes and problems will come from reusable contract schemas instead of copied
-objects.
+Every public route will contribute typed request and response schemas to the generated artifact.
+Shared headers, security schemes, envelopes and problems will come from reusable contract schemas
+instead of copied objects.
+
+The committed artifact derives each operation's request shape from the Zod parse result or typed
+Fastify request used by that handler, and derives successful representations from the handler's
+TypeScript return expressions. This avoids a parallel hand-maintained DTO registry while preserving
+the runtime's real optional fields, unions, enums, dates, collections, 204 responses and non-JSON
+representations. A generation test covers representative body, envelope, bare discovery, 204 and
+fiscal-document routes; policy rejects any operation that falls back to `SuccessEnvelope`.
 
 ### CI compares against the merge base
 
@@ -73,4 +80,3 @@ origin reflection.
 
 Rollback restores the previous handler/CORS configuration while retaining additive schemas and
 the generated artifact.
-

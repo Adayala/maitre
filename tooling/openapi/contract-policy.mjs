@@ -32,10 +32,44 @@ export function validateContract(document) {
         issues.push(`${location} is missing x-maitre-spec`);
       if (!operation.security)
         issues.push(`${location} is missing security declaration`);
-      if (!operation.responses?.default) {
+      const success = successfulResponse(operation.responses);
+      if (!success) {
+        issues.push(`${location} is missing a successful response`);
+      } else if (isNoContentResponse(success)) {
+        // 204 intentionally has no representation.
+      } else if (!hasTypedSuccessContent(success)) {
+        issues.push(
+          `${location} success response is missing a typed media schema`,
+        );
+      } else if (hasGenericSuccessEnvelope(success)) {
+        issues.push(`${location} still uses the generic success envelope`);
+      } else if (hasUnconstrainedSuccessSchema(success)) {
+        issues.push(`${location} success response schema is unconstrained`);
+      }
+      const problem = operation.responses?.default;
+      if (!problem) {
         issues.push(
           `${location} is missing the default Problem Details response`,
         );
+      } else if (!problem.content?.["application/problem+json"]?.schema) {
+        issues.push(
+          `${location} default response must use application/problem+json`,
+        );
+      }
+      for (const header of [
+        "x-tenant-id",
+        "x-branch-id",
+        "x-correlation-id",
+        "traceparent",
+      ]) {
+        if (
+          !(operation.parameters ?? []).some(
+            (parameter) =>
+              parameter?.in === "header" && parameter?.name === header,
+          )
+        ) {
+          issues.push(`${location} is missing ${header} header declaration`);
+        }
       }
     }
   }
@@ -55,6 +89,46 @@ export function validateContract(document) {
     }
   }
   return issues;
+}
+
+function successfulResponse(responses) {
+  return Object.entries(responses ?? {}).find(([status]) =>
+    /^(?:2\d\d|2XX)$/.test(status),
+  )?.[1];
+}
+
+function isNoContentResponse(response) {
+  return response?.description === "No content" && !response.content;
+}
+
+function hasTypedSuccessContent(response) {
+  const media = Object.values(response?.content ?? {});
+  return media.length > 0 && media.every((entry) => entry?.schema);
+}
+
+function hasGenericSuccessEnvelope(response) {
+  return Object.values(response?.content ?? {}).some(
+    (entry) =>
+      typeof entry?.schema?.$ref === "string" &&
+      entry.schema.$ref.endsWith("/SuccessEnvelope"),
+  );
+}
+
+function hasUnconstrainedSuccessSchema(response) {
+  return Object.values(response?.content ?? {}).some((entry) =>
+    isUnconstrainedSchema(entry?.schema),
+  );
+}
+
+function isUnconstrainedSchema(schema) {
+  return (
+    schema &&
+    typeof schema === "object" &&
+    !schema.$ref &&
+    schema.type === "object" &&
+    schema.additionalProperties === true &&
+    !schema.properties
+  );
 }
 
 async function main() {
