@@ -29,6 +29,23 @@ test("authentication failures use the complete RFC 9457 representation", async (
   await app.close();
 });
 
+test("documentation schemas do not alter successful runtime payloads", async () => {
+  const container = await buildContainer();
+  const app = await buildApp(container);
+  const response = await app.inject({
+    method: "GET",
+    url: "/v1/me/context",
+    headers: {
+      authorization: `Bearer ${container.demoAccessToken}`,
+    },
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.ok(response.json().user);
+  assert.ok(Array.isArray(response.json().tenants));
+  await app.close();
+});
+
 test("unexpected failures are sanitized by the central error boundary", async () => {
   const container = await buildContainer();
   const app = await buildApp(container);

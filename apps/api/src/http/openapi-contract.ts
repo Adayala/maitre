@@ -142,22 +142,12 @@ export function registerOpenApiContractMetadata(app: FastifyInstance): void {
       tags,
       security,
       response: {
-        "2XX": {
-          description: "Successful response",
-          content: {
-            "application/json": {
-              schema: { $ref: `${SUCCESS_SCHEMA_ID}#` },
-            },
-          },
-        },
-        default: {
-          description: "RFC 9457 problem response",
-          content: {
-            "application/problem+json": {
-              schema: { $ref: `${PROBLEM_SCHEMA_ID}#` },
-            },
-          },
-        },
+        // Fastify consumes route schemas for runtime serialization. Keep this
+        // permissive here and materialize the exact operation contract only in
+        // the Swagger transform/generator so documentation cannot change
+        // business responses.
+        "2XX": { type: "object", additionalProperties: true },
+        default: { $ref: `${PROBLEM_SCHEMA_ID}#` },
         ...response,
       },
       "x-maitre-owner": ownership.owner,
@@ -170,10 +160,38 @@ export const openApiConfiguration: SwaggerOptions = {
   transform({ schema, url }) {
     if (!url.startsWith("/v1/")) return { schema, url };
     const existing = schema as Record<string, unknown>;
+    const response = (existing["response"] ?? {}) as Record<string, unknown>;
     return {
       schema: {
         ...existing,
         headers: existing["headers"] ?? contextHeadersJsonSchema,
+        response: {
+          ...response,
+          ...(response["2XX"]
+            ? {
+                "2XX": {
+                  description: "Successful response",
+                  content: {
+                    "application/json": {
+                      schema: { $ref: `${SUCCESS_SCHEMA_ID}#` },
+                    },
+                  },
+                },
+              }
+            : {}),
+          ...(response["default"]
+            ? {
+                default: {
+                  description: "RFC 9457 problem response",
+                  content: {
+                    "application/problem+json": {
+                      schema: { $ref: `${PROBLEM_SCHEMA_ID}#` },
+                    },
+                  },
+                },
+              }
+            : {}),
+        },
       },
       url,
     };
