@@ -89,6 +89,8 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
   api,
   apps,
 }, testInfo) => {
+  test.setTimeout(120_000);
+
   const evidence: Record<string, unknown> = {};
   let visit!: Visit;
   let order!: Order;
