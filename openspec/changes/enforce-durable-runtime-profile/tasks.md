@@ -13,6 +13,6 @@
 ## 3. Documentation and verification
 
 - [x] 3.1 Document required variables, credential boundary and rollout impact.
-- [ ] 3.2 Provision ephemeral PostgreSQL/Supabase and apply migrations from zero in release E2E.
-- [ ] 3.3 Verify tenant RLS, restart durability and teardown evidence.
+- [x] 3.2 Provision ephemeral PostgreSQL/Supabase and apply migrations from zero in release E2E.
+- [x] 3.3 Verify tenant RLS, restart durability and teardown evidence.
 - [x] 3.4 Run typecheck, tests, config validation and strict OpenSpec validation.

@@ -12,11 +12,11 @@ const isolatedEnvironment = {
   E2E_FIXTURES_ENABLED: "1",
   E2E_RUN_ID: "run-20260730-a",
   E2E_BUSINESS_CLOCK: "2026-07-30T18:00:00.000Z",
-  E2E_BOOTSTRAP_SECRET:
-    "run-20260730-a.0123456789abcdef0123456789abcdef",
+  E2E_BOOTSTRAP_SECRET: "run-20260730-a.0123456789abcdef0123456789abcdef",
   E2E_WAITER_TOKEN: "waiter-token",
   E2E_COOK_TOKEN: "cook-token",
   E2E_CASHIER_TOKEN: "cashier-token",
+  E2E_AUDITOR_TOKEN: "auditor-token",
   E2E_TENANT_B_TOKEN: "tenant-b-token",
 };
 
@@ -31,7 +31,7 @@ test("E2E fixture guard fails closed in shared environments", () => {
   );
 });
 
-test("E2E fixtures register scoped waiter, cook and cashier principals", async () => {
+test("E2E fixtures register scoped operational and auditor principals", async () => {
   const container = await buildContainer();
   const owner = await container.users.findByExternalIdentity(
     "fixture",
@@ -54,14 +54,17 @@ test("E2E fixtures register scoped waiter, cook and cashier principals", async (
     ["waiter-token", "role_waiter"],
     ["cook-token", "role_cook"],
     ["cashier-token", "role_cashier"],
+    ["auditor-token", "role_admin"],
   ] as const) {
     const principal = await sessions.verifyAccessToken(token);
     const user = await container.users.findByExternalIdentity(
       principal.provider,
       principal.subject,
     );
-    const membership =
-      await container.memberships.findActiveByUserAndTenant(user!.id, tenantId);
+    const membership = await container.memberships.findActiveByUserAndTenant(
+      user!.id,
+      tenantId,
+    );
     assert.deepEqual(membership?.roleIds, [roleId]);
     assert.deepEqual(membership?.branchIds, [branchId]);
   }

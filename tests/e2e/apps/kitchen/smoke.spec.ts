@@ -141,6 +141,7 @@ test("@ui-contract opera una comanda desde recibida hasta el handoff", async ({
     name: /Milanesa napolitana, Nueva/,
   });
   await expect(card).toBeVisible();
+  await expect(card).toHaveAttribute("data-command-id", commandId);
   await expect(card.getByText("GLUTEN")).toBeVisible();
   await expect(card.getByText("Una porción sin sal")).toBeVisible();
 

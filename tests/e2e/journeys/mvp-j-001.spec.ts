@@ -1,3 +1,4 @@
+import { writeFile } from "node:fs/promises";
 import { expect, type Page, type TestInfo } from "@playwright/test";
 import type { ApiEvidence } from "./api-client.js";
 import { test } from "./fixtures.js";
@@ -77,16 +78,27 @@ interface TableStatus {
     "BLOCKED" | "OCCUPIED" | "PAYING" | "CLEANING" | "RESERVED" | "AVAILABLE";
 }
 
+interface AuditLog {
+  actionCode?: string;
+  outcome?: string;
+  resourceId: string;
+  correlationId?: string;
+}
+
 test("@release-journey MVP-J-001 completes table to close through the real product", async ({
   api,
   apps,
 }, testInfo) => {
+  test.setTimeout(120_000);
+
   const evidence: Record<string, unknown> = {};
   let visit!: Visit;
   let order!: Order;
   let command!: KitchenCommand;
   let check!: Check;
   let cashSession!: CashSession;
+  let payment!: Payment;
+  let tableId!: string;
 
   await test.step("all deployable applications share one ready API", async () => {
     const readiness = await api.get<{ status: string }>(
@@ -109,27 +121,40 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
   });
 
   await test.step("Floor seats a real table and submits a real menu item", async () => {
-    await apps.floor
+    const availableTable = apps.floor
       .locator(".table-card")
       .filter({ hasText: "Libre" })
-      .first()
-      .click();
+      .first();
+    tableId = (await availableTable.getAttribute("data-table-id"))!;
+    expect(tableId).toMatch(/^[0-9a-f-]{36}$/i);
+    await availableTable.click();
     const seatDialog = apps.floor.getByRole("dialog", {
       name: "Sentar comensales",
     });
     await expect(seatDialog).toBeVisible();
-    await seatDialog.getByRole("button", { name: /^Sentar \d+/ }).click();
+    const [seatResponse] = await Promise.all([
+      apps.floor.waitForResponse(
+        (response) =>
+          response.request().method() === "POST" &&
+          new URL(response.url()).pathname === "/v1/visits",
+      ),
+      seatDialog.getByRole("button", { name: /^Sentar \d+/ }).click(),
+    ]);
+    expect(seatResponse.status()).toBe(201);
+    const seatedVisit = (await seatResponse.json()) as ApiData<Visit>;
 
     await expect(
       apps.floor.getByRole("button", { name: /Nuevo pedido/ }),
     ).toBeVisible();
-    const visits = await api.poll<ApiData<Visit[]>>(
+    const openedVisit = await api.poll<ApiData<Visit>>(
       "open visit",
-      () => api.get("waiter", `/v1/visits?branchId=${BRANCH_ID}`),
-      (body) => body.data.some((candidate) => candidate.status === "OPEN"),
+      () => api.get("waiter", `/v1/visits/${seatedVisit.data.id}`),
+      (body) => body.data.status === "OPEN",
     );
-    assertEvidence(visits);
-    visit = visits.body.data.find((candidate) => candidate.status === "OPEN")!;
+    assertEvidence(openedVisit);
+    visit = openedVisit.body.data;
+    expect(visit.id).toBe(seatedVisit.data.id);
+    expect(visit.tableIds).toContain(tableId);
 
     await apps.floor.getByRole("button", { name: /Nuevo pedido/ }).click();
     await expect(
@@ -175,16 +200,15 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
   });
 
   await test.step("Kitchen prepares and hands off that same command", async () => {
-    const commandName = command.payload.displayName;
-    await kitchenAction(apps.kitchen, commandName, "Nueva", "Tomar");
-    await kitchenAction(apps.kitchen, commandName, "Tomada", "Empezar");
+    await kitchenAction(apps.kitchen, command.id, "Nueva", "Tomar");
+    await kitchenAction(apps.kitchen, command.id, "Tomada", "Empezar");
     await kitchenAction(
       apps.kitchen,
-      commandName,
+      command.id,
       "En preparación",
       "Marcar lista",
     );
-    await kitchenAction(apps.kitchen, commandName, "Lista", "Entregar");
+    await kitchenAction(apps.kitchen, command.id, "Lista", "Entregar");
 
     const completed = await api.poll<ApiData<KitchenCommand>>(
       "completed kitchen handoff",
@@ -225,19 +249,28 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
     check = pendingCheck.body.data;
     expect(check.totals.balance).toBeGreaterThan(0);
 
-    await apps.cash
-      .getByRole("button", { name: "Abrir sesión", exact: true })
-      .click();
-    const sessions = await api.poll<ApiData<CashSession[]>>(
-      "open cash session",
-      () =>
-        api.get("cashier", `/v1/cash-registers/${CASH_REGISTER_ID}/sessions`),
-      (body) => body.data.some((candidate) => candidate.status === "OPEN"),
+    let sessions = await api.get<ApiData<CashSession[]>>(
+      "cashier",
+      `/v1/cash-registers/${CASH_REGISTER_ID}/sessions`,
     );
+    if (!sessions.body.data.some((candidate) => candidate.status === "OPEN")) {
+      await apps.cash
+        .getByRole("button", { name: "Abrir sesión", exact: true })
+        .click();
+      sessions = await api.poll<ApiData<CashSession[]>>(
+        "open cash session",
+        () =>
+          api.get("cashier", `/v1/cash-registers/${CASH_REGISTER_ID}/sessions`),
+        (body) => body.data.some((candidate) => candidate.status === "OPEN"),
+      );
+    }
     assertEvidence(sessions);
     cashSession = sessions.body.data.find(
       (candidate) => candidate.status === "OPEN",
     )!;
+    await expect(apps.cash.locator(".cashier-session-status")).toHaveText(
+      "Abierta",
+    );
 
     const pendingRegion = apps.cash.getByRole("region", {
       name: "Cobros pendientes",
@@ -266,7 +299,8 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
     );
     assertEvidence(payments);
     expect(payments.body.data).toHaveLength(1);
-    expect(payments.body.data[0]).toMatchObject({
+    payment = payments.body.data[0]!;
+    expect(payment).toMatchObject({
       status: "CAPTURED",
       amountMinorUnits: check.totals.netDue,
     });
@@ -277,9 +311,7 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
     );
     assertEvidence(movements);
     const paymentMovements = movements.body.data.filter(
-      (movement) =>
-        movement.sourceReference ===
-        `FLOOR_PAYMENT:${payments.body.data[0]!.id}`,
+      (movement) => movement.sourceReference === `FLOOR_PAYMENT:${payment.id}`,
     );
     expect(paymentMovements).toEqual([
       expect.objectContaining({
@@ -289,7 +321,7 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
     ]);
     evidence.cash = {
       check,
-      payment: payments.body.data[0],
+      payment,
       paymentMovement: paymentMovements[0],
       correlationId: settled.correlationId,
     };
@@ -298,9 +330,8 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
   await test.step("Floor closes the visit and releases the table", async () => {
     await apps.floor.reload();
     const servedTable = apps.floor
-      .locator(".table-card")
-      .filter({ hasText: "Ocupada" })
-      .first();
+      .locator(`[data-table-id="${tableId}"]`)
+      .filter({ hasText: "Ocupada" });
     await expect(servedTable).toBeVisible();
     await servedTable.click();
     const closeTable = apps.floor.getByRole("button", { name: "Cerrar mesa" });
@@ -346,20 +377,77 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
     evidence.tenantIsolation = { read: forbiddenRead, write: forbiddenWrite };
   });
 
+  await test.step("critical mutations have correlated audit evidence", async () => {
+    const expected = [
+      ["VISIT_OPENED", visit.id],
+      ["ORDER_SUBMITTED", order.id],
+      ["KITCHEN_COMMAND_SERVED", command.id],
+      ["PAYMENT_CAPTURED", payment.id],
+      ["CHECK_SETTLED", check.id],
+      ["VISIT_CLOSED", visit.id],
+    ] as const;
+    const entries: AuditLog[] = [];
+    for (const [actionCode, resourceId] of expected) {
+      const page = await api.poll<ApiData<AuditLog[]>>(
+        `audit ${actionCode}`,
+        () =>
+          api.get(
+            "auditor",
+            `/v1/audit-logs?branch_id=${BRANCH_ID}&action_code=${actionCode}`,
+          ),
+        (body) =>
+          body.data.some(
+            (entry) =>
+              entry.resourceId === resourceId &&
+              entry.outcome === "SUCCEEDED" &&
+              Boolean(entry.correlationId),
+          ),
+      );
+      assertEvidence(page);
+      entries.push(
+        page.body.data.find((entry) => entry.resourceId === resourceId)!,
+      );
+    }
+    expect(new Set(entries.map(({ actionCode }) => actionCode))).toEqual(
+      new Set(expected.map(([actionCode]) => actionCode)),
+    );
+    evidence.audit = entries;
+  });
+
   await attachEvidence(testInfo, evidence);
+  const checkpointPath = process.env["E2E_DURABILITY_CHECKPOINT"];
+  if (checkpointPath) {
+    await writeFile(
+      checkpointPath,
+      JSON.stringify(
+        {
+          schemaVersion: 1,
+          visitId: visit.id,
+          tableId: visit.tableIds[0],
+          orderId: order.id,
+          commandId: command.id,
+          checkId: check.id,
+          cashSessionId: cashSession.id,
+        },
+        null,
+        2,
+      ),
+      { encoding: "utf8", mode: 0o600 },
+    );
+  }
 });
 
 async function kitchenAction(
   page: Page,
-  commandName: string,
+  commandId: string,
   statusLabel: string,
   actionLabel: string,
 ) {
-  const card = page.getByRole("article", {
-    name: `${commandName}, ${statusLabel}`,
-    exact: true,
-  });
+  const card = page.locator(`[data-command-id="${commandId}"]`);
   await expect(card).toBeVisible();
+  await expect(card).toHaveAccessibleName(
+    new RegExp(`, ${statusLabel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`),
+  );
   await card.getByRole("button", { name: actionLabel, exact: true }).click();
 }
 

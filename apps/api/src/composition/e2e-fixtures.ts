@@ -22,6 +22,11 @@ const PRINCIPALS = [
     roleId: "role_cashier",
     tokenVariable: "E2E_CASHIER_TOKEN",
   },
+  {
+    role: "auditor",
+    roleId: "role_admin",
+    tokenVariable: "E2E_AUDITOR_TOKEN",
+  },
 ] as const;
 
 export async function registerE2EFixtures(
@@ -53,8 +58,10 @@ export async function registerE2EFixtures(
         updatedAt: now,
       });
     }
-    const membership =
-      await repositories.memberships.findActiveByUserAndTenant(userId, tenantId);
+    const membership = await repositories.memberships.findActiveByUserAndTenant(
+      userId,
+      tenantId,
+    );
     if (!membership) {
       await repositories.memberships.save({
         id: membershipId,
@@ -108,7 +115,9 @@ export function assertIsolatedE2EEnvironment(
     env["VERCEL_ENV"] ||
     env["E2E_SHARED_ENV"] === "1"
   ) {
-    throw new Error("E2E fixtures are forbidden outside an isolated E2E environment");
+    throw new Error(
+      "E2E fixtures are forbidden outside an isolated E2E environment",
+    );
   }
   if (!secret.startsWith(`${runId}.`) || secret.length < runId.length + 33) {
     throw new Error("E2E bootstrap secret must be strong and run-scoped");

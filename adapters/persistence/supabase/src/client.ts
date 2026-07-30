@@ -9,17 +9,25 @@ import WebSocket from "ws";
  * password is used or required.
  */
 export function createSupabaseClient(): SupabaseClient {
-  const url = process.env["SUPABASE_URL"];
-  const key = process.env["SUPABASE_SECRET_KEY"];
-  if (!url || !key) {
-    throw new Error(
-      "SUPABASE_URL and SUPABASE_SECRET_KEY must be set to use the Supabase adapters",
-    );
-  }
+  const { url, key } = resolveSupabaseCredentials();
   // Node 20 has no native WebSocket; supabase-js's realtime client (unused
   // by our REST-only repositories) still initializes eagerly and needs one.
   return createClient(url, key, {
     auth: { persistSession: false },
     realtime: { transport: WebSocket } as never,
   });
+}
+
+export function resolveSupabaseCredentials(
+  env: NodeJS.ProcessEnv = process.env,
+): { url: string; key: string } {
+  const url = env["SUPABASE_URL"];
+  const key =
+    env["SUPABASE_SECRET_KEY"] ?? env["SUPABASE_SERVICE_ROLE_KEY"];
+  if (!url || !key) {
+    throw new Error(
+      "SUPABASE_URL and a server-side Supabase secret must be set to use the Supabase adapters",
+    );
+  }
+  return { url, key };
 }

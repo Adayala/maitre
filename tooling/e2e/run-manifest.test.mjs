@@ -13,6 +13,7 @@ const validEnvironment = {
   E2E_WAITER_TOKEN: "waiter-token",
   E2E_COOK_TOKEN: "cook-token",
   E2E_CASHIER_TOKEN: "cashier-token",
+  E2E_AUDITOR_TOKEN: "auditor-token",
   E2E_TENANT_B_TOKEN: "tenant-b-token",
 };
 

@@ -71,6 +71,7 @@ jobs:
           npm run deps:check
           npm run deploy:affected:test
           npm run runtime:profile:test
+          npm run runtime:grants:test
           npm run coverage:gate:test
           npm run e2e:journey:policy
           npm run e2e:journey:policy:test
@@ -152,22 +153,170 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+  release-journey:
+    name: E2E · Release journey (ephemeral Supabase)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      APP_ENV: e2e
+      AUTH_DRIVER: fixture
+      CI: "true"
+      E2E_BUSINESS_CLOCK: "2026-07-30T12:00:00.000Z"
+      E2E_FIXTURES_ENABLED: "1"
+      E2E_PROFILE: release-postgres
+      E2E_RUN_ID: e2e-${{ github.run_id }}-${{ github.run_attempt }}
+      E2E_SEED: "215"
+      PERSISTENCE_DRIVER: supabase
+      VITE_API_URL: http://127.0.0.1:3101
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 20.19.0
+          cache: npm
+
+      - name: Set up pinned Supabase CLI
+        uses: supabase/setup-cli@v2
+        with:
+          version: 2.110.0
+
+      - name: Prepare isolated run identity
+        shell: bash
+        run: |
+          evidence_dir="$RUNNER_TEMP/maitre-release-evidence"
+          mkdir -p "$evidence_dir"
+          {
+            echo "E2E_BOOTSTRAP_SECRET=${E2E_RUN_ID}.$(openssl rand -hex 32)"
+            echo "E2E_WAITER_TOKEN=${E2E_RUN_ID}.waiter.$(openssl rand -hex 24)"
+            echo "E2E_COOK_TOKEN=${E2E_RUN_ID}.cook.$(openssl rand -hex 24)"
+            echo "E2E_CASHIER_TOKEN=${E2E_RUN_ID}.cashier.$(openssl rand -hex 24)"
+            echo "E2E_AUDITOR_TOKEN=${E2E_RUN_ID}.auditor.$(openssl rand -hex 24)"
+            echo "E2E_TENANT_B_TOKEN=${E2E_RUN_ID}.tenant-b.$(openssl rand -hex 24)"
+            echo "E2E_DURABILITY_CHECKPOINT=$evidence_dir/durability-checkpoint.json"
+            echo "E2E_EVIDENCE_DIR=$evidence_dir"
+          } >> "$GITHUB_ENV"
+          echo "INFRA_ERROR: isolated stack has not completed startup" > "$evidence_dir/classification.txt"
+          {
+            echo "run_id=$E2E_RUN_ID"
+            echo "profile=$E2E_PROFILE"
+            echo "seed=$E2E_SEED"
+            echo "business_clock=$E2E_BUSINESS_CLOCK"
+            echo "git_sha=$GITHUB_SHA"
+          } > "$evidence_dir/run.txt"
+
+      - name: Install dependencies and Chromium
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Build API, Floor, Kitchen and Cash
+        run: |
+          npm run build --workspace apps/api
+          npm run build --workspace apps/waiter
+          npm run build --workspace apps/kitchen
+          npm run build --workspace apps/cashier
+
+      - name: Recreate ephemeral database from migrations
+        shell: bash
+        run: |
+          if ! supabase start --exclude edge-runtime,imgproxy,logflare,mailpit,postgres-meta,realtime,studio,supavisor,vector; then
+            echo "INFRA_ERROR: Supabase local stack failed to start" > "$E2E_EVIDENCE_DIR/classification.txt"
+            exit 1
+          fi
+          if ! supabase db reset --local --no-seed; then
+            echo "INFRA_ERROR: migrations failed from an empty database" > "$E2E_EVIDENCE_DIR/classification.txt"
+            exit 1
+          fi
+          supabase migration list --local > "$E2E_EVIDENCE_DIR/migrations.txt"
+          status_env="$RUNNER_TEMP/supabase-status.env"
+          supabase status -o env > "$status_env"
+          set -a
+          source "$status_env"
+          set +a
+          if [[ -z "${API_URL:-}" || -z "${SERVICE_ROLE_KEY:-}" ]]; then
+            echo "INFRA_ERROR: Supabase status did not provide API_URL and SERVICE_ROLE_KEY" > "$E2E_EVIDENCE_DIR/classification.txt"
+            exit 1
+          fi
+          echo "::add-mask::$SERVICE_ROLE_KEY"
+          {
+            echo "SUPABASE_URL=$API_URL"
+            echo "SUPABASE_SECRET_KEY=$SERVICE_ROLE_KEY"
+          } >> "$GITHUB_ENV"
+          echo "PRODUCT_FAILURE: authoritative journey has not completed" > "$E2E_EVIDENCE_DIR/classification.txt"
+
+      - name: Run authoritative MVP journey
+        shell: bash
+        run: |
+          if ! npm run test:e2e:journey:run; then
+            echo "PRODUCT_FAILURE: MVP-J-001 failed" > "$E2E_EVIDENCE_DIR/classification.txt"
+            exit 1
+          fi
+          mkdir -p "$E2E_EVIDENCE_DIR/initial-process"
+          cp -R test-results playwright-report "$E2E_EVIDENCE_DIR/initial-process/"
+          echo "PRODUCT_FAILURE: durable state has not survived an API restart" > "$E2E_EVIDENCE_DIR/classification.txt"
+
+      - name: Restart API and prove persisted state
+        shell: bash
+        run: |
+          if ! npm run test:e2e:journey:restart; then
+            echo "PRODUCT_FAILURE: state was not durable across API restart" > "$E2E_EVIDENCE_DIR/classification.txt"
+            exit 1
+          fi
+          mkdir -p "$E2E_EVIDENCE_DIR/restarted-process"
+          cp -R test-results playwright-report "$E2E_EVIDENCE_DIR/restarted-process/"
+          echo "PASS: MVP-J-001 completed and survived an API restart" > "$E2E_EVIDENCE_DIR/classification.txt"
+
+      - name: Destroy ephemeral database and verify cleanup
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          evidence_dir="${E2E_EVIDENCE_DIR:-$RUNNER_TEMP/maitre-release-evidence}"
+          mkdir -p "$evidence_dir"
+          if supabase status >/dev/null 2>&1; then
+            if ! supabase stop --no-backup; then
+              echo "CLEANUP_FAILURE: Supabase teardown failed" > "$evidence_dir/classification.txt"
+              exit 1
+            fi
+          fi
+          if supabase status >/dev/null 2>&1; then
+            echo "CLEANUP_FAILURE: Supabase resources remain active" > "$evidence_dir/classification.txt"
+            exit 1
+          fi
+          echo "cleanup=verified" > "$evidence_dir/cleanup.txt"
+
+      - name: Upload release journey evidence
+        if: ${{ always() && !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-journey-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/maitre-release-evidence/
+          if-no-files-found: error
+          retention-days: 14
+
   e2e-gate:
     name: E2E gate
     if: ${{ always() }}
-    needs: [affected, playwright]
+    needs: [affected, playwright, release-journey]
     runs-on: ubuntu-24.04
     steps:
-      - name: Require every affected Playwright project
+      - name: Require every affected project and the release journey
         env:
           HAS_E2E: ${{ needs.affected.outputs.has_e2e }}
           PLAYWRIGHT_RESULT: ${{ needs.playwright.result }}
+          RELEASE_JOURNEY_RESULT: ${{ needs.release-journey.result }}
         run: |
           if [[ "$HAS_E2E" == "true" && "$PLAYWRIGHT_RESULT" != "success" ]]; then
             echo "Affected E2E projects did not all pass: $PLAYWRIGHT_RESULT"
             exit 1
           fi
-          echo "E2E gate passed (affected=$HAS_E2E, result=$PLAYWRIGHT_RESULT)."
+          if [[ "$RELEASE_JOURNEY_RESULT" != "success" ]]; then
+            echo "Authoritative release journey did not pass: $RELEASE_JOURNEY_RESULT"
+            exit 1
+          fi
+          echo "E2E gate passed (affected=$HAS_E2E, matrix=$PLAYWRIGHT_RESULT, release=$RELEASE_JOURNEY_RESULT)."
 
   deploy:
     name: Deploy · ${{ matrix.name }}

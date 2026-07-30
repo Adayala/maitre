@@ -45,7 +45,11 @@ export default defineConfig({
   retries: 0,
   workers: process.env["CI"] ? 1 : undefined,
   reporter: process.env["CI"]
-    ? [["line"], ["junit", { outputFile: "test-results/e2e-junit.xml" }], ["html", { open: "never" }]]
+    ? [
+        ["line"],
+        ["junit", { outputFile: "test-results/e2e-junit.xml" }],
+        ["html", { open: "never" }],
+      ]
     : [["list"], ["html", { open: "never" }]],
   use: {
     trace: "retain-on-failure",
@@ -65,7 +69,17 @@ export default defineConfig({
     appProject("guest", ports.guest, "Pixel 7"),
     {
       name: "journeys",
-      testMatch: /journeys\/.*\.spec\.ts/,
+      testMatch: /journeys\/mvp-.*\.spec\.ts/,
+      fullyParallel: false,
+      use: {
+        ...devices["iPad (gen 7)"],
+        browserName: "chromium",
+        baseURL: `http://${host}:${ports.floor}`,
+      },
+    },
+    {
+      name: "journey-restart",
+      testMatch: /journeys\/restart-durability\.spec\.ts/,
       fullyParallel: false,
       use: {
         ...devices["iPad (gen 7)"],
@@ -77,12 +91,13 @@ export default defineConfig({
 });
 
 function webServersFor(selectedApp) {
-  const appNames =
-    selectedApp === "journeys"
-      ? ["floor", "kitchen", "cash"]
-      : selectedApp
-        ? [selectedApp]
-        : Object.keys(webapps);
+  const isJourney =
+    selectedApp === "journeys" || selectedApp === "journey-restart";
+  const appNames = isJourney
+    ? ["floor", "kitchen", "cash"]
+    : selectedApp
+      ? [selectedApp]
+      : Object.keys(webapps);
   const selectedWebapps = appNames.map((name) => {
     const server = webapps[name];
     if (!server) {
@@ -99,10 +114,9 @@ function webServersFor(selectedApp) {
   return [
     {
       name: "api",
-      command:
-        selectedApp === "journeys"
-          ? `AUTH_DRIVER=fixture PORT=${ports.api} npm run start --workspace apps/api`
-          : `PORT=${ports.api} npm run start --workspace apps/api`,
+      command: isJourney
+        ? `AUTH_DRIVER=fixture PORT=${ports.api} npm run start --workspace apps/api`
+        : `PORT=${ports.api} npm run start --workspace apps/api`,
       url: `http://${host}:${ports.api}/health/ready`,
       timeout: 30_000,
       reuseExistingServer: false,
