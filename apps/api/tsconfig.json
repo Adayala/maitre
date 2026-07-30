@@ -9,6 +9,7 @@
     { "path": "../../packages/arca-client" },
     { "path": "../../packages/modules/fiscal" },
     { "path": "../../packages/contracts" },
+    { "path": "../../packages/telemetry" },
     { "path": "../../packages/modules/organization" },
     { "path": "../../packages/modules/identity" },
     { "path": "../../packages/modules/subscription" },

@@ -73,10 +73,12 @@ export function registerMutationAudit(
     if (!MUTATION_METHODS.has(request.method)) return;
     if (!routeTemplate.startsWith("/v1/")) return;
 
-    await app.rateLimit({
-      max: AUDIT_RATE_LIMIT_MAX,
-      timeWindow: AUDIT_RATE_LIMIT_WINDOW_MS,
-    })(request, reply);
+    await app
+      .rateLimit({
+        max: AUDIT_RATE_LIMIT_MAX,
+        timeWindow: AUDIT_RATE_LIMIT_WINDOW_MS,
+      })
+      .call(app, request, reply);
   });
 
   app.addHook("onResponse", async (request, reply) => {
