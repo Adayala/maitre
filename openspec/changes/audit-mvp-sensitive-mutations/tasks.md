@@ -1,7 +1,7 @@
 ## 1. Audit contract and persistence
 
-- [ ] 1.1 Extend AuditLog with action code, branch, outcome, reason code and request identifiers.
-- [ ] 1.2 Add migration, indexes and persistence mapping for the additive fields.
+- [x] 1.1 Extend AuditLog with action code, branch, outcome, reason code and request identifiers.
+- [x] 1.2 Add migration, indexes and persistence mapping for the additive fields.
 - [ ] 1.3 Implement allowlist evidence projectors, redaction rules and serialized size limits.
 - [ ] 1.4 Add an audit-aware unit-of-work port for atomic state, outbox and evidence writes.
 
@@ -15,9 +15,8 @@
 
 ## 3. Query, governance and operations
 
-- [ ] 3.1 Extend audit queries with branch, action code, outcome, resource and correlation filters.
+- [x] 3.1 Extend audit queries with branch, action code, outcome, resource and correlation filters.
 - [ ] 3.2 Add a contract test that rejects uncovered sensitive mutations.
 - [ ] 3.3 Add audit append failure/rate/size metrics and an operational alert.
 - [ ] 3.4 Document redaction, incident lookup, coverage boundary and rollback procedures.
 - [ ] 3.5 Run migrations, typecheck, domain/API tests and strict OpenSpec validation.
-

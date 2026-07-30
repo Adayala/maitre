@@ -25,7 +25,16 @@ export async function registerAuditLogRoutes(
       const page = await container.auditLogs.query({
         tenantId: ctx.tenantId,
         ...(query["actor_id"] ? { actorId: query["actor_id"] } : {}),
+        ...(query["branch_id"] ? { branchId: query["branch_id"] } : {}),
+        ...(query["action_code"] ? { actionCode: query["action_code"] } : {}),
+        ...(query["outcome"]
+          ? { outcome: query["outcome"] as "SUCCEEDED" | "DENIED" | "FAILED" }
+          : {}),
         ...(query["resource_type"] ? { resourceType: query["resource_type"] } : {}),
+        ...(query["resource_id"] ? { resourceId: query["resource_id"] } : {}),
+        ...(query["correlation_id"]
+          ? { correlationId: query["correlation_id"] }
+          : {}),
         ...(query["from"] ? { from: new Date(query["from"]) } : {}),
         ...(query["to"] ? { to: new Date(query["to"]) } : {}),
         ...(query["cursor"] ? { cursor: query["cursor"] } : {}),
