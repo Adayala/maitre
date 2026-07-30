@@ -127,18 +127,28 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
       name: "Sentar comensales",
     });
     await expect(seatDialog).toBeVisible();
-    await seatDialog.getByRole("button", { name: /^Sentar \d+/ }).click();
+    const [seatResponse] = await Promise.all([
+      apps.floor.waitForResponse(
+        (response) =>
+          response.request().method() === "POST" &&
+          new URL(response.url()).pathname === "/v1/visits",
+      ),
+      seatDialog.getByRole("button", { name: /^Sentar \d+/ }).click(),
+    ]);
+    expect(seatResponse.status()).toBe(201);
+    const seatedVisit = (await seatResponse.json()) as ApiData<Visit>;
 
     await expect(
       apps.floor.getByRole("button", { name: /Nuevo pedido/ }),
     ).toBeVisible();
-    const visits = await api.poll<ApiData<Visit[]>>(
+    const openedVisit = await api.poll<ApiData<Visit>>(
       "open visit",
-      () => api.get("waiter", `/v1/visits?branchId=${BRANCH_ID}`),
-      (body) => body.data.some((candidate) => candidate.status === "OPEN"),
+      () => api.get("waiter", `/v1/visits/${seatedVisit.data.id}`),
+      (body) => body.data.status === "OPEN",
     );
-    assertEvidence(visits);
-    visit = visits.body.data.find((candidate) => candidate.status === "OPEN")!;
+    assertEvidence(openedVisit);
+    visit = openedVisit.body.data;
+    expect(visit.id).toBe(seatedVisit.data.id);
 
     await apps.floor.getByRole("button", { name: /Nuevo pedido/ }).click();
     await expect(
