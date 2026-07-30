@@ -5,6 +5,9 @@ import type { Container } from "../composition/container.js";
 import { tenantContextForRequest } from "./request-context.js";
 
 const MUTATION_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+const AUDIT_RATE_LIMIT_WINDOW_MS = 60_000;
+const AUDIT_RATE_LIMIT_MAX = 120;
+const auditRateLimitBuckets = new Map<string, { count: number; resetAt: number }>();
 const DOMAIN_SEGMENTS: Record<string, string> = {
   visits: "FLOOR",
   checks: "FLOOR",
@@ -53,6 +56,9 @@ export function registerMutationAudit(
   container: Container,
 ): void {
   app.addHook("onResponse", async (request, reply) => {
+    const rateLimitKey = auditRateLimitKeyFor(request);
+    if (isAuditRateLimited(rateLimitKey)) return;
+
     const routeTemplate = request.routeOptions.url;
     if (!routeTemplate) return;
     const policy = mutationAuditPolicy(request.method, routeTemplate);
@@ -133,6 +139,30 @@ function correlationIdFor(
   return typeof requestValue === "string" && isUuid(requestValue)
     ? requestValue
     : randomUUID();
+}
+
+function auditRateLimitKeyFor(request: FastifyRequest): string {
+  const forwardedFor = request.headers["x-forwarded-for"];
+  if (typeof forwardedFor === "string" && forwardedFor.length > 0) {
+    return forwardedFor.split(",")[0]!.trim();
+  }
+  return request.ip;
+}
+
+function isAuditRateLimited(key: string): boolean {
+  const now = Date.now();
+  const current = auditRateLimitBuckets.get(key);
+  if (!current || current.resetAt <= now) {
+    auditRateLimitBuckets.set(key, {
+      count: 1,
+      resetAt: now + AUDIT_RATE_LIMIT_WINDOW_MS,
+    });
+    return false;
+  }
+
+  if (current.count >= AUDIT_RATE_LIMIT_MAX) return true;
+  current.count += 1;
+  return false;
 }
 
 function isUuid(value: string): boolean {
