@@ -343,19 +343,19 @@ test("invalid transition (mark-ready before start) returns 409; unknown id 404",
   assert.equal(bad.statusCode, 409);
   assert.deepEqual(
     new Set(Object.keys(bad.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(bad.json().type, "conflict");
+  assert.equal(bad.json().type, "https://docs.maitre.app/problems/conflict");
   assert.equal(bad.json().status, 409);
 
   const missing = await app.inject({ method: "GET", url: `/v1/kitchen/commands/${randomUUID()}`, headers });
   assert.equal(missing.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(missing.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(missing.json().type, "not-found");
-  assert.equal(missing.json().title, "Command not found");
+  assert.equal(missing.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(missing.json().detail, "Command not found");
   assert.equal(missing.json().status, 404);
   await app.close();
 });
@@ -408,10 +408,10 @@ test("kitchen commands enforce RBAC for cashier and hide unknown command ids as 
   assert.equal(forbiddenRead.statusCode, 403);
   assert.deepEqual(
     new Set(Object.keys(forbiddenRead.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(forbiddenRead.json().type, "insufficient-scope");
-  assert.equal(forbiddenRead.json().title, "Insufficient scope");
+  assert.equal(forbiddenRead.json().type, "https://docs.maitre.app/problems/insufficient-scope");
+  assert.equal(forbiddenRead.json().detail, "Insufficient scope");
   assert.equal(forbiddenRead.json().status, 403);
 
   const forbiddenClaim = await app.inject({
@@ -423,10 +423,10 @@ test("kitchen commands enforce RBAC for cashier and hide unknown command ids as 
   assert.equal(forbiddenClaim.statusCode, 403);
   assert.deepEqual(
     new Set(Object.keys(forbiddenClaim.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(forbiddenClaim.json().type, "insufficient-scope");
-  assert.equal(forbiddenClaim.json().title, "Insufficient scope");
+  assert.equal(forbiddenClaim.json().type, "https://docs.maitre.app/problems/insufficient-scope");
+  assert.equal(forbiddenClaim.json().detail, "Insufficient scope");
   assert.equal(forbiddenClaim.json().status, 403);
 
   const missingClaim = await app.inject({
@@ -438,10 +438,10 @@ test("kitchen commands enforce RBAC for cashier and hide unknown command ids as 
   assert.equal(missingClaim.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(missingClaim.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(missingClaim.json().type, "not-found");
-  assert.equal(missingClaim.json().title, "Command not found");
+  assert.equal(missingClaim.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(missingClaim.json().detail, "Command not found");
   assert.equal(missingClaim.json().status, 404);
 
   await app.close();
@@ -783,9 +783,9 @@ test("deactivating a station with active commands returns 409", async () => {
   assert.equal(res.statusCode, 409);
   assert.deepEqual(
     new Set(Object.keys(res.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(res.json().type, "conflict");
+  assert.equal(res.json().type, "https://docs.maitre.app/problems/conflict");
   assert.equal(res.json().status, 409);
   await app.close();
 });
@@ -959,10 +959,10 @@ test("403 without permission (cashier), 404 for unknown station", async () => {
   assert.equal(forbidden.statusCode, 403);
   assert.deepEqual(
     new Set(Object.keys(forbidden.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(forbidden.json().type, "insufficient-scope");
-  assert.equal(forbidden.json().title, "Insufficient scope");
+  assert.equal(forbidden.json().type, "https://docs.maitre.app/problems/insufficient-scope");
+  assert.equal(forbidden.json().detail, "Insufficient scope");
   assert.equal(forbidden.json().status, 403);
 
   const missing = await app.inject({
@@ -973,10 +973,10 @@ test("403 without permission (cashier), 404 for unknown station", async () => {
   assert.equal(missing.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(missing.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(missing.json().type, "not-found");
-  assert.equal(missing.json().title, "Station not found");
+  assert.equal(missing.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(missing.json().detail, "Station not found");
   assert.equal(missing.json().status, 404);
   await app.close();
 });

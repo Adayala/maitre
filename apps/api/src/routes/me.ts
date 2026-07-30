@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { randomUUID } from "node:crypto";
-import type { ProblemDetails } from "@maitre/contracts";
 import type { Container } from "../composition/container.js";
+import { HttpProblemError, sendProblem } from "../http/problem-details.js";
 import {
   AuthenticationRequiredError,
   SessionExpiredError,
@@ -27,46 +27,36 @@ export async function registerMeRoutes(
       reply.header("x-correlation-id", correlationId);
       return context;
     } catch (err) {
-      const problem = toProblemDetails(err, correlationId);
-      reply.header("x-correlation-id", correlationId);
-      if (problem.status === 401) {
-        reply.header("www-authenticate", "Bearer");
+      if (err instanceof AuthenticationRequiredError) {
+        return sendProblem(
+          reply,
+          correlationId,
+          new HttpProblemError(
+            401,
+            "authentication-required",
+            "Authentication required",
+          ),
+        );
       }
-      reply.code(problem.status);
-      return problem;
+      if (err instanceof SessionExpiredError) {
+        return sendProblem(
+          reply,
+          correlationId,
+          new HttpProblemError(401, "session-expired", "Session expired"),
+        );
+      }
+      if (err instanceof IdentityNotEnabledError) {
+        return sendProblem(
+          reply,
+          correlationId,
+          new HttpProblemError(
+            403,
+            "identity-not-enabled",
+            "Identity not enabled",
+          ),
+        );
+      }
+      return sendProblem(reply, correlationId, err);
     }
   });
-}
-
-function toProblemDetails(err: unknown, correlationId: string): ProblemDetails {
-  if (err instanceof AuthenticationRequiredError) {
-    return {
-      type: "authentication-required",
-      title: "Authentication required",
-      status: 401,
-      correlationId,
-    };
-  }
-  if (err instanceof SessionExpiredError) {
-    return {
-      type: "session-expired",
-      title: "Session expired",
-      status: 401,
-      correlationId,
-    };
-  }
-  if (err instanceof IdentityNotEnabledError) {
-    return {
-      type: "identity-not-enabled",
-      title: "Identity not enabled",
-      status: 403,
-      correlationId,
-    };
-  }
-  return {
-    type: "internal-error",
-    title: "Internal error",
-    status: 500,
-    correlationId,
-  };
 }

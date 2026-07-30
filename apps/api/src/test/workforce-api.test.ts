@@ -473,7 +473,7 @@ test("Workforce clock-out rejects when there is an OPEN break", async () => {
     },
   });
   assert.equal(clockOut.statusCode, 409);
-  assert.match(clockOut.json().title, /cannot clock-out while BreakLog .* remains OPEN/i);
+  assert.match(clockOut.json().detail, /cannot clock-out while BreakLog .* remains OPEN/i);
 
   await app.close();
 });
@@ -4809,7 +4809,7 @@ test("Workforce reassign returns 404 for missing target employment", async () =>
     },
   });
   assert.equal(reassignMissingEmployment.statusCode, 404);
-  assert.equal(reassignMissingEmployment.json().title, "Employment not found");
+  assert.equal(reassignMissingEmployment.json().detail, "Employment not found");
 
   await app.close();
 });
@@ -5850,7 +5850,7 @@ test("Workforce adjustment decision endpoints return 404 for missing base resour
     payload: { approverId: "manager-missing-base" },
   });
   assert.equal(approveMissingTimeEntry.statusCode, 404);
-  assert.equal(approveMissingTimeEntry.json().title, "TimeEntry not found");
+  assert.equal(approveMissingTimeEntry.json().detail, "TimeEntry not found");
 
   const breakAdjustmentId = randomUUID();
   await container.breakAdjustments!.save({
@@ -5871,7 +5871,7 @@ test("Workforce adjustment decision endpoints return 404 for missing base resour
     payload: { approverId: "manager-missing-base" },
   });
   assert.equal(rejectMissingBreakLog.statusCode, 404);
-  assert.equal(rejectMissingBreakLog.json().title, "BreakLog not found");
+  assert.equal(rejectMissingBreakLog.json().detail, "BreakLog not found");
 
   await app.close();
 });
@@ -5926,7 +5926,7 @@ test("Workforce break adjustment endpoints return 404 for missing base time entr
     headers,
   });
   assert.equal(getMissingTimeEntryBreakAdjustment.statusCode, 404);
-  assert.equal(getMissingTimeEntryBreakAdjustment.json().title, "TimeEntry not found");
+  assert.equal(getMissingTimeEntryBreakAdjustment.json().detail, "TimeEntry not found");
 
   const approveMissingTimeEntryBreakAdjustment = await app.inject({
     method: "POST",
@@ -5935,7 +5935,7 @@ test("Workforce break adjustment endpoints return 404 for missing base time entr
     payload: { approverId: "manager-missing-base" },
   });
   assert.equal(approveMissingTimeEntryBreakAdjustment.statusCode, 404);
-  assert.equal(approveMissingTimeEntryBreakAdjustment.json().title, "TimeEntry not found");
+  assert.equal(approveMissingTimeEntryBreakAdjustment.json().detail, "TimeEntry not found");
 
   const rejectMissingTimeEntryBreakAdjustment = await app.inject({
     method: "POST",
@@ -5944,7 +5944,7 @@ test("Workforce break adjustment endpoints return 404 for missing base time entr
     payload: { approverId: "manager-missing-base" },
   });
   assert.equal(rejectMissingTimeEntryBreakAdjustment.statusCode, 404);
-  assert.equal(rejectMissingTimeEntryBreakAdjustment.json().title, "TimeEntry not found");
+  assert.equal(rejectMissingTimeEntryBreakAdjustment.json().detail, "TimeEntry not found");
 
   await app.close();
 });
@@ -5987,7 +5987,7 @@ test("Workforce break adjustment create/list endpoints return 404 for missing ba
     },
   });
   assert.equal(createAdjustment.statusCode, 404);
-  assert.equal(createAdjustment.json().title, "TimeEntry not found");
+  assert.equal(createAdjustment.json().detail, "TimeEntry not found");
 
   const listAdjustments = await app.inject({
     method: "GET",
@@ -5995,7 +5995,7 @@ test("Workforce break adjustment create/list endpoints return 404 for missing ba
     headers,
   });
   assert.equal(listAdjustments.statusCode, 404);
-  assert.equal(listAdjustments.json().title, "TimeEntry not found");
+  assert.equal(listAdjustments.json().detail, "TimeEntry not found");
 
   await app.close();
 });
@@ -7770,7 +7770,7 @@ test("Workforce time export denies missing or stale step-up", async () => {
     },
   });
   assert.equal(missingStepUp.statusCode, 403);
-  assert.equal(missingStepUp.json().type, "step-up-required");
+  assert.equal(missingStepUp.json().type, "https://docs.maitre.app/problems/step-up-required");
 
   const staleStepUp = await app.inject({
     method: "POST",
@@ -7783,7 +7783,7 @@ test("Workforce time export denies missing or stale step-up", async () => {
     },
   });
   assert.equal(staleStepUp.statusCode, 403);
-  assert.equal(staleStepUp.json().type, "step-up-required");
+  assert.equal(staleStepUp.json().type, "https://docs.maitre.app/problems/step-up-required");
 
   await app.close();
 });
@@ -7812,7 +7812,7 @@ test("Workforce time export fails for expired sessions", async () => {
     },
   });
   assert.equal(exportResponse.statusCode, 401);
-  assert.equal(exportResponse.json().type, "session-expired");
+  assert.equal(exportResponse.json().type, "https://docs.maitre.app/problems/session-expired");
 
   await app.close();
 });
@@ -7990,7 +7990,7 @@ test("Workforce labor policy review is branch-scoped and does not grant time exp
     },
   });
   assert.equal(exportDenied.statusCode, 403);
-  assert.equal(exportDenied.json().type, "insufficient-scope");
+  assert.equal(exportDenied.json().type, "https://docs.maitre.app/problems/insufficient-scope");
 
   await app.close();
 });
@@ -8036,7 +8036,7 @@ test("Workforce labor policy review denies roles without labor policy permission
     headers: { authorization: `Bearer ${cookToken}`, "x-tenant-id": tenantId },
   });
   assert.equal(denied.statusCode, 403);
-  assert.equal(denied.json().type, "insufficient-scope");
+  assert.equal(denied.json().type, "https://docs.maitre.app/problems/insufficient-scope");
 
   await app.close();
 });
@@ -8152,7 +8152,7 @@ test("Workforce labor policy manage is separate from review", async () => {
     },
   });
   assert.equal(deniedCreate.statusCode, 403);
-  assert.equal(deniedCreate.json().type, "insufficient-scope");
+  assert.equal(deniedCreate.json().type, "https://docs.maitre.app/problems/insufficient-scope");
 
   await app.close();
 });
@@ -8385,7 +8385,7 @@ test("Workforce labor policy activation requires manage permission", async () =>
     },
   });
   assert.equal(denied.statusCode, 403);
-  assert.equal(denied.json().type, "insufficient-scope");
+  assert.equal(denied.json().type, "https://docs.maitre.app/problems/insufficient-scope");
 
   await app.close();
 });
@@ -8423,7 +8423,7 @@ test("Workforce labor policy activation denies self supersession", async () => {
     },
   });
   assert.equal(denied.statusCode, 400);
-  assert.match(denied.json().title, /cannot supersede itself/i);
+  assert.match(denied.json().detail, /cannot supersede itself/i);
 
   await app.close();
 });
@@ -8526,7 +8526,7 @@ test("Workforce labor policy create denies invalid superseded policy references"
     },
   });
   assert.equal(invalidDateSupersede.statusCode, 400);
-  assert.match(invalidDateSupersede.json().title, /effectivefrom must be later than or equal/i);
+  assert.match(invalidDateSupersede.json().detail, /effectivefrom must be later than or equal/i);
 
   await app.close();
 });

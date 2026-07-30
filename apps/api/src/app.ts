@@ -52,6 +52,12 @@ import { registerInvoiceRoutes } from "./routes/invoices.js";
 import { registerTaxRateRoutes } from "./routes/tax-rates.js";
 import { registerFiscalPrinterRoutes } from "./routes/fiscal-printers.js";
 import { registerInvoiceTemplateRoutes } from "./routes/invoice-templates.js";
+import {
+  openApiConfiguration,
+  registerOpenApiContractMetadata,
+} from "./http/openapi-contract.js";
+import { sendProblem } from "./http/problem-details.js";
+import { randomUUID } from "node:crypto";
 
 // SPEC-211 — app.ts instantiates and wires plugins/routes without listen().
 // server.ts (local/process) and api/serverless.ts (Vercel) both consume this.
@@ -64,6 +70,11 @@ export async function buildApp(container?: Container): Promise<FastifyInstance> 
     connectionTimeout: 10_000,
   });
   const resolvedContainer = container ?? (await buildContainer());
+
+  registerOpenApiContractMetadata(app);
+  app.setErrorHandler((error, _request, reply) => {
+    sendProblem(reply, randomUUID(), error);
+  });
 
   await app.register(helmet, {
     // Swagger UI needs inline assets. Product frontends define their CSP at
@@ -93,12 +104,7 @@ export async function buildApp(container?: Container): Promise<FastifyInstance> 
   // the handler rather than a Fastify route `schema`, so this generates a
   // real, browsable endpoint catalog (path/method per route) without detailed
   // per-route request/response bodies. Served at /docs, separate from /v1/*.
-  await app.register(swagger, {
-    openapi: {
-      info: { title: "Maitre API", version: "0.0.1" },
-      servers: [{ url: "/" }],
-    },
-  });
+  await app.register(swagger, openApiConfiguration);
   await app.register(swaggerUi, { routePrefix: "/docs" });
 
   await registerHealthRoutes(app, resolvedContainer);
@@ -152,16 +158,33 @@ export async function buildApp(container?: Container): Promise<FastifyInstance> 
   return app;
 }
 
-function resolveCorsOrigins(): true | string[] {
+export function resolveCorsOrigins(): string[] {
   const configured = process.env["CORS_ALLOWED_ORIGINS"]
     ?.split(",")
     .map((origin) => origin.trim())
     .filter(Boolean);
-  if (configured?.length) return configured;
-  if (process.env["APP_ENV"] === "production") {
-    throw new Error("CORS_ALLOWED_ORIGINS must be configured in production");
+  if (configured?.length) return [...new Set(configured.map(normalizeOrigin))];
+
+  const environment = process.env["APP_ENV"] ?? "local";
+  if (!["local", "test", "e2e"].includes(environment)) {
+    throw new Error(
+      `CORS_ALLOWED_ORIGINS must be configured in ${environment}`,
+    );
   }
-  return true;
+  return [
+    "http://127.0.0.1:5173",
+    "http://localhost:5173",
+    "http://127.0.0.1:5273",
+    "http://localhost:5273",
+  ];
+}
+
+function normalizeOrigin(origin: string): string {
+  const parsed = new URL(origin);
+  if (!["http:", "https:"].includes(parsed.protocol) || parsed.username || parsed.password) {
+    throw new Error(`Invalid CORS origin: ${origin}`);
+  }
+  return parsed.origin;
 }
 
 function resolveTrustProxy(): boolean | number {

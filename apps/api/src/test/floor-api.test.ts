@@ -249,10 +249,10 @@ serialTest("Visit move and cancel commands update the visit and enforce branch-s
   assert.equal(missingBranchQuery.statusCode, 400);
   assert.deepEqual(
     new Set(Object.keys(missingBranchQuery.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(missingBranchQuery.json().type, "bad-request");
-  assert.equal(missingBranchQuery.json().title, "branchId is required");
+  assert.equal(missingBranchQuery.json().type, "https://docs.maitre.app/problems/bad-request");
+  assert.equal(missingBranchQuery.json().detail, "branchId is required");
   assert.equal(missingBranchQuery.json().status, 400);
 
   const move = await app.inject({
@@ -338,9 +338,9 @@ serialTest("Visit commands reject occupied moves, close with unsettled check, an
   assert.equal(moveConflict.statusCode, 409);
   assert.deepEqual(
     new Set(Object.keys(moveConflict.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(moveConflict.json().type, "conflict");
+  assert.equal(moveConflict.json().type, "https://docs.maitre.app/problems/conflict");
   assert.equal(moveConflict.json().status, 409);
 
   const moveOk = await app.inject({
@@ -375,9 +375,9 @@ serialTest("Visit commands reject occupied moves, close with unsettled check, an
   assert.equal(closeBlocked.statusCode, 400);
   assert.deepEqual(
     new Set(Object.keys(closeBlocked.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(closeBlocked.json().type, "bad-request");
+  assert.equal(closeBlocked.json().type, "https://docs.maitre.app/problems/bad-request");
   assert.equal(closeBlocked.json().status, 400);
 
   const requestCloseAgain = await app.inject({
@@ -388,9 +388,9 @@ serialTest("Visit commands reject occupied moves, close with unsettled check, an
   assert.equal(requestCloseAgain.statusCode, 409);
   assert.deepEqual(
     new Set(Object.keys(requestCloseAgain.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(requestCloseAgain.json().type, "conflict");
+  assert.equal(requestCloseAgain.json().type, "https://docs.maitre.app/problems/conflict");
   assert.equal(requestCloseAgain.json().status, 409);
 
   const cancelAfterCheck = await app.inject({
@@ -402,9 +402,9 @@ serialTest("Visit commands reject occupied moves, close with unsettled check, an
   assert.equal(cancelAfterCheck.statusCode, 409);
   assert.deepEqual(
     new Set(Object.keys(cancelAfterCheck.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(cancelAfterCheck.json().type, "conflict");
+  assert.equal(cancelAfterCheck.json().type, "https://docs.maitre.app/problems/conflict");
   assert.equal(cancelAfterCheck.json().status, 409);
 
   const reopenWithoutReason = await app.inject({
@@ -416,11 +416,11 @@ serialTest("Visit commands reject occupied moves, close with unsettled check, an
   assert.equal(reopenWithoutReason.statusCode, 400);
   assert.deepEqual(
     new Set(Object.keys(reopenWithoutReason.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(reopenWithoutReason.json().type, "bad-request");
+  assert.equal(reopenWithoutReason.json().type, "https://docs.maitre.app/problems/bad-request");
   assert.equal(reopenWithoutReason.json().status, 400);
-  assert.match(String(reopenWithoutReason.json().title), /reason/i);
+  assert.match(String(reopenWithoutReason.json().detail), /reason/i);
 
   const reopen = await app.inject({
     method: "POST",
@@ -877,9 +877,9 @@ serialTest("Payments API: refund and over-capture validation", async () => {
   assert.equal(overCapture.statusCode, 400);
   assert.deepEqual(
     new Set(Object.keys(overCapture.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(overCapture.json().type, "bad-request");
+  assert.equal(overCapture.json().type, "https://docs.maitre.app/problems/bad-request");
   assert.equal(overCapture.json().status, 400);
 
   await app.close();
@@ -930,10 +930,10 @@ serialTest("403 without permission, 404 for unknown ids", async () => {
   assert.equal(forbidden.statusCode, 403);
   assert.deepEqual(
     new Set(Object.keys(forbidden.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(forbidden.json().type, "insufficient-scope");
-  assert.equal(forbidden.json().title, "Insufficient scope");
+  assert.equal(forbidden.json().type, "https://docs.maitre.app/problems/insufficient-scope");
+  assert.equal(forbidden.json().detail, "Insufficient scope");
   assert.equal(forbidden.json().status, 403);
 
   const notFound = await app.inject({
@@ -944,10 +944,10 @@ serialTest("403 without permission, 404 for unknown ids", async () => {
   assert.equal(notFound.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(notFound.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(notFound.json().type, "not-found");
-  assert.equal(notFound.json().title, "Visit not found");
+  assert.equal(notFound.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(notFound.json().detail, "Visit not found");
   assert.equal(notFound.json().status, 404);
 
   const reopenForbidden = await app.inject({
@@ -959,10 +959,10 @@ serialTest("403 without permission, 404 for unknown ids", async () => {
   assert.equal(reopenForbidden.statusCode, 403);
   assert.deepEqual(
     new Set(Object.keys(reopenForbidden.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(reopenForbidden.json().type, "insufficient-scope");
-  assert.equal(reopenForbidden.json().title, "Insufficient scope");
+  assert.equal(reopenForbidden.json().type, "https://docs.maitre.app/problems/insufficient-scope");
+  assert.equal(reopenForbidden.json().detail, "Insufficient scope");
   assert.equal(reopenForbidden.json().status, 403);
   await app.close();
 });
@@ -1060,11 +1060,11 @@ serialTest("ServicePeriod force-close endpoint closes a closing period and requi
   assert.equal(missingReason.statusCode, 400);
   assert.deepEqual(
     new Set(Object.keys(missingReason.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(missingReason.json().type, "bad-request");
+  assert.equal(missingReason.json().type, "https://docs.maitre.app/problems/bad-request");
   assert.equal(missingReason.json().status, 400);
-  assert.match(String(missingReason.json().title), /reason/i);
+  assert.match(String(missingReason.json().detail), /reason/i);
 
   const forceClose = await app.inject({
     method: "POST",
@@ -1302,9 +1302,9 @@ serialTest("ServicePeriod list/detail and transition guards enforce conflict and
   assert.equal(conflictingOpen.statusCode, 409);
   assert.deepEqual(
     new Set(Object.keys(conflictingOpen.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(conflictingOpen.json().type, "conflict");
+  assert.equal(conflictingOpen.json().type, "https://docs.maitre.app/problems/conflict");
   assert.equal(conflictingOpen.json().status, 409);
 
   const closeWithoutBegin = await app.inject({
@@ -1316,9 +1316,9 @@ serialTest("ServicePeriod list/detail and transition guards enforce conflict and
   assert.equal(closeWithoutBegin.statusCode, 409);
   assert.deepEqual(
     new Set(Object.keys(closeWithoutBegin.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(closeWithoutBegin.json().type, "conflict");
+  assert.equal(closeWithoutBegin.json().type, "https://docs.maitre.app/problems/conflict");
   assert.equal(closeWithoutBegin.json().status, 409);
 
   const cancelPlannedDinner = await app.inject({
@@ -1353,9 +1353,9 @@ serialTest("ServicePeriod list/detail and transition guards enforce conflict and
   assert.equal(reopenCancelledDinner.statusCode, 409);
   assert.deepEqual(
     new Set(Object.keys(reopenCancelledDinner.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(reopenCancelledDinner.json().type, "conflict");
+  assert.equal(reopenCancelledDinner.json().type, "https://docs.maitre.app/problems/conflict");
   assert.equal(reopenCancelledDinner.json().status, 409);
 
   const unknownDetail = await app.inject({
@@ -1366,10 +1366,10 @@ serialTest("ServicePeriod list/detail and transition guards enforce conflict and
   assert.equal(unknownDetail.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(unknownDetail.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(unknownDetail.json().type, "not-found");
-  assert.equal(unknownDetail.json().title, "ServicePeriod not found");
+  assert.equal(unknownDetail.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(unknownDetail.json().detail, "ServicePeriod not found");
   assert.equal(unknownDetail.json().status, 404);
 
   const unknownOpen = await app.inject({
@@ -1380,10 +1380,10 @@ serialTest("ServicePeriod list/detail and transition guards enforce conflict and
   assert.equal(unknownOpen.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(unknownOpen.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(unknownOpen.json().type, "not-found");
-  assert.equal(unknownOpen.json().title, "ServicePeriod not found");
+  assert.equal(unknownOpen.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(unknownOpen.json().detail, "ServicePeriod not found");
   assert.equal(unknownOpen.json().status, 404);
 
   const unknownForceClose = await app.inject({
@@ -1395,10 +1395,10 @@ serialTest("ServicePeriod list/detail and transition guards enforce conflict and
   assert.equal(unknownForceClose.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(unknownForceClose.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(unknownForceClose.json().type, "not-found");
-  assert.equal(unknownForceClose.json().title, "ServicePeriod not found");
+  assert.equal(unknownForceClose.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(unknownForceClose.json().detail, "ServicePeriod not found");
   assert.equal(unknownForceClose.json().status, 404);
 
   await app.close();
@@ -1449,11 +1449,11 @@ serialTest("ServicePeriod routes enforce create schema and manage permission", a
   assert.equal(invalidCreate.statusCode, 400);
   assert.deepEqual(
     new Set(Object.keys(invalidCreate.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(invalidCreate.json().type, "bad-request");
+  assert.equal(invalidCreate.json().type, "https://docs.maitre.app/problems/bad-request");
   assert.equal(invalidCreate.json().status, 400);
-  assert.match(String(invalidCreate.json().title), /name/i);
+  assert.match(String(invalidCreate.json().detail), /name/i);
 
   const create = await app.inject({
     method: "POST",
@@ -1488,10 +1488,10 @@ serialTest("ServicePeriod routes enforce create schema and manage permission", a
   assert.equal(forbiddenList.statusCode, 403);
   assert.deepEqual(
     new Set(Object.keys(forbiddenList.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(forbiddenList.json().type, "insufficient-scope");
-  assert.equal(forbiddenList.json().title, "Insufficient scope");
+  assert.equal(forbiddenList.json().type, "https://docs.maitre.app/problems/insufficient-scope");
+  assert.equal(forbiddenList.json().detail, "Insufficient scope");
   assert.equal(forbiddenList.json().status, 403);
 
   const forbiddenOpen = await app.inject({
@@ -1502,10 +1502,10 @@ serialTest("ServicePeriod routes enforce create schema and manage permission", a
   assert.equal(forbiddenOpen.statusCode, 403);
   assert.deepEqual(
     new Set(Object.keys(forbiddenOpen.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(forbiddenOpen.json().type, "insufficient-scope");
-  assert.equal(forbiddenOpen.json().title, "Insufficient scope");
+  assert.equal(forbiddenOpen.json().type, "https://docs.maitre.app/problems/insufficient-scope");
+  assert.equal(forbiddenOpen.json().detail, "Insufficient scope");
   assert.equal(forbiddenOpen.json().status, 403);
 
   await app.close();
@@ -1526,10 +1526,10 @@ serialTest("ServicePeriod detail and commands hide cross-tenant resources as 404
   assert.equal(detail.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(detail.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(detail.json().type, "not-found");
-  assert.equal(detail.json().title, "ServicePeriod not found");
+  assert.equal(detail.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(detail.json().detail, "ServicePeriod not found");
   assert.equal(detail.json().status, 404);
 
   const open = await app.inject({
@@ -1540,10 +1540,10 @@ serialTest("ServicePeriod detail and commands hide cross-tenant resources as 404
   assert.equal(open.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(open.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(open.json().type, "not-found");
-  assert.equal(open.json().title, "ServicePeriod not found");
+  assert.equal(open.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(open.json().detail, "ServicePeriod not found");
   assert.equal(open.json().status, 404);
 
   const beginClose = await app.inject({
@@ -1554,10 +1554,10 @@ serialTest("ServicePeriod detail and commands hide cross-tenant resources as 404
   assert.equal(beginClose.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(beginClose.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(beginClose.json().type, "not-found");
-  assert.equal(beginClose.json().title, "ServicePeriod not found");
+  assert.equal(beginClose.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(beginClose.json().detail, "ServicePeriod not found");
   assert.equal(beginClose.json().status, 404);
 
   const cancelPlanned = await app.inject({
@@ -1568,10 +1568,10 @@ serialTest("ServicePeriod detail and commands hide cross-tenant resources as 404
   assert.equal(cancelPlanned.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(cancelPlanned.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(cancelPlanned.json().type, "not-found");
-  assert.equal(cancelPlanned.json().title, "ServicePeriod not found");
+  assert.equal(cancelPlanned.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(cancelPlanned.json().detail, "ServicePeriod not found");
   assert.equal(cancelPlanned.json().status, 404);
 
   const close = await app.inject({
@@ -1583,10 +1583,10 @@ serialTest("ServicePeriod detail and commands hide cross-tenant resources as 404
   assert.equal(close.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(close.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(close.json().type, "not-found");
-  assert.equal(close.json().title, "ServicePeriod not found");
+  assert.equal(close.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(close.json().detail, "ServicePeriod not found");
   assert.equal(close.json().status, 404);
 
   const forceClose = await app.inject({
@@ -1598,10 +1598,10 @@ serialTest("ServicePeriod detail and commands hide cross-tenant resources as 404
   assert.equal(forceClose.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(forceClose.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(forceClose.json().type, "not-found");
-  assert.equal(forceClose.json().title, "ServicePeriod not found");
+  assert.equal(forceClose.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(forceClose.json().detail, "ServicePeriod not found");
   assert.equal(forceClose.json().status, 404);
 
   await app.close();
@@ -1949,10 +1949,10 @@ serialTest("Occupancy endpoints list visit occupancies, release an occupancy, an
   assert.equal(unknownRelease.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(unknownRelease.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(unknownRelease.json().type, "not-found");
-  assert.equal(unknownRelease.json().title, "Occupancy not found");
+  assert.equal(unknownRelease.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(unknownRelease.json().detail, "Occupancy not found");
   assert.equal(unknownRelease.json().status, 404);
 
   await app.close();
@@ -1993,9 +1993,9 @@ serialTest("Checks API rejects duplicate checks, invalid mutations, and invalid 
   assert.equal(duplicateCheck.statusCode, 409);
   assert.deepEqual(
     new Set(Object.keys(duplicateCheck.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(duplicateCheck.json().type, "conflict");
+  assert.equal(duplicateCheck.json().type, "https://docs.maitre.app/problems/conflict");
   assert.equal(duplicateCheck.json().status, 409);
 
   const invalidLine = await app.inject({
@@ -2007,11 +2007,11 @@ serialTest("Checks API rejects duplicate checks, invalid mutations, and invalid 
   assert.equal(invalidLine.statusCode, 400);
   assert.deepEqual(
     new Set(Object.keys(invalidLine.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(invalidLine.json().type, "bad-request");
+  assert.equal(invalidLine.json().type, "https://docs.maitre.app/problems/bad-request");
   assert.equal(invalidLine.json().status, 400);
-  assert.match(String(invalidLine.json().title), /amountMinorUnits/i);
+  assert.match(String(invalidLine.json().detail), /amountMinorUnits/i);
 
   const validLine = await app.inject({
     method: "POST",
@@ -2031,11 +2031,11 @@ serialTest("Checks API rejects duplicate checks, invalid mutations, and invalid 
   assert.equal(invalidVoidBody.statusCode, 400);
   assert.deepEqual(
     new Set(Object.keys(invalidVoidBody.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(invalidVoidBody.json().type, "bad-request");
+  assert.equal(invalidVoidBody.json().type, "https://docs.maitre.app/problems/bad-request");
   assert.equal(invalidVoidBody.json().status, 400);
-  assert.match(String(invalidVoidBody.json().title), /reason/i);
+  assert.match(String(invalidVoidBody.json().detail), /reason/i);
 
   const requestPayment = await app.inject({
     method: "POST",
@@ -2055,9 +2055,9 @@ serialTest("Checks API rejects duplicate checks, invalid mutations, and invalid 
   assert.equal(addLineAfterPaymentRequested.statusCode, 400);
   assert.deepEqual(
     new Set(Object.keys(addLineAfterPaymentRequested.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(addLineAfterPaymentRequested.json().type, "bad-request");
+  assert.equal(addLineAfterPaymentRequested.json().type, "https://docs.maitre.app/problems/bad-request");
   assert.equal(addLineAfterPaymentRequested.json().status, 400);
 
   const settleUnbalanced = await app.inject({
@@ -2068,9 +2068,9 @@ serialTest("Checks API rejects duplicate checks, invalid mutations, and invalid 
   assert.equal(settleUnbalanced.statusCode, 400);
   assert.deepEqual(
     new Set(Object.keys(settleUnbalanced.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(settleUnbalanced.json().type, "bad-request");
+  assert.equal(settleUnbalanced.json().type, "https://docs.maitre.app/problems/bad-request");
   assert.equal(settleUnbalanced.json().status, 400);
 
   const voidCheck = await app.inject({
@@ -2091,9 +2091,9 @@ serialTest("Checks API rejects duplicate checks, invalid mutations, and invalid 
   assert.equal(settleVoid.statusCode, 409);
   assert.deepEqual(
     new Set(Object.keys(settleVoid.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(settleVoid.json().type, "conflict");
+  assert.equal(settleVoid.json().type, "https://docs.maitre.app/problems/conflict");
   assert.equal(settleVoid.json().status, 409);
 
   const requestPaymentAgain = await app.inject({
@@ -2104,9 +2104,9 @@ serialTest("Checks API rejects duplicate checks, invalid mutations, and invalid 
   assert.equal(requestPaymentAgain.statusCode, 409);
   assert.deepEqual(
     new Set(Object.keys(requestPaymentAgain.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(requestPaymentAgain.json().type, "conflict");
+  assert.equal(requestPaymentAgain.json().type, "https://docs.maitre.app/problems/conflict");
   assert.equal(requestPaymentAgain.json().status, 409);
 
   await app.close();

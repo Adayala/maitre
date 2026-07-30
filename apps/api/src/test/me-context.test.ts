@@ -40,10 +40,10 @@ test("GET /v1/me/context without a bearer token returns 401 authentication-requi
   assert.equal(response.statusCode, 401);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(response.json().type, "authentication-required");
-  assert.equal(response.json().title, "Authentication required");
+  assert.equal(response.json().type, "https://docs.maitre.app/problems/authentication-required");
+  assert.equal(response.json().detail, "Authentication required");
   assert.equal(response.json().status, 401);
   assert.equal(response.headers["www-authenticate"], "Bearer");
   await app.close();
@@ -61,10 +61,10 @@ test("GET /v1/me/context with a bogus token returns 401 authentication-required"
   assert.equal(response.statusCode, 401);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(response.json().type, "authentication-required");
-  assert.equal(response.json().title, "Authentication required");
+  assert.equal(response.json().type, "https://docs.maitre.app/problems/authentication-required");
+  assert.equal(response.json().detail, "Authentication required");
   assert.equal(response.json().status, 401);
   assert.equal(response.json().correlationId, correlationId);
   assert.equal(response.headers["x-correlation-id"], correlationId);
@@ -84,10 +84,10 @@ test("GET /v1/me/context with a malformed Authorization header returns 401", asy
   assert.equal(response.statusCode, 401);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(response.json().type, "authentication-required");
-  assert.equal(response.json().title, "Authentication required");
+  assert.equal(response.json().type, "https://docs.maitre.app/problems/authentication-required");
+  assert.equal(response.json().detail, "Authentication required");
   assert.equal(response.json().status, 401);
   assert.equal(response.json().correlationId, correlationId);
   assert.equal(response.headers["x-correlation-id"], correlationId);
@@ -193,10 +193,10 @@ test("GET /v1/me/context rejects a token whose session has expired", async () =>
   assert.equal(response.statusCode, 401);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(response.json().type, "session-expired");
-  assert.equal(response.json().title, "Session expired");
+  assert.equal(response.json().type, "https://docs.maitre.app/problems/session-expired");
+  assert.equal(response.json().detail, "Session expired");
   assert.equal(response.json().status, 401);
   assert.equal(response.json().correlationId, correlationId);
   assert.equal(response.headers["x-correlation-id"], correlationId);
@@ -221,10 +221,10 @@ test("GET /v1/me/context rejects a principal with no matching User (identity-not
   assert.equal(response.statusCode, 403);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(response.json().type, "identity-not-enabled");
-  assert.equal(response.json().title, "Identity not enabled");
+  assert.equal(response.json().type, "https://docs.maitre.app/problems/identity-not-enabled");
+  assert.equal(response.json().detail, "Identity not enabled");
   assert.equal(response.json().status, 403);
   await app.close();
 });

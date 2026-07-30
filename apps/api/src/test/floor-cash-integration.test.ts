@@ -201,7 +201,7 @@ test("returns a CashSession 404 instead of misreporting the Payment", async () =
   });
 
   assert.equal(response.statusCode, 404);
-  assert.equal(response.json().title, "CashSession not found");
+  assert.equal(response.json().detail, "CashSession not found");
   await app.close();
 });
 

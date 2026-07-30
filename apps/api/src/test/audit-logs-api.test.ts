@@ -203,10 +203,10 @@ test("GET /v1/audit-logs requires tenant context (403 without X-Tenant-Id)", asy
   assert.equal(response.statusCode, 403);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(response.json().type, "insufficient-scope");
-  assert.equal(response.json().title, "Insufficient scope");
+  assert.equal(response.json().type, "https://docs.maitre.app/problems/insufficient-scope");
+  assert.equal(response.json().detail, "Insufficient scope");
   assert.equal(response.json().status, 403);
   await app.close();
 });
@@ -255,10 +255,10 @@ test("GET /v1/audit-logs as EMPLOYEE returns 403 (audit:read is OWNER/ADMIN only
   assert.equal(response.statusCode, 403);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(response.json().type, "insufficient-scope");
-  assert.equal(response.json().title, "Insufficient scope");
+  assert.equal(response.json().type, "https://docs.maitre.app/problems/insufficient-scope");
+  assert.equal(response.json().detail, "Insufficient scope");
   assert.equal(response.json().status, 403);
   await app.close();
 });

@@ -9,7 +9,9 @@ export const authenticatedPrincipalSchema = z.object({
   issuedAt: z.coerce.date(),
   expiresAt: z.coerce.date(),
 });
-export type AuthenticatedPrincipal = z.infer<typeof authenticatedPrincipalSchema>;
+export type AuthenticatedPrincipal = z.infer<
+  typeof authenticatedPrincipalSchema
+>;
 
 // SPEC-213 — GET /v1/me/context response
 export const meContextBranchSchema = z.object({
@@ -35,11 +37,20 @@ export const meContextResponseSchema = z.object({
 export type MeContextResponse = z.infer<typeof meContextResponseSchema>;
 
 // Problem Details error shape (SPEC-023 §7 / SPEC-215)
+export const problemFieldErrorSchema = z.object({
+  path: z.string(),
+  code: z.string(),
+  message: z.string(),
+});
+
 export const problemDetailsSchema = z.object({
-  type: z.string(),
+  type: z.string().url(),
   title: z.string(),
   status: z.number().int(),
-  detail: z.string().optional(),
+  detail: z.string(),
+  instance: z.string(),
+  code: z.string(),
   correlationId: z.string(),
+  errors: z.array(problemFieldErrorSchema).optional(),
 });
 export type ProblemDetails = z.infer<typeof problemDetailsSchema>;
