@@ -1,5 +1,6 @@
 // SPEC-142/148 — InvoiceTemplate use cases: create, list, publish (freezes),
-// deactivate, preview (canned synthetic fixture). No real rendering engine.
+// deactivate, preview (canned synthetic fixture). Template interpretation stays
+// deferred; the minimal authorized-invoice renderer is a separate use case.
 
 import { randomUUID } from "node:crypto";
 import {
@@ -29,7 +30,10 @@ export interface CreateTemplateInput {
   layoutNormativeVersion: string;
 }
 
-export async function createTemplate(deps: TemplateDeps, input: CreateTemplateInput): Promise<InvoiceTemplate> {
+export async function createTemplate(
+  deps: TemplateDeps,
+  input: CreateTemplateInput,
+): Promise<InvoiceTemplate> {
   const now = nowFrom(deps);
   const template: InvoiceTemplate = {
     id: input.id ?? randomUUID(),
@@ -51,7 +55,10 @@ export async function createTemplate(deps: TemplateDeps, input: CreateTemplateIn
   return template;
 }
 
-export async function listTemplates(deps: TemplateDeps, tenantId: string): Promise<InvoiceTemplate[]> {
+export async function listTemplates(
+  deps: TemplateDeps,
+  tenantId: string,
+): Promise<InvoiceTemplate[]> {
   return deps.templates.listByTenant(tenantId);
 }
 
@@ -76,19 +83,30 @@ export async function publishTemplate(
   return published;
 }
 
-export async function deactivateTemplate(deps: TemplateDeps, input: { tenantId: string; id: string }): Promise<InvoiceTemplate> {
+export async function deactivateTemplate(
+  deps: TemplateDeps,
+  input: { tenantId: string; id: string },
+): Promise<InvoiceTemplate> {
   const template = await deps.templates.findById(input.tenantId, input.id);
   if (!template) throw new Error(`InvoiceTemplate ${input.id} not found`);
   assertTemplateTransition(template.status, "DEACTIVATED");
   const now = nowFrom(deps);
-  const deactivated: InvoiceTemplate = { ...template, status: "DEACTIVATED", updatedAt: now, revision: template.revision + 1 };
+  const deactivated: InvoiceTemplate = {
+    ...template,
+    status: "DEACTIVATED",
+    updatedAt: now,
+    revision: template.revision + 1,
+  };
   await deps.templates.save(deactivated);
   return deactivated;
 }
 
 // SPEC-142 preview — synthetic fixture only, never a real render, never real
 // customer/CAE/token data.
-export async function previewTemplate(deps: TemplateDeps, input: { tenantId: string; id: string }): Promise<InvoiceTemplatePreview> {
+export async function previewTemplate(
+  deps: TemplateDeps,
+  input: { tenantId: string; id: string },
+): Promise<InvoiceTemplatePreview> {
   const template = await deps.templates.findById(input.tenantId, input.id);
   if (!template) throw new Error(`InvoiceTemplate ${input.id} not found`);
   return {

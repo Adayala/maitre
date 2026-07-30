@@ -2,11 +2,11 @@
 // mandatory fiscal content. Simple CRUD with a DRAFT -> PUBLISHED -> DEACTIVATED
 // lifecycle; publish freezes the template.
 //
-// DEFERRED (documented): the actual HTML/CSS rendering engine, the typed
-// variable allowlist, asset sanitization and length limits. `contentRef` is an
-// opaque string and `variableSchemaVersion` is a plain int. `preview` returns a
-// canned synthetic-fixture placeholder — it never renders real content and never
-// touches real customer/CAE/token data.
+// DEFERRED (documented): the template-driven HTML/CSS rendering engine, typed
+// variable allowlist, asset sanitization and length limits. The separate
+// invoice-document use case provides a deterministic mandatory-field fallback
+// for AUTHORIZED invoices, but does not interpret `contentRef`. Preview remains
+// a synthetic fixture and never touches customer/CAE/token data.
 
 export type InvoiceTemplateStatus = "DRAFT" | "PUBLISHED" | "DEACTIVATED";
 
@@ -27,7 +27,10 @@ export interface InvoiceTemplate {
   updatedAt: Date;
 }
 
-const allowedTransitions: Record<InvoiceTemplateStatus, InvoiceTemplateStatus[]> = {
+const allowedTransitions: Record<
+  InvoiceTemplateStatus,
+  InvoiceTemplateStatus[]
+> = {
   DRAFT: ["PUBLISHED", "DEACTIVATED"],
   PUBLISHED: ["DEACTIVATED"],
   DEACTIVATED: [],
@@ -40,7 +43,10 @@ export class InvalidInvoiceTemplateTransitionError extends Error {
   }
 }
 
-export function assertTemplateTransition(from: InvoiceTemplateStatus, to: InvoiceTemplateStatus): void {
+export function assertTemplateTransition(
+  from: InvoiceTemplateStatus,
+  to: InvoiceTemplateStatus,
+): void {
   if (!allowedTransitions[from].includes(to)) {
     throw new InvalidInvoiceTemplateTransitionError(from, to);
   }
