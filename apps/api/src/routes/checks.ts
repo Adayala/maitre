@@ -16,7 +16,13 @@ import {
 } from "@maitre/floor";
 import type { Container } from "../composition/container.js";
 import { requireTenantContext, requirePermission } from "../http/request-context.js";
-import { sendProblem, notFound, conflict, badRequest } from "../http/problem-details.js";
+import {
+  sendProblem,
+  notFound,
+  conflict,
+  badRequest,
+  insufficientScope,
+} from "../http/problem-details.js";
 
 // SPEC-058 — Checks API. Totals are always recalculated server-side from
 // lines/adjustments/payments — client-supplied totals are never accepted.
@@ -58,6 +64,56 @@ async function withTotals(container: Container, tenantId: string, check: Awaited
 
 export async function registerCheckRoutes(app: FastifyInstance, container: Container): Promise<void> {
   const deps = () => ({ checks: container.checks, visits: container.visits, outbox: container.outbox });
+
+  app.get<{ Params: { id: string } }>("/v1/branches/:id/pending-checks", async (req, reply) => {
+    const correlationId = randomUUID();
+    try {
+      const ctx = await requireTenantContext(container, req);
+      requirePermission(ctx, "check:read");
+      if (ctx.branchScopeType !== "ALL_BRANCHES" && !ctx.branchIds.includes(req.params.id)) {
+        throw insufficientScope();
+      }
+
+      const pendingChecks = (await container.checks.listByBranch(ctx.tenantId, req.params.id))
+        .filter((check) => check.status === "PAYMENT_PENDING");
+      const data = await Promise.all(
+        pendingChecks.map(async (check) => {
+          const [withCalculatedTotals, visit] = await Promise.all([
+            withTotals(container, ctx.tenantId, check),
+            container.visits.findById(ctx.tenantId, check.visitId),
+          ]);
+          const tables = visit
+            ? (
+                await Promise.all(
+                  visit.tableIds.map((tableId) => container.tables.findById(ctx.tenantId, tableId)),
+                )
+              ).filter((table) => table !== null)
+            : [];
+
+          return {
+            ...withCalculatedTotals,
+            visit: visit
+              ? {
+                  id: visit.id,
+                  status: visit.status,
+                  guestCount: visit.guestCount,
+                  tableIds: visit.tableIds,
+                }
+              : null,
+            tables: tables.map((table) => ({
+              id: table.id,
+              number: table.number,
+              name: table.name,
+            })),
+          };
+        }),
+      );
+
+      return { data };
+    } catch (err) {
+      return sendProblem(reply, correlationId, err);
+    }
+  });
 
   app.post<{ Params: { id: string } }>("/v1/visits/:id/check", async (req, reply) => {
     const correlationId = randomUUID();
@@ -169,6 +225,14 @@ export async function registerCheckRoutes(app: FastifyInstance, container: Conta
     try {
       const ctx = await requireTenantContext(container, req);
       requirePermission(ctx, "check:settle");
+      const existingCheck = await container.checks.findById(ctx.tenantId, req.params.id);
+      if (!existingCheck) return sendProblem(reply, correlationId, notFound("Check"));
+      if (
+        ctx.branchScopeType !== "ALL_BRANCHES" &&
+        !ctx.branchIds.includes(existingCheck.branchId)
+      ) {
+        throw insufficientScope();
+      }
       const check = await settleCheck(
         { checks: container.checks, payments: container.payments, outbox: container.outbox },
         { tenantId: ctx.tenantId, checkId: req.params.id, correlationId },
