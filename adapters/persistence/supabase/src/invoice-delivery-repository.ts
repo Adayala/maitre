@@ -12,7 +12,8 @@ function fromRow(row: Record<string, unknown>): InvoiceDelivery {
     tenantId: String(row["tenant_id"]),
     invoiceId: String(row["invoice_id"]),
     channel: "EMAIL",
-    recipientEmail: String(row["recipient_email"]),
+    recipientEmail:
+      row["recipient_email"] === null ? null : String(row["recipient_email"]),
     format: row["format"] as InvoiceDelivery["format"],
     idempotencyKey: String(row["idempotency_key"]),
     status: row["status"] as InvoiceDelivery["status"],
@@ -22,6 +23,9 @@ function fromRow(row: Record<string, unknown>): InvoiceDelivery {
     ...(row["sent_at"] ? { sentAt: new Date(String(row["sent_at"])) } : {}),
     ...(row["failure_reason"]
       ? { failureReason: String(row["failure_reason"]) }
+      : {}),
+    ...(row["redacted_at"]
+      ? { redactedAt: new Date(String(row["redacted_at"])) }
       : {}),
   };
 }
@@ -132,6 +136,33 @@ export class SupabaseInvoiceDeliveryRepository
     return data ? fromRow(data as Record<string, unknown>) : null;
   }
 
+  async redactSentBefore(cutoff: Date, redactedAt: Date, limit: number) {
+    const { data: candidates, error: selectError } = await this.client
+      .from(TABLE)
+      .select("id")
+      .eq("status", "SENT")
+      .not("recipient_email", "is", null)
+      .lte("sent_at", cutoff.toISOString())
+      .order("sent_at")
+      .limit(limit);
+    if (selectError) throw selectError;
+    const ids = (candidates ?? []).map((row) => String(row["id"]));
+    if (ids.length === 0) return 0;
+    const { data, error } = await this.client
+      .from(TABLE)
+      .update({
+        recipient_email: null,
+        redacted_at: redactedAt.toISOString(),
+        updated_at: redactedAt.toISOString(),
+      })
+      .in("id", ids)
+      .eq("status", "SENT")
+      .not("recipient_email", "is", null)
+      .select("id");
+    if (error) throw error;
+    return data?.length ?? 0;
+  }
+
   async save(delivery: InvoiceDelivery) {
     const { error } = await this.client.from(TABLE).upsert({
       id: delivery.id,
@@ -147,6 +178,7 @@ export class SupabaseInvoiceDeliveryRepository
       updated_at: delivery.updatedAt.toISOString(),
       sent_at: delivery.sentAt?.toISOString() ?? null,
       failure_reason: delivery.failureReason ?? null,
+      redacted_at: delivery.redactedAt?.toISOString() ?? null,
     });
     if (error) throw error;
   }

@@ -38,3 +38,9 @@ Los templates `EMAIL` aceptan asunto y cuerpo de texto versionados. Sólo interp
 `issuerName`, `voucherType`, `voucherNumber`, `total`, `currency` y `environment`; publicar falla
 ante variables desconocidas. El HTML se deriva escapando el texto y existe un fallback
 determinístico cuando no hay template global publicado. No se interpolan email, CAE ni secretos.
+
+El mismo cron ejecuta una limpieza acotada de PII operacional. Para entregas `SENT` cuyo `sentAt`
+supera `FISCAL_DELIVERY_PII_RETENTION_DAYS` (30 por defecto), reemplaza `recipientEmail` por `null`
+y registra `redactedAt`. Nunca redacta solicitudes pendientes o fallidas que todavía pueden
+reintentarse, ni elimina comprobantes fiscales. Cada corrida procesa como máximo 500 filas.
+El replay de una clave idempotente ya redactada sigue devolviendo la entrega terminal sin reenviar.

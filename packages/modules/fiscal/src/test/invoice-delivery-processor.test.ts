@@ -92,6 +92,10 @@ class DeliveryRepository implements InvoiceDeliveryRepositoryPort {
     return this.item;
   }
 
+  async redactSentBefore() {
+    return 0;
+  }
+
   async save(delivery: InvoiceDelivery) {
     this.item = delivery;
   }
