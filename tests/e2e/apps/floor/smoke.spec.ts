@@ -10,7 +10,7 @@ test("@smoke muestra el acceso de Floor", async ({ page }) => {
   await expectNoSeriousAccessibilityViolations(page);
 });
 
-test("muestra estados operativos, filtra mesas y abre una visita", async ({
+test("@ui-contract muestra estados operativos, filtra mesas y abre una visita", async ({
   page,
 }) => {
   const tenantId = "00000000-0000-0000-0000-000000000001";
@@ -172,7 +172,7 @@ test("muestra estados operativos, filtra mesas y abre una visita", async ({
   ).toBeHidden();
 });
 
-test("arma un pedido y lo envía a cocina desde una visita", async ({
+test("@ui-contract arma un pedido y lo envía a cocina desde una visita", async ({
   page,
 }) => {
   const tenantId = "00000000-0000-0000-0000-000000000001";

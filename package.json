@@ -30,6 +30,10 @@
     "test:coverage": "npm run build && node tooling/quality/run-node-tests.mjs --coverage",
     "test:e2e": "VITE_API_URL=http://127.0.0.1:3101 npm run build && playwright test --tsconfig tests/e2e/tsconfig.json",
     "test:e2e:run": "playwright test --tsconfig tests/e2e/tsconfig.json",
+    "test:e2e:journey": "VITE_API_URL=http://127.0.0.1:3101 npm run build && npm run test:e2e:journey:run",
+    "test:e2e:journey:run": "npm run e2e:journey:policy && E2E_FIXTURES_ENABLED=1 E2E_APP=journeys playwright test --tsconfig tests/e2e/tsconfig.json --project=journeys",
+    "e2e:journey:policy": "node tooling/e2e/check-authoritative-policy.mjs",
+    "e2e:journey:policy:test": "node --test tooling/e2e/*.test.mjs",
     "test:e2e:smoke": "VITE_API_URL=http://127.0.0.1:3101 npm run build && playwright test --tsconfig tests/e2e/tsconfig.json --grep @smoke",
     "typecheck": "tsc -b --pretty",
     "dev:api": "npm run dev --workspace apps/api"

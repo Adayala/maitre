@@ -10,7 +10,7 @@ test("@smoke muestra el acceso de Host", async ({ page }) => {
   await expectNoSeriousAccessibilityViolations(page);
 });
 
-test("crea una reserva desde recepción y la incorpora a la agenda", async ({
+test("@ui-contract crea una reserva desde recepción y la incorpora a la agenda", async ({
   page,
 }) => {
   const tenantId = "00000000-0000-0000-0000-000000000001";

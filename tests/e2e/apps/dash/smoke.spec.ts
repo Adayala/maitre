@@ -10,7 +10,7 @@ test("@smoke muestra el acceso de Dash", async ({ page }) => {
   await expectNoSeriousAccessibilityViolations(page);
 });
 
-test("actualiza el perfil fiscal y declara un punto de venta ARCA", async ({
+test("@ui-contract actualiza el perfil fiscal y declara un punto de venta ARCA", async ({
   page,
 }) => {
   const tenantId = "00000000-0000-0000-0000-000000000001";

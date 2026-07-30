@@ -117,6 +117,7 @@ import {
   SupabaseCatalogItemRepository,
   SupabaseCatalogPackageRepository,
 } from "@maitre/adapter-persistence-supabase";
+import { registerE2EFixtures } from "./e2e-fixtures.js";
 import {
   createTenant,
   createBrand,
@@ -1113,6 +1114,9 @@ async function ensureSeed(repos: Repositories): Promise<void> {
   await ensureQuantity("SEATS", 12, DEMO_BRANCH_ID);
   await ensureQuantity("WAITERS", 8, DEMO_BRANCH_ID);
   await ensureQuantity("CASHIERS", 3, DEMO_BRANCH_ID);
+  await ensureService("KITCHEN", DEMO_BRANCH_ID);
+  await ensureService("CASH", DEMO_BRANCH_ID);
+  await ensureService("PAYMENTS", DEMO_BRANCH_ID);
   await ensureService("RESERVATIONS", DEMO_BRANCH_ID);
   await ensureService("QR_MENU", DEMO_BRANCH_ID);
 
@@ -1649,6 +1653,12 @@ export async function buildContainer(): Promise<Container> {
       issuedAt: now,
       expiresAt: new Date(now.getTime() + 60 * 60 * 1000),
     });
+    await registerE2EFixtures(
+      repos,
+      sessions,
+      DEMO_TENANT_ID,
+      DEMO_BRANCH_ID,
+    );
   }
 
   return {
