@@ -102,6 +102,23 @@ test("CORS origin resolution is normalized, deduplicated and fail-closed", () =>
   }
 });
 
+test("E2E CORS defaults allow each dedicated application origin", () => {
+  const previousAppEnv = process.env["APP_ENV"];
+  const previousOrigins = process.env["CORS_ALLOWED_ORIGINS"];
+  try {
+    process.env["APP_ENV"] = "e2e";
+    delete process.env["CORS_ALLOWED_ORIGINS"];
+    const origins = resolveCorsOrigins();
+    for (const port of [5273, 5274, 5275, 5276, 5278, 5279]) {
+      assert.ok(origins.includes(`http://127.0.0.1:${port}`));
+      assert.ok(origins.includes(`http://localhost:${port}`));
+    }
+  } finally {
+    restoreEnvironment("APP_ENV", previousAppEnv);
+    restoreEnvironment("CORS_ALLOWED_ORIGINS", previousOrigins);
+  }
+});
+
 test("CORS preflight grants only configured origins", async () => {
   const previousOrigins = process.env["CORS_ALLOWED_ORIGINS"];
   try {

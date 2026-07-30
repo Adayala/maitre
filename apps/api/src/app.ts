@@ -186,11 +186,23 @@ export function resolveCorsOrigins(): string[] {
       `CORS_ALLOWED_ORIGINS must be configured in ${environment}`,
     );
   }
-  return [
+  const localOrigins = [
     "http://127.0.0.1:5173",
     "http://localhost:5173",
     "http://127.0.0.1:5273",
     "http://localhost:5273",
+  ];
+  if (environment !== "e2e") return localOrigins;
+
+  // Playwright gives each application a dedicated preview port. Keep this
+  // allowlist exact so the authoritative multi-app journey works without
+  // reopening CORS to arbitrary origins.
+  return [
+    ...localOrigins,
+    ...[5274, 5275, 5276, 5278, 5279].flatMap((port) => [
+      `http://127.0.0.1:${port}`,
+      `http://localhost:${port}`,
+    ]),
   ];
 }
 
