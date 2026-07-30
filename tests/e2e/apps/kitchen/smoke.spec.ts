@@ -10,7 +10,9 @@ test("@smoke muestra el acceso de Kitchen", async ({ page }) => {
   await expectNoSeriousAccessibilityViolations(page);
 });
 
-test("opera una comanda desde recibida hasta el handoff", async ({ page }) => {
+test("@ui-contract opera una comanda desde recibida hasta el handoff", async ({
+  page,
+}) => {
   const tenantId = "00000000-0000-0000-0000-000000000001";
   const branchId = "00000000-0000-0000-0000-000000000003";
   const stationId = "00000000-0000-0000-0000-000000000301";

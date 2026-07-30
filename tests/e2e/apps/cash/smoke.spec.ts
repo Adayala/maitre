@@ -9,7 +9,7 @@ test("@smoke muestra el acceso de Cash", async ({ page }) => {
   await expectNoSeriousAccessibilityViolations(page);
 });
 
-test("abre caja, registra una venta, cierra y envía la conciliación", async ({
+test("@ui-contract abre caja, registra una venta, cierra y envía la conciliación", async ({
   page,
 }) => {
   const tenantId = "00000000-0000-0000-0000-000000000001";

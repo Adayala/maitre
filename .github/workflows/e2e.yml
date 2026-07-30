@@ -69,6 +69,8 @@ jobs:
           npm run deps:check
           npm run deploy:affected:test
           npm run coverage:gate:test
+          npm run e2e:journey:policy
+          npm run e2e:journey:policy:test
           npm run sdd:validate
       - name: Unit tests and coverage
         run: npm run test:coverage

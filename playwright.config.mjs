@@ -41,7 +41,7 @@ const webapps = {
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
-  forbidOnly: Boolean(process.env["CI"]),
+  forbidOnly: true,
   retries: 0,
   workers: process.env["CI"] ? 1 : undefined,
   reporter: process.env["CI"]
@@ -63,11 +63,26 @@ export default defineConfig({
     appProject("kitchen", ports.kitchen, "iPad (gen 7)"),
     appProject("cash", ports.cash, "iPad (gen 7)"),
     appProject("guest", ports.guest, "Pixel 7"),
+    {
+      name: "journeys",
+      testMatch: /journeys\/.*\.spec\.ts/,
+      fullyParallel: false,
+      use: {
+        ...devices["iPad (gen 7)"],
+        browserName: "chromium",
+        baseURL: `http://${host}:${ports.floor}`,
+      },
+    },
   ],
 });
 
 function webServersFor(selectedApp) {
-  const appNames = selectedApp ? [selectedApp] : Object.keys(webapps);
+  const appNames =
+    selectedApp === "journeys"
+      ? ["floor", "kitchen", "cash"]
+      : selectedApp
+        ? [selectedApp]
+        : Object.keys(webapps);
   const selectedWebapps = appNames.map((name) => {
     const server = webapps[name];
     if (!server) {
@@ -84,7 +99,10 @@ function webServersFor(selectedApp) {
   return [
     {
       name: "api",
-      command: `PORT=${ports.api} npm run start --workspace apps/api`,
+      command:
+        selectedApp === "journeys"
+          ? `AUTH_DRIVER=fixture PORT=${ports.api} npm run start --workspace apps/api`
+          : `PORT=${ports.api} npm run start --workspace apps/api`,
       url: `http://${host}:${ports.api}/health/ready`,
       timeout: 30_000,
       reuseExistingServer: false,

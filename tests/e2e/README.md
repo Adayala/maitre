@@ -1,7 +1,11 @@
 # Harness E2E
 
-Playwright verifica cada webapp como un proyecto independiente contra los builds de producción y
-una instancia real de la API.
+Playwright mantiene dos clases de evidencia:
+
+- los proyectos por aplicación validan shells y contratos UI; los casos
+  `@ui-contract` interceptan respuestas y no cuentan como evidencia de release;
+- `journeys` usa Floor, Kitchen y Cash contra una API y persistencia compartidas,
+  sin interceptar requests del producto.
 
 ## Comandos
 
@@ -17,6 +21,14 @@ npm run test:e2e:run -- --project=host
 
 # Levanta únicamente Host y la API, como hace su job de CI.
 E2E_APP=host npm run test:e2e:run -- --project=host
+
+# Valida que el journey no tenga mocks, skips, focus ni sleeps fijos.
+npm run e2e:journey:policy
+
+# Ejecuta el perfil local del journey (no es evidencia release).
+# Requiere APP_ENV=e2e, un run ID/seed/reloj, secreto ligado al run ID y
+# tokens sintéticos distintos para waiter, cook, cashier y Tenant B.
+npm run test:e2e:journey
 ```
 
 Los puertos dedicados al harness son: API `3101`, Dash `5273`, Cash `5274`, Kitchen `5275`,
@@ -33,6 +45,19 @@ Ordering se verifica desde Floor con una visita ocupada: el mozo abre cuenta y b
 menú, agrega cantidad y nota a un producto y envía el pedido a cocina.
 Reservations se verifica desde Host: recepción identifica o crea al huésped, carga la reserva,
 envía el contrato esperado a la API y comprueba que la nueva entrada aparezca en la agenda.
+
+## Estado de MVP-J-001
+
+El proyecto y el harness ya fallan de forma cerrada, registran manifiesto y
+diagnósticos, crean identidades fixture con roles limitados y usan un cliente
+API black-box. El test de release está intencionalmente rojo en el primer gate
+de producto comprobado: Cash no expone todavía una bandeja de checks pendientes
+ni la captura de un pago asociado. Sólo ofrece sesión, movimientos y
+conciliación. No se simula esa capacidad.
+
+`local-memory` sirve para desarrollo y no prueba migraciones ni RLS. El gate de
+release seguirá desactivado hasta disponer de PostgreSQL/Supabase efímero,
+provisionamiento Tenant A/B, limpieza verificada y el recorrido completo verde.
 
 En GitHub Actions cada aplicación es un job de matriz independiente, con build, ejecución y
 artifacts propios. `fail-fast` está deshabilitado: un fallo de Host no impide obtener evidencia de
