@@ -249,19 +249,28 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
     check = pendingCheck.body.data;
     expect(check.totals.balance).toBeGreaterThan(0);
 
-    await apps.cash
-      .getByRole("button", { name: "Abrir sesión", exact: true })
-      .click();
-    const sessions = await api.poll<ApiData<CashSession[]>>(
-      "open cash session",
-      () =>
-        api.get("cashier", `/v1/cash-registers/${CASH_REGISTER_ID}/sessions`),
-      (body) => body.data.some((candidate) => candidate.status === "OPEN"),
+    let sessions = await api.get<ApiData<CashSession[]>>(
+      "cashier",
+      `/v1/cash-registers/${CASH_REGISTER_ID}/sessions`,
     );
+    if (!sessions.body.data.some((candidate) => candidate.status === "OPEN")) {
+      await apps.cash
+        .getByRole("button", { name: "Abrir sesión", exact: true })
+        .click();
+      sessions = await api.poll<ApiData<CashSession[]>>(
+        "open cash session",
+        () =>
+          api.get("cashier", `/v1/cash-registers/${CASH_REGISTER_ID}/sessions`),
+        (body) => body.data.some((candidate) => candidate.status === "OPEN"),
+      );
+    }
     assertEvidence(sessions);
     cashSession = sessions.body.data.find(
       (candidate) => candidate.status === "OPEN",
     )!;
+    await expect(apps.cash.locator(".cashier-session-status")).toHaveText(
+      "Abierta",
+    );
 
     const pendingRegion = apps.cash.getByRole("region", {
       name: "Cobros pendientes",
