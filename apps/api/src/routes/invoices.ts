@@ -16,6 +16,7 @@ import {
   buildInvoiceExportManifest,
   buildFiscalQrCode,
   renderAuthorizedInvoiceDocument,
+  renderAuthorizedInvoicePdfDocument,
   type TaxLineInput,
   type InvoiceDeps,
   InvalidInvoiceTransitionError,
@@ -679,7 +680,10 @@ export async function registerInvoiceRoutes(
     },
   );
 
-  app.get<{ Params: { id: string } }>(
+  app.get<{
+    Params: { id: string };
+    Querystring: { format?: "html" | "pdf" };
+  }>(
     "/v1/invoices/:id/document",
     {
       config: {
@@ -740,7 +744,7 @@ export async function registerInvoiceRoutes(
             caeExpiresAt: invoice.caeExpiresAt,
             authorizedAt: invoice.authorizedAt,
           });
-          const document = renderAuthorizedInvoiceDocument({
+          const documentInput = {
             invoice,
             issuer: {
               cuit: issuer.cuit,
@@ -758,7 +762,20 @@ export async function registerInvoiceRoutes(
                 : {}),
             },
             qr,
-          });
+          };
+          if (req.query.format === "pdf") {
+            const document =
+              await renderAuthorizedInvoicePdfDocument(documentInput);
+            reply
+              .header("Content-Type", document.mediaType)
+              .header(
+                "Content-Disposition",
+                `attachment; filename="${document.fileName}"`,
+              )
+              .header("ETag", `"${document.contentHash}"`);
+            return Buffer.from(document.bytes);
+          }
+          const document = renderAuthorizedInvoiceDocument(documentInput);
           reply
             .header("Content-Type", `${document.mediaType}; charset=utf-8`)
             .header(
