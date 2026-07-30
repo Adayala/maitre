@@ -145,6 +145,34 @@ test("contract policy rejects unconstrained success and wrong problem media type
   ]);
 });
 
+test("contract policy rejects the shared success envelope", () => {
+  const candidate = document();
+  candidate.paths["/v1/orders"].get.responses["200"].content[
+    "application/json"
+  ].schema = { $ref: "#/components/schemas/SuccessEnvelope" };
+  assert.deepEqual(validateContract(candidate), [
+    "GET /v1/orders still uses the generic success envelope",
+  ]);
+});
+
+test("contract policy accepts a typed non-JSON representation and 204", () => {
+  const typed = document();
+  typed.paths["/v1/orders"].get.responses["200"] = {
+    description: "Document",
+    content: {
+      "text/html": { schema: { type: "string" } },
+    },
+  };
+  assert.deepEqual(validateContract(typed), []);
+
+  const noContent = document();
+  noContent.paths["/v1/orders"].get.responses = {
+    204: { description: "No content" },
+    default: noContent.paths["/v1/orders"].get.responses.default,
+  };
+  assert.deepEqual(validateContract(noContent), []);
+});
+
 test("breaking checker detects removed operations and schema fields", () => {
   const baseline = document();
   const candidate = document();
@@ -260,5 +288,76 @@ test("breaking approval is scoped to an unexpired default media migration", () =
       new Date("2026-10-01T00:00:00Z"),
     ).unapproved,
     [change],
+  );
+});
+
+test("payload materialization approval requires a typed v1 replacement", () => {
+  const candidate = document();
+  const policy = {
+    approvals: [
+      {
+        id: "SPEC-215-OPERATION-PAYLOAD-MATERIALIZATION",
+        kind: "materialize-runtime-payload-schema",
+        pathPrefix: "/v1/",
+        expiresOn: "2026-09-30",
+        reason: "Contract correction.",
+      },
+    ],
+  };
+  const required =
+    "made property required GET /v1/orders.responses.200.application/json.data";
+  const removed = "removed response 2XX from GET /v1/orders";
+  assert.deepEqual(
+    partitionApprovedChanges(
+      [required, removed],
+      candidate,
+      policy,
+      new Date("2026-07-30T00:00:00Z"),
+    ),
+    {
+      approved: [
+        {
+          change: required,
+          approvalId: "SPEC-215-OPERATION-PAYLOAD-MATERIALIZATION",
+        },
+        {
+          change: removed,
+          approvalId: "SPEC-215-OPERATION-PAYLOAD-MATERIALIZATION",
+        },
+      ],
+      unapproved: [],
+    },
+  );
+});
+
+test("payload materialization approval rejects generic or missing replacements", () => {
+  const candidate = document();
+  candidate.paths["/v1/orders"].get.responses["200"].content[
+    "application/json"
+  ].schema = { $ref: "#/components/schemas/SuccessEnvelope" };
+  const policy = {
+    approvals: [
+      {
+        id: "SPEC-215-OPERATION-PAYLOAD-MATERIALIZATION",
+        kind: "materialize-runtime-payload-schema",
+        pathPrefix: "/v1/",
+        expiresOn: "2026-09-30",
+        reason: "Contract correction.",
+      },
+    ],
+  };
+  const changes = [
+    "made property required GET /v1/orders.responses.200.application/json.data",
+    "removed response 2XX from GET /v1/orders",
+    "removed property GET /v1/orders.responses.200.application/json.data",
+  ];
+  assert.deepEqual(
+    partitionApprovedChanges(
+      changes,
+      candidate,
+      policy,
+      new Date("2026-07-30T00:00:00Z"),
+    ).unapproved,
+    changes,
   );
 });

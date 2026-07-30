@@ -244,17 +244,29 @@ async function main() {
 }
 
 function approvesChange(change, candidate, approval, today) {
-  if (
-    approval?.kind !== "replace-default-response-media-type" ||
-    typeof approval.id !== "string" ||
-    typeof approval.from !== "string" ||
-    typeof approval.to !== "string" ||
-    typeof approval.pathPrefix !== "string" ||
-    typeof approval.expiresOn !== "string" ||
-    typeof approval.reason !== "string" ||
-    approval.reason.trim() === "" ||
-    approval.expiresOn < today.toISOString().slice(0, 10)
-  ) {
+  if (!isValidApproval(approval, today)) return false;
+  if (approval.kind === "replace-default-response-media-type") {
+    return approvesDefaultResponseMediaMigration(change, candidate, approval);
+  }
+  if (approval.kind === "materialize-runtime-payload-schema") {
+    return approvesPayloadSchemaMaterialization(change, candidate, approval);
+  }
+  return false;
+}
+
+function isValidApproval(approval, today) {
+  return (
+    typeof approval?.id === "string" &&
+    typeof approval.pathPrefix === "string" &&
+    typeof approval.expiresOn === "string" &&
+    typeof approval.reason === "string" &&
+    approval.reason.trim() !== "" &&
+    approval.expiresOn >= today.toISOString().slice(0, 10)
+  );
+}
+
+function approvesDefaultResponseMediaMigration(change, candidate, approval) {
+  if (typeof approval.from !== "string" || typeof approval.to !== "string") {
     return false;
   }
   const match =
@@ -270,6 +282,51 @@ function approvesChange(change, candidate, approval, today) {
       candidate.paths?.[path]?.[method.toLowerCase()]?.responses?.default
         ?.content?.[approval.to],
     )
+  );
+}
+
+function approvesPayloadSchemaMaterialization(change, candidate, approval) {
+  const requiredMatch =
+    /^made property required (GET|PUT|POST|DELETE|PATCH) (\/.+)\.responses\.(\d{3}|[1-5]XX)\.(\S+)\.(.+)$/.exec(
+      change,
+    );
+  if (requiredMatch) {
+    const [, method, path, status, mediaType] = requiredMatch;
+    if (!path.startsWith(approval.pathPrefix)) return false;
+    const schema =
+      candidate.paths?.[path]?.[method.toLowerCase()]?.responses?.[status]
+        ?.content?.[mediaType]?.schema;
+    return isMaterializedSchema(schema);
+  }
+
+  const removedResponseMatch =
+    /^removed response (\d{3}|[1-5]XX) from (GET|PUT|POST|DELETE|PATCH) (\/.+)$/.exec(
+      change,
+    );
+  if (!removedResponseMatch) return false;
+  const [, removedStatus, method, path] = removedResponseMatch;
+  if (!removedStatus.startsWith("2") || !path.startsWith(approval.pathPrefix)) {
+    return false;
+  }
+  const responses =
+    candidate.paths?.[path]?.[method.toLowerCase()]?.responses ?? {};
+  return Object.entries(responses).some(
+    ([status, response]) =>
+      status.startsWith("2") &&
+      (response?.description === "No content" ||
+        Object.values(response?.content ?? {}).some(({ schema }) =>
+          isMaterializedSchema(schema),
+        )),
+  );
+}
+
+function isMaterializedSchema(schema) {
+  if (!schema || typeof schema !== "object") return false;
+  if (schema.$ref === "#/components/schemas/SuccessEnvelope") return false;
+  return !(
+    schema.type === "object" &&
+    schema.additionalProperties === true &&
+    Object.keys(schema.properties ?? {}).length === 0
   );
 }
 

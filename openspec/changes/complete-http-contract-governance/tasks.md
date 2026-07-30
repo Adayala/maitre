@@ -3,11 +3,11 @@
 - [x] 1.1 Define reusable OpenAPI schemas for authentication, tenant/branch context, success
       envelopes, pagination and RFC 9457 problems.
 - [x] 1.2 Add a deterministic non-listening OpenAPI generator and commit the baseline artifact.
-- [ ] 1.3 Document all public `/v1` operations with request, response, security and ownership
+- [x] 1.3 Document all public `/v1` operations with request, response, security and ownership
       metadata.
   - [x] 1.3a Enforce structured success envelopes, RFC 9457 response media types and context
         header declarations for every `/v1` operation.
-  - [ ] 1.3b Replace the shared payload fallback with operation-specific request and response
+  - [x] 1.3b Replace the shared payload fallback with operation-specific request and response
         field schemas.
 
 ## 2. Error boundary and CORS
