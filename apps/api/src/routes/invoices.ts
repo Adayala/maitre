@@ -388,26 +388,37 @@ export async function registerInvoiceRoutes(
     },
   );
 
-  app.get("/internal/fiscal/invoice-deliveries/process", async (req, reply) => {
-    const correlationId = randomUUID();
-    try {
-      if (!hasCronAuthorization(req.headers.authorization)) {
-        return sendProblem(reply, correlationId, authenticationRequired());
-      }
-      const result = await processInvoiceDeliveryBatch(
-        {
-          deliveries: container.invoiceDeliveries,
-          documents: deliveryDocuments(container),
-          sender: configuredEmailSender(),
-          outbox: container.outbox,
+  app.get(
+    "/internal/fiscal/invoice-deliveries/process",
+    {
+      config: {
+        rateLimit: {
+          max: 10,
+          timeWindow: "1 minute",
         },
-        { limit: 10, correlationId },
-      );
-      return { data: result };
-    } catch (err) {
-      return sendProblem(reply, correlationId, err);
-    }
-  });
+      },
+    },
+    async (req, reply) => {
+      const correlationId = randomUUID();
+      try {
+        if (!hasCronAuthorization(req.headers.authorization)) {
+          return sendProblem(reply, correlationId, authenticationRequired());
+        }
+        const result = await processInvoiceDeliveryBatch(
+          {
+            deliveries: container.invoiceDeliveries,
+            documents: deliveryDocuments(container),
+            sender: configuredEmailSender(),
+            outbox: container.outbox,
+          },
+          { limit: 10, correlationId },
+        );
+        return { data: result };
+      } catch (err) {
+        return sendProblem(reply, correlationId, err);
+      }
+    },
+  );
 
   app.get<{ Querystring: { fiscalEntityId?: string } }>(
     "/v1/fiscal-points-of-sale",
