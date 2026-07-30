@@ -216,7 +216,7 @@ jobs:
       - name: Recreate ephemeral database from migrations
         shell: bash
         run: |
-          if ! supabase start --exclude edge-runtime,gotrue,imgproxy,logflare,mailpit,postgres-meta,realtime,studio,supavisor,vector; then
+          if ! supabase start --exclude edge-runtime,imgproxy,logflare,mailpit,postgres-meta,realtime,studio,supavisor,vector; then
             echo "INFRA_ERROR: Supabase local stack failed to start" > "$E2E_EVIDENCE_DIR/classification.txt"
             exit 1
           fi
@@ -225,10 +225,20 @@ jobs:
             exit 1
           fi
           supabase migration list --local > "$E2E_EVIDENCE_DIR/migrations.txt"
-          supabase status -o env \
-            --override-name api.url=SUPABASE_URL \
-            --override-name auth.service_role_key=SUPABASE_SECRET_KEY \
-            >> "$GITHUB_ENV"
+          status_env="$RUNNER_TEMP/supabase-status.env"
+          supabase status -o env > "$status_env"
+          set -a
+          source "$status_env"
+          set +a
+          if [[ -z "${API_URL:-}" || -z "${SERVICE_ROLE_KEY:-}" ]]; then
+            echo "INFRA_ERROR: Supabase status did not provide API_URL and SERVICE_ROLE_KEY" > "$E2E_EVIDENCE_DIR/classification.txt"
+            exit 1
+          fi
+          echo "::add-mask::$SERVICE_ROLE_KEY"
+          {
+            echo "SUPABASE_URL=$API_URL"
+            echo "SUPABASE_SECRET_KEY=$SERVICE_ROLE_KEY"
+          } >> "$GITHUB_ENV"
           echo "PRODUCT_FAILURE: authoritative journey has not completed" > "$E2E_EVIDENCE_DIR/classification.txt"
 
       - name: Run authoritative MVP journey
