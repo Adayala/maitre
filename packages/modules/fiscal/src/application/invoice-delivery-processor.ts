@@ -68,7 +68,8 @@ export async function processInvoiceDelivery(
     });
     const result = await deps.sender.send({
       deliveryId: claimed.id,
-      recipientEmail: claimed.recipientEmail,
+      // Retention only redacts terminal SENT rows, which return before claim.
+      recipientEmail: claimed.recipientEmail!,
       attachment,
     });
     const sent: InvoiceDelivery = {

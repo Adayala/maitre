@@ -3,7 +3,12 @@ import type { AuditLog } from "../domain/audit-log.js";
 export interface AuditLogQuery {
   tenantId: string;
   actorId?: string;
+  branchId?: string;
+  actionCode?: string;
+  outcome?: AuditLog["outcome"];
   resourceType?: string;
+  resourceId?: string;
+  correlationId?: string;
   from?: Date;
   to?: Date;
   limit?: number;

@@ -54,6 +54,7 @@ import { registerInvoiceRoutes } from "./routes/invoices.js";
 import { registerTaxRateRoutes } from "./routes/tax-rates.js";
 import { registerFiscalPrinterRoutes } from "./routes/fiscal-printers.js";
 import { registerInvoiceTemplateRoutes } from "./routes/invoice-templates.js";
+import { registerMutationAudit } from "./http/mutation-audit.js";
 
 // SPEC-211 — app.ts instantiates and wires plugins/routes without listen().
 // server.ts (local/process) and api/serverless.ts (Vercel) both consume this.
@@ -70,6 +71,7 @@ export async function buildApp(
   });
   const resolvedContainer = container ?? (await buildContainer());
   registerHttpObservability(app, telemetry);
+  registerMutationAudit(app, resolvedContainer);
 
   await app.register(helmet, {
     // Swagger UI needs inline assets. Product frontends define their CSP at

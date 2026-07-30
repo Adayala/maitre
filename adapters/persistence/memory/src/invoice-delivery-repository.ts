@@ -83,6 +83,32 @@ export class InMemoryInvoiceDeliveryRepository
     return claimed;
   }
 
+  async redactSentBefore(cutoff: Date, redactedAt: Date, limit: number) {
+    const candidates = [...this.byId.values()]
+      .filter(
+        (item) =>
+          item.status === "SENT" &&
+          item.recipientEmail !== null &&
+          item.sentAt !== null &&
+          item.sentAt !== undefined &&
+          item.sentAt <= cutoff,
+      )
+      .sort(
+        (a, b) =>
+          (a.sentAt?.getTime() ?? 0) - (b.sentAt?.getTime() ?? 0),
+      )
+      .slice(0, limit);
+    for (const item of candidates) {
+      this.byId.set(item.id, {
+        ...item,
+        recipientEmail: null,
+        redactedAt,
+        updatedAt: redactedAt,
+      });
+    }
+    return candidates.length;
+  }
+
   async save(delivery: InvoiceDelivery) {
     this.byId.set(delivery.id, delivery);
   }
