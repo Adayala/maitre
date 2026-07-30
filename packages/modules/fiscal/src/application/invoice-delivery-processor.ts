@@ -11,6 +11,9 @@ export interface InvoiceDeliveryAttachment {
   mediaType: "application/pdf" | "text/html";
   content: Uint8Array;
   contentHash: string;
+  emailSubject?: string;
+  emailText?: string;
+  emailHtml?: string;
 }
 
 export interface InvoiceDeliveryDocumentPort {

@@ -8,25 +8,45 @@ import {
   deactivateTemplate,
   previewTemplate,
   InvalidInvoiceTemplateTransitionError,
+  InvalidInvoiceEmailTemplateError,
+  encodeInvoiceEmailTemplate,
 } from "@maitre/fiscal";
 import type { Container } from "../composition/container.js";
 import { requireTenantContext, requirePermission } from "../http/request-context.js";
 import { sendProblem, notFound, conflict, badRequest } from "../http/problem-details.js";
 
-// SPEC-142/148 — InvoiceTemplate API. Simple CRUD; publish freezes. `preview`
-// returns a canned synthetic fixture (no real rendering). No HTML/CSS engine.
+// SPEC-142/148 — InvoiceTemplate API. Simple CRUD; publish freezes. EMAIL
+// templates use a constrained text renderer and synthetic preview data.
 
 const createBody = z.object({
   name: z.string().min(1),
   channel: z.string().min(1).default("PDF"),
-  contentRef: z.string().min(1),
+  contentRef: z.string().min(1).optional(),
   variableSchemaVersion: z.number().int().positive().default(1),
   layoutNormativeVersion: z.string().min(1),
   brandId: z.string().min(1).optional(),
+  emailContent: z
+    .object({
+      subject: z.string().min(1).max(200),
+      text: z.string().min(1).max(4_000),
+    })
+    .optional(),
+}).superRefine((body, ctx) => {
+  if (body.channel === "EMAIL" ? !body.emailContent : !body.contentRef) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: [body.channel === "EMAIL" ? "emailContent" : "contentRef"],
+      message:
+        body.channel === "EMAIL"
+          ? "emailContent is required for EMAIL templates"
+          : "contentRef is required",
+    });
+  }
 });
 
 function handle(reply: import("fastify").FastifyReply, correlationId: string, err: unknown, label: string) {
   if (err instanceof InvalidInvoiceTemplateTransitionError) return sendProblem(reply, correlationId, conflict(err.message));
+  if (err instanceof InvalidInvoiceEmailTemplateError) return sendProblem(reply, correlationId, badRequest(err.message));
   if (err instanceof Error && err.message.includes("not found")) return sendProblem(reply, correlationId, notFound(label));
   return sendProblem(reply, correlationId, err);
 }
@@ -44,7 +64,10 @@ export async function registerInvoiceTemplateRoutes(app: FastifyInstance, contai
           tenantId: ctx.tenantId,
           name: body.name,
           channel: body.channel,
-          contentRef: body.contentRef,
+          contentRef:
+            body.channel === "EMAIL" && body.emailContent
+              ? encodeInvoiceEmailTemplate(body.emailContent)
+              : body.contentRef!,
           variableSchemaVersion: body.variableSchemaVersion,
           layoutNormativeVersion: body.layoutNormativeVersion,
           ...(body.brandId ? { brandId: body.brandId } : {}),

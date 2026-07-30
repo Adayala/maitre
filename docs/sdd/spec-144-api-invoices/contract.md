@@ -33,3 +33,8 @@ el mismo endpoint cada cinco minutos. Los candidatos se ordenan por antigüedad 
 `GET /v1/invoice-deliveries/summary` exige `invoice:read` y devuelve únicamente conteos por
 estado y la fecha del pendiente más antiguo para el tenant autenticado. No devuelve emails,
 errores de proveedor, adjuntos ni filas de otros tenants.
+
+Los templates `EMAIL` aceptan asunto y cuerpo de texto versionados. Sólo interpretan
+`issuerName`, `voucherType`, `voucherNumber`, `total`, `currency` y `environment`; publicar falla
+ante variables desconocidas. El HTML se deriva escapando el texto y existe un fallback
+determinístico cuando no hay template global publicado. No se interpolan email, CAE ni secretos.

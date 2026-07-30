@@ -22,6 +22,7 @@ import {
   processInvoiceDeliveryBatch,
   ResendInvoiceEmailSender,
   type InvoiceDeliveryDocumentPort,
+  renderInvoiceEmailTemplate,
   type TaxLineInput,
   type InvoiceDeps,
   InvalidInvoiceTransitionError,
@@ -217,6 +218,30 @@ function deliveryDocuments(container: Container): InvoiceDeliveryDocumentPort {
         },
         qr,
       };
+      const templates = await container.invoiceTemplates.listByTenant(
+        input.tenantId,
+      );
+      const emailTemplate =
+        templates
+          .filter(
+            (template) =>
+              template.channel === "EMAIL" &&
+              template.status === "PUBLISHED" &&
+              !template.brandId,
+          )
+          .sort(
+            (a, b) =>
+              (b.publishedAt?.getTime() ?? 0) -
+              (a.publishedAt?.getTime() ?? 0),
+          )[0] ?? null;
+      const email = renderInvoiceEmailTemplate(emailTemplate, {
+        issuerName: issuer.displayName ?? issuer.legalName ?? issuer.name,
+        voucherType: invoice.voucherType,
+        voucherNumber: `${pointOfSale.officialCode.padStart(5, "0")}-${String(invoice.number).padStart(8, "0")}`,
+        total: (invoice.totals.grossMinorUnits / 100).toFixed(2),
+        currency: invoice.currency,
+        environment: invoice.environment,
+      });
       if (input.format === "PDF") {
         const document =
           await renderAuthorizedInvoicePdfDocument(documentInput);
@@ -225,6 +250,9 @@ function deliveryDocuments(container: Container): InvoiceDeliveryDocumentPort {
           mediaType: document.mediaType,
           content: document.bytes,
           contentHash: document.contentHash,
+          emailSubject: email.subject,
+          emailText: email.text,
+          emailHtml: email.html,
         };
       }
       const document = renderAuthorizedInvoiceDocument(documentInput);
@@ -233,6 +261,9 @@ function deliveryDocuments(container: Container): InvoiceDeliveryDocumentPort {
         mediaType: document.mediaType,
         content: new TextEncoder().encode(document.html),
         contentHash: document.contentHash,
+        emailSubject: email.subject,
+        emailText: email.text,
+        emailHtml: email.html,
       };
     },
   };
