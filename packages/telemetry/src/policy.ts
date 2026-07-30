@@ -17,6 +17,9 @@ const LABEL_SCHEMA: Record<TelemetrySignal, readonly string[]> = {
     "status_class",
     "outcome",
   ],
+  [TELEMETRY_SIGNALS.httpActiveRequests]: ["method", "route"],
+  [TELEMETRY_SIGNALS.authAttempts]: ["operation", "outcome"],
+  [TELEMETRY_SIGNALS.contextResolution]: ["operation", "outcome"],
   [TELEMETRY_SIGNALS.readiness]: ["dependency", "outcome"],
   [TELEMETRY_SIGNALS.journeyTransition]: ["transition", "outcome"],
   [TELEMETRY_SIGNALS.journeyDuration]: ["transition", "outcome"],
@@ -25,6 +28,10 @@ const LABEL_SCHEMA: Record<TelemetrySignal, readonly string[]> = {
   [TELEMETRY_SIGNALS.auditAppend]: ["action_code", "outcome"],
   [TELEMETRY_SIGNALS.auditEvidenceSize]: ["action_code", "outcome"],
   [TELEMETRY_SIGNALS.auditPolicyMissing]: ["method", "route"],
+  [TELEMETRY_SIGNALS.outboxPublished]: [],
+  [TELEMETRY_SIGNALS.outboxRetries]: [],
+  [TELEMETRY_SIGNALS.outboxFailures]: [],
+  [TELEMETRY_SIGNALS.outboxExpiredLeases]: [],
 };
 
 const FORBIDDEN_LABELS = new Set([
@@ -70,7 +77,18 @@ export function assertTelemetryAttributes(
 }
 
 export function assertSpanAttributes(attributes: TelemetryAttributes): void {
-  const allowed = new Set(["http.request.method", "http.route"]);
+  const allowed = new Set([
+    "http.request.method",
+    "http.route",
+    "auth.operation",
+    "auth.outcome",
+    "dependency.name",
+    "dependency.operation",
+    "messaging.operation",
+    "messaging.system",
+    "journey.transition",
+    "journey.outcome",
+  ]);
   for (const [key, value] of Object.entries(attributes)) {
     if (!allowed.has(key) || FORBIDDEN_LABELS.has(key)) {
       throw new Error(`telemetry-span-label-not-allowed:${key}`);

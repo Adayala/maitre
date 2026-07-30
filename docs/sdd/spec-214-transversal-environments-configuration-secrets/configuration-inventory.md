@@ -16,28 +16,35 @@ Sólo este allowlist puede entrar al bundle. Ningún nombre que contenga `SECRET
 
 ## API runtime
 
-| Variable                    | Requerida                  | Secreta | Propósito                                                     |
-| --------------------------- | -------------------------- | ------- | ------------------------------------------------------------- |
-| `APP_ENV`                   | sí                         | no      | ambiente lógico Maitre                                        |
-| `APP_VERSION`               | sí fuera de local          | no      | commit/version desplegada                                     |
-| `PERSISTENCE_DRIVER`        | sí fuera de local/test/e2e | no      | `supabase`; `memory` está prohibido en ambientes compartidos  |
-| `AUTH_DRIVER`               | sí fuera de local/test/e2e | no      | `supabase`; `fixture` está prohibido en ambientes compartidos |
-| `SUPABASE_URL`              | con drivers Supabase       | no      | endpoint server-side de persistencia y JWKS                   |
-| `SUPABASE_SECRET_KEY`       | con persistencia Supabase  | sí      | credencial server-only del adapter PostgREST actual           |
-| `SUPABASE_SERVICE_ROLE_KEY` | alias legado               | sí      | fallback temporal de `SUPABASE_SECRET_KEY`; nunca browser     |
-| `SUPABASE_PUBLISHABLE_KEY`  | Auth Supabase opcional     | no      | header público para verificación cuando aplica                |
-| `LOG_LEVEL`                 | sí                         | no      | nivel allowlisted                                             |
-| `API_HOST`                  | local/Node                 | no      | bind address; adapter puede proveerlo                         |
-| `API_PORT`                  | local/Node                 | no      | puerto validado                                               |
-| `CORS_ALLOWED_ORIGINS`      | sí                         | no      | allowlist explícita                                           |
-| `DATABASE_URL`              | sí                         | sí      | conexión pooled de runtime                                    |
-| `AUTH_PROVIDER`             | sí                         | no      | adapter seleccionado, inicialmente `supabase`                 |
-| `AUTH_ISSUER`               | sí                         | no      | issuer esperado                                               |
-| `AUTH_AUDIENCE`             | sí                         | no      | audience esperada                                             |
-| `AUTH_JWKS_URL`             | sí                         | no      | origen confiable de claves públicas                           |
-| `AUTH_ALLOWED_ALGORITHMS`   | sí                         | no      | allowlist, nunca derivada del token                           |
-| `AUTH_CLOCK_SKEW_SECONDS`   | sí                         | no      | tolerancia acotada                                            |
-| `REQUEST_TIMEOUT_MS`        | sí                         | no      | presupuesto máximo de request                                 |
+| Variable                      | Requerida                  | Secreta | Propósito                                                     |
+| ----------------------------- | -------------------------- | ------- | ------------------------------------------------------------- |
+| `APP_ENV`                     | sí                         | no      | ambiente lógico Maitre                                        |
+| `APP_VERSION`                 | sí fuera de local          | no      | commit/version desplegada                                     |
+| `PERSISTENCE_DRIVER`          | sí fuera de local/test/e2e | no      | `supabase`; `memory` está prohibido en ambientes compartidos  |
+| `AUTH_DRIVER`                 | sí fuera de local/test/e2e | no      | `supabase`; `fixture` está prohibido en ambientes compartidos |
+| `SUPABASE_URL`                | con drivers Supabase       | no      | endpoint server-side de persistencia y JWKS                   |
+| `SUPABASE_SECRET_KEY`         | con persistencia Supabase  | sí      | credencial server-only del adapter PostgREST actual           |
+| `SUPABASE_SERVICE_ROLE_KEY`   | alias legado               | sí      | fallback temporal de `SUPABASE_SECRET_KEY`; nunca browser     |
+| `SUPABASE_PUBLISHABLE_KEY`    | Auth Supabase opcional     | no      | header público para verificación cuando aplica                |
+| `LOG_LEVEL`                   | sí                         | no      | nivel allowlisted                                             |
+| `API_HOST`                    | local/Node                 | no      | bind address; adapter puede proveerlo                         |
+| `API_PORT`                    | local/Node                 | no      | puerto validado                                               |
+| `CORS_ALLOWED_ORIGINS`        | sí                         | no      | allowlist explícita                                           |
+| `DATABASE_URL`                | sí                         | sí      | conexión pooled de runtime                                    |
+| `AUTH_PROVIDER`               | sí                         | no      | adapter seleccionado, inicialmente `supabase`                 |
+| `AUTH_ISSUER`                 | sí                         | no      | issuer esperado                                               |
+| `AUTH_AUDIENCE`               | sí                         | no      | audience esperada                                             |
+| `AUTH_JWKS_URL`               | sí                         | no      | origen confiable de claves públicas                           |
+| `AUTH_ALLOWED_ALGORITHMS`     | sí                         | no      | allowlist, nunca derivada del token                           |
+| `AUTH_CLOCK_SKEW_SECONDS`     | sí                         | no      | tolerancia acotada                                            |
+| `REQUEST_TIMEOUT_MS`          | sí                         | no      | presupuesto máximo de request                                 |
+| `OTEL_SERVICE_NAME`           | si OTLP                    | no      | nombre estable del servicio                                   |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | no                         | no      | activa export de trazas/métricas OTLP                         |
+| `OTEL_EXPORTER_OTLP_HEADERS`  | según backend              | sí      | autenticación del collector                                   |
+| `OTEL_TRACES_SAMPLER`         | si OTLP                    | no      | sampler estándar OpenTelemetry                                |
+| `OTEL_TRACES_SAMPLER_ARG`     | según sampler              | no      | argumento acotado del sampler                                 |
+| `OTEL_METRIC_EXPORT_INTERVAL` | si OTLP                    | no      | período de export de métricas                                 |
+| `OTEL_METRIC_EXPORT_TIMEOUT`  | si OTLP                    | no      | timeout de export de métricas                                 |
 
 El adapter de persistencia Supabase actual usa PostgREST y por eso requiere
 `SUPABASE_SECRET_KEY` (o el alias legado `SUPABASE_SERVICE_ROLE_KEY`) en el proceso API. La

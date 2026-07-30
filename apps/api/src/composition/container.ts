@@ -135,7 +135,7 @@ import {
   type BranchRepositoryPort,
   type SalonRepositoryPort,
   type TableRepositoryPort,
-  type OutboxPort,
+  type OutboxOperationsPort,
 } from "@maitre/organization";
 import {
   createMembership,
@@ -274,7 +274,7 @@ export interface Container {
   tables: TableRepositoryPort;
   users: UserRepositoryPort;
   memberships: MembershipRepositoryPort;
-  outbox: OutboxPort;
+  outbox: OutboxOperationsPort;
   subscriptions: SubscriptionRepositoryPort;
   subscriptionItems: SubscriptionItemRepositoryPort;
   catalog: CatalogRepositoryPort;
@@ -826,7 +826,7 @@ interface Repositories {
   tables: TableRepositoryPort;
   users: UserRepositoryPort;
   memberships: MembershipRepositoryPort;
-  outbox: OutboxPort;
+  outbox: OutboxOperationsPort;
   subscriptions: SubscriptionRepositoryPort;
   subscriptionItems: SubscriptionItemRepositoryPort;
   catalog: CatalogRepositoryPort;

@@ -61,6 +61,9 @@ import {
 import { sendProblem } from "./http/problem-details.js";
 import { randomUUID } from "node:crypto";
 import { registerMutationAudit } from "./http/mutation-audit.js";
+import { ContextPropagatingOutbox } from "./composition/observable-outbox.js";
+import { registerJourneyObservability } from "./observability/journey.js";
+import { registerOutboxOperationsRoutes } from "./routes/outbox-operations.js";
 
 // SPEC-211 — app.ts instantiates and wires plugins/routes without listen().
 // server.ts (local/process) and api/serverless.ts (Vercel) both consume this.
@@ -75,8 +78,13 @@ export async function buildApp(
     requestTimeout: 30_000,
     connectionTimeout: 10_000,
   });
-  const resolvedContainer = container ?? (await buildContainer());
+  const baseContainer = container ?? (await buildContainer());
+  const resolvedContainer: Container = {
+    ...baseContainer,
+    outbox: new ContextPropagatingOutbox(baseContainer.outbox),
+  };
   registerHttpObservability(app, telemetry);
+  registerJourneyObservability(app, resolvedContainer.outbox, telemetry);
   registerMutationAudit(app, resolvedContainer, telemetry);
 
   registerOpenApiContractMetadata(app);
@@ -123,6 +131,7 @@ export async function buildApp(
   await app.register(swaggerUi, { routePrefix: "/docs" });
 
   await registerHealthRoutes(app, resolvedContainer, telemetry);
+  await registerOutboxOperationsRoutes(app, resolvedContainer);
   await registerMeRoutes(app, resolvedContainer);
   await registerTenantRoutes(app, resolvedContainer);
   await registerBrandRoutes(app, resolvedContainer);
