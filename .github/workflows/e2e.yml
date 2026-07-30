@@ -71,6 +71,7 @@ jobs:
           npm run deps:check
           npm run deploy:affected:test
           npm run runtime:profile:test
+          npm run runtime:grants:test
           npm run coverage:gate:test
           npm run e2e:journey:policy
           npm run e2e:journey:policy:test
