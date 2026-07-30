@@ -24,6 +24,14 @@ export interface TenantContext extends AuthenticatedContext {
   externalIdentityId: string;
 }
 
+const tenantContextByRequest = new WeakMap<FastifyRequest, TenantContext>();
+
+export function tenantContextForRequest(
+  request: FastifyRequest,
+): TenantContext | undefined {
+  return tenantContextByRequest.get(request);
+}
+
 function extractBearerToken(header: string | undefined): string | null {
   if (!header) return null;
   const [scheme, token] = header.split(" ");
@@ -84,7 +92,7 @@ export async function requireTenantContext(
   const user = await container.users.findById(auth.userId);
   if (!user || !isUserEligibleForSession(user)) throw identityNotEnabled();
 
-  return {
+  const context: TenantContext = {
     userId: auth.userId,
     sessionIssuedAt: auth.sessionIssuedAt,
     sessionExpiresAt: auth.sessionExpiresAt,
@@ -94,6 +102,8 @@ export async function requireTenantContext(
     branchIds: membership.branchIds,
     externalIdentityId: user.externalIdentityId,
   };
+  tenantContextByRequest.set(req, context);
+  return context;
 }
 
 export function requirePermission(context: TenantContext, permissionId: string): void {

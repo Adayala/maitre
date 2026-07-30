@@ -191,6 +191,50 @@ test("GET /v1/audit-logs supports resource_type, from/to, limit clamp and cursor
   await app.close();
 });
 
+test("GET /v1/audit-logs filters sensitive evidence metadata", async () => {
+  const container = await buildContainer();
+  const tenantId = await getTenantId(container);
+  const branchId = (await container.branches.listByTenant(tenantId))[0]!.id;
+  const app = await buildApp(container);
+
+  await container.auditLogs.append({
+    id: "44444444-4444-4444-8444-444444444444",
+    tenantId,
+    actorType: "USER",
+    actorId: "55555555-5555-4555-8555-555555555555",
+    action: "UPDATE",
+    actionCode: "CASH_POST_PAYMENTS",
+    outcome: "SUCCEEDED",
+    branchId,
+    reasonCode: "HTTP_SUCCESS",
+    requestId: "req-sensitive-1",
+    resourceType: "PAYMENTS",
+    resourceId: "66666666-6666-4666-8666-666666666666",
+    correlationId: "77777777-7777-4777-8777-777777777777",
+    occurredAt: new Date("2026-07-30T12:00:00Z"),
+  });
+
+  const response = await app.inject({
+    method: "GET",
+    url:
+      `/v1/audit-logs?branch_id=${branchId}` +
+      "&action_code=CASH_POST_PAYMENTS&outcome=SUCCEEDED" +
+      "&resource_id=66666666-6666-4666-8666-666666666666" +
+      "&correlation_id=77777777-7777-4777-8777-777777777777",
+    headers: {
+      authorization: `Bearer ${container.demoAccessToken}`,
+      "x-tenant-id": tenantId,
+    },
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.json().data.length, 1);
+  assert.equal(response.json().data[0].actionCode, "CASH_POST_PAYMENTS");
+  assert.equal(response.json().data[0].outcome, "SUCCEEDED");
+  assert.equal(response.json().data[0].branchId, branchId);
+  await app.close();
+});
+
 test("GET /v1/audit-logs requires tenant context (403 without X-Tenant-Id)", async () => {
   const container = await buildContainer();
   const app = await buildApp(container);
