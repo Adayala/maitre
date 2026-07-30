@@ -79,6 +79,10 @@ jobs:
           npm run openapi:breaking
       - name: Unit tests and coverage
         run: npm run test:coverage
+      - name: OpenTelemetry export integration
+        run: npm run test:telemetry:export
+      - name: Generate sanitized observability evidence
+        run: npm run observability:evidence > observability-evidence.json
       - name: Security controls
         run: |
           npm run secrets:scan
@@ -92,6 +96,7 @@ jobs:
           name: quality-evidence-${{ github.run_attempt }}
           path: |
             maitre-sbom.json
+            observability-evidence.json
             coverage/
           if-no-files-found: ignore
           retention-days: 14

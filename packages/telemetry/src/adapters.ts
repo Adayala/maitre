@@ -70,6 +70,9 @@ export class InMemoryTelemetry implements TelemetryPort {
     const startedAt = performance.now();
     let ended = false;
     return {
+      ...(options.parentTraceparent
+        ? { traceparent: options.parentTraceparent }
+        : {}),
       end: (outcome = "OK") => {
         if (ended) return;
         ended = true;

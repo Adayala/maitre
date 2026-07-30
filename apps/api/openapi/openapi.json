@@ -7375,6 +7375,44 @@
         "x-maitre-spec": "SPEC-215"
       }
     },
+    "/v1/operations/outbox-health": {
+      "get": {
+        "operationId": "getOperationsOutboxHealth",
+        "responses": {
+          "2XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "operations"
+        ],
+        "x-maitre-owner": "operations",
+        "x-maitre-spec": "SPEC-215"
+      }
+    },
     "/v1/orders/{id}": {
       "get": {
         "operationId": "getOrdersById",
