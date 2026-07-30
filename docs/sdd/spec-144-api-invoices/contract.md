@@ -7,3 +7,9 @@ reintentable. Tests cubren concurrencia, duplicados, rechazo ARCA, notas asociad
 RBAC, auditoría y aislamiento entre tenants. `GET /v1/invoices/:id/document` acepta
 `format=html|pdf` (HTML por defecto para compatibilidad). Ambos documentos descargables se
 derivan sólo de un AUTHORIZED, son determinísticos y fallan cerrado para cualquier otro estado.
+
+`POST /v1/invoices/:id/deliveries` exige `Idempotency-Key`, acepta un email y
+`format=PDF|HTML`, y responde `202` al encolar o `200` al repetir exactamente la misma
+solicitud. La dirección se persiste tenant-scoped en `fiscal_invoice_deliveries`; el evento
+`fiscal.invoice-delivery.queued.v1` sólo contiene identificadores y formato, nunca el email.
+El worker y el proveedor de correo permanecen desacoplados de este contrato.

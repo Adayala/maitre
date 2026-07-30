@@ -44,6 +44,7 @@ import {
   InMemoryDiscountApplicationRepository,
   InMemoryInvoiceRepository,
   InMemoryAuthorizationAttemptRepository,
+  InMemoryInvoiceDeliveryRepository,
   InMemoryFiscalPointOfSaleRepository,
   InMemoryFiscalPrinterRepository,
   InMemoryFiscalCertificateRepository,
@@ -107,6 +108,7 @@ import {
   SupabaseDiscountApplicationRepository,
   SupabaseInvoiceRepository,
   SupabaseAuthorizationAttemptRepository,
+  SupabaseInvoiceDeliveryRepository,
   SupabaseFiscalPointOfSaleRepository,
   SupabaseFiscalPrinterRepository,
   SupabaseFiscalCertificateRepository,
@@ -231,6 +233,7 @@ import {
   type TaxRateRepositoryPort,
   type ArcaAdapterPort,
   type AuthorizationAttemptRepositoryPort,
+  type InvoiceDeliveryRepositoryPort,
 } from "@maitre/fiscal";
 import {
   FetchArcaHttpTransport,
@@ -306,6 +309,7 @@ export interface Container {
   discountApplications: DiscountApplicationRepositoryPort;
   invoices: InvoiceRepositoryPort;
   authorizationAttempts: AuthorizationAttemptRepositoryPort;
+  invoiceDeliveries: InvoiceDeliveryRepositoryPort;
   fiscalPointsOfSale: FiscalPointOfSaleRepositoryPort;
   fiscalPrinters: FiscalPrinterRepositoryPort;
   fiscalCertificates: FiscalCertificateRepositoryPort;
@@ -665,6 +669,7 @@ interface Repositories {
   discountApplications: DiscountApplicationRepositoryPort;
   invoices: InvoiceRepositoryPort;
   authorizationAttempts: AuthorizationAttemptRepositoryPort;
+  invoiceDeliveries: InvoiceDeliveryRepositoryPort;
   fiscalPointsOfSale: FiscalPointOfSaleRepositoryPort;
   fiscalPrinters: FiscalPrinterRepositoryPort;
   fiscalCertificates: FiscalCertificateRepositoryPort;
@@ -755,6 +760,7 @@ function buildRepositories(): Repositories {
       discountApplications: new SupabaseDiscountApplicationRepository(client),
       invoices: new SupabaseInvoiceRepository(client),
       authorizationAttempts: new SupabaseAuthorizationAttemptRepository(client),
+      invoiceDeliveries: new SupabaseInvoiceDeliveryRepository(client),
       fiscalPointsOfSale: new SupabaseFiscalPointOfSaleRepository(client),
       fiscalPrinters: new SupabaseFiscalPrinterRepository(client),
       fiscalCertificates: new SupabaseFiscalCertificateRepository(client),
@@ -821,6 +827,7 @@ function buildRepositories(): Repositories {
     discountApplications: new InMemoryDiscountApplicationRepository(),
     invoices: new InMemoryInvoiceRepository(),
     authorizationAttempts: new InMemoryAuthorizationAttemptRepository(),
+    invoiceDeliveries: new InMemoryInvoiceDeliveryRepository(),
     fiscalPointsOfSale: new InMemoryFiscalPointOfSaleRepository(),
     fiscalPrinters: new InMemoryFiscalPrinterRepository(),
     fiscalCertificates: new InMemoryFiscalCertificateRepository(),
