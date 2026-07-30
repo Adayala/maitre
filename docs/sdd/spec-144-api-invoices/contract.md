@@ -18,3 +18,9 @@ El procesador reclama atómicamente entregas `QUEUED|FAILED`, renderiza el docum
 `InvoiceDeliveryDocumentPort` y envía mediante `InvoiceEmailSenderPort`. Una entrega `SENT` es
 terminal e idempotente; un fallo persiste sólo la clase de error redactada y puede reintentarse.
 Los eventos `sent`/`failed` no contienen destinatarios ni contenido del comprobante.
+
+El adaptador runtime `ResendInvoiceEmailSender` usa `POST https://api.resend.com/emails`, envía
+el comprobante como adjunto base64 y propaga `invoice-delivery/{deliveryId}` como clave de
+idempotencia del proveedor. Requiere `RESEND_API_KEY` y `FISCAL_EMAIL_FROM` sólo en servidor.
+`POST /v1/invoice-deliveries/:id/process` ejecuta una entrega del tenant autenticado y exige
+`invoice:issue`; sin configuración falla cerrado y nunca simula un envío exitoso.
