@@ -11,6 +11,13 @@
 | **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
 | **Fase** | 3 |
 
+> **Nota de alcance (I0):** la API materializada administra, publica, evalúa y
+> registra `DiscountApplication` con cálculo server-side. El engine
+> transaccional que revalida stacking/caps/usage y actualiza `Order` o `Check`
+> permanece diferido hasta congelar `MoneyPolicy`, reglas de elegibilidad,
+> concurrencia y compensación. La aplicación I0 es una traza auditable y no
+> modifica automáticamente el total dependiente.
+
 ## Documentos
 
 - [Contrato](contract.md)
