@@ -471,6 +471,23 @@ serialTest(
     assert.equal(first.body, second.body);
     assert.match(first.body, /HOMOLOGACIÓN · SIN VALIDEZ FISCAL PRODUCTIVA/);
     assert.match(first.body, /CAE/);
+
+    const pdfFirst = await app.inject({
+      method: "GET",
+      url: `/v1/invoices/${invoice.id}/document?format=pdf`,
+      headers,
+    });
+    const pdfSecond = await app.inject({
+      method: "GET",
+      url: `/v1/invoices/${invoice.id}/document?format=pdf`,
+      headers,
+    });
+    assert.equal(pdfFirst.statusCode, 200);
+    assert.equal(pdfFirst.headers["content-type"], "application/pdf");
+    assert.match(pdfFirst.headers["content-disposition"] ?? "", /\.pdf"/);
+    assert.equal(pdfFirst.headers.etag, pdfSecond.headers.etag);
+    assert.equal(pdfFirst.rawPayload.subarray(0, 5).toString(), "%PDF-");
+    assert.deepEqual(pdfFirst.rawPayload, pdfSecond.rawPayload);
   },
 );
 

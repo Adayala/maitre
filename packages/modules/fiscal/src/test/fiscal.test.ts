@@ -30,6 +30,7 @@ import {
 } from "../application/invoice-commands.js";
 import { buildInvoiceExportManifest } from "../application/invoice-export.js";
 import { renderAuthorizedInvoiceDocument } from "../application/invoice-document.js";
+import { renderAuthorizedInvoicePdfDocument } from "../application/invoice-pdf-document.js";
 import {
   createTemplate,
   publishTemplate,
@@ -544,6 +545,69 @@ test("authorized invoice document is deterministic, complete and escapes untrust
   assert.match(first.html, new RegExp(qr.payloadHash));
   assert.doesNotMatch(first.html, /<script\b/i);
   assert.match(first.html, /&lt;script&gt;alert/);
+});
+
+test("authorized invoice PDF is deterministic", async () => {
+  const deps = makeDeps();
+  const { pos } = await seedRateAndPos(deps);
+  const draft = await createInvoice(deps, {
+    tenantId: TENANT,
+    fiscalEntityId: FE,
+    environment: "HOMOLOGATION",
+    pointOfSaleId: pos.id,
+    voucherType: "FACTURA_A",
+    currency: "ARS",
+    lines: [
+      {
+        id: "pdf-line",
+        description: "Menu del dia",
+        quantity: 1,
+        unit: "unit",
+        unitNetMinorUnits: 100000,
+      },
+    ],
+  });
+  const invoice = await issueInvoice(deps, {
+    tenantId: TENANT,
+    id: draft.id,
+    cuit: "20111111112",
+  });
+  assert.ok(
+    invoice.number &&
+      invoice.cae &&
+      invoice.caeExpiresAt &&
+      invoice.authorizedAt,
+  );
+  const qr = buildFiscalQrCode({
+    cuit: "20111111112",
+    voucherType: invoice.voucherType,
+    pointOfSaleCode: pos.officialCode,
+    number: invoice.number,
+    amountMinorUnits: invoice.totals.grossMinorUnits,
+    currency: invoice.currency,
+    cae: invoice.cae,
+    caeExpiresAt: invoice.caeExpiresAt,
+    authorizedAt: invoice.authorizedAt,
+  });
+  const input = {
+    invoice,
+    issuer: {
+      cuit: "20111111112",
+      legalName: "Maitre Test SA",
+      taxCondition: "RI",
+    },
+    pointOfSale: { officialCode: pos.officialCode },
+    qr,
+  };
+
+  const first = await renderAuthorizedInvoicePdfDocument(input);
+  const second = await renderAuthorizedInvoicePdfDocument(input);
+
+  assert.equal(first.mediaType, "application/pdf");
+  assert.match(first.fileName, /\.pdf$/);
+  assert.equal(Buffer.from(first.bytes.subarray(0, 5)).toString(), "%PDF-");
+  assert.equal(first.contentHash, second.contentHash);
+  assert.deepEqual(first.bytes, second.bytes);
 });
 
 test("invoice export manifest sums authorized totals and lists exceptions", async () => {

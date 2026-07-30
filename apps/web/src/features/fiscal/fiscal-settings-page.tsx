@@ -346,7 +346,7 @@ export function FiscalSettingsPage() {
     setMessage(null);
     try {
       const { blob, fileName } = await apiDownload(
-        `/v1/invoices/${invoice.id}/document`,
+        `/v1/invoices/${invoice.id}/document?format=pdf`,
         { accessToken: accessToken!, tenantId: selectedTenantId! },
       );
       const href = URL.createObjectURL(blob);
@@ -529,7 +529,9 @@ export function FiscalSettingsPage() {
                             disabled={busy || invoice.status !== "AUTHORIZED"}
                             onClick={() => void downloadInvoice(invoice)}
                           >
-                            {invoice.status === "AUTHORIZED" ? "Descargar" : "No disponible"}
+                            {invoice.status === "AUTHORIZED"
+                              ? "Descargar PDF"
+                              : "No disponible"}
                           </button>
                         </article>
                       ))}

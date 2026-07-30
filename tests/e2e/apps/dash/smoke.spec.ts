@@ -141,15 +141,18 @@ test("actualiza el perfil fiscal y declara un punto de venta ARCA", async ({
         },
       });
     }
-    if (path === `/v1/invoices/${invoiceId}/document`) {
+    if (
+      path === `/v1/invoices/${invoiceId}/document` &&
+      url.searchParams.get("format") === "pdf"
+    ) {
       return route.fulfill({
         headers: {
           "Access-Control-Expose-Headers": "Content-Disposition, ETag",
           "Content-Disposition":
-            'attachment; filename="factura-a-00001-00000007.html"',
-          "Content-Type": "text/html; charset=utf-8",
+            'attachment; filename="factura-a-00001-00000007.pdf"',
+          "Content-Type": "application/pdf",
         },
-        body: "<!doctype html><title>Factura A 00001-00000007</title>",
+        body: "%PDF-1.7 mock",
       });
     }
     return route.fulfill({
@@ -185,9 +188,9 @@ test("actualiza el perfil fiscal y declara un punto de venta ARCA", async ({
   await expect(page.getByText("FACTURA A · 00000007")).toBeVisible();
 
   const downloadPromise = page.waitForEvent("download");
-  await page.getByRole("button", { name: "Descargar" }).click();
+  await page.getByRole("button", { name: "Descargar PDF" }).click();
   const download = await downloadPromise;
-  expect(download.suggestedFilename()).toBe("factura-a-00001-00000007.html");
+  expect(download.suggestedFilename()).toBe("factura-a-00001-00000007.pdf");
   await expect(page.getByRole("status")).toContainText(
     "Comprobante FACTURA A · 00000007 descargado.",
   );

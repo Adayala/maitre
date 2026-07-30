@@ -4,5 +4,6 @@ Crear, listar y obtener comprobantes, y ejecutar validate/issue/reconcile/credit
 comandos explícitos. Create e issue requieren Idempotency-Key; If-Match protege el draft y la
 emisión congela el snapshot. Un timeout fiscal retorna estado pendiente, no un falso error
 reintentable. Tests cubren concurrencia, duplicados, rechazo ARCA, notas asociadas, PII,
-RBAC, auditoría y aislamiento entre tenants. El documento descargable se deriva sólo de un
-AUTHORIZED, es determinístico y falla cerrado para cualquier otro estado.
+RBAC, auditoría y aislamiento entre tenants. `GET /v1/invoices/:id/document` acepta
+`format=html|pdf` (HTML por defecto para compatibilidad). Ambos documentos descargables se
+derivan sólo de un AUTHORIZED, son determinísticos y fallan cerrado para cualquier otro estado.
