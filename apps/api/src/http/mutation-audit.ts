@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { FastifyInstance, FastifyRequest } from "fastify";
+import fastifyRateLimit from "@fastify/rate-limit";
 import { recordAuditLog, type AuditAction, type AuditOutcome } from "@maitre/audit";
 import type { Container } from "../composition/container.js";
 import { tenantContextForRequest } from "./request-context.js";
@@ -55,6 +56,29 @@ export function registerMutationAudit(
   app: FastifyInstance,
   container: Container,
 ): void {
+  void app.register(fastifyRateLimit, {
+    global: false,
+    max: AUDIT_RATE_LIMIT_MAX,
+    timeWindow: AUDIT_RATE_LIMIT_WINDOW_MS,
+    keyGenerator: (request) => {
+      const context = tenantContextForRequest(request);
+      if (context) return `${context.tenantId}:${context.userId}`;
+      return request.ip;
+    },
+  });
+
+  app.addHook("onRequest", async (request, reply) => {
+    const routeTemplate = request.routeOptions.url;
+    if (!routeTemplate) return;
+    if (!MUTATION_METHODS.has(request.method)) return;
+    if (!routeTemplate.startsWith("/v1/")) return;
+
+    await app.rateLimit({
+      max: AUDIT_RATE_LIMIT_MAX,
+      timeWindow: AUDIT_RATE_LIMIT_WINDOW_MS,
+    })(request, reply);
+  });
+
   app.addHook("onResponse", async (request, reply) => {
     const rateLimitKey = auditRateLimitKeyFor(request);
     if (isAuditRateLimited(rateLimitKey)) return;
