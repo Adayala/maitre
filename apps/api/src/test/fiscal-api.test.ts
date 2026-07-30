@@ -577,6 +577,27 @@ serialTest(
       const { tenantId, branchId, fiscalEntityId } = await getContext(container);
       const app = await buildApp(container);
       const headers = ownerHeaders(container, tenantId);
+      const emailTemplate = await app.inject({
+        method: "POST",
+        url: "/v1/invoice-templates",
+        headers,
+        payload: {
+          name: "Email fiscal",
+          channel: "EMAIL",
+          emailContent: {
+            subject: "Comprobante {{voucherNumber}}",
+            text: "Emitido por {{issuerName}} por {{currency}} {{total}}",
+          },
+          variableSchemaVersion: 1,
+          layoutNormativeVersion: "email-v1",
+        },
+      });
+      assert.equal(emailTemplate.statusCode, 201);
+      await app.inject({
+        method: "POST",
+        url: `/v1/invoice-templates/${emailTemplate.json().data.id}/publish`,
+        headers,
+      });
       const checkId = await seedCheck(container, tenantId, branchId);
       const invoice = (
         await createInvoiceFromCheck(container, headers, fiscalEntityId, checkId)
@@ -610,6 +631,7 @@ serialTest(
         queued.json().data.id,
       );
       assert.equal(delivery?.status, "SENT");
+      assert.match(String(providerBody?.["subject"]), /^Comprobante /);
       const attachments = providerBody?.["attachments"] as Array<{
         filename: string;
         content: string;

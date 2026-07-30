@@ -34,8 +34,13 @@ export class ResendInvoiceEmailSender implements InvoiceEmailSenderPort {
         body: JSON.stringify({
           from: this.config.from,
           to: [input.recipientEmail],
-          subject: "Tu comprobante fiscal",
-          html: "<p>Adjuntamos tu comprobante fiscal.</p>",
+          subject: input.attachment.emailSubject ?? "Tu comprobante fiscal",
+          html:
+            input.attachment.emailHtml ??
+            "<p>Adjuntamos tu comprobante fiscal.</p>",
+          text:
+            input.attachment.emailText ??
+            "Adjuntamos tu comprobante fiscal.",
           attachments: [
             {
               filename: input.attachment.fileName,

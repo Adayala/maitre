@@ -1,6 +1,6 @@
 // SPEC-142/148 — InvoiceTemplate use cases: create, list, publish (freezes),
-// deactivate, preview (canned synthetic fixture). Template interpretation stays
-// deferred; the minimal authorized-invoice renderer is a separate use case.
+// deactivate and preview. EMAIL templates use an allowlisted text renderer;
+// arbitrary HTML/CSS interpretation remains intentionally unsupported.
 
 import { randomUUID } from "node:crypto";
 import {
@@ -9,6 +9,10 @@ import {
   assertTemplateTransition,
 } from "../domain/invoice-template.js";
 import type { InvoiceTemplateRepositoryPort } from "./ports.js";
+import {
+  decodeInvoiceEmailTemplate,
+  renderInvoiceEmailTemplate,
+} from "./invoice-email-template.js";
 
 export interface TemplateDeps {
   templates: InvoiceTemplateRepositoryPort;
@@ -68,6 +72,9 @@ export async function publishTemplate(
 ): Promise<InvoiceTemplate> {
   const template = await deps.templates.findById(input.tenantId, input.id);
   if (!template) throw new Error(`InvoiceTemplate ${input.id} not found`);
+  if (template.channel === "EMAIL") {
+    decodeInvoiceEmailTemplate(template.contentRef);
+  }
   assertTemplateTransition(template.status, "PUBLISHED");
   const now = nowFrom(deps);
   // Publish freezes the template (SPEC-142); further changes require a new version.
@@ -101,14 +108,32 @@ export async function deactivateTemplate(
   return deactivated;
 }
 
-// SPEC-142 preview — synthetic fixture only, never a real render, never real
-// customer/CAE/token data.
+// SPEC-142 preview uses a synthetic fixture, never customer/CAE/token data.
 export async function previewTemplate(
   deps: TemplateDeps,
   input: { tenantId: string; id: string },
 ): Promise<InvoiceTemplatePreview> {
   const template = await deps.templates.findById(input.tenantId, input.id);
   if (!template) throw new Error(`InvoiceTemplate ${input.id} not found`);
+  if (template.channel === "EMAIL") {
+    const rendered = renderInvoiceEmailTemplate(
+      { ...template, status: "PUBLISHED" },
+      {
+        issuerName: "Maitre Demo",
+        voucherType: "Factura A",
+        voucherNumber: "00001-00000042",
+        total: "1210.00",
+        currency: "ARS",
+        environment: "HOMOLOGATION",
+      },
+    );
+    return {
+      templateId: template.id,
+      status: template.status,
+      renderedPlaceholder: `${rendered.subject}\n\n${rendered.text}`,
+      fixtureOnly: true,
+    };
+  }
   return {
     templateId: template.id,
     status: template.status,
