@@ -8,6 +8,7 @@ El runtime usa Resend mediante HTTPS, sin SDK ni credenciales persistidas en la 
 RESEND_API_KEY=<secret-with-sending-access>
 FISCAL_EMAIL_FROM=Maitre <facturas@dominio-verificado.example>
 CRON_SECRET=<random-secret-at-least-32-bytes>
+FISCAL_DELIVERY_PII_RETENTION_DAYS=30
 ```
 
 La clave debe tener sólo permiso de envío y permanecer en el secret manager del entorno. El
@@ -23,7 +24,9 @@ remitente debe pertenecer a un dominio verificado por el proveedor.
 En la configuración portable incluida, Vercel invoca diariamente a las 03:00 UTC
 `GET /internal/fiscal/invoice-deliveries/process`. El endpoint exige
 `Authorization: Bearer <CRON_SECRET>`, procesa como máximo diez entregas por ejecución y recupera
-claims `PROCESSING` abandonados después de cinco minutos.
+claims `PROCESSING` abandonados después de cinco minutos. La misma corrida redacta hasta 500
+direcciones de entregas `SENT` que hayan superado la ventana configurada; conserva la evidencia
+operacional e idempotencia y no elimina el comprobante fiscal. El valor debe ser un entero positivo.
 
 Vercel Hobby sólo admite cron diario. En Pro puede cambiarse el schedule a `*/5 * * * *`; también
 puede usarse un scheduler externo con el mismo header para lograr menor latencia.

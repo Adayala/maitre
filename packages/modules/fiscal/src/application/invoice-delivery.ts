@@ -32,7 +32,8 @@ export async function queueInvoiceEmailDelivery(
   if (existing) {
     if (
       existing.invoiceId !== input.invoiceId ||
-      existing.recipientEmail !== normalizeEmail(input.recipientEmail) ||
+      (existing.recipientEmail !== null &&
+        existing.recipientEmail !== normalizeEmail(input.recipientEmail)) ||
       existing.format !== input.format
     ) {
       throw new InvoiceDeliveryIdempotencyConflictError(input.idempotencyKey);

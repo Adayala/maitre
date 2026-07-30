@@ -561,10 +561,13 @@ serialTest(
     const previousApiKey = process.env["RESEND_API_KEY"];
     const previousFrom = process.env["FISCAL_EMAIL_FROM"];
     const previousCronSecret = process.env["CRON_SECRET"];
+    const previousRetentionDays =
+      process.env["FISCAL_DELIVERY_PII_RETENTION_DAYS"];
     const previousFetch = globalThis.fetch;
     process.env["RESEND_API_KEY"] = "test-key";
     process.env["FISCAL_EMAIL_FROM"] = "Maitre <facturas@example.com>";
     process.env["CRON_SECRET"] = "test-cron-secret";
+    process.env["FISCAL_DELIVERY_PII_RETENTION_DAYS"] = "30";
     let providerBody: Record<string, unknown> | undefined;
     globalThis.fetch = async (_input, init) => {
       providerBody = JSON.parse(String(init?.body));
@@ -626,11 +629,40 @@ serialTest(
 
       assert.equal(processed.statusCode, 200);
       assert.equal(processed.json().data.sent, 1);
+      assert.equal(processed.json().data.retention.redacted, 0);
       const delivery = await container.invoiceDeliveries.findById(
         tenantId,
         queued.json().data.id,
       );
       assert.equal(delivery?.status, "SENT");
+      await container.invoiceDeliveries.save({
+        ...delivery!,
+        sentAt: new Date("2020-01-01T00:00:00.000Z"),
+      });
+      const retained = await app.inject({
+        method: "GET",
+        url: "/internal/fiscal/invoice-deliveries/process",
+        headers: { authorization: "Bearer test-cron-secret" },
+      });
+      assert.equal(retained.statusCode, 200);
+      assert.equal(retained.json().data.retention.redacted, 1);
+      assert.equal(
+        (
+          await container.invoiceDeliveries.findById(
+            tenantId,
+            queued.json().data.id,
+          )
+        )?.recipientEmail,
+        null,
+      );
+      const replayAfterRetention = await app.inject({
+        method: "POST",
+        url: `/v1/invoices/${invoice.id}/deliveries`,
+        headers: { ...headers, "idempotency-key": "runtime-email-1" },
+        payload: { recipientEmail: "client@example.com", format: "PDF" },
+      });
+      assert.equal(replayAfterRetention.statusCode, 200);
+      assert.equal(replayAfterRetention.json().meta.idempotentReplay, true);
       assert.match(String(providerBody?.["subject"]), /^Comprobante /);
       const attachments = providerBody?.["attachments"] as Array<{
         filename: string;
@@ -649,6 +681,11 @@ serialTest(
       else process.env["FISCAL_EMAIL_FROM"] = previousFrom;
       if (previousCronSecret === undefined) delete process.env["CRON_SECRET"];
       else process.env["CRON_SECRET"] = previousCronSecret;
+      if (previousRetentionDays === undefined)
+        delete process.env["FISCAL_DELIVERY_PII_RETENTION_DAYS"];
+      else
+        process.env["FISCAL_DELIVERY_PII_RETENTION_DAYS"] =
+          previousRetentionDays;
     }
   },
 );

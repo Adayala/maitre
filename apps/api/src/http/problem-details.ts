@@ -78,12 +78,17 @@ export function sendProblem(
   correlationId: string,
   err: unknown,
 ): void {
+  const responseCorrelationId = reply.getHeader("x-correlation-id");
+  const propagatedCorrelationId =
+    typeof responseCorrelationId === "string"
+      ? responseCorrelationId
+      : correlationId;
   const problem = toProblemDetails(
     err,
-    correlationId,
+    propagatedCorrelationId,
     new URL(reply.request.url, "http://maitre.local").pathname,
   );
-  reply.header("x-correlation-id", correlationId);
+  reply.header("x-correlation-id", propagatedCorrelationId);
   if (problem.status === 401) {
     reply.header("www-authenticate", "Bearer");
   }

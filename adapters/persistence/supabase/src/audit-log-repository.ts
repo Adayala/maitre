@@ -9,6 +9,11 @@ interface AuditLogRow {
   actor_type: string;
   actor_id: string | null;
   action: string;
+  action_code: string | null;
+  outcome: string | null;
+  branch_id: string | null;
+  reason_code: string | null;
+  request_id: string | null;
   resource_type: string;
   resource_id: string;
   previous_state: unknown;
@@ -26,6 +31,13 @@ function fromRow(row: AuditLogRow): AuditLog {
     resourceType: row.resource_type,
     resourceId: row.resource_id,
     occurredAt: new Date(row.occurred_at),
+    ...(row.action_code !== null ? { actionCode: row.action_code } : {}),
+    ...(row.outcome !== null
+      ? { outcome: row.outcome as NonNullable<AuditLog["outcome"]> }
+      : {}),
+    ...(row.branch_id !== null ? { branchId: row.branch_id } : {}),
+    ...(row.reason_code !== null ? { reasonCode: row.reason_code } : {}),
+    ...(row.request_id !== null ? { requestId: row.request_id } : {}),
     ...(row.actor_id !== null ? { actorId: row.actor_id } : {}),
     ...(row.previous_state !== null ? { previousState: row.previous_state } : {}),
     ...(row.new_state !== null ? { newState: row.new_state } : {}),
@@ -40,6 +52,11 @@ function toRow(entry: AuditLog): AuditLogRow {
     actor_type: entry.actorType,
     actor_id: entry.actorId ?? null,
     action: entry.action,
+    action_code: entry.actionCode ?? null,
+    outcome: entry.outcome ?? null,
+    branch_id: entry.branchId ?? null,
+    reason_code: entry.reasonCode ?? null,
+    request_id: entry.requestId ?? null,
     resource_type: entry.resourceType,
     resource_id: entry.resourceId,
     previous_state: entry.previousState ?? null,
@@ -83,7 +100,12 @@ export class SupabaseAuditLogRepository implements AuditLogRepositoryPort {
       .limit(limit + 1);
 
     if (params.actorId) query = query.eq("actor_id", params.actorId);
+    if (params.branchId) query = query.eq("branch_id", params.branchId);
+    if (params.actionCode) query = query.eq("action_code", params.actionCode);
+    if (params.outcome) query = query.eq("outcome", params.outcome);
     if (params.resourceType) query = query.eq("resource_type", params.resourceType);
+    if (params.resourceId) query = query.eq("resource_id", params.resourceId);
+    if (params.correlationId) query = query.eq("correlation_id", params.correlationId);
     if (params.from) query = query.gte("occurred_at", params.from.toISOString());
     if (params.to) query = query.lte("occurred_at", params.to.toISOString());
     if (params.cursor) {

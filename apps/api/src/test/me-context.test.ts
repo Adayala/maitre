@@ -52,7 +52,7 @@ test("GET /v1/me/context without a bearer token returns 401 authentication-requi
 test("GET /v1/me/context with a bogus token returns 401 authentication-required", async () => {
   const container = await buildContainer();
   const app = await buildApp(container);
-  const correlationId = "corr-bogus-1";
+  const correlationId = "11111111-1111-4111-8111-111111111112";
   const response = await app.inject({
     method: "GET",
     url: "/v1/me/context",
@@ -75,7 +75,7 @@ test("GET /v1/me/context with a bogus token returns 401 authentication-required"
 test("GET /v1/me/context with a malformed Authorization header returns 401", async () => {
   const container = await buildContainer();
   const app = await buildApp(container);
-  const correlationId = "corr-malformed-1";
+  const correlationId = "11111111-1111-4111-8111-111111111113";
   const response = await app.inject({
     method: "GET",
     url: "/v1/me/context",
@@ -139,7 +139,7 @@ test("GET /v1/me/context appends UserAuthenticated to the outbox with no tenantI
 test("GET /v1/me/context propagates x-correlation-id to response and outbox event", async () => {
   const container = await buildContainer();
   const app = await buildApp(container);
-  const correlationId = "corr-me-context-1";
+  const correlationId = "11111111-1111-4111-8111-111111111114";
 
   const response = await app.inject({
     method: "GET",
@@ -184,7 +184,7 @@ test("GET /v1/me/context rejects a token whose session has expired", async () =>
     expiresAt: new Date(Date.now() - 60 * 60 * 1000),
   });
   const app = await buildApp(container);
-  const correlationId = "corr-expired-1";
+  const correlationId = "11111111-1111-4111-8111-111111111115";
   const response = await app.inject({
     method: "GET",
     url: "/v1/me/context",

@@ -8,6 +8,7 @@ import {
   IdentityNotEnabledError,
   resolveMeContext,
 } from "../composition/resolve-me-context.js";
+import { correlationIdForRequest } from "../http/observability.js";
 
 // SPEC-213 — GET /v1/me/context (no X-Tenant-Id/X-Branch-Id required).
 export async function registerMeRoutes(
@@ -15,8 +16,7 @@ export async function registerMeRoutes(
   container: Container,
 ): Promise<void> {
   app.get("/v1/me/context", async (req, reply) => {
-    const correlationId =
-      (req.headers["x-correlation-id"] as string | undefined) ?? randomUUID();
+    const correlationId = correlationIdForRequest(req) ?? randomUUID();
 
     try {
       const context = await resolveMeContext(
