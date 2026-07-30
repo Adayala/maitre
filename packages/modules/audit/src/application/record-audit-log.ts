@@ -6,6 +6,7 @@ import type {
   AuditOutcome,
 } from "../domain/audit-log.js";
 import type { AuditLogRepositoryPort } from "./ports.js";
+import { sanitizeAuditEvidence } from "./evidence.js";
 
 export interface RecordAuditLogInput {
   tenantId: string;
@@ -29,10 +30,8 @@ export interface RecordAuditLogDeps {
   now?: () => Date;
 }
 
-// SPEC-044 — appends one immutable entry. Callers (other modules' use
-// cases) decide what to redact before previousState/newState reach here;
-// this function does not sanitize — see the deferred-instrumentation note
-// in domain/audit-log.ts.
+// SPEC-044 — appends one immutable entry. Evidence is always sanitized here,
+// so every caller receives the same redaction and serialized-size boundary.
 export async function recordAuditLog(
   deps: RecordAuditLogDeps,
   input: RecordAuditLogInput,
@@ -52,9 +51,15 @@ export async function recordAuditLog(
     ...(input.reasonCode !== undefined ? { reasonCode: input.reasonCode } : {}),
     ...(input.requestId !== undefined ? { requestId: input.requestId } : {}),
     ...(input.actorId !== undefined ? { actorId: input.actorId } : {}),
-    ...(input.previousState !== undefined ? { previousState: input.previousState } : {}),
-    ...(input.newState !== undefined ? { newState: input.newState } : {}),
-    ...(input.correlationId !== undefined ? { correlationId: input.correlationId } : {}),
+    ...(input.previousState !== undefined
+      ? { previousState: sanitizeAuditEvidence(input.previousState) }
+      : {}),
+    ...(input.newState !== undefined
+      ? { newState: sanitizeAuditEvidence(input.newState) }
+      : {}),
+    ...(input.correlationId !== undefined
+      ? { correlationId: input.correlationId }
+      : {}),
   };
   await deps.auditLogs.append(entry);
   return entry;

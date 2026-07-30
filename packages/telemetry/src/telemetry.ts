@@ -6,6 +6,9 @@ export const TELEMETRY_SIGNALS = {
   journeyDuration: "maitre.mvp.journey.duration_ms",
   outboxBacklog: "maitre.outbox.backlog",
   outboxOldestAge: "maitre.outbox.oldest_pending_age_ms",
+  auditAppend: "maitre.audit.append",
+  auditEvidenceSize: "maitre.audit.evidence_size_bytes",
+  auditPolicyMissing: "maitre.audit.policy_missing",
 } as const;
 
 export type TelemetrySignal =

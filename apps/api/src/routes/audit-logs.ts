@@ -1,8 +1,11 @@
 import type { FastifyInstance } from "fastify";
 import { randomUUID } from "node:crypto";
 import type { Container } from "../composition/container.js";
-import { requireTenantContext, requirePermission } from "../http/request-context.js";
-import { sendProblem } from "../http/problem-details.js";
+import {
+  requireTenantContext,
+  requirePermission,
+} from "../http/request-context.js";
+import { insufficientScope, sendProblem } from "../http/problem-details.js";
 
 // SPEC-045 — GET /v1/audit-logs. Read-only; no create/update/delete exposed
 // (the entries themselves are appended internally by other modules' use
@@ -19,8 +22,18 @@ export async function registerAuditLogRoutes(
       requirePermission(ctx, "audit:read");
 
       const query = req.query as Record<string, string | undefined>;
+      const requestedBranchId = query["branch_id"];
+      if (
+        requestedBranchId &&
+        ctx.branchScopeType !== "ALL_BRANCHES" &&
+        !ctx.branchIds.includes(requestedBranchId)
+      ) {
+        throw insufficientScope();
+      }
       const limitRaw = Number(query["limit"] ?? 100);
-      const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(1, limitRaw), 500) : 100;
+      const limit = Number.isFinite(limitRaw)
+        ? Math.min(Math.max(1, limitRaw), 500)
+        : 100;
 
       const page = await container.auditLogs.query({
         tenantId: ctx.tenantId,
@@ -30,7 +43,9 @@ export async function registerAuditLogRoutes(
         ...(query["outcome"]
           ? { outcome: query["outcome"] as "SUCCEEDED" | "DENIED" | "FAILED" }
           : {}),
-        ...(query["resource_type"] ? { resourceType: query["resource_type"] } : {}),
+        ...(query["resource_type"]
+          ? { resourceType: query["resource_type"] }
+          : {}),
         ...(query["resource_id"] ? { resourceId: query["resource_id"] } : {}),
         ...(query["correlation_id"]
           ? { correlationId: query["correlation_id"] }
@@ -43,7 +58,10 @@ export async function registerAuditLogRoutes(
 
       return {
         data: page.items,
-        meta: { limit, ...(page.nextCursor ? { nextCursor: page.nextCursor } : {}) },
+        meta: {
+          limit,
+          ...(page.nextCursor ? { nextCursor: page.nextCursor } : {}),
+        },
       };
     } catch (err) {
       return sendProblem(reply, correlationId, err);
