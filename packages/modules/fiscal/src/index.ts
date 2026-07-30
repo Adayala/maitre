@@ -23,6 +23,7 @@ export * from "./application/invoice-pdf-document.js";
 export * from "./application/invoice-delivery.js";
 export * from "./application/invoice-email-template.js";
 export * from "./application/invoice-delivery-processor.js";
+export * from "./application/invoice-delivery-retention.js";
 export * from "./domain/invoice-delivery.js";
 export * from "./adapters/simulated-arca-adapter.js";
 export * from "./adapters/resend-email-sender.js";

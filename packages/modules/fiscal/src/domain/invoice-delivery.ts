@@ -6,7 +6,7 @@ export interface InvoiceDelivery {
   tenantId: string;
   invoiceId: string;
   channel: "EMAIL";
-  recipientEmail: string;
+  recipientEmail: string | null;
   format: InvoiceDeliveryFormat;
   idempotencyKey: string;
   status: InvoiceDeliveryStatus;
@@ -15,6 +15,7 @@ export interface InvoiceDelivery {
   updatedAt: Date;
   sentAt?: Date | null;
   failureReason?: string | null;
+  redactedAt?: Date | null;
 }
 
 export interface InvoiceDeliverySummary {

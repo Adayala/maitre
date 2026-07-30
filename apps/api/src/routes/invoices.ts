@@ -20,6 +20,7 @@ import {
   queueInvoiceEmailDelivery,
   processInvoiceDelivery,
   processInvoiceDeliveryBatch,
+  redactExpiredInvoiceDeliveryPii,
   ResendInvoiceEmailSender,
   type InvoiceDeliveryDocumentPort,
   renderInvoiceEmailTemplate,
@@ -435,6 +436,17 @@ export async function registerInvoiceRoutes(
         if (!hasCronAuthorization(req.headers.authorization)) {
           return sendProblem(reply, correlationId, authenticationRequired());
         }
+        const retention = await redactExpiredInvoiceDeliveryPii(
+          {
+            deliveries: container.invoiceDeliveries,
+            ...(container.now ? { now: container.now } : {}),
+          },
+          {
+            retentionDays: Number(
+              process.env["FISCAL_DELIVERY_PII_RETENTION_DAYS"] ?? "30",
+            ),
+          },
+        );
         const result = await processInvoiceDeliveryBatch(
           {
             deliveries: container.invoiceDeliveries,
@@ -444,7 +456,7 @@ export async function registerInvoiceRoutes(
           },
           { limit: 10, correlationId },
         );
-        return { data: result };
+        return { data: { ...result, retention } };
       } catch (err) {
         return sendProblem(reply, correlationId, err);
       }

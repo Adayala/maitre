@@ -47,6 +47,11 @@ export interface InvoiceDeliveryRepositoryPort {
     updatedAt: Date,
     staleBefore: Date,
   ): Promise<InvoiceDelivery | null>;
+  redactSentBefore(
+    cutoff: Date,
+    redactedAt: Date,
+    limit: number,
+  ): Promise<number>;
   save(delivery: InvoiceDelivery): Promise<void>;
 }
 
