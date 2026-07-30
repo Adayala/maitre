@@ -1,12 +1,12 @@
 # Revisión de contratos — Fiscal & ARCA SPEC-137–156
 
-| Campo | Valor |
-| --- | --- |
-| Alcance | SPEC-137–156 |
-| Commit revisado | `7e253ca` |
-| Protocolo | `contract-review-checklist.md` |
-| Outcome | `BLOCKED` |
-| Autoridad para implementar | No otorgada |
+| Campo                      | Valor                                 |
+| -------------------------- | ------------------------------------- |
+| Alcance                    | SPEC-137–156                          |
+| Commit revisado            | `0968f253`                            |
+| Protocolo                  | `contract-review-checklist.md`        |
+| Outcome                    | `I0 IMPLEMENTED / PRODUCTION BLOCKED` |
+| Autoridad para implementar | Walking skeleton I0 implementado      |
 
 ## Resultado ejecutivo
 
@@ -15,11 +15,39 @@ certificados, reconcilia timeouts ambiguos y no afirma que exportar Libro IVA eq
 presentarlo. Invoice/line items son snapshots; taxes/numeración usan cálculo determinista;
 correcciones autorizadas se modelan como notas.
 
-La aprobación productiva permanece correctamente bloqueada. Además de metadata incompleta,
-hay una contradicción de lifecycle de Invoice y falta una autoridad explícita para puntos de
-venta/numeración fiscal.
+La aprobación productiva permanece correctamente bloqueada hasta completar homologación y
+revisión fiscal competente. El walking skeleton I0 ya resuelve lifecycle, autoridad de puntos de
+venta, numeración, QR, persistencia y operación web; los alcances posteriores se registran
+separadamente y no bloquean el cierre del umbrella de implementación I0.
 
-## Findings bloqueantes
+## Estado reconciliado del I0
+
+- Invoice y líneas preservan snapshot e inmutabilidad; las correcciones autorizadas son notas.
+- FiscalPointOfSale es autoritativo por entidad, sucursal, ambiente, código y tipos admitidos.
+- WSAA/WSFEv1 separa homologación y producción, reconcilia resultados ambiguos y no expone
+  certificados ni claves privadas al browser.
+- Dash administra titular fiscal, sucursales y puntos de venta, con cobertura E2E del CRUD
+  registral y declaración en homologación.
+- El preview de templates usa fixtures sintéticos por contrato; no pretende ser comprobante.
+- SPEC-150 entrega el manifest I0 de comprobantes autorizados. El job/archivo descargable y
+  Libro IVA Digital quedan fuera de esta iteración.
+- SPEC-156 permanece explícitamente como placeholder fuera de P0 para I0.
+
+## Alcance posterior, no bloqueante para I0
+
+- [Issue #42](https://github.com/Adayala/maitre/issues/42): driver/SDK, cola y contingencia
+  operacional de impresora fiscal física;
+- [Issue #43](https://github.com/Adayala/maitre/issues/43): renderer, distribución PDF/email y
+  artefactos descargables de exportación;
+- [Issue #44](https://github.com/Adayala/maitre/issues/44): rotación de certificados con
+  overlap/rollback y habilitación productiva con evidencia formal de homologación;
+- [Issue #45](https://github.com/Adayala/maitre/issues/45): motor normativo de compliance de
+  SPEC-156;
+- [Issue #46](https://github.com/Adayala/maitre/issues/46): protocolo y contingencia fiscal
+  offline fail-closed;
+- [Issue #34](https://github.com/Adayala/maitre/issues/34): Libro IVA Digital;
+
+## Findings de la revisión histórica
 
 ### FISC-REV-001 — Metadata provisoria y revisión experta pendientes
 
@@ -104,6 +132,6 @@ estado de hardware al dominio central; registrar alcance MVP y fallback de repre
 
 ## Próxima revisión
 
-Revisar después de resolver FISC-REV-001–004. La evidencia debe incluir state machine de
-Invoice, FiscalPointOfSale, registro de fuentes normativas, homologación de timeout/numeración,
-rotación de certificado y reconciliación dorada Check→Invoice→Libro IVA.
+La revisión para producción debe verificar el registro de fuentes normativas, la matriz de
+homologación, rotación de certificados y reconciliación dorada Check→Invoice→Libro IVA. Esa
+revisión no convierte el placeholder de SPEC-156 ni Libro IVA Digital en alcance implícito del I0.
