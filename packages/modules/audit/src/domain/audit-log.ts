@@ -2,10 +2,9 @@
 // exists on the repository port by design (SPEC-044 §contract: "Eventos no
 // se actualizan ni borran mediante API común").
 //
-// The API boundary records covered Floor, Ordering, Kitchen and Cash
-// mutations. Domain-level atomic persistence with state and outbox changes,
-// plus coverage of the remaining modules, stays explicit in the active
-// OpenSpec change rather than being implied by this append-only model.
+// The API boundary requires explicit business policies for every covered
+// Floor, Ordering, Kitchen and Cash mutation. Evidence passes through the
+// audit module's central redaction and size boundary before append.
 
 export type AuditAction = "CREATE" | "UPDATE" | "DELETE";
 export type AuditActorType = "USER" | "SYSTEM";

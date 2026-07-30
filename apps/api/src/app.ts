@@ -77,7 +77,7 @@ export async function buildApp(
   });
   const resolvedContainer = container ?? (await buildContainer());
   registerHttpObservability(app, telemetry);
-  registerMutationAudit(app, resolvedContainer);
+  registerMutationAudit(app, resolvedContainer, telemetry);
 
   registerOpenApiContractMetadata(app);
   app.setErrorHandler((error, _request, reply) => {
@@ -196,7 +196,11 @@ export function resolveCorsOrigins(): string[] {
 
 function normalizeOrigin(origin: string): string {
   const parsed = new URL(origin);
-  if (!["http:", "https:"].includes(parsed.protocol) || parsed.username || parsed.password) {
+  if (
+    !["http:", "https:"].includes(parsed.protocol) ||
+    parsed.username ||
+    parsed.password
+  ) {
     throw new Error(`Invalid CORS origin: ${origin}`);
   }
   return parsed.origin;

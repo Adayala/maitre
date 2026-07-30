@@ -22,6 +22,9 @@ const LABEL_SCHEMA: Record<TelemetrySignal, readonly string[]> = {
   [TELEMETRY_SIGNALS.journeyDuration]: ["transition", "outcome"],
   [TELEMETRY_SIGNALS.outboxBacklog]: ["status"],
   [TELEMETRY_SIGNALS.outboxOldestAge]: ["status"],
+  [TELEMETRY_SIGNALS.auditAppend]: ["action_code", "outcome"],
+  [TELEMETRY_SIGNALS.auditEvidenceSize]: ["action_code", "outcome"],
+  [TELEMETRY_SIGNALS.auditPolicyMissing]: ["method", "route"],
 };
 
 const FORBIDDEN_LABELS = new Set([
@@ -57,7 +60,9 @@ export function assertTelemetryAttributes(
     const route = attributes["route"];
     if (
       route !== "UNMATCHED" &&
-      (!route?.startsWith("/") || route.includes("?") || UUID_OR_NUMBER.test(route))
+      (!route?.startsWith("/") ||
+        route.includes("?") ||
+        UUID_OR_NUMBER.test(route))
     ) {
       throw new Error(`telemetry-route-not-template:${route}`);
     }
@@ -78,7 +83,9 @@ export function assertSpanAttributes(attributes: TelemetryAttributes): void {
   if (
     route !== undefined &&
     route !== "UNMATCHED" &&
-    (!route.startsWith("/") || route.includes("?") || UUID_OR_NUMBER.test(route))
+    (!route.startsWith("/") ||
+      route.includes("?") ||
+      UUID_OR_NUMBER.test(route))
   ) {
     throw new Error(`telemetry-route-not-template:${route}`);
   }
