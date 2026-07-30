@@ -545,9 +545,11 @@ serialTest(
   async () => {
     const previousApiKey = process.env["RESEND_API_KEY"];
     const previousFrom = process.env["FISCAL_EMAIL_FROM"];
+    const previousCronSecret = process.env["CRON_SECRET"];
     const previousFetch = globalThis.fetch;
     process.env["RESEND_API_KEY"] = "test-key";
     process.env["FISCAL_EMAIL_FROM"] = "Maitre <facturas@example.com>";
+    process.env["CRON_SECRET"] = "test-cron-secret";
     let providerBody: Record<string, unknown> | undefined;
     globalThis.fetch = async (_input, init) => {
       providerBody = JSON.parse(String(init?.body));
@@ -575,14 +577,24 @@ serialTest(
         headers: { ...headers, "idempotency-key": "runtime-email-1" },
         payload: { recipientEmail: "client@example.com", format: "PDF" },
       });
+      const unauthorized = await app.inject({
+        method: "GET",
+        url: "/internal/fiscal/invoice-deliveries/process",
+      });
+      assert.equal(unauthorized.statusCode, 401);
       const processed = await app.inject({
-        method: "POST",
-        url: `/v1/invoice-deliveries/${queued.json().data.id}/process`,
-        headers,
+        method: "GET",
+        url: "/internal/fiscal/invoice-deliveries/process",
+        headers: { authorization: "Bearer test-cron-secret" },
       });
 
       assert.equal(processed.statusCode, 200);
-      assert.equal(processed.json().data.status, "SENT");
+      assert.equal(processed.json().data.sent, 1);
+      const delivery = await container.invoiceDeliveries.findById(
+        tenantId,
+        queued.json().data.id,
+      );
+      assert.equal(delivery?.status, "SENT");
       const attachments = providerBody?.["attachments"] as Array<{
         filename: string;
         content: string;
@@ -598,6 +610,8 @@ serialTest(
       else process.env["RESEND_API_KEY"] = previousApiKey;
       if (previousFrom === undefined) delete process.env["FISCAL_EMAIL_FROM"];
       else process.env["FISCAL_EMAIL_FROM"] = previousFrom;
+      if (previousCronSecret === undefined) delete process.env["CRON_SECRET"];
+      else process.env["CRON_SECRET"] = previousCronSecret;
     }
   },
 );

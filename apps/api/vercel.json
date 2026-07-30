@@ -4,6 +4,12 @@
   "functions": {
     "api/serverless.ts": { "maxDuration": 30 }
   },
+  "crons": [
+    {
+      "path": "/internal/fiscal/invoice-deliveries/process",
+      "schedule": "0 3 * * *"
+    }
+  ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/api/serverless" }
   ]

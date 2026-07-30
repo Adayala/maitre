@@ -29,9 +29,31 @@ export class InMemoryInvoiceDeliveryRepository
     );
   }
 
-  async claimForProcessing(tenantId: string, id: string, updatedAt: Date) {
+  async listProcessable(limit: number, staleBefore: Date) {
+    return [...this.byId.values()]
+      .filter(
+        (item) =>
+          item.status === "QUEUED" ||
+          item.status === "FAILED" ||
+          (item.status === "PROCESSING" && item.updatedAt < staleBefore),
+      )
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+      .slice(0, limit);
+  }
+
+  async claimForProcessing(
+    tenantId: string,
+    id: string,
+    updatedAt: Date,
+    staleBefore: Date,
+  ) {
     const item = await this.findById(tenantId, id);
-    if (!item || (item.status !== "QUEUED" && item.status !== "FAILED")) {
+    if (
+      !item ||
+      (item.status !== "QUEUED" &&
+        item.status !== "FAILED" &&
+        !(item.status === "PROCESSING" && item.updatedAt < staleBefore))
+    ) {
       return null;
     }
     const claimed: InvoiceDelivery = {

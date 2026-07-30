@@ -48,11 +48,27 @@ class DeliveryRepository implements InvoiceDeliveryRepositoryPort {
       : [];
   }
 
-  async claimForProcessing(tenantId: string, id: string, updatedAt: Date) {
+  async listProcessable(limit: number, staleBefore: Date) {
+    return (
+      this.item.status === "QUEUED" ||
+      this.item.status === "FAILED" ||
+      (this.item.status === "PROCESSING" && this.item.updatedAt < staleBefore)
+        ? [this.item]
+        : []
+    ).slice(0, limit);
+  }
+
+  async claimForProcessing(
+    tenantId: string,
+    id: string,
+    updatedAt: Date,
+    staleBefore: Date,
+  ) {
     if (
       this.item.tenantId !== tenantId ||
       this.item.id !== id ||
-      !["QUEUED", "FAILED"].includes(this.item.status)
+      (!["QUEUED", "FAILED"].includes(this.item.status) &&
+        !(this.item.status === "PROCESSING" && this.item.updatedAt < staleBefore))
     ) {
       return null;
     }
