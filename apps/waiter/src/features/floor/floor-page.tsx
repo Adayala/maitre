@@ -348,6 +348,7 @@ export function FloorPage() {
                       key={t.id}
                       type="button"
                       className={`table-card table-card--${meta.cls}`}
+                      data-table-id={t.id}
                       disabled={!actionable}
                       onClick={() => handleTap(t)}
                     >

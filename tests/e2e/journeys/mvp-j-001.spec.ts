@@ -98,7 +98,7 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
   let check!: Check;
   let cashSession!: CashSession;
   let payment!: Payment;
-  let tableNumber!: string;
+  let tableId!: string;
 
   await test.step("all deployable applications share one ready API", async () => {
     const readiness = await api.get<{ status: string }>(
@@ -125,9 +125,8 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
       .locator(".table-card")
       .filter({ hasText: "Libre" })
       .first();
-    tableNumber = (
-      await availableTable.locator(".table-card-num").innerText()
-    ).trim();
+    tableId = (await availableTable.getAttribute("data-table-id"))!;
+    expect(tableId).toMatch(/^[0-9a-f-]{36}$/i);
     await availableTable.click();
     const seatDialog = apps.floor.getByRole("dialog", {
       name: "Sentar comensales",
@@ -155,6 +154,7 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
     assertEvidence(openedVisit);
     visit = openedVisit.body.data;
     expect(visit.id).toBe(seatedVisit.data.id);
+    expect(visit.tableIds).toContain(tableId);
 
     await apps.floor.getByRole("button", { name: /Nuevo pedido/ }).click();
     await expect(
@@ -330,12 +330,7 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
   await test.step("Floor closes the visit and releases the table", async () => {
     await apps.floor.reload();
     const servedTable = apps.floor
-      .locator(".table-card")
-      .filter({
-        has: apps.floor.locator(".table-card-num", {
-          hasText: new RegExp(`^${tableNumber}$`),
-        }),
-      })
+      .locator(`[data-table-id="${tableId}"]`)
       .filter({ hasText: "Ocupada" });
     await expect(servedTable).toBeVisible();
     await servedTable.click();

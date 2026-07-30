@@ -141,7 +141,9 @@ test("@ui-contract muestra estados operativos, filtra mesas y abre una visita", 
   await expect(
     page.getByRole("heading", { name: "Salón principal" }),
   ).toBeVisible();
-  await expect(page.getByRole("button", { name: /1 Libre/ })).toBeVisible();
+  const availableTable = page.getByRole("button", { name: /1 Libre/ });
+  await expect(availableTable).toBeVisible();
+  await expect(availableTable).toHaveAttribute("data-table-id", tables[0]!.id);
   await expect(page.getByRole("button", { name: /2 Reservada/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /3 Ocupada/ })).toBeVisible();
 
