@@ -4,7 +4,9 @@ import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
+import { NoopTelemetry, type TelemetryPort } from "@maitre/telemetry";
 import { buildContainer, type Container } from "./composition/container.js";
+import { registerHttpObservability } from "./http/observability.js";
 import { registerHealthRoutes } from "./routes/health.js";
 import { registerMeRoutes } from "./routes/me.js";
 import { registerTenantRoutes } from "./routes/tenants.js";
@@ -55,7 +57,10 @@ import { registerInvoiceTemplateRoutes } from "./routes/invoice-templates.js";
 
 // SPEC-211 — app.ts instantiates and wires plugins/routes without listen().
 // server.ts (local/process) and api/serverless.ts (Vercel) both consume this.
-export async function buildApp(container?: Container): Promise<FastifyInstance> {
+export async function buildApp(
+  container?: Container,
+  telemetry: TelemetryPort = new NoopTelemetry(),
+): Promise<FastifyInstance> {
   const app = Fastify({
     logger: true,
     bodyLimit: 1_048_576,
@@ -64,6 +69,7 @@ export async function buildApp(container?: Container): Promise<FastifyInstance> 
     connectionTimeout: 10_000,
   });
   const resolvedContainer = container ?? (await buildContainer());
+  registerHttpObservability(app, telemetry);
 
   await app.register(helmet, {
     // Swagger UI needs inline assets. Product frontends define their CSP at
@@ -83,8 +89,15 @@ export async function buildApp(container?: Container): Promise<FastifyInstance> 
   await app.register(cors, {
     origin: resolveCorsOrigins(),
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Tenant-Id", "X-Branch-Id"],
-    exposedHeaders: ["Content-Disposition", "ETag"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Tenant-Id",
+      "X-Branch-Id",
+      "X-Correlation-Id",
+      "Traceparent",
+    ],
+    exposedHeaders: ["Content-Disposition", "ETag", "X-Correlation-Id"],
     credentials: false,
     maxAge: 600,
   });
@@ -101,7 +114,7 @@ export async function buildApp(container?: Container): Promise<FastifyInstance> 
   });
   await app.register(swaggerUi, { routePrefix: "/docs" });
 
-  await registerHealthRoutes(app, resolvedContainer);
+  await registerHealthRoutes(app, resolvedContainer, telemetry);
   await registerMeRoutes(app, resolvedContainer);
   await registerTenantRoutes(app, resolvedContainer);
   await registerBrandRoutes(app, resolvedContainer);

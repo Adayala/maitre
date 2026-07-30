@@ -37,8 +37,13 @@ export function sendProblem(
   correlationId: string,
   err: unknown,
 ): void {
-  const problem = toProblemDetails(err, correlationId);
-  reply.header("x-correlation-id", correlationId);
+  const responseCorrelationId = reply.getHeader("x-correlation-id");
+  const propagatedCorrelationId =
+    typeof responseCorrelationId === "string"
+      ? responseCorrelationId
+      : correlationId;
+  const problem = toProblemDetails(err, propagatedCorrelationId);
+  reply.header("x-correlation-id", propagatedCorrelationId);
   if (problem.status === 401) {
     reply.header("www-authenticate", "Bearer");
   }

@@ -32,6 +32,7 @@
     "@maitre/organization": "*",
     "@maitre/reservations": "*",
     "@maitre/subscription": "*",
+    "@maitre/telemetry": "*",
     "@maitre/workforce": "*",
     "fastify": "5.10.0",
     "zod": "^3.23.8"
