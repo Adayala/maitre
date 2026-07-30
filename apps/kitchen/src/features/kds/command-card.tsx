@@ -38,7 +38,9 @@ function primaryActionsFor(status: CommandStatus): ActionButton[] {
     case "ON_HOLD":
       return [{ action: "resume", label: "Reanudar", variant: "primary" }];
     case "READY":
-      return [{ action: "complete-handoff", label: "Entregar", variant: "success" }];
+      return [
+        { action: "complete-handoff", label: "Entregar", variant: "success" },
+      ];
     default:
       return [];
   }
@@ -73,11 +75,14 @@ export function CommandCard({
   const newAndUrgent = isNew && urgency !== "calm";
   const { payload, status } = command;
 
-  const ownedByMe = Boolean(command.ownerActorRef && command.ownerActorRef === currentUserId);
+  const ownedByMe = Boolean(
+    command.ownerActorRef && command.ownerActorRef === currentUserId,
+  );
   const ownedByOther = Boolean(
     command.ownerActorRef && command.ownerActorRef !== currentUserId,
   );
-  const lockedByOtherOwner = ownedByOther && status !== "COMPLETED" && status !== "CANCELLED";
+  const lockedByOtherOwner =
+    ownedByOther && status !== "COMPLETED" && status !== "CANCELLED";
   const flowHint = lockedByOtherOwner
     ? { label: "Bloqueada", tone: "blocked" as const }
     : ownedByMe
@@ -92,7 +97,9 @@ export function CommandCard({
 
   const actions = lockedByOtherOwner
     ? []
-    : primaryActionsFor(status).filter((action) => !deniedActions?.[action.action]);
+    : primaryActionsFor(status).filter(
+        (action) => !deniedActions?.[action.action],
+      );
   const canCancel =
     !lockedByOtherOwner && status !== "READY" && !deniedActions?.cancel; // keep the destructive tap away from the hand-off moment
   const decisionNote = getDecisionNote({
@@ -123,6 +130,7 @@ export function CommandCard({
       ]
         .filter(Boolean)
         .join(" ")}
+      data-command-id={command.id}
       aria-label={`${payload.displayName}, ${STATUS_LABEL[status]}`}
     >
       <header className="card-top">
@@ -135,13 +143,17 @@ export function CommandCard({
             <div className="card-flags">
               {isNew && <span className="pill pill--new">Nueva</span>}
               {newAndUrgent && (
-                <span className={`pill ${urgency === "late" ? "pill--rush" : "pill--warn"}`}>
+                <span
+                  className={`pill ${urgency === "late" ? "pill--rush" : "pill--warn"}`}
+                >
                   {urgency === "late" ? "Urgente" : "Atención"}
                 </span>
               )}
             </div>
           </div>
-          <span className={`pill pill--${status.toLowerCase()}`}>{STATUS_LABEL[status]}</span>
+          <span className={`pill pill--${status.toLowerCase()}`}>
+            {STATUS_LABEL[status]}
+          </span>
         </div>
         <span
           className={`timer timer--${urgency}`}
@@ -165,7 +177,9 @@ export function CommandCard({
         </div>
       )}
 
-      {payload.modifierSummary && <p className="card-mods">{payload.modifierSummary}</p>}
+      {payload.modifierSummary && (
+        <p className="card-mods">{payload.modifierSummary}</p>
+      )}
 
       {payload.notes && (
         <p className="card-notes">
@@ -178,18 +192,23 @@ export function CommandCard({
         {(ownedByMe || ownedByOther || flowHint) && (
           <div className="card-meta">
             {(ownedByMe || ownedByOther) && (
-              <span className={`owner ${ownedByMe ? "owner--me" : "owner--other"}`}>
+              <span
+                className={`owner ${ownedByMe ? "owner--me" : "owner--other"}`}
+              >
                 {ownedByMe ? "Vos" : `Otro cocinero`}
               </span>
             )}
             {flowHint && (
-              <span className={`flow-hint flow-hint--${flowHint.tone}`}>{flowHint.label}</span>
+              <span className={`flow-hint flow-hint--${flowHint.tone}`}>
+                {flowHint.label}
+              </span>
             )}
           </div>
         )}
         {lockedByOtherOwner && (
           <p className="card-lock-note">
-            Esta comanda está en manos de otro cocinero. Desde esta pantalla queda en solo lectura.
+            Esta comanda está en manos de otro cocinero. Desde esta pantalla
+            queda en solo lectura.
           </p>
         )}
         {pending && pendingLabel && (
@@ -197,10 +216,19 @@ export function CommandCard({
             {pendingLabel}
           </p>
         )}
-        {decisionNote ? <p className="card-decision-note">{decisionNote}</p> : null}
+        {decisionNote ? (
+          <p className="card-decision-note">{decisionNote}</p>
+        ) : null}
         {cancelOpen && canCancel && (
-          <div className="cancel-box" role="group" aria-label="Motivo de cancelación">
-            <label className="cancel-box__label" htmlFor={`cancel-reason-${command.id}`}>
+          <div
+            className="cancel-box"
+            role="group"
+            aria-label="Motivo de cancelación"
+          >
+            <label
+              className="cancel-box__label"
+              htmlFor={`cancel-reason-${command.id}`}
+            >
               Motivo obligatorio
             </label>
             <textarea

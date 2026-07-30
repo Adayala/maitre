@@ -198,16 +198,15 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
   });
 
   await test.step("Kitchen prepares and hands off that same command", async () => {
-    const commandName = command.payload.displayName;
-    await kitchenAction(apps.kitchen, commandName, "Nueva", "Tomar");
-    await kitchenAction(apps.kitchen, commandName, "Tomada", "Empezar");
+    await kitchenAction(apps.kitchen, command.id, "Nueva", "Tomar");
+    await kitchenAction(apps.kitchen, command.id, "Tomada", "Empezar");
     await kitchenAction(
       apps.kitchen,
-      commandName,
+      command.id,
       "En preparación",
       "Marcar lista",
     );
-    await kitchenAction(apps.kitchen, commandName, "Lista", "Entregar");
+    await kitchenAction(apps.kitchen, command.id, "Lista", "Entregar");
 
     const completed = await api.poll<ApiData<KitchenCommand>>(
       "completed kitchen handoff",
@@ -434,15 +433,15 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
 
 async function kitchenAction(
   page: Page,
-  commandName: string,
+  commandId: string,
   statusLabel: string,
   actionLabel: string,
 ) {
-  const card = page.getByRole("article", {
-    name: `${commandName}, ${statusLabel}`,
-    exact: true,
-  });
+  const card = page.locator(`[data-command-id="${commandId}"]`);
   await expect(card).toBeVisible();
+  await expect(card).toHaveAccessibleName(
+    new RegExp(`, ${statusLabel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`),
+  );
   await card.getByRole("button", { name: actionLabel, exact: true }).click();
 }
 
