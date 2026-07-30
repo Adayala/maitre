@@ -1,3 +1,4 @@
+import { writeFile } from "node:fs/promises";
 import { expect, type Page, type TestInfo } from "@playwright/test";
 import type { ApiEvidence } from "./api-client.js";
 import { test } from "./fixtures.js";
@@ -77,6 +78,13 @@ interface TableStatus {
     "BLOCKED" | "OCCUPIED" | "PAYING" | "CLEANING" | "RESERVED" | "AVAILABLE";
 }
 
+interface AuditLog {
+  actionCode?: string;
+  outcome?: string;
+  resourceId: string;
+  correlationId?: string;
+}
+
 test("@release-journey MVP-J-001 completes table to close through the real product", async ({
   api,
   apps,
@@ -87,6 +95,7 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
   let command!: KitchenCommand;
   let check!: Check;
   let cashSession!: CashSession;
+  let payment!: Payment;
 
   await test.step("all deployable applications share one ready API", async () => {
     const readiness = await api.get<{ status: string }>(
@@ -266,7 +275,8 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
     );
     assertEvidence(payments);
     expect(payments.body.data).toHaveLength(1);
-    expect(payments.body.data[0]).toMatchObject({
+    payment = payments.body.data[0]!;
+    expect(payment).toMatchObject({
       status: "CAPTURED",
       amountMinorUnits: check.totals.netDue,
     });
@@ -277,9 +287,7 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
     );
     assertEvidence(movements);
     const paymentMovements = movements.body.data.filter(
-      (movement) =>
-        movement.sourceReference ===
-        `FLOOR_PAYMENT:${payments.body.data[0]!.id}`,
+      (movement) => movement.sourceReference === `FLOOR_PAYMENT:${payment.id}`,
     );
     expect(paymentMovements).toEqual([
       expect.objectContaining({
@@ -289,7 +297,7 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
     ]);
     evidence.cash = {
       check,
-      payment: payments.body.data[0],
+      payment,
       paymentMovement: paymentMovements[0],
       correlationId: settled.correlationId,
     };
@@ -346,7 +354,64 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
     evidence.tenantIsolation = { read: forbiddenRead, write: forbiddenWrite };
   });
 
+  await test.step("critical mutations have correlated audit evidence", async () => {
+    const expected = [
+      ["VISIT_OPENED", visit.id],
+      ["ORDER_SUBMITTED", order.id],
+      ["KITCHEN_COMMAND_SERVED", command.id],
+      ["PAYMENT_CAPTURED", payment.id],
+      ["CHECK_SETTLED", check.id],
+      ["VISIT_CLOSED", visit.id],
+    ] as const;
+    const entries: AuditLog[] = [];
+    for (const [actionCode, resourceId] of expected) {
+      const page = await api.poll<ApiData<AuditLog[]>>(
+        `audit ${actionCode}`,
+        () =>
+          api.get(
+            "auditor",
+            `/v1/audit-logs?branch_id=${BRANCH_ID}&action_code=${actionCode}`,
+          ),
+        (body) =>
+          body.data.some(
+            (entry) =>
+              entry.resourceId === resourceId &&
+              entry.outcome === "SUCCEEDED" &&
+              Boolean(entry.correlationId),
+          ),
+      );
+      assertEvidence(page);
+      entries.push(
+        page.body.data.find((entry) => entry.resourceId === resourceId)!,
+      );
+    }
+    expect(new Set(entries.map(({ actionCode }) => actionCode))).toEqual(
+      new Set(expected.map(([actionCode]) => actionCode)),
+    );
+    evidence.audit = entries;
+  });
+
   await attachEvidence(testInfo, evidence);
+  const checkpointPath = process.env["E2E_DURABILITY_CHECKPOINT"];
+  if (checkpointPath) {
+    await writeFile(
+      checkpointPath,
+      JSON.stringify(
+        {
+          schemaVersion: 1,
+          visitId: visit.id,
+          tableId: visit.tableIds[0],
+          orderId: order.id,
+          commandId: command.id,
+          checkId: check.id,
+          cashSessionId: cashSession.id,
+        },
+        null,
+        2,
+      ),
+      { encoding: "utf8", mode: 0o600 },
+    );
+  }
 });
 
 async function kitchenAction(

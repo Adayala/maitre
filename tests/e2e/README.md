@@ -27,8 +27,12 @@ npm run e2e:journey:policy
 
 # Ejecuta el perfil local del journey (no es evidencia release).
 # Requiere APP_ENV=e2e, un run ID/seed/reloj, secreto ligado al run ID y
-# tokens sintéticos distintos para waiter, cook, cashier y Tenant B.
+# tokens sintéticos distintos para waiter, cook, cashier, auditor y Tenant B.
 npm run test:e2e:journey
+
+# Después del journey, reinicia la API y verifica el checkpoint durable.
+# Requiere E2E_DURABILITY_CHECKPOINT y el mismo stack PostgreSQL/Supabase.
+npm run test:e2e:journey:restart
 ```
 
 Los puertos dedicados al harness son: API `3101`, Dash `5273`, Cash `5274`, Kitchen `5275`,
@@ -56,9 +60,14 @@ pago en Cash, cerrar la visita y comprobar que la mesa quedó libre. También
 verifica el pago y su único movimiento de caja, registra evidencia correlacionada
 y prueba que Tenant B no puede leer ni mutar el estado de Tenant A.
 
-`local-memory` sirve para desarrollo y no prueba migraciones ni RLS. El gate de
-release seguirá desactivado hasta disponer de PostgreSQL/Supabase efímero,
-provisionamiento Tenant A/B, limpieza verificada y el recorrido completo verde.
+`local-memory` sirve únicamente para desarrollo. El job obligatorio
+`E2E · Release journey (ephemeral Supabase)` usa el perfil `release-postgres`:
+levanta un stack Supabase local aislado, reconstruye PostgreSQL desde todas las
+migraciones, ejecuta el recorrido, reinicia la API y vuelve a leer el estado
+persistido. Finalmente destruye el stack con `--no-backup`, verifica que ya no
+esté activo y publica clasificación, manifiesto, migraciones y evidencia
+Playwright. Un fallo de infraestructura, producto, persistencia o limpieza
+bloquea `E2E gate` y, por extensión, el deploy.
 
 En GitHub Actions cada aplicación es un job de matriz independiente, con build, ejecución y
 artifacts propios. `fail-fast` está deshabilitado: un fallo de Host no impide obtener evidencia de

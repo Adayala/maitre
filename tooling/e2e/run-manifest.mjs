@@ -1,5 +1,5 @@
 const PROFILES = new Set(["local-memory", "release-postgres"]);
-const ROLES = ["waiter", "cook", "cashier", "tenantB"];
+const ROLES = ["waiter", "cook", "cashier", "auditor", "tenantB"];
 
 export function createRunManifest(env = process.env) {
   const runId = required(env, "E2E_RUN_ID");

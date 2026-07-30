@@ -1,4 +1,4 @@
-export type E2ERole = "waiter" | "cook" | "cashier" | "tenantB";
+export type E2ERole = "waiter" | "cook" | "cashier" | "auditor" | "tenantB";
 
 export interface E2ERunManifest {
   schemaVersion: 1;
