@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import {
   parseEnvironmentFile,
@@ -67,5 +68,16 @@ test("deployment preflight rejects missing, mismatched and ephemeral profiles", 
         ),
       message,
     );
+  }
+});
+
+test("Vercel production workflows validate Maitre's logical demo environment", () => {
+  for (const workflow of ["deploy.yml", "e2e.yml"]) {
+    const contents = readFileSync(
+      new URL(`../../.github/workflows/${workflow}`, import.meta.url),
+      "utf8",
+    );
+    assert.match(contents, /--expect demo/);
+    assert.doesNotMatch(contents, /--expect production/);
   }
 });

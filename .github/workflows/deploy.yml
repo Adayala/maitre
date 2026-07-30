@@ -42,7 +42,7 @@ jobs:
           if [[ "${{ matrix.name }}" == "api" ]]; then
             node tooling/deployment/check-runtime-profile.mjs \
               --env-file .vercel/.env.production.local \
-              --expect production
+              --expect demo
           fi
           npx --yes vercel@57 deploy --prod --yes --token="$VERCEL_TOKEN" \
             --build-env VITE_GIT_COMMIT_SHA="$GITHUB_SHA" \
