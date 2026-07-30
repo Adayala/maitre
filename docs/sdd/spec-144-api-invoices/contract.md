@@ -29,3 +29,7 @@ El cron interno procesa lotes de hasta diez solicitudes, protegido por `CRON_SEC
 incluido es diario para ser compatible con Vercel Hobby; Pro o un scheduler externo pueden invocar
 el mismo endpoint cada cinco minutos. Los candidatos se ordenan por antigüedad y un claim
 `PROCESSING` se considera recuperable después de cinco minutos.
+
+`GET /v1/invoice-deliveries/summary` exige `invoice:read` y devuelve únicamente conteos por
+estado y la fecha del pendiente más antiguo para el tenant autenticado. No devuelve emails,
+errores de proveedor, adjuntos ni filas de otros tenants.
