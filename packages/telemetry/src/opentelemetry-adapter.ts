@@ -234,7 +234,9 @@ function appendSignalPath(
   signal: "traces" | "metrics",
 ): string | undefined {
   if (!endpoint) return undefined;
-  return `${endpoint.replace(/\/+$/, "")}/v1/${signal}`;
+  let end = endpoint.length;
+  while (end > 0 && endpoint.charCodeAt(end - 1) === 47) end -= 1;
+  return `${endpoint.slice(0, end)}/v1/${signal}`;
 }
 
 function positiveInteger(value: string | undefined, fallback: number): number {

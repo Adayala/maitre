@@ -118,8 +118,7 @@ test(
     const endpoint = `http://127.0.0.1:${address.port}`;
     const runtime = createTelemetryFromEnvironment({
       OTEL_SERVICE_NAME: "maitre-telemetry-test",
-      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: `${endpoint}/v1/traces`,
-      OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: `${endpoint}/v1/metrics`,
+      OTEL_EXPORTER_OTLP_ENDPOINT: `${endpoint}////`,
       OTEL_METRIC_EXPORT_INTERVAL: "60000",
       OTEL_METRIC_EXPORT_TIMEOUT: "5000",
     });
