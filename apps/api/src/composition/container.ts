@@ -375,74 +375,178 @@ const catalogItem = (
 
 const CATALOG_PURPOSE: Record<string, string> = {
   CORE: "centraliza la estructura del negocio, usuarios, permisos, auditoría y configuración común de Maitre",
-  BRANCHES: "permite administrar sucursales adicionales dentro del mismo tenant con datos y operación aislados",
-  IDENTITY: "gestiona accesos, roles y permisos para que cada persona vea y opere solamente lo que le corresponde",
-  CONNECT: "integra Maitre con sistemas externos y automatiza el intercambio de información operativa",
-  FLOOR: "digitaliza el salón, las mesas, ocupaciones, visitas, pedidos y precuentas de cada sucursal",
-  SEATS: "define la capacidad simultánea habilitada del salón y acompaña el crecimiento de cada sucursal",
-  RESERVATIONS: "organiza agenda, disponibilidad, reservas, confirmaciones, señas, cancelaciones y lista de espera",
-  SHIFTS: "planifica jornadas, dotaciones, horarios y asignaciones del equipo por sucursal",
-  SHIFT_SLOTS: "habilita franjas operativas diferenciadas como desayuno, almuerzo, merienda y cena",
-  WAITERS: "habilita al personal de salón que puede recibir asignaciones y operar mesas durante el servicio",
-  CASHIERS: "habilita cajeros o cajas concurrentes para registrar y controlar movimientos de dinero",
-  KITCHEN: "coordina comandas, estaciones, preparación, estados y despacho entre salón y cocina",
-  QR_MENU: "publica una carta digital actualizada con categorías, productos, precios e información del menú",
-  QR_ORDERING: "permite que el cliente realice pedidos desde la mesa con aprobación y seguimiento operativo",
-  GUEST: "consolida perfiles, preferencias e historial de clientes para brindar una atención más personalizada",
-  DELIVERY: "organiza pedidos para entrega, estados de preparación y seguimiento del despacho",
-  INVENTORY: "controla existencias, movimientos y disponibilidad de insumos vinculados a la operación",
+  BRANCHES:
+    "permite administrar sucursales adicionales dentro del mismo tenant con datos y operación aislados",
+  IDENTITY:
+    "gestiona accesos, roles y permisos para que cada persona vea y opere solamente lo que le corresponde",
+  CONNECT:
+    "integra Maitre con sistemas externos y automatiza el intercambio de información operativa",
+  FLOOR:
+    "digitaliza el salón, las mesas, ocupaciones, visitas, pedidos y precuentas de cada sucursal",
+  SEATS:
+    "define la capacidad simultánea habilitada del salón y acompaña el crecimiento de cada sucursal",
+  RESERVATIONS:
+    "organiza agenda, disponibilidad, reservas, confirmaciones, señas, cancelaciones y lista de espera",
+  SHIFTS:
+    "planifica jornadas, dotaciones, horarios y asignaciones del equipo por sucursal",
+  SHIFT_SLOTS:
+    "habilita franjas operativas diferenciadas como desayuno, almuerzo, merienda y cena",
+  WAITERS:
+    "habilita al personal de salón que puede recibir asignaciones y operar mesas durante el servicio",
+  CASHIERS:
+    "habilita cajeros o cajas concurrentes para registrar y controlar movimientos de dinero",
+  KITCHEN:
+    "coordina comandas, estaciones, preparación, estados y despacho entre salón y cocina",
+  QR_MENU:
+    "publica una carta digital actualizada con categorías, productos, precios e información del menú",
+  QR_ORDERING:
+    "permite que el cliente realice pedidos desde la mesa con aprobación y seguimiento operativo",
+  GUEST:
+    "consolida perfiles, preferencias e historial de clientes para brindar una atención más personalizada",
+  DELIVERY:
+    "organiza pedidos para entrega, estados de preparación y seguimiento del despacho",
+  INVENTORY:
+    "controla existencias, movimientos y disponibilidad de insumos vinculados a la operación",
   CASH: "administra cajas, aperturas, cierres, movimientos y conciliaciones por sucursal",
   BILLING: "gestiona documentos comerciales y facturación por entidad fiscal",
   PAYMENTS: "unifica el registro y la conciliación de distintos medios de pago",
-  PAYLANDING: "genera páginas y enlaces de cobro para reservas, delivery y cuentas pendientes",
+  PAYLANDING:
+    "genera páginas y enlaces de cobro para reservas, delivery y cuentas pendientes",
   ARCA: "automatiza la autorización fiscal y la emisión electrónica integrada con ARCA",
   IVA: "ordena registración, reportes y conciliación de IVA por entidad fiscal",
-  FEEDBACK: "captura opiniones del cliente y las convierte en señales accionables para el equipo",
-  REPUTATION: "centraliza reputación y reseñas para detectar problemas y oportunidades de mejora",
+  FEEDBACK:
+    "captura opiniones del cliente y las convierte en señales accionables para el equipo",
+  REPUTATION:
+    "centraliza reputación y reseñas para detectar problemas y oportunidades de mejora",
   CRM: "organiza segmentos, comunicaciones y relación comercial con clientes frecuentes",
-  LOYALTY: "crea beneficios y recompensas para aumentar recurrencia y valor de cada cliente",
-  AI_ASSISTANT: "ofrece asistencia contextual para consultar datos y resolver tareas con lenguaje natural",
-  AI_FORECAST: "anticipa demanda y carga operativa utilizando el historial del negocio",
-  AI_PROMISE: "estima compromisos realistas de reserva, preparación y atención según capacidad disponible",
-  AI_KITCHEN: "detecta cuellos de botella y recomienda prioridades para mejorar tiempos de cocina",
-  AI_AHEAD: "anticipa riesgos operativos combinando información de salón, reservas y cocina",
-  AI_AUTOPILOT: "ejecuta acciones operativas autorizadas bajo políticas, límites y trazabilidad definidos",
+  LOYALTY:
+    "crea beneficios y recompensas para aumentar recurrencia y valor de cada cliente",
+  AI_ASSISTANT:
+    "ofrece asistencia contextual para consultar datos y resolver tareas con lenguaje natural",
+  AI_FORECAST:
+    "anticipa demanda y carga operativa utilizando el historial del negocio",
+  AI_PROMISE:
+    "estima compromisos realistas de reserva, preparación y atención según capacidad disponible",
+  AI_KITCHEN:
+    "detecta cuellos de botella y recomienda prioridades para mejorar tiempos de cocina",
+  AI_AHEAD:
+    "anticipa riesgos operativos combinando información de salón, reservas y cocina",
+  AI_AUTOPILOT:
+    "ejecuta acciones operativas autorizadas bajo políticas, límites y trazabilidad definidos",
 };
 
 const CATALOG_BENEFITS: Record<string, string[]> = {
-  CORE: ["Unifica la configuración del negocio", "Mantiene permisos y auditoría centralizados"],
-  BRANCHES: ["Separa la operación por sucursal", "Consolida la gestión del grupo"],
-  IDENTITY: ["Reduce accesos indebidos", "Simplifica altas, bajas y cambios de rol"],
-  CONNECT: ["Evita carga duplicada de datos", "Sincroniza sistemas externos con Maitre"],
-  FLOOR: ["Agiliza la rotación de mesas", "Da visibilidad del salón en tiempo real"],
-  SEATS: ["Ajusta la capacidad habilitada por sucursal", "Define límites operativos claros"],
-  RESERVATIONS: ["Ordena la demanda antes del servicio", "Reduce ausencias y sobreventa"],
+  CORE: [
+    "Unifica la configuración del negocio",
+    "Mantiene permisos y auditoría centralizados",
+  ],
+  BRANCHES: [
+    "Separa la operación por sucursal",
+    "Consolida la gestión del grupo",
+  ],
+  IDENTITY: [
+    "Reduce accesos indebidos",
+    "Simplifica altas, bajas y cambios de rol",
+  ],
+  CONNECT: [
+    "Evita carga duplicada de datos",
+    "Sincroniza sistemas externos con Maitre",
+  ],
+  FLOOR: [
+    "Agiliza la rotación de mesas",
+    "Da visibilidad del salón en tiempo real",
+  ],
+  SEATS: [
+    "Ajusta la capacidad habilitada por sucursal",
+    "Define límites operativos claros",
+  ],
+  RESERVATIONS: [
+    "Ordena la demanda antes del servicio",
+    "Reduce ausencias y sobreventa",
+  ],
   SHIFTS: ["Alinea dotación y demanda", "Facilita el control de jornadas"],
-  SHIFT_SLOTS: ["Separa la operación por franja horaria", "Mejora la planificación diaria"],
-  WAITERS: ["Controla quién puede operar mesas", "Facilita asignaciones de salón"],
-  CASHIERS: ["Controla cajas concurrentes", "Define responsables de cada turno"],
-  KITCHEN: ["Reduce demoras y comandas perdidas", "Coordina prioridades de preparación"],
-  QR_MENU: ["Mantiene precios y productos actualizados", "Evita reimpresiones de carta"],
-  QR_ORDERING: ["Reduce tiempos de toma de pedido", "Permite seguimiento desde la mesa"],
-  GUEST: ["Recuerda preferencias del cliente", "Mejora la personalización del servicio"],
+  SHIFT_SLOTS: [
+    "Separa la operación por franja horaria",
+    "Mejora la planificación diaria",
+  ],
+  WAITERS: [
+    "Controla quién puede operar mesas",
+    "Facilita asignaciones de salón",
+  ],
+  CASHIERS: [
+    "Controla cajas concurrentes",
+    "Define responsables de cada turno",
+  ],
+  KITCHEN: [
+    "Reduce demoras y comandas perdidas",
+    "Coordina prioridades de preparación",
+  ],
+  QR_MENU: [
+    "Mantiene precios y productos actualizados",
+    "Evita reimpresiones de carta",
+  ],
+  QR_ORDERING: [
+    "Reduce tiempos de toma de pedido",
+    "Permite seguimiento desde la mesa",
+  ],
+  GUEST: [
+    "Recuerda preferencias del cliente",
+    "Mejora la personalización del servicio",
+  ],
   DELIVERY: ["Ordena preparación y despacho", "Da seguimiento a cada entrega"],
-  INVENTORY: ["Previene faltantes de insumos", "Mejora el control de movimientos"],
+  INVENTORY: [
+    "Previene faltantes de insumos",
+    "Mejora el control de movimientos",
+  ],
   CASH: ["Trazabilidad de aperturas y cierres", "Reduce diferencias de caja"],
-  BILLING: ["Centraliza documentos comerciales", "Separa la facturación por entidad fiscal"],
+  BILLING: [
+    "Centraliza documentos comerciales",
+    "Separa la facturación por entidad fiscal",
+  ],
   PAYMENTS: ["Unifica medios de pago", "Simplifica conciliaciones"],
-  PAYLANDING: ["Permite cobrar antes o después del servicio", "Reduce pagos pendientes"],
+  PAYLANDING: [
+    "Permite cobrar antes o después del servicio",
+    "Reduce pagos pendientes",
+  ],
   ARCA: ["Evita carga fiscal duplicada", "Acelera la emisión de comprobantes"],
   IVA: ["Ordena información impositiva", "Facilita conciliación y control"],
-  FEEDBACK: ["Detecta problemas rápidamente", "Prioriza mejoras basadas en clientes"],
-  REPUTATION: ["Centraliza reseñas externas", "Identifica tendencias de satisfacción"],
-  CRM: ["Segmenta clientes por comportamiento", "Mejora la relevancia de comunicaciones"],
+  FEEDBACK: [
+    "Detecta problemas rápidamente",
+    "Prioriza mejoras basadas en clientes",
+  ],
+  REPUTATION: [
+    "Centraliza reseñas externas",
+    "Identifica tendencias de satisfacción",
+  ],
+  CRM: [
+    "Segmenta clientes por comportamiento",
+    "Mejora la relevancia de comunicaciones",
+  ],
   LOYALTY: ["Aumenta la recurrencia", "Reconoce a los clientes frecuentes"],
-  AI_ASSISTANT: ["Acelera consultas operativas", "Reduce tiempo buscando información"],
-  AI_FORECAST: ["Anticipa picos de demanda", "Mejora la planificación de recursos"],
-  AI_PROMISE: ["Evita promesas difíciles de cumplir", "Ajusta tiempos a la capacidad real"],
-  AI_KITCHEN: ["Detecta cuellos de botella", "Mejora prioridades de preparación"],
-  AI_AHEAD: ["Alerta riesgos antes del servicio", "Conecta señales de salón, reservas y cocina"],
-  AI_AUTOPILOT: ["Automatiza acciones repetitivas autorizadas", "Conserva control y trazabilidad"],
+  AI_ASSISTANT: [
+    "Acelera consultas operativas",
+    "Reduce tiempo buscando información",
+  ],
+  AI_FORECAST: [
+    "Anticipa picos de demanda",
+    "Mejora la planificación de recursos",
+  ],
+  AI_PROMISE: [
+    "Evita promesas difíciles de cumplir",
+    "Ajusta tiempos a la capacidad real",
+  ],
+  AI_KITCHEN: [
+    "Detecta cuellos de botella",
+    "Mejora prioridades de preparación",
+  ],
+  AI_AHEAD: [
+    "Alerta riesgos antes del servicio",
+    "Conecta señales de salón, reservas y cocina",
+  ],
+  AI_AUTOPILOT: [
+    "Automatiza acciones repetitivas autorizadas",
+    "Conserva control y trazabilidad",
+  ],
 };
 
 function catalogDescription(code: string, name: string) {
@@ -472,42 +576,130 @@ function catalogBenefits(code: string): string[] {
 
 const SEED_CATALOG_ITEMS: CatalogItem[] = [
   catalogItem("CORE", "Maitre Core", "SERVICE", "TENANT", 15_000),
-  catalogItem("BRANCHES", "Maitre Branches", "QUANTITY", "TENANT", 8_000, ["CORE"]),
+  catalogItem("BRANCHES", "Maitre Branches", "QUANTITY", "TENANT", 8_000, [
+    "CORE",
+  ]),
   catalogItem("IDENTITY", "Maitre Identity", "SERVICE", "TENANT", 0, ["CORE"]),
-  catalogItem("CONNECT", "Maitre Connect", "SERVICE", "BRANCH", 3_000, ["CORE"]),
-  catalogItem("FLOOR", "Maitre Floor", "SERVICE", "BRANCH", 6_000, ["CORE", "BRANCHES"]),
+  catalogItem("CONNECT", "Maitre Connect", "SERVICE", "BRANCH", 3_000, [
+    "CORE",
+  ]),
+  catalogItem("FLOOR", "Maitre Floor", "SERVICE", "BRANCH", 6_000, [
+    "CORE",
+    "BRANCHES",
+  ]),
   catalogItem("SEATS", "Plazas", "QUANTITY", "BRANCH", 500, ["FLOOR"]),
-  catalogItem("RESERVATIONS", "Maitre Reservations", "SERVICE", "BRANCH", 4_000, ["CORE", "BRANCHES"]),
-  catalogItem("SHIFTS", "Maitre Shifts", "SERVICE", "BRANCH", 3_000, ["CORE", "BRANCHES"]),
+  catalogItem(
+    "RESERVATIONS",
+    "Maitre Reservations",
+    "SERVICE",
+    "BRANCH",
+    4_000,
+    ["CORE", "BRANCHES"],
+  ),
+  catalogItem("SHIFTS", "Maitre Shifts", "SERVICE", "BRANCH", 3_000, [
+    "CORE",
+    "BRANCHES",
+  ]),
   catalogItem("SHIFT_SLOTS", "Turnos", "QUANTITY", "BRANCH", 300, ["SHIFTS"]),
   catalogItem("WAITERS", "Mozos", "QUANTITY", "BRANCH", 1_200, ["FLOOR"]),
   catalogItem("CASHIERS", "Cajeros", "QUANTITY", "BRANCH", 1_500, ["CASH"]),
-  catalogItem("KITCHEN", "Maitre Kitchen", "SERVICE", "BRANCH", 5_000, ["FLOOR"]),
-  catalogItem("QR_MENU", "Maitre QR Menu", "SERVICE", "BRANCH", 2_000, ["CORE"]),
-  catalogItem("QR_ORDERING", "Maitre QR Ordering", "SERVICE", "BRANCH", 3_000, ["QR_MENU"]),
+  catalogItem("KITCHEN", "Maitre Kitchen", "SERVICE", "BRANCH", 5_000, [
+    "FLOOR",
+  ]),
+  catalogItem("QR_MENU", "Maitre QR Menu", "SERVICE", "BRANCH", 2_000, [
+    "CORE",
+  ]),
+  catalogItem("QR_ORDERING", "Maitre QR Ordering", "SERVICE", "BRANCH", 3_000, [
+    "QR_MENU",
+  ]),
   catalogItem("GUEST", "Maitre Guest", "SERVICE", "BRANCH", 2_000, ["CORE"]),
-  catalogItem("DELIVERY", "Maitre Delivery", "SERVICE", "BRANCH", 4_000, ["CORE"]),
-  catalogItem("INVENTORY", "Maitre Inventory", "SERVICE", "BRANCH", 5_000, ["CORE"]),
+  catalogItem("DELIVERY", "Maitre Delivery", "SERVICE", "BRANCH", 4_000, [
+    "CORE",
+  ]),
+  catalogItem("INVENTORY", "Maitre Inventory", "SERVICE", "BRANCH", 5_000, [
+    "CORE",
+  ]),
   catalogItem("CASH", "Maitre Cash", "SERVICE", "BRANCH", 3_500, ["CORE"]),
-  catalogItem("BILLING", "Maitre Billing", "SERVICE", "FISCAL_ENTITY", 5_000, ["CORE"]),
-  catalogItem("PAYMENTS", "Maitre Payments", "SERVICE", "TENANT", 4_000, ["CASH"]),
-  catalogItem("PAYLANDING", "Maitre PayLanding", "SERVICE", "TENANT", 3_000, ["PAYMENTS"]),
-  catalogItem("PAYLANDING.MERCADOPAGO", "PayLanding — Mercado Pago", "SERVICE", "CONNECTOR", 0, ["PAYLANDING"]),
-  catalogItem("PAYLANDING.NARANJA_X", "PayLanding — Naranja X", "SERVICE", "CONNECTOR", 0, ["PAYLANDING"]),
-  catalogItem("PAYLANDING.MODO", "PayLanding — MODO", "SERVICE", "CONNECTOR", 0, ["PAYLANDING"]),
-  catalogItem("PAYLANDING.TODO_PAGO", "PayLanding — Todo Pago", "SERVICE", "CONNECTOR", 0, ["PAYLANDING"]),
-  catalogItem("ARCA", "Maitre ARCA", "SERVICE", "FISCAL_ENTITY", 7_000, ["BILLING"]),
-  catalogItem("IVA", "Maitre IVA", "SERVICE", "FISCAL_ENTITY", 4_000, ["BILLING"]),
-  catalogItem("FEEDBACK", "Maitre Feedback", "SERVICE", "BRANCH", 2_500, ["CORE"]),
-  catalogItem("REPUTATION", "Maitre Reputation", "SERVICE", "BRANCH", 3_500, ["CORE"]),
+  catalogItem("BILLING", "Maitre Billing", "SERVICE", "FISCAL_ENTITY", 5_000, [
+    "CORE",
+  ]),
+  catalogItem("PAYMENTS", "Maitre Payments", "SERVICE", "TENANT", 4_000, [
+    "CASH",
+  ]),
+  catalogItem("PAYLANDING", "Maitre PayLanding", "SERVICE", "TENANT", 3_000, [
+    "PAYMENTS",
+  ]),
+  catalogItem(
+    "PAYLANDING.MERCADOPAGO",
+    "PayLanding — Mercado Pago",
+    "SERVICE",
+    "CONNECTOR",
+    0,
+    ["PAYLANDING"],
+  ),
+  catalogItem(
+    "PAYLANDING.NARANJA_X",
+    "PayLanding — Naranja X",
+    "SERVICE",
+    "CONNECTOR",
+    0,
+    ["PAYLANDING"],
+  ),
+  catalogItem(
+    "PAYLANDING.MODO",
+    "PayLanding — MODO",
+    "SERVICE",
+    "CONNECTOR",
+    0,
+    ["PAYLANDING"],
+  ),
+  catalogItem(
+    "PAYLANDING.TODO_PAGO",
+    "PayLanding — Todo Pago",
+    "SERVICE",
+    "CONNECTOR",
+    0,
+    ["PAYLANDING"],
+  ),
+  catalogItem("ARCA", "Maitre ARCA", "SERVICE", "FISCAL_ENTITY", 7_000, [
+    "BILLING",
+  ]),
+  catalogItem("IVA", "Maitre IVA", "SERVICE", "FISCAL_ENTITY", 4_000, [
+    "BILLING",
+  ]),
+  catalogItem("FEEDBACK", "Maitre Feedback", "SERVICE", "BRANCH", 2_500, [
+    "CORE",
+  ]),
+  catalogItem("REPUTATION", "Maitre Reputation", "SERVICE", "BRANCH", 3_500, [
+    "CORE",
+  ]),
   catalogItem("CRM", "Maitre CRM", "SERVICE", "BRAND", 4_500, ["CORE"]),
   catalogItem("LOYALTY", "Maitre Loyalty", "SERVICE", "BRAND", 4_000, ["CRM"]),
-  catalogItem("AI_ASSISTANT", "Maitre AI Assistant", "SERVICE", "TENANT", 8_000, ["CORE"]),
-  catalogItem("AI_FORECAST", "Maitre AI Forecast", "SERVICE", "BRANCH", 7_000, ["CORE"]),
-  catalogItem("AI_PROMISE", "Maitre AI Promise", "SERVICE", "BRANCH", 7_000, ["RESERVATIONS"]),
-  catalogItem("AI_KITCHEN", "Maitre AI Kitchen", "SERVICE", "BRANCH", 7_000, ["KITCHEN"]),
-  catalogItem("AI_AHEAD", "Maitre Ahead", "SERVICE", "BRANCH", 10_000, ["FLOOR", "RESERVATIONS", "KITCHEN"]),
-  catalogItem("AI_AUTOPILOT", "Maitre Autopilot", "SERVICE", "BRANCH", 12_000, ["AI_AHEAD"]),
+  catalogItem(
+    "AI_ASSISTANT",
+    "Maitre AI Assistant",
+    "SERVICE",
+    "TENANT",
+    8_000,
+    ["CORE"],
+  ),
+  catalogItem("AI_FORECAST", "Maitre AI Forecast", "SERVICE", "BRANCH", 7_000, [
+    "CORE",
+  ]),
+  catalogItem("AI_PROMISE", "Maitre AI Promise", "SERVICE", "BRANCH", 7_000, [
+    "RESERVATIONS",
+  ]),
+  catalogItem("AI_KITCHEN", "Maitre AI Kitchen", "SERVICE", "BRANCH", 7_000, [
+    "KITCHEN",
+  ]),
+  catalogItem("AI_AHEAD", "Maitre Ahead", "SERVICE", "BRANCH", 10_000, [
+    "FLOOR",
+    "RESERVATIONS",
+    "KITCHEN",
+  ]),
+  catalogItem("AI_AUTOPILOT", "Maitre Autopilot", "SERVICE", "BRANCH", 12_000, [
+    "AI_AHEAD",
+  ]),
 ];
 
 const SEED_CATALOG_PACKAGES: CatalogPackage[] = [
@@ -687,15 +879,86 @@ interface Repositories {
   timeExportJobs?: TimeExportJobRepositoryPort;
 }
 
-function hasSupabasePersistenceConfig(): boolean {
+export type PersistenceDriver = "memory" | "supabase";
+export type AuthenticationDriver = "fixture" | "supabase";
+
+export interface RuntimeProfile {
+  environment: string;
+  persistenceDriver: PersistenceDriver;
+  authenticationDriver: AuthenticationDriver;
+  durable: boolean;
+}
+
+const LOCAL_RUNTIME_ENVIRONMENTS = new Set(["local", "test", "e2e"]);
+
+function hasSupabasePersistenceConfig(
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
   return Boolean(
-    process.env["SUPABASE_URL"] &&
-      (process.env["SUPABASE_SECRET_KEY"] || process.env["SUPABASE_SERVICE_ROLE_KEY"]),
+    env["SUPABASE_URL"] &&
+    (env["SUPABASE_SECRET_KEY"] || env["SUPABASE_SERVICE_ROLE_KEY"]),
   );
 }
 
-function hasSupabaseAuthConfig(): boolean {
-  return Boolean(process.env["SUPABASE_URL"]);
+function hasSupabaseAuthConfig(env: NodeJS.ProcessEnv = process.env): boolean {
+  return Boolean(env["SUPABASE_URL"]);
+}
+
+export function resolveRuntimeProfile(
+  env: NodeJS.ProcessEnv = process.env,
+): RuntimeProfile {
+  const environment =
+    env["APP_ENV"] ?? env["VERCEL_ENV"] ?? env["NODE_ENV"] ?? "local";
+  const sharedEnvironment = !LOCAL_RUNTIME_ENVIRONMENTS.has(environment);
+  if (sharedEnvironment && !env["PERSISTENCE_DRIVER"]) {
+    throw new Error(
+      `PERSISTENCE_DRIVER must be explicitly configured for APP_ENV=${environment}`,
+    );
+  }
+  if (sharedEnvironment && !env["AUTH_DRIVER"]) {
+    throw new Error(
+      `AUTH_DRIVER must be explicitly configured for APP_ENV=${environment}`,
+    );
+  }
+  const persistenceDriver =
+    env["PERSISTENCE_DRIVER"] ??
+    (hasSupabasePersistenceConfig(env) ? "supabase" : "memory");
+  const authenticationDriver =
+    env["AUTH_DRIVER"] ?? (hasSupabaseAuthConfig(env) ? "supabase" : "fixture");
+
+  if (!["memory", "supabase"].includes(persistenceDriver)) {
+    throw new Error(`Unsupported PERSISTENCE_DRIVER: ${persistenceDriver}`);
+  }
+  if (!["fixture", "supabase"].includes(authenticationDriver)) {
+    throw new Error(`Unsupported AUTH_DRIVER: ${authenticationDriver}`);
+  }
+  if (persistenceDriver === "supabase" && !hasSupabasePersistenceConfig(env)) {
+    throw new Error(
+      "SUPABASE_URL and a server-side Supabase secret are required for PERSISTENCE_DRIVER=supabase",
+    );
+  }
+  if (authenticationDriver === "supabase" && !hasSupabaseAuthConfig(env)) {
+    throw new Error("SUPABASE_URL is required for AUTH_DRIVER=supabase");
+  }
+  if (sharedEnvironment) {
+    if (persistenceDriver !== "supabase") {
+      throw new Error(
+        `Durable persistence is required for APP_ENV=${environment}; memory is local/test only`,
+      );
+    }
+    if (authenticationDriver !== "supabase") {
+      throw new Error(
+        `Supabase authentication is required for APP_ENV=${environment}; fixture auth is local/test only`,
+      );
+    }
+  }
+
+  return {
+    environment,
+    persistenceDriver: persistenceDriver as PersistenceDriver,
+    authenticationDriver: authenticationDriver as AuthenticationDriver,
+    durable: persistenceDriver === "supabase",
+  };
 }
 
 /**
@@ -707,11 +970,8 @@ function hasSupabaseAuthConfig(): boolean {
  * Supabase credentials. "supabase" talks to real Postgres via PostgREST using
  * the configured server-side secret key (see adapters/persistence/supabase).
  */
-function buildRepositories(): Repositories {
-  const driver =
-    process.env["PERSISTENCE_DRIVER"] ?? (hasSupabasePersistenceConfig() ? "supabase" : "memory");
-
-  if (driver === "supabase") {
+function buildRepositories(profile: RuntimeProfile): Repositories {
+  if (profile.persistenceDriver === "supabase") {
     const client = createSupabaseClient();
     return {
       tenants: new SupabaseTenantRepository(client),
@@ -744,7 +1004,9 @@ function buildRepositories(): Repositories {
       reservations: new SupabaseReservationRepository(client),
       guests: new SupabaseGuestRepository(client),
       waitlistEntries: new SupabaseWaitlistEntryRepository(client),
-      reservationPreferences: new SupabaseReservationPreferenceRepository(client),
+      reservationPreferences: new SupabaseReservationPreferenceRepository(
+        client,
+      ),
       cancellationPolicies: new SupabaseCancellationPolicyRepository(client),
       notificationIntents: new SupabaseNotificationIntentRepository(client),
       orders: new SupabaseOrderRepository(client),
@@ -796,7 +1058,9 @@ function buildRepositories(): Repositories {
     subscriptionItems: new InMemorySubscriptionItemRepository(),
     // seed real llega en la Task 8 (SEED_CATALOG_ITEMS)
     catalog: new InMemoryCatalogItemRepository(SEED_CATALOG_ITEMS),
-    catalogPackages: new InMemoryCatalogPackageRepository(SEED_CATALOG_PACKAGES),
+    catalogPackages: new InMemoryCatalogPackageRepository(
+      SEED_CATALOG_PACKAGES,
+    ),
     entitlements: new InMemoryEntitlementRepository(),
     quotas: new InMemoryQuotaRepository(),
     menus: new InMemoryMenuRepository(),
@@ -848,11 +1112,12 @@ function buildRepositories(): Repositories {
 // Each step checks its own existence first — a boot that gets interrupted
 // mid-seed (or a prior partial failure) must not leave later steps
 // permanently skipped just because the Tenant already exists.
-async function ensureSeed(repos: Repositories): Promise<void> {
+async function ensureSeed(
+  repos: Repositories,
+  profile: RuntimeProfile,
+): Promise<void> {
   const now = new Date();
-  const persistenceDriver =
-    process.env["PERSISTENCE_DRIVER"] ?? (hasSupabasePersistenceConfig() ? "supabase" : "memory");
-  const seedOperationalDemo = persistenceDriver === "supabase";
+  const seedOperationalDemo = profile.persistenceDriver === "supabase";
 
   let tenant = await repos.tenants.findById(DEMO_TENANT_ID);
   if (!tenant) {
@@ -871,7 +1136,12 @@ async function ensureSeed(repos: Repositories): Promise<void> {
   let brand = await repos.brands.findById(tenant.id, DEMO_BRAND_ID);
   if (!brand) {
     brand = await createBrand(
-      { tenants: repos.tenants, brands: repos.brands, outbox: repos.outbox, now: () => now },
+      {
+        tenants: repos.tenants,
+        brands: repos.brands,
+        outbox: repos.outbox,
+        now: () => now,
+      },
       {
         id: DEMO_BRAND_ID,
         tenantId: tenant.id,
@@ -882,24 +1152,63 @@ async function ensureSeed(repos: Repositories): Promise<void> {
   }
 
   const demoAssets = [
-    { id: "00000000-0000-0000-0000-000000000021", kind: "LOGO" as const, file: "logo.svg", mimeType: "image/svg+xml", width: 640, height: 180 },
-    { id: "00000000-0000-0000-0000-000000000022", kind: "LOGO_DARK" as const, file: "logo-dark.svg", mimeType: "image/svg+xml", width: 640, height: 180 },
-    { id: "00000000-0000-0000-0000-000000000023", kind: "FAVICON" as const, file: "favicon.svg", mimeType: "image/svg+xml", width: 128, height: 128 },
-    { id: "00000000-0000-0000-0000-000000000024", kind: "HERO" as const, file: "hero.png", mimeType: "image/png", width: 1664, height: 936 },
+    {
+      id: "00000000-0000-0000-0000-000000000021",
+      kind: "LOGO" as const,
+      file: "logo.svg",
+      mimeType: "image/svg+xml",
+      width: 640,
+      height: 180,
+    },
+    {
+      id: "00000000-0000-0000-0000-000000000022",
+      kind: "LOGO_DARK" as const,
+      file: "logo-dark.svg",
+      mimeType: "image/svg+xml",
+      width: 640,
+      height: 180,
+    },
+    {
+      id: "00000000-0000-0000-0000-000000000023",
+      kind: "FAVICON" as const,
+      file: "favicon.svg",
+      mimeType: "image/svg+xml",
+      width: 128,
+      height: 128,
+    },
+    {
+      id: "00000000-0000-0000-0000-000000000024",
+      kind: "HERO" as const,
+      file: "hero.png",
+      mimeType: "image/png",
+      width: 1664,
+      height: 936,
+    },
   ];
   for (const definition of demoAssets) {
-    if (await repos.brandAssets.findById(tenant.id, brand.id, definition.id)) continue;
-    const bytes = await readFile(new URL(`../../assets/demo-brand/${definition.file}`, import.meta.url));
+    if (await repos.brandAssets.findById(tenant.id, brand.id, definition.id))
+      continue;
+    const bytes = await readFile(
+      new URL(`../../assets/demo-brand/${definition.file}`, import.meta.url),
+    );
     const storagePath = `tenants/${tenant.id}/brands/${brand.id}/${definition.kind.toLowerCase()}/${definition.id}/${definition.file}`;
     await repos.brandAssetStorage.put(storagePath, bytes, definition.mimeType);
     await repos.brandAssets.save({
-      id: definition.id, tenantId: tenant.id, brandId: brand.id, kind: definition.kind,
-      storageBucket: "brand-assets", storagePath,
+      id: definition.id,
+      tenantId: tenant.id,
+      brandId: brand.id,
+      kind: definition.kind,
+      storageBucket: "brand-assets",
+      storagePath,
       publicUrl: `/public/tenants/${tenant.id}/brands/${brand.id}/assets/${definition.id}`,
-      mimeType: definition.mimeType, sizeBytes: bytes.byteLength,
+      mimeType: definition.mimeType,
+      sizeBytes: bytes.byteLength,
       checksum: createHash("sha256").update(bytes).digest("hex"),
-      width: definition.width, height: definition.height, status: "READY",
-      createdAt: now, createdBy: DEMO_USER_ID,
+      width: definition.width,
+      height: definition.height,
+      status: "READY",
+      createdAt: now,
+      createdBy: DEMO_USER_ID,
     });
   }
 
@@ -918,10 +1227,42 @@ async function ensureSeed(repos: Repositories): Promise<void> {
           tagline: "Cocina porteña, servicio contemporáneo",
         },
         assets: {
-          logo: { assetId: demoAssets[0]!.id, kind: "LOGO", url: `/public/tenants/${tenant.id}/brands/${brand.id}/assets/${demoAssets[0]!.id}`, mimeType: "image/svg+xml", checksum: "demo-logo-v1", width: 640, height: 180 },
-          logoDark: { assetId: demoAssets[1]!.id, kind: "LOGO_DARK", url: `/public/tenants/${tenant.id}/brands/${brand.id}/assets/${demoAssets[1]!.id}`, mimeType: "image/svg+xml", checksum: "demo-logo-dark-v1", width: 640, height: 180 },
-          favicon: { assetId: demoAssets[2]!.id, kind: "FAVICON", url: `/public/tenants/${tenant.id}/brands/${brand.id}/assets/${demoAssets[2]!.id}`, mimeType: "image/svg+xml", checksum: "demo-favicon-v1", width: 128, height: 128 },
-          hero: { assetId: demoAssets[3]!.id, kind: "HERO", url: `/public/tenants/${tenant.id}/brands/${brand.id}/assets/${demoAssets[3]!.id}`, mimeType: "image/png", checksum: "demo-hero-v1", width: 1664, height: 936 },
+          logo: {
+            assetId: demoAssets[0]!.id,
+            kind: "LOGO",
+            url: `/public/tenants/${tenant.id}/brands/${brand.id}/assets/${demoAssets[0]!.id}`,
+            mimeType: "image/svg+xml",
+            checksum: "demo-logo-v1",
+            width: 640,
+            height: 180,
+          },
+          logoDark: {
+            assetId: demoAssets[1]!.id,
+            kind: "LOGO_DARK",
+            url: `/public/tenants/${tenant.id}/brands/${brand.id}/assets/${demoAssets[1]!.id}`,
+            mimeType: "image/svg+xml",
+            checksum: "demo-logo-dark-v1",
+            width: 640,
+            height: 180,
+          },
+          favicon: {
+            assetId: demoAssets[2]!.id,
+            kind: "FAVICON",
+            url: `/public/tenants/${tenant.id}/brands/${brand.id}/assets/${demoAssets[2]!.id}`,
+            mimeType: "image/svg+xml",
+            checksum: "demo-favicon-v1",
+            width: 128,
+            height: 128,
+          },
+          hero: {
+            assetId: demoAssets[3]!.id,
+            kind: "HERO",
+            url: `/public/tenants/${tenant.id}/brands/${brand.id}/assets/${demoAssets[3]!.id}`,
+            mimeType: "image/png",
+            checksum: "demo-hero-v1",
+            width: 1664,
+            height: 936,
+          },
         },
         colors: {
           primary: "#A63D2F",
@@ -934,9 +1275,21 @@ async function ensureSeed(repos: Repositories): Promise<void> {
           border: "#D9CDBD",
         },
         typography: {
-          heading: { family: "Georgia", fallback: "Georgia, serif", weights: [400, 700] },
-          body: { family: "Inter", fallback: "system-ui, sans-serif", weights: [400, 600, 700] },
-          numeric: { family: "Inter", fallback: "ui-monospace, monospace", weights: [600, 700] },
+          heading: {
+            family: "Georgia",
+            fallback: "Georgia, serif",
+            weights: [400, 700],
+          },
+          body: {
+            family: "Inter",
+            fallback: "system-ui, sans-serif",
+            weights: [400, 600, 700],
+          },
+          numeric: {
+            family: "Inter",
+            fallback: "ui-monospace, monospace",
+            weights: [600, 700],
+          },
           scale: "comfortable",
         },
         shape: { radius: "medium", elevation: "subtle" },
@@ -963,7 +1316,12 @@ async function ensureSeed(repos: Repositories): Promise<void> {
   let branch = await repos.branches.findById(tenant.id, DEMO_BRANCH_ID);
   if (!branch) {
     branch = await createBranch(
-      { brands: repos.brands, branches: repos.branches, outbox: repos.outbox, now: () => now },
+      {
+        brands: repos.brands,
+        branches: repos.branches,
+        outbox: repos.outbox,
+        now: () => now,
+      },
       {
         id: DEMO_BRANCH_ID,
         tenantId: tenant.id,
@@ -1068,11 +1426,17 @@ async function ensureSeed(repos: Repositories): Promise<void> {
   for (const item of SEED_CATALOG_ITEMS) {
     const existing = await repos.catalog.findByCode(item.code);
     if (!existing || existing.version < item.version) {
-      await (repos.catalog as CatalogRepositoryPort & { save(item: CatalogItem): Promise<void> }).save(item);
+      await (
+        repos.catalog as CatalogRepositoryPort & {
+          save(item: CatalogItem): Promise<void>;
+        }
+      ).save(item);
     }
   }
   for (const catalogPackage of SEED_CATALOG_PACKAGES) {
-    const existing = await repos.catalogPackages.findByCode(catalogPackage.code);
+    const existing = await repos.catalogPackages.findByCode(
+      catalogPackage.code,
+    );
     if (!existing || existing.version < catalogPackage.version) {
       await repos.catalogPackages.save(catalogPackage);
     }
@@ -1088,7 +1452,11 @@ async function ensureSeed(repos: Repositories): Promise<void> {
         catalog: repos.catalog,
         now: () => now,
       },
-      { id: DEMO_SUBSCRIPTION_ID, tenantId: tenant.id, planCode: "PROFESSIONAL" },
+      {
+        id: DEMO_SUBSCRIPTION_ID,
+        tenantId: tenant.id,
+        planCode: "PROFESSIONAL",
+      },
     );
   }
 
@@ -1101,12 +1469,35 @@ async function ensureSeed(repos: Repositories): Promise<void> {
     now: () => now,
   };
   const ensureService = async (serviceId: string, scopeRefId?: string) => {
-    const existing = await repos.subscriptionItems.findByServiceId(DEMO_SUBSCRIPTION_ID, serviceId, scopeRefId ?? null);
-    if (!existing) await addService(itemDeps, { subscriptionId: DEMO_SUBSCRIPTION_ID, serviceId, ...(scopeRefId ? { scopeRefId } : {}) });
+    const existing = await repos.subscriptionItems.findByServiceId(
+      DEMO_SUBSCRIPTION_ID,
+      serviceId,
+      scopeRefId ?? null,
+    );
+    if (!existing)
+      await addService(itemDeps, {
+        subscriptionId: DEMO_SUBSCRIPTION_ID,
+        serviceId,
+        ...(scopeRefId ? { scopeRefId } : {}),
+      });
   };
-  const ensureQuantity = async (catalogItemCode: string, quantity: number, scopeRefId?: string) => {
-    const existing = await repos.subscriptionItems.findByServiceId(DEMO_SUBSCRIPTION_ID, catalogItemCode, scopeRefId ?? null);
-    if (!existing) await addQuantityItem(itemDeps, { subscriptionId: DEMO_SUBSCRIPTION_ID, catalogItemCode, quantity, ...(scopeRefId ? { scopeRefId } : {}) });
+  const ensureQuantity = async (
+    catalogItemCode: string,
+    quantity: number,
+    scopeRefId?: string,
+  ) => {
+    const existing = await repos.subscriptionItems.findByServiceId(
+      DEMO_SUBSCRIPTION_ID,
+      catalogItemCode,
+      scopeRefId ?? null,
+    );
+    if (!existing)
+      await addQuantityItem(itemDeps, {
+        subscriptionId: DEMO_SUBSCRIPTION_ID,
+        catalogItemCode,
+        quantity,
+        ...(scopeRefId ? { scopeRefId } : {}),
+      });
   };
   await ensureService("CORE");
   await ensureQuantity("BRANCHES", 1);
@@ -1124,7 +1515,13 @@ async function ensureSeed(repos: Repositories): Promise<void> {
   if (!menu) {
     menu = await createMenu(
       { menus: repos.menus, now: () => now },
-      { id: DEMO_MENU_ID, tenantId: tenant.id, brandId: brand.id, name: "Menú Principal", isDefault: true },
+      {
+        id: DEMO_MENU_ID,
+        tenantId: tenant.id,
+        brandId: brand.id,
+        name: "Menú Principal",
+        isDefault: true,
+      },
     );
   }
 
@@ -1132,14 +1529,23 @@ async function ensureSeed(repos: Repositories): Promise<void> {
   if (!category) {
     category = await createCategory(
       { menus: repos.menus, categories: repos.categories, now: () => now },
-      { id: DEMO_CATEGORY_ID, tenantId: tenant.id, menuId: menu.id, name: "Entradas" },
+      {
+        id: DEMO_CATEGORY_ID,
+        tenantId: tenant.id,
+        menuId: menu.id,
+        name: "Entradas",
+      },
     );
   }
 
   const product = await repos.products.findById(tenant.id, DEMO_PRODUCT_ID);
   if (!product) {
     await createProduct(
-      { categories: repos.categories, products: repos.products, now: () => now },
+      {
+        categories: repos.categories,
+        products: repos.products,
+        now: () => now,
+      },
       {
         id: DEMO_PRODUCT_ID,
         tenantId: tenant.id,
@@ -1155,7 +1561,9 @@ async function ensureSeed(repos: Repositories): Promise<void> {
   // seeded demo Menu, so the public GET /public/menu/:token route can be
   // exercised by hand. Idempotent via the fixed token hash. This is the only
   // Ordering seed — Orders/KitchenTickets/etc. are transactional, not seeded.
-  const existingQr = await repos.capabilityTokens.findByHash(hashToken(DEMO_QR_MENU_TOKEN));
+  const existingQr = await repos.capabilityTokens.findByHash(
+    hashToken(DEMO_QR_MENU_TOKEN),
+  );
   if (!existingQr) {
     await repos.capabilityTokens.save({
       id: DEMO_QR_TOKEN_ID,
@@ -1195,7 +1603,10 @@ async function ensureSeed(repos: Repositories): Promise<void> {
   // Cash (SPEC-124): one demo CashRegister for the demo Branch, accepting the
   // tenant's default currency, so a CashSession can be opened by hand. Idempotent
   // via the fixed id.
-  const cashRegister = await repos.cashRegisters.findById(tenant.id, DEMO_CASH_REGISTER_ID);
+  const cashRegister = await repos.cashRegisters.findById(
+    tenant.id,
+    DEMO_CASH_REGISTER_ID,
+  );
   if (!cashRegister) {
     await createCashRegister(
       { registers: repos.cashRegisters, now: () => now },
@@ -1215,10 +1626,18 @@ async function ensureSeed(repos: Repositories): Promise<void> {
   // the rest of the app can still boot against real organization/floor/ordering
   // data while fiscal rollout catches up.
   try {
-    let fiscalEntity = await repos.fiscalEntities.findByCuit(tenant.id, DEMO_FISCAL_ENTITY_CUIT);
+    let fiscalEntity = await repos.fiscalEntities.findByCuit(
+      tenant.id,
+      DEMO_FISCAL_ENTITY_CUIT,
+    );
     if (!fiscalEntity) {
       fiscalEntity = await createFiscalEntity(
-        { tenants: repos.tenants, fiscalEntities: repos.fiscalEntities, outbox: repos.outbox, now: () => now },
+        {
+          tenants: repos.tenants,
+          fiscalEntities: repos.fiscalEntities,
+          outbox: repos.outbox,
+          now: () => now,
+        },
         {
           tenantId: tenant.id,
           cuit: DEMO_FISCAL_ENTITY_CUIT,
@@ -1229,7 +1648,10 @@ async function ensureSeed(repos: Repositories): Promise<void> {
       );
     }
 
-    const demoPos = await repos.fiscalPointsOfSale.findById(tenant.id, DEMO_FISCAL_POS_ID);
+    const demoPos = await repos.fiscalPointsOfSale.findById(
+      tenant.id,
+      DEMO_FISCAL_POS_ID,
+    );
     if (!demoPos) {
       await createPointOfSale(
         { pointsOfSale: repos.fiscalPointsOfSale, now: () => now },
@@ -1266,10 +1688,18 @@ async function ensureSeed(repos: Repositories): Promise<void> {
           normativeSourceVersion: "AR-IVA-GENERAL",
         },
       );
-      await publishTaxRate({ taxRates: repos.taxRates, now: () => now }, { id: DEMO_TAX_RATE_ID });
+      await publishTaxRate(
+        { taxRates: repos.taxRates, now: () => now },
+        { id: DEMO_TAX_RATE_ID },
+      );
     }
   } catch (err) {
-    if (err && typeof err === "object" && "code" in err && err.code === "PGRST205") {
+    if (
+      err &&
+      typeof err === "object" &&
+      "code" in err &&
+      err.code === "PGRST205"
+    ) {
       // eslint-disable-next-line no-console
       console.warn(
         `Fiscal Supabase schema missing or not exposed (${String("message" in err ? err.message : "unknown table")}); apply fiscal migrations before enabling fiscal runtime seed`,
@@ -1283,7 +1713,10 @@ async function ensureSeed(repos: Repositories): Promise<void> {
 
   const businessDate = deriveBusinessDate(now, tenant.defaultTimezone);
 
-  let servicePeriod = await repos.servicePeriods.findById(tenant.id, DEMO_SERVICE_PERIOD_ID);
+  let servicePeriod = await repos.servicePeriods.findById(
+    tenant.id,
+    DEMO_SERVICE_PERIOD_ID,
+  );
   if (!servicePeriod) {
     servicePeriod = {
       id: DEMO_SERVICE_PERIOD_ID,
@@ -1321,10 +1754,17 @@ async function ensureSeed(repos: Repositories): Promise<void> {
     );
   }
 
-  let reservation = await repos.reservations.findById(tenant.id, DEMO_RESERVATION_ID);
+  let reservation = await repos.reservations.findById(
+    tenant.id,
+    DEMO_RESERVATION_ID,
+  );
   if (!reservation) {
     reservation = await createReservation(
-      { reservations: repos.reservations, outbox: repos.outbox, now: () => now },
+      {
+        reservations: repos.reservations,
+        outbox: repos.outbox,
+        now: () => now,
+      },
       {
         id: DEMO_RESERVATION_ID,
         tenantId: tenant.id,
@@ -1340,7 +1780,11 @@ async function ensureSeed(repos: Repositories): Promise<void> {
   }
   if (reservation.status === "PENDING") {
     reservation = await confirmReservation(
-      { reservations: repos.reservations, outbox: repos.outbox, now: () => now },
+      {
+        reservations: repos.reservations,
+        outbox: repos.outbox,
+        now: () => now,
+      },
       {
         tenantId: tenant.id,
         reservationId: reservation.id,
@@ -1353,7 +1797,10 @@ async function ensureSeed(repos: Repositories): Promise<void> {
     );
   }
 
-  const waitlist = await repos.waitlistEntries.findById(tenant.id, DEMO_WAITLIST_ID);
+  const waitlist = await repos.waitlistEntries.findById(
+    tenant.id,
+    DEMO_WAITLIST_ID,
+  );
   if (!waitlist) {
     await addWaitlistEntry(
       { waitlistEntries: repos.waitlistEntries, now: () => now },
@@ -1372,7 +1819,12 @@ async function ensureSeed(repos: Repositories): Promise<void> {
   const visit = await repos.visits.findById(tenant.id, DEMO_VISIT_ID);
   if (!visit) {
     await openVisit(
-      { visits: repos.visits, occupancies: repos.occupancies, outbox: repos.outbox, now: () => now },
+      {
+        visits: repos.visits,
+        occupancies: repos.occupancies,
+        outbox: repos.outbox,
+        now: () => now,
+      },
       {
         id: DEMO_VISIT_ID,
         tenantId: tenant.id,
@@ -1386,8 +1838,17 @@ async function ensureSeed(repos: Repositories): Promise<void> {
   let check = await repos.checks.findByVisit(tenant.id, DEMO_VISIT_ID);
   if (!check) {
     check = await createCheck(
-      { checks: repos.checks, visits: repos.visits, outbox: repos.outbox, now: () => now },
-      { tenantId: tenant.id, visitId: DEMO_VISIT_ID, currency: tenant.defaultCurrency },
+      {
+        checks: repos.checks,
+        visits: repos.visits,
+        outbox: repos.outbox,
+        now: () => now,
+      },
+      {
+        tenantId: tenant.id,
+        visitId: DEMO_VISIT_ID,
+        currency: tenant.defaultCurrency,
+      },
     );
   }
 
@@ -1430,7 +1891,10 @@ async function ensureSeed(repos: Repositories): Promise<void> {
   }
 
   check = (await repos.checks.findByVisit(tenant.id, DEMO_VISIT_ID)) ?? check;
-  if (check && !check.lines.some((line) => line.description === `Order ${order.id}`)) {
+  if (
+    check &&
+    !check.lines.some((line) => line.description === `Order ${order.id}`)
+  ) {
     await addCheckLine(
       { checks: repos.checks, now: () => now },
       {
@@ -1442,7 +1906,10 @@ async function ensureSeed(repos: Repositories): Promise<void> {
     );
   }
 
-  const existingCommands = await repos.commands.listByOrder(tenant.id, DEMO_ORDER_ID);
+  const existingCommands = await repos.commands.listByOrder(
+    tenant.id,
+    DEMO_ORDER_ID,
+  );
   if (existingCommands.length === 0 && order.items.length > 0) {
     const item = order.items[0]!;
     await createCommand(
@@ -1473,7 +1940,11 @@ async function ensureSeed(repos: Repositories): Promise<void> {
       tenant.defaultCurrency,
     )) ??
     (await openSession(
-      { registers: repos.cashRegisters, sessions: repos.cashSessions, now: () => now },
+      {
+        registers: repos.cashRegisters,
+        sessions: repos.cashSessions,
+        now: () => now,
+      },
       {
         id: DEMO_CASH_SESSION_ID,
         tenantId: tenant.id,
@@ -1494,7 +1965,12 @@ async function ensureSeed(repos: Repositories): Promise<void> {
     ))
   ) {
     await recordMovement(
-      { sessions: repos.cashSessions, movements: repos.cashMovements, outbox: repos.outbox, now: () => now },
+      {
+        sessions: repos.cashSessions,
+        movements: repos.cashMovements,
+        outbox: repos.outbox,
+        now: () => now,
+      },
       {
         tenantId: tenant.id,
         cashSessionId: liveSession.id,
@@ -1517,7 +1993,12 @@ async function ensureSeed(repos: Repositories): Promise<void> {
     ))
   ) {
     await recordMovement(
-      { sessions: repos.cashSessions, movements: repos.cashMovements, outbox: repos.outbox, now: () => now },
+      {
+        sessions: repos.cashSessions,
+        movements: repos.cashMovements,
+        outbox: repos.outbox,
+        now: () => now,
+      },
       {
         tenantId: tenant.id,
         cashSessionId: liveSession.id,
@@ -1546,7 +2027,10 @@ function pemFromEnvironment(name: string): string {
 function buildArcaCredentialProvider(): ArcaCredentialProvider {
   return {
     async getCredentials({ environment, representedCuit }) {
-      const prefix = environment === "homologation" ? "ARCA_HOMOLOGATION" : "ARCA_PRODUCTION";
+      const prefix =
+        environment === "homologation"
+          ? "ARCA_HOMOLOGATION"
+          : "ARCA_PRODUCTION";
       const configuredCuit = process.env[`${prefix}_CUIT`];
       if (configuredCuit && configuredCuit !== representedCuit) {
         throw new ArcaError(
@@ -1580,7 +2064,10 @@ function buildArcaAdapter(): ArcaAdapterPort {
   }
 
   const transport = new FetchArcaHttpTransport({
-    timeoutMs: Number.parseInt(process.env["ARCA_HTTP_TIMEOUT_MS"] ?? "15000", 10),
+    timeoutMs: Number.parseInt(
+      process.env["ARCA_HTTP_TIMEOUT_MS"] ?? "15000",
+      10,
+    ),
   });
   const signer = new ForgeCmsSigner();
   const cache = new MemoryWsaaTicketCache();
@@ -1624,11 +2111,13 @@ function buildArcaAdapter(): ArcaAdapterPort {
  * that mode; callers must obtain a real token via Supabase Auth
  * (e.g. POST /auth/v1/token?grant_type=password).
  */
-function buildSessionVerifier(): SessionVerificationPort {
-  const driver = process.env["AUTH_DRIVER"] ?? (hasSupabaseAuthConfig() ? "supabase" : "fixture");
-  if (driver === "supabase") {
+function buildSessionVerifier(
+  profile: RuntimeProfile,
+): SessionVerificationPort {
+  if (profile.authenticationDriver === "supabase") {
     const url = process.env["SUPABASE_URL"];
-    if (!url) throw new Error("SUPABASE_URL must be set for AUTH_DRIVER=supabase");
+    if (!url)
+      throw new Error("SUPABASE_URL must be set for AUTH_DRIVER=supabase");
     return new SupabaseSessionVerificationPort(url, {
       ...(process.env["SUPABASE_PUBLISHABLE_KEY"]
         ? { apiKey: process.env["SUPABASE_PUBLISHABLE_KEY"] }
@@ -1639,10 +2128,11 @@ function buildSessionVerifier(): SessionVerificationPort {
 }
 
 export async function buildContainer(): Promise<Container> {
-  const repos = buildRepositories();
-  await ensureSeed(repos);
+  const profile = resolveRuntimeProfile();
+  const repos = buildRepositories(profile);
+  await ensureSeed(repos, profile);
 
-  const sessions = buildSessionVerifier();
+  const sessions = buildSessionVerifier(profile);
   if (sessions instanceof FixtureSessionVerificationPort) {
     const now = new Date();
     sessions.registerToken(DEMO_ACCESS_TOKEN, {
@@ -1653,12 +2143,7 @@ export async function buildContainer(): Promise<Container> {
       issuedAt: now,
       expiresAt: new Date(now.getTime() + 60 * 60 * 1000),
     });
-    await registerE2EFixtures(
-      repos,
-      sessions,
-      DEMO_TENANT_ID,
-      DEMO_BRANCH_ID,
-    );
+    await registerE2EFixtures(repos, sessions, DEMO_TENANT_ID, DEMO_BRANCH_ID);
   }
 
   return {
