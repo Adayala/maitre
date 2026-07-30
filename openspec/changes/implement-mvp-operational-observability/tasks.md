@@ -21,7 +21,7 @@
 
 ## 4. Verification and operation
 
-- [ ] 4.1 Add a synthetic controlled-environment journey and publish sanitized CI evidence.
+- [x] 4.1 Add a synthetic controlled-environment journey and publish sanitized CI evidence.
 - [x] 4.2 Measure instrumentation overhead, log volume and estimated free-tier consumption.
 - [x] 4.3 Write runbooks for API, database/auth, stuck outbox and failed MVP journey conditions.
 - [x] 4.4 Document remote dashboards/alerts/SLOs as `NOT_OPERATIONAL` until their activation gate.
