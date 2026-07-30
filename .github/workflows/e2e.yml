@@ -70,6 +70,7 @@ jobs:
           npm run typecheck
           npm run deps:check
           npm run deploy:affected:test
+          npm run runtime:profile:test
           npm run coverage:gate:test
           npm run e2e:journey:policy
           npm run e2e:journey:policy:test
@@ -191,4 +192,9 @@ jobs:
       - name: Deploy after all required checks
         run: |
           npx --yes vercel@57 pull --yes --environment=production --token="$VERCEL_TOKEN"
+          if [[ "${{ matrix.name }}" == "api" ]]; then
+            node tooling/deployment/check-runtime-profile.mjs \
+              --env-file .vercel/.env.production.local \
+              --expect production
+          fi
           npx --yes vercel@57 deploy --prod --yes --token="$VERCEL_TOKEN"

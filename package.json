@@ -21,6 +21,7 @@
     "openapi:generate": "npm run build --workspace apps/api && npm run openapi:generate --workspace apps/api",
     "openapi:tools:test": "node --test tooling/openapi/openapi-tools.test.mjs",
     "performance:budget": "node tooling/performance/check-bundles.mjs",
+    "runtime:profile:test": "node --test tooling/deployment/runtime-profile.test.mjs",
     "sdd:validate": "node tooling/quality/validate-docs.mjs",
     "secrets:scan": "node tooling/security/scan-secrets.mjs",
     "security:audit": "node tooling/security/audit-dependencies.mjs",
