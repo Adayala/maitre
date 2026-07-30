@@ -84,6 +84,7 @@ export async function buildApp(container?: Container): Promise<FastifyInstance> 
     origin: resolveCorsOrigins(),
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Tenant-Id", "X-Branch-Id"],
+    exposedHeaders: ["Content-Disposition", "ETag"],
     credentials: false,
     maxAge: 600,
   });

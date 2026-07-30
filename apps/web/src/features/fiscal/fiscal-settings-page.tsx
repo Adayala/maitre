@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../app/auth-context.js";
 import { useTenantContext } from "../../app/tenant-context.js";
 import { StateView } from "../../components/state-view.js";
-import { apiRequest } from "../../lib/api-client.js";
+import { apiDownload, apiRequest } from "../../lib/api-client.js";
 import { useTenantQuery } from "../../lib/use-tenant-query.js";
 
 type FiscalStatus = "ACTIVE" | "INACTIVE" | "ARCHIVED";
@@ -51,6 +51,16 @@ interface PointOfSale {
 interface Subscription {
   id: string;
   subscriberFiscalEntityId?: string;
+}
+
+interface Invoice {
+  id: string;
+  voucherType: string;
+  number?: number;
+  status: "DRAFT" | "VALIDATED" | "AUTHORIZED" | "REJECTED" | "PENDING_RECONCILIATION" | "VOIDED_DRAFT";
+  currency: string;
+  totals: { grossMinorUnits: number };
+  authorizedAt?: string;
 }
 
 const voucherTypes = [
@@ -101,6 +111,16 @@ export function FiscalSettingsPage() {
     enabled: Boolean(accessToken && selectedTenantId && selectedEntityId),
   });
   const points = pointsQuery.data?.data ?? [];
+  const invoicesQuery = useQuery({
+    queryKey: ["fiscal-invoices", selectedTenantId, selectedEntityId],
+    queryFn: () =>
+      apiRequest<{ data: Invoice[] }>(
+        `/v1/invoices?fiscalEntityId=${encodeURIComponent(selectedEntityId)}`,
+        { accessToken: accessToken!, tenantId: selectedTenantId! },
+      ),
+    enabled: Boolean(accessToken && selectedTenantId && selectedEntityId),
+  });
+  const invoices = invoicesQuery.data?.data ?? [];
 
   const [createForm, setCreateForm] = useState({
     legalName: "",
@@ -320,6 +340,29 @@ export function FiscalSettingsPage() {
     );
   }
 
+  async function downloadInvoice(invoice: Invoice) {
+    setBusy(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const { blob, fileName } = await apiDownload(
+        `/v1/invoices/${invoice.id}/document`,
+        { accessToken: accessToken!, tenantId: selectedTenantId! },
+      );
+      const href = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = href;
+      anchor.download = fileName;
+      anchor.click();
+      window.setTimeout(() => URL.revokeObjectURL(href), 0);
+      setMessage(`Comprobante ${invoiceLabel(invoice)} descargado.`);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "No se pudo descargar el comprobante");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const loading =
     entitiesQuery.isLoading || branchesQuery.isLoading || subscriptionQuery.isLoading;
   const queryError =
@@ -456,6 +499,42 @@ export function FiscalSettingsPage() {
                       </form>
                     </details>
                   </article>
+
+                  <article className="overview-card fiscal-documents">
+                    <div className="fiscal-section-heading"><p>06 / Documentos</p><h2>Comprobantes</h2></div>
+                    <p className="fiscal-documents__intro">
+                      Descargá la representación fiscal congelada de cada comprobante autorizado.
+                      Homologación se identifica dentro del archivo y no se presenta como producción.
+                    </p>
+                    {invoicesQuery.isLoading ? <p role="status">Cargando comprobantes…</p> : null}
+                    {!invoicesQuery.isLoading && invoices.length === 0 ? (
+                      <p className="fiscal-documents__empty">Todavía no hay comprobantes para esta entidad.</p>
+                    ) : null}
+                    <div className="fiscal-document-list">
+                      {invoices.map((invoice) => (
+                        <article key={invoice.id} className="fiscal-document-row">
+                          <div>
+                            <span>{invoice.status}</span>
+                            <strong>{invoiceLabel(invoice)}</strong>
+                            <small>
+                              {invoice.authorizedAt
+                                ? new Intl.DateTimeFormat("es-AR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(invoice.authorizedAt))
+                                : "Sin autorización"}
+                            </small>
+                          </div>
+                          <strong>{formatMoney(invoice.totals.grossMinorUnits, invoice.currency)}</strong>
+                          <button
+                            type="button"
+                            className="button-secondary"
+                            disabled={busy || invoice.status !== "AUTHORIZED"}
+                            onClick={() => void downloadInvoice(invoice)}
+                          >
+                            {invoice.status === "AUTHORIZED" ? "Descargar" : "No disponible"}
+                          </button>
+                        </article>
+                      ))}
+                    </div>
+                  </article>
                 </>
               ) : (
                 <article className="overview-priority overview-priority--warning">
@@ -485,4 +564,13 @@ function readinessLabel(key: string) {
     homologation: "Homologación",
     production: "Producción",
   } as Record<string, string>)[key] ?? key;
+}
+
+function invoiceLabel(invoice: Invoice) {
+  const type = invoice.voucherType.replaceAll("_", " ");
+  return invoice.number == null ? type : `${type} · ${String(invoice.number).padStart(8, "0")}`;
+}
+
+function formatMoney(minorUnits: number, currency: string) {
+  return new Intl.NumberFormat("es-AR", { style: "currency", currency }).format(minorUnits / 100);
 }
