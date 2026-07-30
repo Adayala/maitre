@@ -18,6 +18,9 @@ import {
   renderAuthorizedInvoiceDocument,
   renderAuthorizedInvoicePdfDocument,
   queueInvoiceEmailDelivery,
+  processInvoiceDelivery,
+  ResendInvoiceEmailSender,
+  type InvoiceDeliveryDocumentPort,
   type TaxLineInput,
   type InvoiceDeps,
   InvalidInvoiceTransitionError,
@@ -153,6 +156,93 @@ function invoiceDeps(container: Container): InvoiceDeps {
     outbox: container.outbox,
     authorizationAttempts: container.authorizationAttempts,
   };
+}
+
+function deliveryDocuments(container: Container): InvoiceDeliveryDocumentPort {
+  return {
+    async render(input) {
+      const invoice = await container.invoices.findById(
+        input.tenantId,
+        input.invoiceId,
+      );
+      if (!invoice) throw new Error(`Invoice ${input.invoiceId} not found`);
+      const pointOfSale = await container.fiscalPointsOfSale.findById(
+        input.tenantId,
+        invoice.pointOfSaleId,
+      );
+      const issuer = await container.fiscalEntities.findById(
+        input.tenantId,
+        invoice.fiscalEntityId,
+      );
+      if (!pointOfSale || !issuer) {
+        throw new Error("Fiscal document dependency not found");
+      }
+      if (
+        invoice.number == null ||
+        !invoice.cae ||
+        !invoice.caeExpiresAt ||
+        !invoice.authorizedAt
+      ) {
+        throw new InvoiceDocumentNotRenderableError(invoice.id);
+      }
+      const qr = buildFiscalQrCode({
+        cuit: issuer.cuit,
+        voucherType: invoice.voucherType,
+        pointOfSaleCode: pointOfSale.officialCode,
+        number: invoice.number,
+        amountMinorUnits: invoice.totals.grossMinorUnits,
+        currency: invoice.currency,
+        cae: invoice.cae,
+        caeExpiresAt: invoice.caeExpiresAt,
+        authorizedAt: invoice.authorizedAt,
+      });
+      const documentInput = {
+        invoice,
+        issuer: {
+          cuit: issuer.cuit,
+          legalName: issuer.legalName ?? issuer.name,
+          ...(issuer.displayName ? { displayName: issuer.displayName } : {}),
+          ...(issuer.fiscalAddress
+            ? { fiscalAddress: issuer.fiscalAddress }
+            : {}),
+          taxCondition: issuer.taxCondition,
+        },
+        pointOfSale: {
+          officialCode: pointOfSale.officialCode,
+          ...(pointOfSale.arcaDomicileLabel
+            ? { domicileLabel: pointOfSale.arcaDomicileLabel }
+            : {}),
+        },
+        qr,
+      };
+      if (input.format === "PDF") {
+        const document =
+          await renderAuthorizedInvoicePdfDocument(documentInput);
+        return {
+          fileName: document.fileName,
+          mediaType: document.mediaType,
+          content: document.bytes,
+          contentHash: document.contentHash,
+        };
+      }
+      const document = renderAuthorizedInvoiceDocument(documentInput);
+      return {
+        fileName: document.fileName,
+        mediaType: document.mediaType,
+        content: new TextEncoder().encode(document.html),
+        contentHash: document.contentHash,
+      };
+    },
+  };
+}
+
+function configuredEmailSender(): ResendInvoiceEmailSender {
+  const apiKey = process.env["RESEND_API_KEY"];
+  const from = process.env["FISCAL_EMAIL_FROM"];
+  if (!apiKey || !from) {
+    throw new Error("RESEND_API_KEY and FISCAL_EMAIL_FROM are required");
+  }
+  return new ResendInvoiceEmailSender({ apiKey, from });
 }
 
 function mapFiscalError(
@@ -837,6 +927,33 @@ export async function registerInvoiceRoutes(
           return sendProblem(reply, correlationId, badRequest(err.message));
         }
         return sendMapped(reply, correlationId, err, "Invoice");
+      }
+    },
+  );
+
+  app.post<{ Params: { id: string } }>(
+    "/v1/invoice-deliveries/:id/process",
+    async (req, reply) => {
+      const correlationId = randomUUID();
+      try {
+        const ctx = await requireTenantContext(container, req);
+        requirePermission(ctx, "invoice:issue");
+        const delivery = await processInvoiceDelivery(
+          {
+            deliveries: container.invoiceDeliveries,
+            documents: deliveryDocuments(container),
+            sender: configuredEmailSender(),
+            outbox: container.outbox,
+          },
+          {
+            tenantId: ctx.tenantId,
+            deliveryId: req.params.id,
+            correlationId,
+          },
+        );
+        return { data: delivery };
+      } catch (err) {
+        return sendMapped(reply, correlationId, err, "InvoiceDelivery");
       }
     },
   );

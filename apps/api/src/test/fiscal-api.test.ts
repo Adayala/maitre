@@ -541,6 +541,68 @@ serialTest(
 );
 
 serialTest(
+  "Fiscal API: renders and processes a queued PDF delivery through the email port",
+  async () => {
+    const previousApiKey = process.env["RESEND_API_KEY"];
+    const previousFrom = process.env["FISCAL_EMAIL_FROM"];
+    const previousFetch = globalThis.fetch;
+    process.env["RESEND_API_KEY"] = "test-key";
+    process.env["FISCAL_EMAIL_FROM"] = "Maitre <facturas@example.com>";
+    let providerBody: Record<string, unknown> | undefined;
+    globalThis.fetch = async (_input, init) => {
+      providerBody = JSON.parse(String(init?.body));
+      return new Response(JSON.stringify({ id: "provider-email-1" }), {
+        status: 200,
+      });
+    };
+    try {
+      const container = await buildContainer();
+      const { tenantId, branchId, fiscalEntityId } = await getContext(container);
+      const app = await buildApp(container);
+      const headers = ownerHeaders(container, tenantId);
+      const checkId = await seedCheck(container, tenantId, branchId);
+      const invoice = (
+        await createInvoiceFromCheck(container, headers, fiscalEntityId, checkId)
+      ).json().data;
+      await app.inject({
+        method: "POST",
+        url: `/v1/invoices/${invoice.id}/issue`,
+        headers,
+      });
+      const queued = await app.inject({
+        method: "POST",
+        url: `/v1/invoices/${invoice.id}/deliveries`,
+        headers: { ...headers, "idempotency-key": "runtime-email-1" },
+        payload: { recipientEmail: "client@example.com", format: "PDF" },
+      });
+      const processed = await app.inject({
+        method: "POST",
+        url: `/v1/invoice-deliveries/${queued.json().data.id}/process`,
+        headers,
+      });
+
+      assert.equal(processed.statusCode, 200);
+      assert.equal(processed.json().data.status, "SENT");
+      const attachments = providerBody?.["attachments"] as Array<{
+        filename: string;
+        content: string;
+      }>;
+      assert.match(attachments[0]!.filename, /\.pdf$/);
+      assert.match(
+        Buffer.from(attachments[0]!.content, "base64").subarray(0, 5).toString(),
+        /^%PDF-/,
+      );
+    } finally {
+      globalThis.fetch = previousFetch;
+      if (previousApiKey === undefined) delete process.env["RESEND_API_KEY"];
+      else process.env["RESEND_API_KEY"] = previousApiKey;
+      if (previousFrom === undefined) delete process.env["FISCAL_EMAIL_FROM"];
+      else process.env["FISCAL_EMAIL_FROM"] = previousFrom;
+    }
+  },
+);
+
+serialTest(
   "Fiscal API: invoice export manifest sums authorized totals",
   async () => {
     const container = await buildContainer();

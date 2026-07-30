@@ -24,4 +24,5 @@ export * from "./application/invoice-delivery.js";
 export * from "./application/invoice-delivery-processor.js";
 export * from "./domain/invoice-delivery.js";
 export * from "./adapters/simulated-arca-adapter.js";
+export * from "./adapters/resend-email-sender.js";
 export * from "./adapters/wsfev1-arca-adapter.js";
