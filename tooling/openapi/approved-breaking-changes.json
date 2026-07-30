@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "approvals": [
+    {
+      "id": "SPEC-215-PROBLEM-DETAILS-MEDIA",
+      "kind": "replace-default-response-media-type",
+      "from": "application/json",
+      "to": "application/problem+json",
+      "pathPrefix": "/v1/",
+      "expiresOn": "2026-09-30",
+      "reason": "Align the generated contract with the RFC 9457 media type already returned by the runtime."
+    }
+  ]
+}

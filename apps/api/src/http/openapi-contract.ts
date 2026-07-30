@@ -45,11 +45,31 @@ const problemDetailsJsonSchema = {
 const successEnvelopeJsonSchema = {
   $id: SUCCESS_SCHEMA_ID,
   type: "object",
-  required: ["data", "meta"],
+  additionalProperties: true,
+  required: ["data"],
   properties: {
-    data: {},
+    data: {
+      anyOf: [
+        { type: "object", additionalProperties: true },
+        { type: "array", items: {} },
+        { type: "string" },
+        { type: "number" },
+        { type: "boolean" },
+        { type: "null" },
+      ],
+    },
+    page: {
+      type: "object",
+      additionalProperties: false,
+      required: ["nextCursor", "hasMore"],
+      properties: {
+        nextCursor: { anyOf: [{ type: "string" }, { type: "null" }] },
+        hasMore: { type: "boolean" },
+      },
+    },
     meta: {
       type: "object",
+      additionalProperties: false,
       required: ["correlationId"],
       properties: { correlationId: { type: "string" } },
     },
@@ -59,6 +79,7 @@ const successEnvelopeJsonSchema = {
 const collectionEnvelopeJsonSchema = {
   $id: COLLECTION_SCHEMA_ID,
   type: "object",
+  additionalProperties: true,
   required: ["data", "page", "meta"],
   properties: {
     data: { type: "array", items: {} },
@@ -72,8 +93,23 @@ const collectionEnvelopeJsonSchema = {
     },
     meta: {
       type: "object",
+      additionalProperties: false,
       required: ["correlationId"],
       properties: { correlationId: { type: "string" } },
+    },
+  },
+} as const;
+
+const contextHeadersJsonSchema = {
+  type: "object",
+  additionalProperties: true,
+  properties: {
+    "x-tenant-id": { type: "string" },
+    "x-branch-id": { type: "string" },
+    "x-correlation-id": { type: "string" },
+    traceparent: {
+      type: "string",
+      pattern: "^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}$",
     },
   },
 } as const;
@@ -106,8 +142,22 @@ export function registerOpenApiContractMetadata(app: FastifyInstance): void {
       tags,
       security,
       response: {
-        "2XX": { type: "object", additionalProperties: true },
-        default: { $ref: `${PROBLEM_SCHEMA_ID}#` },
+        "2XX": {
+          description: "Successful response",
+          content: {
+            "application/json": {
+              schema: { $ref: `${SUCCESS_SCHEMA_ID}#` },
+            },
+          },
+        },
+        default: {
+          description: "RFC 9457 problem response",
+          content: {
+            "application/problem+json": {
+              schema: { $ref: `${PROBLEM_SCHEMA_ID}#` },
+            },
+          },
+        },
         ...response,
       },
       "x-maitre-owner": ownership.owner,
@@ -117,6 +167,17 @@ export function registerOpenApiContractMetadata(app: FastifyInstance): void {
 }
 
 export const openApiConfiguration: SwaggerOptions = {
+  transform({ schema, url }) {
+    if (!url.startsWith("/v1/")) return { schema, url };
+    const existing = schema as Record<string, unknown>;
+    return {
+      schema: {
+        ...existing,
+        headers: existing["headers"] ?? contextHeadersJsonSchema,
+      },
+      url,
+    };
+  },
   refResolver: {
     buildLocalReference(json, _baseUri, _fragment, index) {
       return typeof json["$id"] === "string" ? json["$id"] : `schema-${index}`;

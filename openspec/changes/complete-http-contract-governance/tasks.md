@@ -5,6 +5,10 @@
 - [x] 1.2 Add a deterministic non-listening OpenAPI generator and commit the baseline artifact.
 - [ ] 1.3 Document all public `/v1` operations with request, response, security and ownership
       metadata.
+  - [x] 1.3a Enforce structured success envelopes, RFC 9457 response media types and context
+        header declarations for every `/v1` operation.
+  - [ ] 1.3b Replace the shared payload fallback with operation-specific request and response
+        field schemas.
 
 ## 2. Error boundary and CORS
 
@@ -21,4 +25,4 @@
 - [x] 3.1 Add deterministic regeneration and OpenAPI lint scripts to the workspace.
 - [x] 3.2 Add a pinned CI breaking-change comparison against the merge base.
 - [x] 3.3 Document the review, exception and major-version process.
-- [ ] 3.4 Run typecheck, API tests, artifact regeneration and strict OpenSpec validation.
+- [x] 3.4 Run typecheck, API tests, artifact regeneration and strict OpenSpec validation.

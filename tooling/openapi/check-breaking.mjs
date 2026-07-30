@@ -15,6 +15,15 @@ export function findBreakingChanges(baseline, candidate) {
     for (const method of Object.keys(pathItem ?? {})) {
       if (HTTP_METHODS.has(method) && !candidate.paths[path]?.[method]) {
         changes.push(`removed operation ${method.toUpperCase()} ${path}`);
+        continue;
+      }
+      if (HTTP_METHODS.has(method)) {
+        compareOperation(
+          `${method.toUpperCase()} ${path}`,
+          pathItem[method],
+          candidate.paths[path][method],
+          changes,
+        );
       }
     }
   }
@@ -32,7 +41,32 @@ export function findBreakingChanges(baseline, candidate) {
   return changes;
 }
 
+export function partitionApprovedChanges(
+  changes,
+  candidate,
+  policy,
+  today = new Date(),
+) {
+  const approved = [];
+  const unapproved = [];
+  for (const change of changes) {
+    const approval = (policy?.approvals ?? []).find((candidateApproval) =>
+      approvesChange(change, candidate, candidateApproval, today),
+    );
+    (approval ? approved : unapproved).push(
+      approval ? { change, approvalId: approval.id } : change,
+    );
+  }
+  return { approved, unapproved };
+}
+
 function compareSchema(path, baseline, candidate, changes) {
+  if (baseline?.$ref && baseline.$ref !== candidate?.$ref) {
+    changes.push(
+      `changed schema reference at ${path} from ${baseline.$ref} to ${String(candidate?.$ref)}`,
+    );
+    return;
+  }
   if (baseline?.type && candidate?.type && baseline.type !== candidate.type) {
     changes.push(
       `changed type at ${path} from ${baseline.type} to ${candidate.type}`,
@@ -55,6 +89,102 @@ function compareSchema(path, baseline, candidate, changes) {
     if (!baselineRequired.has(required)) {
       changes.push(`made property required ${path}.${required}`);
     }
+  }
+  if (baseline?.items && candidate?.items) {
+    compareSchema(`${path}.items`, baseline.items, candidate.items, changes);
+  }
+  if (Array.isArray(baseline?.enum) && Array.isArray(candidate?.enum)) {
+    for (const value of baseline.enum) {
+      if (!candidate.enum.includes(value)) {
+        changes.push(`removed enum value ${JSON.stringify(value)} at ${path}`);
+      }
+    }
+  }
+}
+
+function compareOperation(location, baseline, candidate, changes) {
+  compareParameters(
+    location,
+    baseline.parameters,
+    candidate.parameters,
+    changes,
+  );
+  compareRequestBody(
+    location,
+    baseline.requestBody,
+    candidate.requestBody,
+    changes,
+  );
+  compareResponses(location, baseline.responses, candidate.responses, changes);
+}
+
+function compareParameters(location, baseline, candidate, changes) {
+  const next = new Map(
+    (candidate ?? []).map((parameter) => [
+      `${parameter.in}:${parameter.name}`,
+      parameter,
+    ]),
+  );
+  for (const parameter of baseline ?? []) {
+    const key = `${parameter.in}:${parameter.name}`;
+    const candidateParameter = next.get(key);
+    if (!candidateParameter) {
+      changes.push(`removed parameter ${key} from ${location}`);
+      continue;
+    }
+    if (!parameter.required && candidateParameter.required) {
+      changes.push(`made parameter ${key} required at ${location}`);
+    }
+    compareSchema(
+      `${location}.parameters.${key}`,
+      parameter.schema,
+      candidateParameter.schema,
+      changes,
+    );
+  }
+}
+
+function compareRequestBody(location, baseline, candidate, changes) {
+  if (!baseline) return;
+  if (!candidate) {
+    changes.push(`removed request body from ${location}`);
+    return;
+  }
+  if (!baseline.required && candidate.required) {
+    changes.push(`made request body required at ${location}`);
+  }
+  compareContent(
+    `${location}.requestBody`,
+    baseline.content,
+    candidate.content,
+    changes,
+  );
+}
+
+function compareResponses(location, baseline, candidate, changes) {
+  for (const [status, response] of Object.entries(baseline ?? {})) {
+    const next = candidate?.[status];
+    if (!next) {
+      changes.push(`removed response ${status} from ${location}`);
+      continue;
+    }
+    compareContent(
+      `${location}.responses.${status}`,
+      response.content,
+      next.content,
+      changes,
+    );
+  }
+}
+
+function compareContent(path, baseline, candidate, changes) {
+  for (const [mediaType, media] of Object.entries(baseline ?? {})) {
+    const next = candidate?.[mediaType];
+    if (!next) {
+      changes.push(`removed media type ${mediaType} at ${path}`);
+      continue;
+    }
+    compareSchema(`${path}.${mediaType}`, media.schema, next.schema, changes);
   }
 }
 
@@ -83,16 +213,64 @@ async function main() {
   const baseline = JSON.parse(baselineText);
   const candidate = JSON.parse(await readFile(candidatePath, "utf8"));
   const changes = findBreakingChanges(baseline, candidate);
-  if (changes.length > 0) {
+  const approvalPath = resolve(
+    process.env["OPENAPI_BREAKING_APPROVALS"] ??
+      "tooling/openapi/approved-breaking-changes.json",
+  );
+  const approvalPolicy = JSON.parse(await readFile(approvalPath, "utf8"));
+  const { approved, unapproved } = partitionApprovedChanges(
+    changes,
+    candidate,
+    approvalPolicy,
+  );
+  if (unapproved.length > 0) {
     process.stderr.write(
-      `Breaking OpenAPI changes against ${baseRef}:\n${changes
+      `Unapproved breaking OpenAPI changes against ${baseRef}:\n${unapproved
         .map((change) => `- ${change}`)
         .join("\n")}\n`,
     );
     process.exitCode = 1;
     return;
   }
+  if (approved.length > 0) {
+    const ids = [...new Set(approved.map((item) => item.approvalId))].join(
+      ", ",
+    );
+    process.stdout.write(
+      `Accepted ${approved.length} approved OpenAPI migrations (${ids}).\n`,
+    );
+  }
   process.stdout.write(`No breaking OpenAPI changes against ${baseRef}.\n`);
+}
+
+function approvesChange(change, candidate, approval, today) {
+  if (
+    approval?.kind !== "replace-default-response-media-type" ||
+    typeof approval.id !== "string" ||
+    typeof approval.from !== "string" ||
+    typeof approval.to !== "string" ||
+    typeof approval.pathPrefix !== "string" ||
+    typeof approval.expiresOn !== "string" ||
+    typeof approval.reason !== "string" ||
+    approval.reason.trim() === "" ||
+    approval.expiresOn < today.toISOString().slice(0, 10)
+  ) {
+    return false;
+  }
+  const match =
+    /^removed media type (\S+) at (GET|PUT|POST|DELETE|PATCH) (\/.+)\.responses\.default$/.exec(
+      change,
+    );
+  if (!match) return false;
+  const [, mediaType, method, path] = match;
+  return (
+    mediaType === approval.from &&
+    path.startsWith(approval.pathPrefix) &&
+    Boolean(
+      candidate.paths?.[path]?.[method.toLowerCase()]?.responses?.default
+        ?.content?.[approval.to],
+    )
+  );
 }
 
 const invokedPath = process.argv[1]
