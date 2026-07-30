@@ -1,4 +1,4 @@
-export type InvoiceDeliveryStatus = "QUEUED" | "SENT" | "FAILED";
+export type InvoiceDeliveryStatus = "QUEUED" | "PROCESSING" | "SENT" | "FAILED";
 export type InvoiceDeliveryFormat = "PDF" | "HTML";
 
 export interface InvoiceDelivery {

@@ -13,3 +13,8 @@ derivan sólo de un AUTHORIZED, son determinísticos y fallan cerrado para cualq
 solicitud. La dirección se persiste tenant-scoped en `fiscal_invoice_deliveries`; el evento
 `fiscal.invoice-delivery.queued.v1` sólo contiene identificadores y formato, nunca el email.
 El worker y el proveedor de correo permanecen desacoplados de este contrato.
+
+El procesador reclama atómicamente entregas `QUEUED|FAILED`, renderiza el documento mediante
+`InvoiceDeliveryDocumentPort` y envía mediante `InvoiceEmailSenderPort`. Una entrega `SENT` es
+terminal e idempotente; un fallo persiste sólo la clase de error redactada y puede reintentarse.
+Los eventos `sent`/`failed` no contienen destinatarios ni contenido del comprobante.
