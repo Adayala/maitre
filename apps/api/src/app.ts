@@ -79,10 +79,17 @@ export async function buildApp(
     connectionTimeout: 10_000,
   });
   const baseContainer = container ?? (await buildContainer());
-  const resolvedContainer: Container = {
-    ...baseContainer,
-    outbox: new ContextPropagatingOutbox(baseContainer.outbox),
-  };
+  const contextualOutbox =
+    baseContainer.outbox instanceof ContextPropagatingOutbox
+      ? baseContainer.outbox
+      : new ContextPropagatingOutbox(baseContainer.outbox);
+  const resolvedContainer = new Proxy(baseContainer, {
+    get(target, property, receiver) {
+      return property === "outbox"
+        ? contextualOutbox
+        : Reflect.get(target, property, receiver);
+    },
+  });
   registerHttpObservability(app, telemetry);
   registerJourneyObservability(app, resolvedContainer.outbox, telemetry);
   registerMutationAudit(app, resolvedContainer, telemetry);

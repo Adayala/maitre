@@ -25,4 +25,4 @@
 - [x] 4.2 Measure instrumentation overhead, log volume and estimated free-tier consumption.
 - [x] 4.3 Write runbooks for API, database/auth, stuck outbox and failed MVP journey conditions.
 - [x] 4.4 Document remote dashboards/alerts/SLOs as `NOT_OPERATIONAL` until their activation gate.
-- [ ] 4.5 Run typecheck, unit/API tests, synthetic checks and strict OpenSpec validation.
+- [x] 4.5 Run typecheck, unit/API tests, synthetic checks and strict OpenSpec validation.
