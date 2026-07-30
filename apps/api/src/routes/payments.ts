@@ -11,7 +11,13 @@ import {
 } from "@maitre/floor";
 import type { Container } from "../composition/container.js";
 import { requireTenantContext, requirePermission } from "../http/request-context.js";
-import { sendProblem, notFound, conflict, badRequest } from "../http/problem-details.js";
+import {
+  sendProblem,
+  notFound,
+  conflict,
+  badRequest,
+  insufficientScope,
+} from "../http/problem-details.js";
 import { omitUndefined } from "../http/omit-undefined.js";
 import {
   capturePaymentWithCash,
@@ -49,9 +55,14 @@ export async function registerPaymentRoutes(app: FastifyInstance, container: Con
       const ctx = await requireTenantContext(container, req);
       requirePermission(ctx, "payment:create");
       const body = createPaymentBodySchema.parse(req.body);
+      const check = await container.checks.findById(ctx.tenantId, req.params.id);
+      if (!check) return sendProblem(reply, correlationId, notFound("Check"));
+      if (ctx.branchScopeType !== "ALL_BRANCHES" && !ctx.branchIds.includes(check.branchId)) {
+        throw insufficientScope();
+      }
       const payment = await createPayment(deps(), {
         tenantId: ctx.tenantId,
-        branchId: req.headers["x-branch-id"] as string,
+        branchId: check.branchId,
         checkId: req.params.id,
         ...omitUndefined(body),
       });
@@ -95,6 +106,14 @@ export async function registerPaymentRoutes(app: FastifyInstance, container: Con
       const ctx = await requireTenantContext(container, req);
       requirePermission(ctx, "payment:capture");
       const body = captureBodySchema.parse(req.body ?? {});
+      const existingPayment = await container.payments.findById(ctx.tenantId, req.params.id);
+      if (!existingPayment) return sendProblem(reply, correlationId, notFound("Payment"));
+      if (
+        ctx.branchScopeType !== "ALL_BRANCHES" &&
+        !ctx.branchIds.includes(existingPayment.branchId)
+      ) {
+        throw insufficientScope();
+      }
       const payment = await capturePaymentWithCash(container, {
         tenantId: ctx.tenantId,
         paymentId: req.params.id,

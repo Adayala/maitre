@@ -1305,6 +1305,54 @@
         "x-maitre-spec": "SPEC-215"
       }
     },
+    "/v1/branches/{id}/pending-checks": {
+      "get": {
+        "operationId": "getBranchesByIdPendingChecks",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "2XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "branches"
+        ],
+        "x-maitre-owner": "branches",
+        "x-maitre-spec": "SPEC-215"
+      }
+    },
     "/v1/brands": {
       "get": {
         "operationId": "getBrands",

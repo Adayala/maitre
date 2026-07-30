@@ -232,6 +232,9 @@ test("@ui-contract abre caja, registra una venta, cierra y envía la conciliaci�
       reconciliationStatus = "SUBMITTED";
       return route.fulfill({ json: { data: reconciliation() } });
     }
+    if (path === `/v1/branches/${branchId}/pending-checks`) {
+      return route.fulfill({ json: { data: [] } });
+    }
     if (path === `/v1/branches/${branchId}/daily-settlement`) {
       return route.fulfill({
         json: {
@@ -311,4 +314,265 @@ test("@ui-contract abre caja, registra una venta, cierra y envía la conciliaci�
   await expect(
     page.getByText("Enviada", { exact: true }).first(),
   ).toBeVisible();
+});
+
+test("@ui-contract cobra el saldo exacto de una cuenta pendiente y la liquida", async ({
+  page,
+}) => {
+  const tenantId = "00000000-0000-0000-0000-000000000001";
+  const branchId = "00000000-0000-0000-0000-000000000003";
+  const registerId = "00000000-0000-0000-0000-000000000411";
+  const sessionId = "00000000-0000-0000-0000-000000000412";
+  const checkId = "00000000-0000-0000-0000-000000000413";
+  const paymentId = "00000000-0000-0000-0000-000000000414";
+  const now = "2026-07-30T18:00:00.000Z";
+  let pending = true;
+  let sessionOpen = false;
+
+  const session = {
+    id: sessionId,
+    tenantId,
+    branchId,
+    cashRegisterId: registerId,
+    currency: "ARS",
+    businessDate: "2026-07-30",
+    timezone: "America/Argentina/Buenos_Aires",
+    openingAmountMinorUnits: 20_000,
+    openedAt: now,
+    openedBy: "user-e2e",
+    ledgerRevision: 1,
+    status: "OPEN",
+    suspended: false,
+    createdAt: now,
+    updatedAt: now,
+  };
+  const check = {
+    id: checkId,
+    tenantId,
+    branchId,
+    visitId: "00000000-0000-0000-0000-000000000415",
+    currency: "ARS",
+    lines: [
+      {
+        id: "00000000-0000-0000-0000-000000000416",
+        description: "Cena",
+        amountMinorUnits: 4_500,
+      },
+    ],
+    adjustments: [],
+    status: "PAYMENT_PENDING",
+    revision: 3,
+    createdAt: now,
+    updatedAt: now,
+    totals: {
+      gross: 4_500,
+      discounts: 0,
+      estimatedTax: 0,
+      serviceCharges: 0,
+      netDue: 4_500,
+      paid: 0,
+      balance: 4_500,
+    },
+    paymentsSummary: {
+      count: 0,
+      capturedCount: 0,
+      refundCount: 0,
+      paidMinorUnits: 0,
+    },
+    visit: {
+      id: "00000000-0000-0000-0000-000000000415",
+      status: "CLOSING",
+      guestCount: 2,
+      tableIds: ["00000000-0000-0000-0000-000000000417"],
+    },
+    tables: [
+      {
+        id: "00000000-0000-0000-0000-000000000417",
+        number: "12",
+      },
+    ],
+  };
+
+  await page.addInitScript(
+    ({ tenant, branch, register }) => {
+      sessionStorage.setItem("maitre.cashier.fixtureAccessToken", "e2e-token");
+      localStorage.setItem("maitre.cashier.selectedTenantId", tenant);
+      localStorage.setItem("maitre.cashier.selectedBranchId", branch);
+      localStorage.setItem("maitre.cashier.selectedRegisterId", register);
+    },
+    { tenant: tenantId, branch: branchId, register: registerId },
+  );
+
+  await page.route("http://127.0.0.1:3101/**", async (route) => {
+    const request = route.request();
+    const path = new URL(request.url()).pathname;
+    const selectedBranchHeader = request.headers()["x-branch-id"];
+
+    if (path === "/v1/me/context") {
+      return route.fulfill({
+        json: {
+          user: { id: "user-e2e", displayName: "Caja E2E", email: null },
+          tenants: [
+            {
+              id: tenantId,
+              name: "Maitre",
+              branches: [{ id: branchId, code: "CENTRO", name: "Centro" }],
+            },
+          ],
+        },
+      });
+    }
+    if (path === `/v1/subscriptions/${tenantId}/access`) {
+      return route.fulfill({
+        json: {
+          data: {
+            services: [
+              { code: "CASH", quantity: 1, scopeRefId: branchId },
+              { code: "CASHIERS", quantity: 1, scopeRefId: branchId },
+            ],
+          },
+        },
+      });
+    }
+    if (path === `/v1/cash-registers/${registerId}`) {
+      return route.fulfill({
+        json: {
+          data: {
+            id: registerId,
+            tenantId,
+            branchId,
+            code: "CAJA-1",
+            displayName: "Caja principal",
+            allowedCurrencies: ["ARS"],
+            status: "ACTIVE",
+            revision: 1,
+            createdAt: now,
+            updatedAt: now,
+          },
+        },
+      });
+    }
+    if (path === `/v1/cash-registers/${registerId}/sessions`) {
+      if (request.method() === "POST") {
+        sessionOpen = true;
+        return route.fulfill({ status: 201, json: { data: session } });
+      }
+      return route.fulfill({ json: { data: sessionOpen ? [session] : [] } });
+    }
+    if (path === `/v1/cash-sessions/${sessionId}/movements`) {
+      return route.fulfill({ json: { data: [] } });
+    }
+    if (path === `/v1/branches/${branchId}/daily-settlement`) {
+      return route.fulfill({
+        json: {
+          data: {
+            tenantId,
+            branchId,
+            businessDate: "2026-07-30",
+            timezone: "America/Argentina/Buenos_Aires",
+            currency: "ARS",
+            sessionCount: 1,
+            openingsMinorUnits: 20_000,
+            movementsByType: {},
+            expectedMinorUnits: 20_000,
+            countedMinorUnits: 0,
+            differenceMinorUnits: 0,
+            sessions: [],
+          },
+        },
+      });
+    }
+    if (path === `/v1/branches/${branchId}/pending-checks`) {
+      expect(selectedBranchHeader).toBe(branchId);
+      return route.fulfill({ json: { data: pending ? [check] : [] } });
+    }
+    if (path === `/v1/checks/${checkId}/payments`) {
+      expect(selectedBranchHeader).toBe(branchId);
+      expect(request.postDataJSON()).toMatchObject({
+        amountMinorUnits: 4_500,
+        currency: "ARS",
+        method: "CASH",
+      });
+      return route.fulfill({
+        status: 201,
+        json: {
+          data: {
+            id: paymentId,
+            tenantId,
+            branchId,
+            checkId,
+            amountMinorUnits: 4_500,
+            currency: "ARS",
+            method: "CASH",
+            status: "PENDING",
+            idempotencyKey: (
+              request.postDataJSON() as { idempotencyKey: string }
+            ).idempotencyKey,
+            revision: 1,
+            createdAt: now,
+            updatedAt: now,
+          },
+        },
+      });
+    }
+    if (path === `/v1/payments/${paymentId}/capture`) {
+      expect(selectedBranchHeader).toBe(branchId);
+      expect(request.postDataJSON()).toEqual({ cashSessionId: sessionId });
+      return route.fulfill({
+        json: {
+          data: {
+            id: paymentId,
+            tenantId,
+            branchId,
+            checkId,
+            amountMinorUnits: 4_500,
+            currency: "ARS",
+            method: "CASH",
+            status: "CAPTURED",
+            idempotencyKey: "captured",
+            revision: 2,
+            createdAt: now,
+            updatedAt: now,
+          },
+        },
+      });
+    }
+    if (path === `/v1/checks/${checkId}/settle`) {
+      expect(selectedBranchHeader).toBe(branchId);
+      pending = false;
+      return route.fulfill({
+        json: {
+          data: {
+            ...check,
+            status: "SETTLED",
+            totals: { ...check.totals, paid: 4_500, balance: 0 },
+          },
+        },
+      });
+    }
+    return route.fulfill({
+      status: 404,
+      json: { title: "Fixture route not found", status: 404 },
+    });
+  });
+
+  await page.goto("/");
+  const pendingRegion = page.getByRole("region", {
+    name: "Cobros pendientes",
+  });
+  await expect(pendingRegion).toBeVisible();
+  await pendingRegion.getByRole("button", { name: /Mesa 12/ }).click();
+  const payButton = pendingRegion.getByRole("button", { name: /Cobrar/ });
+  await expect(payButton).toBeDisabled();
+  await expect(
+    pendingRegion.getByText("Abrí una sesión en ARS para cobrar en efectivo."),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Abrir sesión" }).click();
+  await expect(payButton).toBeEnabled();
+  await payButton.click();
+  await expect(
+    pendingRegion.getByText("Cuenta de Mesa 12 cobrada y liquidada."),
+  ).toBeVisible();
+  await expect(pendingRegion.getByText("Cola al día")).toBeVisible();
+  await expectNoSeriousAccessibilityViolations(page);
 });

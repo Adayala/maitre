@@ -2111,3 +2111,127 @@ serialTest("Checks API rejects duplicate checks, invalid mutations, and invalid 
 
   await app.close();
 });
+
+serialTest("Pending checks are branch-scoped and expose server-calculated cashier context", async () => {
+  const container = await buildContainer();
+  const { tenantId, branchId } = await getContext(container);
+  const headers = ownerHeaders(container, tenantId);
+  const app = await buildApp(container);
+  const salon = (await container.salons.listByBranch(tenantId, branchId))[0]!;
+  const table = (await container.tables.listBySalon(tenantId, salon.id))[0]!;
+
+  const pendingVisit = (
+    await app.inject({
+      method: "POST",
+      url: "/v1/visits",
+      headers,
+      payload: { branchId, tableIds: [table.id], guestCount: 3 },
+    })
+  ).json().data;
+  const pendingCheck = (
+    await app.inject({
+      method: "POST",
+      url: `/v1/visits/${pendingVisit.id}/check`,
+      headers,
+      payload: { currency: "ARS" },
+    })
+  ).json().data;
+  await app.inject({
+    method: "POST",
+    url: `/v1/checks/${pendingCheck.id}/add-line`,
+    headers,
+    payload: { description: "Cena", amountMinorUnits: 12_500 },
+  });
+  await app.inject({
+    method: "POST",
+    url: `/v1/checks/${pendingCheck.id}/request-payment`,
+    headers,
+  });
+
+  const openVisit = (
+    await app.inject({
+      method: "POST",
+      url: "/v1/visits",
+      headers,
+      payload: { branchId, tableIds: [randomUUID()], guestCount: 1 },
+    })
+  ).json().data;
+  await app.inject({
+    method: "POST",
+    url: `/v1/visits/${openVisit.id}/check`,
+    headers,
+    payload: { currency: "ARS" },
+  });
+
+  const response = await app.inject({
+    method: "GET",
+    url: `/v1/branches/${branchId}/pending-checks`,
+    headers,
+  });
+  assert.equal(response.statusCode, 200);
+  const listed = response
+    .json()
+    .data.find((check: { id: string }) => check.id === pendingCheck.id);
+  assert.ok(listed);
+  assert.equal(
+    response.json().data.every((check: { status: string }) => check.status === "PAYMENT_PENDING"),
+    true,
+  );
+  assert.equal(listed.totals.netDue, 12_500);
+  assert.equal(listed.totals.balance, 12_500);
+  assert.equal(listed.paymentsSummary.paidMinorUnits, 0);
+  assert.equal(listed.visit.id, pendingVisit.id);
+  assert.equal(listed.visit.guestCount, 3);
+  assert.deepEqual(listed.tables, [
+    {
+      id: table.id,
+      number: table.number,
+      ...(table.name ? { name: table.name } : {}),
+    },
+  ]);
+
+  const now = new Date();
+  const scopedUser = {
+    id: randomUUID(),
+    identityProvider: "fixture",
+    externalIdentityId: "pending-checks-scoped-cashier",
+    displayName: "Scoped Cashier",
+    status: "ACTIVE" as const,
+    createdAt: now,
+    updatedAt: now,
+  };
+  await container.users.save(scopedUser);
+  await container.memberships.save({
+    id: randomUUID(),
+    tenantId,
+    userId: scopedUser.id,
+    status: "ACTIVE",
+    branchScopeType: "SELECTED_BRANCHES",
+    roleIds: ["role_cashier"],
+    branchIds: [randomUUID()],
+    activatedAt: now,
+    createdAt: now,
+    updatedAt: now,
+  });
+  const scopedToken = "pending-checks-scoped-cashier-token";
+  sessionsOf(container).registerToken(scopedToken, {
+    provider: "fixture",
+    subject: scopedUser.externalIdentityId,
+    issuedAt: now,
+    expiresAt: new Date(now.getTime() + 60 * 60 * 1000),
+  });
+
+  const forbidden = await app.inject({
+    method: "GET",
+    url: `/v1/branches/${branchId}/pending-checks`,
+    headers: {
+      authorization: `Bearer ${scopedToken}`,
+      "x-tenant-id": tenantId,
+    },
+  });
+  assert.equal(forbidden.statusCode, 403);
+  assert.equal(forbidden.headers["content-type"], "application/problem+json; charset=utf-8");
+  assert.equal(forbidden.json().code, "INSUFFICIENT_SCOPE");
+
+  await app.close();
+});

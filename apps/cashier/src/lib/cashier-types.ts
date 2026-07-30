@@ -2,6 +2,64 @@ export interface ApiData<T> {
   data: T;
 }
 
+export type PaymentMethod = "CASH" | "CARD" | "OTHER";
+
+export interface Payment {
+  id: string;
+  tenantId: string;
+  branchId: string;
+  checkId: string;
+  amountMinorUnits: number;
+  currency: string;
+  method: PaymentMethod;
+  status: "PENDING" | "AUTHORIZED" | "CAPTURED" | "FAILED" | "VOID";
+  idempotencyKey: string;
+  revision: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PendingCheck {
+  id: string;
+  tenantId: string;
+  branchId: string;
+  visitId: string;
+  currency: string;
+  lines: Array<{
+    id: string;
+    description: string;
+    amountMinorUnits: number;
+  }>;
+  status: "PAYMENT_PENDING";
+  updatedAt: string;
+  totals: {
+    gross: number;
+    discounts: number;
+    estimatedTax: number;
+    serviceCharges: number;
+    netDue: number;
+    paid: number;
+    balance: number;
+  };
+  paymentsSummary: {
+    count: number;
+    capturedCount: number;
+    refundCount: number;
+    paidMinorUnits: number;
+  };
+  visit: {
+    id: string;
+    status: "OPEN" | "CLOSING" | "CLOSED" | "CANCELLED";
+    guestCount: number;
+    tableIds: string[];
+  } | null;
+  tables: Array<{
+    id: string;
+    number: string;
+    name?: string;
+  }>;
+}
+
 export interface CashRegister {
   id: string;
   tenantId: string;

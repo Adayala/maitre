@@ -7,16 +7,20 @@ import { useSession } from "./session-context.js";
 // every request, so feature code just calls `api("/v1/...", { method, body })`.
 export function useApi() {
   const { accessToken } = useAuth();
-  const { selectedTenantId } = useSession();
+  const { selectedTenantId, selectedBranchId } = useSession();
 
   return useCallback(
-    <T>(path: string, options: Omit<RequestOptions, "accessToken" | "tenantId"> = {}): Promise<T> => {
+    <T>(
+      path: string,
+      options: Omit<RequestOptions, "accessToken" | "tenantId" | "branchId"> = {},
+    ): Promise<T> => {
       return apiRequest<T>(path, {
         accessToken: accessToken!,
         ...(selectedTenantId ? { tenantId: selectedTenantId } : {}),
+        ...(selectedBranchId ? { branchId: selectedBranchId } : {}),
         ...options,
       });
     },
-    [accessToken, selectedTenantId],
+    [accessToken, selectedBranchId, selectedTenantId],
   );
 }

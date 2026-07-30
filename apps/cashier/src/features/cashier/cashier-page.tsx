@@ -6,6 +6,7 @@ import { useApi } from "../../app/use-api.js";
 import { useSession } from "../../app/session-context.js";
 import { elapsedLabel, formatMoney } from "../../lib/format.js";
 import { ApiError } from "../../lib/api-client.js";
+import { PendingChecksPanel } from "./pending-checks-panel.js";
 import type {
   ApiData,
   CashMovement,
@@ -534,6 +535,8 @@ export function CashierPage() {
                 </div>
               </div>
             </article>
+
+            <PendingChecksPanel activeSession={activeSession} onSettled={refresh} />
 
             <article className="cashier-kpi-strip">
               <button

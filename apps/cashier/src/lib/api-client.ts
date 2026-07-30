@@ -16,6 +16,7 @@ export class ApiError extends Error {
 export interface RequestOptions {
   accessToken: string;
   tenantId?: string;
+  branchId?: string;
   method?: "GET" | "POST" | "PATCH" | "DELETE";
   body?: unknown;
 }
@@ -25,6 +26,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions): Prom
     Authorization: `Bearer ${options.accessToken}`,
   };
   if (options.tenantId) headers["X-Tenant-Id"] = options.tenantId;
+  if (options.branchId) headers["X-Branch-Id"] = options.branchId;
   if (options.body !== undefined) headers["Content-Type"] = "application/json";
 
   const response = await fetch(`${API_URL}${path}`, {
