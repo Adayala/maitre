@@ -681,88 +681,96 @@ export async function registerInvoiceRoutes(
 
   app.get<{ Params: { id: string } }>(
     "/v1/invoices/:id/document",
-    async (req, reply) => {
-      const correlationId = randomUUID();
-      try {
-        const ctx = await requireTenantContext(container, req);
-        requirePermission(ctx, "invoice:read");
-        const invoice = await container.invoices.findById(
-          ctx.tenantId,
-          req.params.id,
-        );
-        if (!invoice)
-          return sendProblem(reply, correlationId, notFound("Invoice"));
-        const pointOfSale = await container.fiscalPointsOfSale.findById(
-          ctx.tenantId,
-          invoice.pointOfSaleId,
-        );
-        const issuer = await container.fiscalEntities.findById(
-          ctx.tenantId,
-          invoice.fiscalEntityId,
-        );
-        if (!pointOfSale || !issuer) {
-          return sendProblem(
-            reply,
-            correlationId,
-            notFound("Fiscal document dependency"),
+    {
+      config: {
+        rateLimit: {
+          max: 30,
+          timeWindow: "1 minute",
+        },
+      },
+      handler: async (req, reply) => {
+        const correlationId = randomUUID();
+        try {
+          const ctx = await requireTenantContext(container, req);
+          requirePermission(ctx, "invoice:read");
+          const invoice = await container.invoices.findById(
+            ctx.tenantId,
+            req.params.id,
           );
-        }
-        if (
-          invoice.status !== "AUTHORIZED" ||
-          invoice.number == null ||
-          !invoice.cae ||
-          !invoice.caeExpiresAt ||
-          !invoice.authorizedAt
-        ) {
-          return sendProblem(
-            reply,
-            correlationId,
-            conflict(
-              "A fiscal document can only be rendered from an AUTHORIZED invoice",
-            ),
+          if (!invoice)
+            return sendProblem(reply, correlationId, notFound("Invoice"));
+          const pointOfSale = await container.fiscalPointsOfSale.findById(
+            ctx.tenantId,
+            invoice.pointOfSaleId,
           );
-        }
-        const qr = buildFiscalQrCode({
-          cuit: issuer.cuit,
-          voucherType: invoice.voucherType,
-          pointOfSaleCode: pointOfSale.officialCode,
-          number: invoice.number,
-          amountMinorUnits: invoice.totals.grossMinorUnits,
-          currency: invoice.currency,
-          cae: invoice.cae,
-          caeExpiresAt: invoice.caeExpiresAt,
-          authorizedAt: invoice.authorizedAt,
-        });
-        const document = renderAuthorizedInvoiceDocument({
-          invoice,
-          issuer: {
+          const issuer = await container.fiscalEntities.findById(
+            ctx.tenantId,
+            invoice.fiscalEntityId,
+          );
+          if (!pointOfSale || !issuer) {
+            return sendProblem(
+              reply,
+              correlationId,
+              notFound("Fiscal document dependency"),
+            );
+          }
+          if (
+            invoice.status !== "AUTHORIZED" ||
+            invoice.number == null ||
+            !invoice.cae ||
+            !invoice.caeExpiresAt ||
+            !invoice.authorizedAt
+          ) {
+            return sendProblem(
+              reply,
+              correlationId,
+              conflict(
+                "A fiscal document can only be rendered from an AUTHORIZED invoice",
+              ),
+            );
+          }
+          const qr = buildFiscalQrCode({
             cuit: issuer.cuit,
-            legalName: issuer.legalName ?? issuer.name,
-            ...(issuer.displayName ? { displayName: issuer.displayName } : {}),
-            ...(issuer.fiscalAddress
-              ? { fiscalAddress: issuer.fiscalAddress }
-              : {}),
-            taxCondition: issuer.taxCondition,
-          },
-          pointOfSale: {
-            officialCode: pointOfSale.officialCode,
-            ...(pointOfSale.arcaDomicileLabel
-              ? { domicileLabel: pointOfSale.arcaDomicileLabel }
-              : {}),
-          },
-          qr,
-        });
-        reply
-          .header("Content-Type", `${document.mediaType}; charset=utf-8`)
-          .header(
-            "Content-Disposition",
-            `attachment; filename="${document.fileName}"`,
-          )
-          .header("ETag", `"${document.contentHash}"`);
-        return document.html;
-      } catch (err) {
-        return sendMapped(reply, correlationId, err, "Invoice");
-      }
+            voucherType: invoice.voucherType,
+            pointOfSaleCode: pointOfSale.officialCode,
+            number: invoice.number,
+            amountMinorUnits: invoice.totals.grossMinorUnits,
+            currency: invoice.currency,
+            cae: invoice.cae,
+            caeExpiresAt: invoice.caeExpiresAt,
+            authorizedAt: invoice.authorizedAt,
+          });
+          const document = renderAuthorizedInvoiceDocument({
+            invoice,
+            issuer: {
+              cuit: issuer.cuit,
+              legalName: issuer.legalName ?? issuer.name,
+              ...(issuer.displayName ? { displayName: issuer.displayName } : {}),
+              ...(issuer.fiscalAddress
+                ? { fiscalAddress: issuer.fiscalAddress }
+                : {}),
+              taxCondition: issuer.taxCondition,
+            },
+            pointOfSale: {
+              officialCode: pointOfSale.officialCode,
+              ...(pointOfSale.arcaDomicileLabel
+                ? { domicileLabel: pointOfSale.arcaDomicileLabel }
+                : {}),
+            },
+            qr,
+          });
+          reply
+            .header("Content-Type", `${document.mediaType}; charset=utf-8`)
+            .header(
+              "Content-Disposition",
+              `attachment; filename="${document.fileName}"`,
+            )
+            .header("ETag", `"${document.contentHash}"`);
+          return document.html;
+        } catch (err) {
+          return sendMapped(reply, correlationId, err, "Invoice");
+        }
+      },
     },
   );
 
