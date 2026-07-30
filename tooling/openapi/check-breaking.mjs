@@ -201,9 +201,22 @@ async function main() {
     baselineText = execFileSync(
       "git",
       ["show", `${baseRef}:apps/api/openapi/openapi.json`],
-      { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] },
+      {
+        encoding: "utf8",
+        maxBuffer: 16 * 1024 * 1024,
+        stdio: ["ignore", "pipe", "pipe"],
+      },
     );
-  } catch {
+  } catch (error) {
+    const stderr =
+      error && typeof error === "object" && "stderr" in error
+        ? String(error.stderr)
+        : "";
+    if (
+      !stderr.includes("path 'apps/api/openapi/openapi.json' does not exist in")
+    ) {
+      throw error;
+    }
     process.stdout.write(
       `No baseline OpenAPI artifact at ${baseRef}; accepting initial baseline.\n`,
     );
