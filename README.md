@@ -31,6 +31,17 @@ El proyecto sigue un enfoque **Spec-Driven Development (SDD)**: primero se defin
 
 La arquitectura mantiene dominio, datos e integraciones desacoplados de Vercel para permitir que frontend, APIs, workers o persistencia migren de forma independiente cuando el crecimiento lo requiera. Los criterios completos están en [Stack técnico y estrategia de plataforma](docs/sdd/TECH_STACK.md).
 
+## Apps desplegadas
+
+| App | URL |
+| --- | --- |
+| Customer | [maitre-customer.vercel.app](https://maitre-customer.vercel.app) |
+| Waiter | [maitre-waiter.vercel.app](https://maitre-waiter.vercel.app) |
+| Host | [maitre-host.vercel.app](https://maitre-host.vercel.app) |
+| Kitchen | [maitre-kitchen.vercel.app](https://maitre-kitchen.vercel.app) |
+| Cashier | [maitre-cashier.vercel.app](https://maitre-cashier.vercel.app) |
+| Dash | [maitre-dash.vercel.app](https://maitre-dash.vercel.app) |
+
 ## Documentación
 
 ### Producto y fundamentos

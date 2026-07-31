@@ -1,12 +1,12 @@
 # Specifications Catalog — Maitre MVP
 
-Índice maestro de especificaciones (SPEC-001 a SPEC-226) para el MVP de Maitre.
+Índice maestro de especificaciones (SPEC-001 a SPEC-232) para el MVP de Maitre.
 
 Formato: **SPEC-NNN | Título | Tipo | Dominio | Fase | Prioridad | Estado | Readiness**
 
 > Nota: este catálogo fue regenerado leyendo directamente el `README.md` de cada carpeta en `docs/sdd/spec-*`, ya que la numeración y contenido habían divergido de versiones anteriores de este archivo.
 
-> Estado operativo relevado el **27 de julio de 2026**: el runtime local contra Supabase ya quedó validado para organization, floor, reservations, ordering, kitchen y cash. El frente fiscal ya tiene adapters, rutas, migration aplicada (`supabase/migrations/20260727143000_fiscal_domain.sql`) y validación live de create/validate/issue/QR con una `FACTURA_A` técnica. La emisión sigue usando ARCA simulado, por lo que el flujo es técnicamente operativo pero no fiscal/legalmente productivo todavía.
+> Estado operativo relevado el **31 de julio de 2026**: el runtime local contra Supabase ya quedó validado para organization, floor, reservations, ordering, kitchen y cash. El frente fiscal ARCA dejó de ser simulado en el código: `packages/arca-client` implementa un cliente real de WSAA (autenticación/TA con firma CMS y cache de ticket) y WSFEv1 (`packages/arca-client/src/wsaa.ts`, `wsfev1.ts`, `cms.ts`), y `packages/modules/fiscal` expone `Wsfev1ArcaAdapter` junto al `SimulatedArcaAdapter` histórico. `apps/api/src/composition/container.ts` (`buildArcaAdapter`) selecciona el driver vía `FISCAL_ARCA_DRIVER` (default `simulated`; `wsfev1` habilita el driver real) con gating explícito de homologación/producción y falla cerrado si la configuración de credenciales es inválida — nunca cae a CAE falso por error de config. Gaps conocidos que persisten: no hay registro de discrepancias de reconciliación (SPEC-153 sigue sin disparadores reales), la coordinación de numeración/secuencia de comprobantes es solo in-process (sin lock distribuido, ver SPEC-155), `subscriberFiscalEntityId` sigue siendo opcional, y no hay chequeo de ownership de sucursal antes de contactar ARCA salvo la validación puntual en `invoices.ts` para el punto de venta de producción. Es decir: el adapter ya es real y apto para homologación, pero la productivización fiscal/legal plena todavía tiene estos pendientes.
 
 ---
 
@@ -168,7 +168,7 @@ Formato: **SPEC-NNN | Título | Tipo | Dominio | Fase | Prioridad | Estado | Rea
 
 ## Billing & Tax
 
-- [ ] **SPEC-145** | Integración fiscal ARCA | API | Billing & Tax | Fase 4 | P0 | IN_PROGRESS | WALKING_SKELETON_I0 (SimulatedArcaAdapter — fake CAE, sin WSAA/WSFEv1 real, no apto para emisión)
+- [ ] **SPEC-145** | Integración fiscal ARCA | API | Billing & Tax | Fase 4 | P0 | IN_PROGRESS | WALKING_SKELETON_I0 (Wsfev1ArcaAdapter real con WSAA/WSFEv1 disponible tras `FISCAL_ARCA_DRIVER=wsfev1`; default sigue en SimulatedArcaAdapter, sin ownership de sucursal ni reconciliación de discrepancias)
 
 ---
 
@@ -257,6 +257,27 @@ Formato: **SPEC-NNN | Título | Tipo | Dominio | Fase | Prioridad | Estado | Rea
 
 ---
 
+## Customer Experience
+
+- [ ] **SPEC-227** | Customer Public App | App | Customer Experience | Fase I0+ | P1 | DRAFT | SPECIFIED
+
+---
+
+## Subscription (catálogo comercial)
+
+- [ ] **SPEC-228** | SubscriptionCatalogItem Entity | Entity | Subscription | Fase 1 | P0 | IN_PROGRESS | NOT_ASSESSED
+- [ ] **SPEC-229** | SubscriptionCatalogPackage Entity | Entity | Subscription | Fase 1 | P1 | IN_PROGRESS | NOT_ASSESSED
+- [ ] **SPEC-230** | Subscription Access API | API | Subscription | Fase 1 | P0 | READY_FOR_IMPLEMENTATION | PROPOSED_FOR_REVIEW
+- [ ] **SPEC-231** | Subscription Surface Gating | App | Subscription | Fase 1 | P0 | READY_FOR_IMPLEMENTATION | PROPOSED_FOR_REVIEW
+
+---
+
+## Organization / UX
+
+- [ ] **SPEC-232** | Presentación de marca multi-tenant | Transversal | Organization / UX | Fase — | P0 | IMPLEMENTED_PENDING_REMOTE_MIGRATION | —
+
+---
+
 ## Specs pendientes de especificar (stubs / placeholders)
 
 Estas carpetas existen pero su `README.md` no fue completado (contenido tipo TBD / plantilla de peer review).
@@ -311,7 +332,7 @@ Estas carpetas existen pero su `README.md` no fue completado (contenido tipo TBD
 - [ ] **SPEC-150** | Invoice/Libro IVA Export | API | Fiscal | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
 - [ ] **SPEC-151** | InvoiceValidated Event | Event | Fiscal | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
 - [ ] **SPEC-152** | InvoiceAuthorized Event | Event | Fiscal | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
-- [ ] **SPEC-153** | FiscalAuthorizationResolved Event | Event | Fiscal | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0 (no code path triggers this — simulated adapter never resolves ambiguously)
+- [ ] **SPEC-153** | FiscalAuthorizationResolved Event | Event | Fiscal | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0 (aún sin disparador real: el adapter WSFEv1 real ya puede fallar/ambiguar, pero no hay registro de discrepancia de reconciliación que emita este evento)
 - [ ] **SPEC-154** | Tax Calculation | Calculation | Fiscal | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
 - [ ] **SPEC-155** | FiscalPointOfSale y Numbering | Calculation | Fiscal | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0
 - [ ] **SPEC-156** | Fiscal Compliance Rules | Rules | Fiscal | Fase 3 | UNASSIGNED | IN_PROGRESS | WALKING_SKELETON_I0 (placeholder — ver README)
@@ -372,9 +393,9 @@ Estas carpetas existen pero su `README.md` no fue completado (contenido tipo TBD
 
 | Categoría | Cantidad |
 | --- | --- |
-| Specs con contenido completo | 90 |
+| Specs con contenido completo | 96 |
 | Specs stub/placeholder | 136 |
-| **TOTAL** | **226** |
+| **TOTAL** | **232** |
 
 ---
 
