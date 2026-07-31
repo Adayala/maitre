@@ -212,9 +212,10 @@ jobs:
           npm ci
           npx playwright install --with-deps chromium
 
-      - name: Build API, Floor, Kitchen and Cash
+      - name: Build API, Dash, Floor, Kitchen and Cash
         run: |
           npm run build --workspace apps/api
+          npm run build --workspace apps/web
           npm run build --workspace apps/waiter
           npm run build --workspace apps/kitchen
           npm run build --workspace apps/cashier
@@ -351,4 +352,8 @@ jobs:
               --env-file .vercel/.env.production.local \
               --expect demo
           fi
-          npx --yes vercel@57 deploy --prod --yes --token="$VERCEL_TOKEN"
+          deployment_url="$(npx --yes vercel@57 deploy --prod --yes --token="$VERCEL_TOKEN")"
+          echo "Deployment ready at $deployment_url"
+          if [[ "${{ matrix.name }}" == "api" ]]; then
+            node tooling/deployment/check-deployment-health.mjs "$deployment_url"
+          fi

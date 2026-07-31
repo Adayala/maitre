@@ -2,8 +2,8 @@
 
 This runbook records the current operational capability for SPEC-216 and
 SPEC-222. Local instrumentation and deterministic test evidence are available.
-OTLP export is environment-configurable. No remote backend, dashboards, alerts
-or SLO enforcement are approved by default.
+OTLP export is environment-configurable. ADR-005 intentionally keeps the MVP
+Demo without a remote backend, dashboards, alerts or SLO enforcement.
 
 ## Capability status
 
@@ -18,6 +18,7 @@ or SLO enforcement are approved by default.
 | Outbox backlog/age/retry signals            | `OPERATIONAL_LOCAL`        | Aggregate memory/PostgreSQL projection            |
 | Dashboards, alerts and paging               | `NOT_OPERATIONAL`          | No approved backend, owner or channel             |
 | SLO/error-budget enforcement                | `NOT_OPERATIONAL`          | Baseline and activation gate are pending          |
+| Authoritative synthetic release gate        | `OPERATIONAL_CI`           | Durable Supabase journey required before deploy   |
 
 ## Reproducible cost and overhead evidence
 
@@ -91,7 +92,8 @@ instrumentation defect rather than a business rollback.
 
 ## Activation gate
 
-Remote capability can change from `NOT_OPERATIONAL` only after an ADR records:
+ADR-005 keeps remote capability `NOT_OPERATIONAL` for MVP Demo. A successor
+decision can activate it only after recording:
 backend and retention, data region, operating owner, notification channel,
 measured baseline, alert thresholds, cost estimate and an end-to-end alert
 test. The same evidence is required before an SLO can block a release.

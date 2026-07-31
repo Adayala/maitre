@@ -31,6 +31,8 @@ test("deployment preflight accepts only an explicit durable profile", () => {
         AUTH_DRIVER: "supabase",
         SUPABASE_URL: "https://project.example.test",
         SUPABASE_SECRET_KEY: "unit-test-key",
+        CORS_ALLOWED_ORIGINS:
+          "https://waiter.example.test,https://cash.example.test",
       },
       "production",
     ),
@@ -41,6 +43,7 @@ test("deployment preflight accepts only an explicit durable profile", () => {
       durable: true,
       supabaseUrlConfigured: true,
       serverCredentialConfigured: true,
+      corsAllowedOriginCount: 2,
     },
   );
 });
@@ -52,6 +55,7 @@ test("deployment preflight rejects missing, mismatched and ephemeral profiles", 
     AUTH_DRIVER: "supabase",
     SUPABASE_URL: "https://project.example.test",
     SUPABASE_SECRET_KEY: "unit-test-key",
+    CORS_ALLOWED_ORIGINS: "https://waiter.example.test",
   };
   for (const [field, value, message] of [
     ["APP_ENV", "preview", /APP_ENV must equal production/],
@@ -59,6 +63,7 @@ test("deployment preflight rejects missing, mismatched and ephemeral profiles", 
     ["AUTH_DRIVER", "fixture", /AUTH_DRIVER/],
     ["SUPABASE_URL", "", /SUPABASE_URL/],
     ["SUPABASE_SECRET_KEY", "", /server-side Supabase secret/],
+    ["CORS_ALLOWED_ORIGINS", "", /CORS_ALLOWED_ORIGINS/],
   ]) {
     assert.throws(
       () =>
@@ -71,6 +76,31 @@ test("deployment preflight rejects missing, mismatched and ephemeral profiles", 
   }
 });
 
+test("deployment preflight rejects wildcard and non-origin CORS values", () => {
+  const valid = {
+    APP_ENV: "demo",
+    PERSISTENCE_DRIVER: "supabase",
+    AUTH_DRIVER: "supabase",
+    SUPABASE_URL: "https://project.example.test",
+    SUPABASE_SECRET_KEY: "unit-test-key",
+  };
+  for (const value of [
+    "https://*.example.test",
+    "https://example.test/path",
+    "https://user:password@example.test",
+    "not-a-url",
+  ]) {
+    assert.throws(
+      () =>
+        validateDeploymentRuntimeProfile(
+          { ...valid, CORS_ALLOWED_ORIGINS: value },
+          "demo",
+        ),
+      /CORS_ALLOWED_ORIGINS/,
+    );
+  }
+});
+
 test("Vercel production workflows validate Maitre's logical demo environment", () => {
   for (const workflow of ["deploy.yml", "e2e.yml"]) {
     const contents = readFileSync(
@@ -79,5 +109,6 @@ test("Vercel production workflows validate Maitre's logical demo environment", (
     );
     assert.match(contents, /--expect demo/);
     assert.doesNotMatch(contents, /--expect production/);
+    assert.match(contents, /check-deployment-health\.mjs/);
   }
 });

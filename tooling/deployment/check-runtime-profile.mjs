@@ -48,6 +48,9 @@ export function validateDeploymentRuntimeProfile(environment, expected) {
       "A server-side Supabase secret is required for a shared deployment",
     );
   }
+  const corsAllowedOrigins = validateCorsAllowedOrigins(
+    environment["CORS_ALLOWED_ORIGINS"],
+  );
   return {
     environment: expected,
     persistenceDriver: "supabase",
@@ -55,7 +58,40 @@ export function validateDeploymentRuntimeProfile(environment, expected) {
     durable: true,
     supabaseUrlConfigured: true,
     serverCredentialConfigured: true,
+    corsAllowedOriginCount: corsAllowedOrigins.length,
   };
+}
+
+export function validateCorsAllowedOrigins(value) {
+  if (!value) {
+    throw new Error("CORS_ALLOWED_ORIGINS is required for a shared deployment");
+  }
+  const origins = [...new Set(value.split(",").map((origin) => origin.trim()))];
+  if (origins.some((origin) => !origin)) {
+    throw new Error("CORS_ALLOWED_ORIGINS contains an empty origin");
+  }
+  for (const origin of origins) {
+    let parsed;
+    try {
+      parsed = new URL(origin);
+    } catch {
+      throw new Error(
+        `CORS_ALLOWED_ORIGINS contains an invalid URL: ${origin}`,
+      );
+    }
+    if (
+      parsed.origin !== origin ||
+      !["http:", "https:"].includes(parsed.protocol) ||
+      parsed.username ||
+      parsed.password ||
+      parsed.hostname.includes("*")
+    ) {
+      throw new Error(
+        `CORS_ALLOWED_ORIGINS must contain exact HTTP(S) origins: ${origin}`,
+      );
+    }
+  }
+  return origins;
 }
 
 async function main() {

@@ -15,6 +15,7 @@ const TENANT_ID = "00000000-0000-0000-0000-000000000001";
 const BRANCH_ID = "00000000-0000-0000-0000-000000000003";
 
 interface ApplicationPages {
+  dash: Page;
   floor: Page;
   kitchen: Page;
   cash: Page;
@@ -43,14 +44,16 @@ export const test = base.extend<JourneyFixtures>({
   apps: async ({ browser, manifest }, use, testInfo) => {
     const diagnostics: Array<Record<string, unknown>> = [];
     const resources = await Promise.all([
+      applicationPage(browser, "dash", manifest, diagnostics),
       applicationPage(browser, "floor", manifest, diagnostics),
       applicationPage(browser, "kitchen", manifest, diagnostics),
       applicationPage(browser, "cash", manifest, diagnostics),
     ]);
     const apps = {
-      floor: resources[0].page,
-      kitchen: resources[1].page,
-      cash: resources[2].page,
+      dash: resources[0].page,
+      floor: resources[1].page,
+      kitchen: resources[2].page,
+      cash: resources[3].page,
     };
 
     await use(apps);
@@ -72,6 +75,13 @@ async function applicationPage(
   diagnostics: Array<Record<string, unknown>>,
 ): Promise<{ context: BrowserContext; page: Page }> {
   const configuration = {
+    dash: {
+      tokenKey: "maitre.fixtureAccessToken",
+      token: tokenForRole("auditor"),
+      localValues: {
+        "maitre.selectedTenantId": TENANT_ID,
+      },
+    },
     floor: {
       tokenKey: "maitre.waiter.fixtureAccessToken",
       token: tokenForRole("waiter"),

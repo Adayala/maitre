@@ -15,25 +15,24 @@
       "branchCount": 1
     },
     "operations": {
-      "status": "UNAVAILABLE",
+      "status": "AVAILABLE",
       "asOf": "ISO8601",
-      "reason": "Floor/Ordering/Payments domains not implemented yet (Fase 2)",
-      "openVisits": null,
-      "occupiedTables": null,
-      "activeOrders": null,
-      "pendingPayments": null
+      "openVisits": 3,
+      "occupiedTables": 4,
+      "activeOrders": 2,
+      "pendingPayments": 1
     },
     "lastUpdated": "ISO8601"
   }
 }
 ```
 
-El I0 actual no expone `sections`, `metrics`, `freshness`, `sourceRevision`, `overviewRevision` ni
-`ETag`. Devuelve un resumen simple con dos bloques:
+El contrato actual no expone todavía `sections`, `metrics`, `freshness`, `sourceRevision`,
+`overviewRevision` ni `ETag`. Devuelve un resumen simple con dos bloques:
 
 - `setup`: estado básico del tenant sembrado (`tenantName`, `brandCount`, `branchCount`);
-- `operations`: bloque degradado `UNAVAILABLE` mientras Floor/Ordering/Payments no están integrados
-  en esta vista.
+- `operations`: conteos autoritativos de Floor, Ordering y Payments, limitados a las sucursales
+  permitidas por el membership.
 
-Una dependencia faltante no fabrica cero operativo: el bloque `operations` devuelve `null` en sus
-contadores y un `reason` explícito.
+Si una fuente operacional falla, el bloque `operations` degrada a `UNAVAILABLE`, devuelve `null`
+en todos sus contadores y un `reason` estable. No fabrica ceros.

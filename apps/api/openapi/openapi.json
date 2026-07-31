@@ -19942,24 +19942,56 @@
                           "additionalProperties": false,
                           "properties": {
                             "activeOrders": {
-                              "type": "null"
+                              "anyOf": [
+                                {
+                                  "type": "null"
+                                },
+                                {
+                                  "type": "number"
+                                }
+                              ]
                             },
                             "asOf": {
                               "type": "string"
                             },
                             "occupiedTables": {
-                              "type": "null"
+                              "anyOf": [
+                                {
+                                  "type": "null"
+                                },
+                                {
+                                  "type": "number"
+                                }
+                              ]
                             },
                             "openVisits": {
-                              "type": "null"
+                              "anyOf": [
+                                {
+                                  "type": "null"
+                                },
+                                {
+                                  "type": "number"
+                                }
+                              ]
                             },
                             "pendingPayments": {
-                              "type": "null"
+                              "anyOf": [
+                                {
+                                  "type": "null"
+                                },
+                                {
+                                  "type": "number"
+                                }
+                              ]
                             },
                             "reason": {
                               "type": "string"
                             },
                             "status": {
+                              "enum": [
+                                "AVAILABLE",
+                                "UNAVAILABLE"
+                              ],
                               "type": "string"
                             }
                           },
@@ -19969,7 +20001,6 @@
                             "occupiedTables",
                             "openVisits",
                             "pendingPayments",
-                            "reason",
                             "status"
                           ],
                           "type": "object"

@@ -1,7 +1,10 @@
 import type { FastifyInstance } from "fastify";
 import { randomUUID } from "node:crypto";
 import type { Container } from "../composition/container.js";
-import { requireTenantContext, requirePermission } from "../http/request-context.js";
+import {
+  requireTenantContext,
+  requirePermission,
+} from "../http/request-context.js";
 import { sendProblem } from "../http/problem-details.js";
 
 type SetupItemStatus = "COMPLETE" | "INCOMPLETE" | "BLOCKED";
@@ -12,6 +15,23 @@ interface SetupItem {
   count: number;
   required: number;
   actionLink?: string;
+}
+
+interface OperationsSnapshot {
+  openVisits: number;
+  occupiedTables: number;
+  activeOrders: number;
+  pendingPayments: number;
+}
+
+interface OperationsResponse {
+  status: "AVAILABLE" | "UNAVAILABLE";
+  asOf: string;
+  reason?: string;
+  openVisits: number | null;
+  occupiedTables: number | null;
+  activeOrders: number | null;
+  pendingPayments: number | null;
 }
 
 // SPEC-046 — GET /v1/dashboard/setup-status. Derived from authoritative
@@ -30,7 +50,9 @@ export async function registerDashboardRoutes(
       const tenant = await container.tenants.findById(ctx.tenantId);
       const brands = await container.brands.listByTenant(ctx.tenantId);
       const branches = await container.branches.listByTenant(ctx.tenantId);
-      const memberships = await container.memberships.listByTenant(ctx.tenantId);
+      const memberships = await container.memberships.listByTenant(
+        ctx.tenantId,
+      );
 
       let menuCount = 0;
       let productCount = 0;
@@ -38,7 +60,10 @@ export async function registerDashboardRoutes(
         const menus = await container.menus.listByBrand(ctx.tenantId, brand.id);
         menuCount += menus.length;
         for (const menu of menus) {
-          const categories = await container.categories.listByMenu(ctx.tenantId, menu.id);
+          const categories = await container.categories.listByMenu(
+            ctx.tenantId,
+            menu.id,
+          );
           for (const category of categories) {
             const products = await container.products.listByCategory(
               ctx.tenantId,
@@ -116,11 +141,9 @@ export async function registerDashboardRoutes(
     }
   });
 
-  // SPEC-047 — GET /v1/dashboard/overview. Operational metrics (visits,
-  // occupied tables, active orders, pending payments) depend on Floor/
-  // Ordering/Payments (Fase 2), which don't exist yet — reported as
-  // UNAVAILABLE rather than fabricated zeros, per the spec's own contract
-  // ("una dependencia fallida no fabrica cero").
+  // SPEC-047 — GET /v1/dashboard/overview. Operational metrics are derived
+  // from the authoritative Floor, Ordering and Payment repositories. Source
+  // failures degrade only the operations section and never fabricate zeroes.
   app.get("/v1/dashboard/overview", async (req, reply) => {
     const correlationId = randomUUID();
     try {
@@ -130,7 +153,40 @@ export async function registerDashboardRoutes(
       const tenant = await container.tenants.findById(ctx.tenantId);
       const brands = await container.brands.listByTenant(ctx.tenantId);
       const branches = await container.branches.listByTenant(ctx.tenantId);
+      const visibleBranches =
+        ctx.branchScopeType === "ALL_BRANCHES"
+          ? branches
+          : branches.filter((branch) => ctx.branchIds.includes(branch.id));
       const now = new Date().toISOString();
+      let operations: OperationsResponse;
+      try {
+        operations = {
+          status: "AVAILABLE",
+          asOf: now,
+          ...(await loadOperationsSnapshot(
+            container,
+            ctx.tenantId,
+            visibleBranches.map(({ id }) => id),
+          )),
+        };
+      } catch (error) {
+        req.log.error(
+          {
+            eventCode: "DASHBOARD_OPERATIONS_SOURCE_FAILED",
+            errorName: error instanceof Error ? error.name : "UnknownError",
+          },
+          "dashboard operations source failed",
+        );
+        operations = {
+          status: "UNAVAILABLE",
+          asOf: now,
+          reason: "Operational sources unavailable",
+          openVisits: null,
+          occupiedTables: null,
+          activeOrders: null,
+          pendingPayments: null,
+        };
+      }
 
       return {
         data: {
@@ -141,15 +197,7 @@ export async function registerDashboardRoutes(
             brandCount: brands.length,
             branchCount: branches.length,
           },
-          operations: {
-            status: "UNAVAILABLE",
-            asOf: now,
-            reason: "Floor/Ordering/Payments domains not implemented yet (Fase 2)",
-            openVisits: null,
-            occupiedTables: null,
-            activeOrders: null,
-            pendingPayments: null,
-          },
+          operations,
           lastUpdated: now,
         },
       };
@@ -157,4 +205,56 @@ export async function registerDashboardRoutes(
       return sendProblem(reply, correlationId, err);
     }
   });
+}
+
+async function loadOperationsSnapshot(
+  container: Container,
+  tenantId: string,
+  branchIds: string[],
+): Promise<OperationsSnapshot> {
+  const visits = (
+    await Promise.all(
+      branchIds.map((branchId) =>
+        container.visits.listByBranch(tenantId, branchId),
+      ),
+    )
+  ).flat();
+  const occupanciesByVisit = await Promise.all(
+    visits.map((visit) =>
+      container.occupancies.listByVisit(tenantId, visit.id),
+    ),
+  );
+  const ordersByVisit = await Promise.all(
+    visits.map((visit) => container.orders.listByVisit(tenantId, visit.id)),
+  );
+  const checks = (
+    await Promise.all(
+      branchIds.map((branchId) =>
+        container.checks.listByBranch(tenantId, branchId),
+      ),
+    )
+  ).flat();
+  const paymentsByCheck = await Promise.all(
+    checks.map((check) => container.payments.listByCheck(tenantId, check.id)),
+  );
+
+  return {
+    openVisits: visits.filter(
+      ({ status }) => status === "OPEN" || status === "CLOSING",
+    ).length,
+    occupiedTables: new Set(
+      occupanciesByVisit
+        .flat()
+        .filter(({ status }) => status === "ACTIVE")
+        .map(({ tableId }) => tableId),
+    ).size,
+    activeOrders: ordersByVisit
+      .flat()
+      .filter(({ status }) => status !== "DELIVERED" && status !== "CANCELLED")
+      .length,
+    pendingPayments: paymentsByCheck
+      .flat()
+      .filter(({ status }) => status === "PENDING" || status === "AUTHORIZED")
+      .length,
+  };
 }
