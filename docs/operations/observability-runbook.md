@@ -5,6 +5,9 @@ SPEC-222. Local instrumentation and deterministic test evidence are available.
 OTLP export is environment-configurable. ADR-005 intentionally keeps the MVP
 Demo without a remote backend, dashboards, alerts or SLO enforcement.
 
+For the consolidated implementation/evidence map, see the
+[MVP gap closure record](mvp-gap-closure-2026-07-30.md).
+
 ## Capability status
 
 | Capability                                  | Status                     | Evidence                                          |

@@ -11,8 +11,8 @@
 - [x] Agregar tests unitarios del detector de impacto.
 - [x] Desplegar desde `main` sólo después de Quality y E2E exitosos.
 - [x] Habilitar redespliegue completo mediante `workflow_dispatch`.
-- [ ] Crear check agregador para path filtering.
-- [ ] Publicar reports y metadata por SHA.
+- [x] Crear check agregador para path filtering.
+- [x] Publicar reports y metadata por SHA.
 - [ ] Desplegar previews con datos sintéticos.
 - [ ] Separar el deploy vigente desde `main` de una promoción staged sin rebuild con
       `APP_ENV=demo`.
@@ -27,3 +27,8 @@
 - [ ] Medir métricas de entrega y revisar cuellos de botella.
 - [ ] Probar PR de fork/no confiable sin exposición de secrets.
 - [ ] Verificar que Preview no dispone de `DATABASE_MIGRATION_URL`.
+
+El gate agregado vigente se llama `E2E gate`. La evidencia de Quality, Playwright y MVP-J-001 se
+publica por run/attempt y conserva el SHA en metadata del workflow. Existen probes de health
+post-deploy y un synthetic durable pre-deploy; la tarea combinada de smoke/synthetic/observación
+post-deploy permanece abierta hasta operar telemetría remota.

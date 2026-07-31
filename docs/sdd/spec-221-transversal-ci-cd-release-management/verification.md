@@ -6,16 +6,16 @@
 
 - [x] checkout limpio reproduce instalación, tests y build;
 - [ ] commit inválido y secret canario bloquean pipeline;
-- [ ] cambio breaking OpenAPI no aprobado falla;
+- [x] cambio breaking OpenAPI no aprobado falla;
 - [ ] violación arquitectónica, RLS o Sonar bloquea merge;
 - [x] run obsoleto se cancela por workflow/ref sin cancelar otra rama;
 - [x] detector de impacto tiene tests y usa fallback completo para rutas compartidas/desconocidas;
-- [ ] `ci/required` reporta resultado único y no queda pending en docs-only;
+- [x] `E2E gate` agrega matrices selectivas y el journey release sin quedar pending en docs-only;
 - [ ] workflows declaran permisos mínimos y third-party actions están fijadas por SHA.
 
-Evidencia operativa parcial: PR #27 y workflow `End-to-end` del commit
-`fb9c7037e94d27210f47f6fad6e4b033676fac68`. Las actions están fijadas por versión mayor, no por
-SHA; ese criterio continúa abierto.
+Evidencia operativa actual:
+[cierre de gaps del MVP](../../operations/mvp-gap-closure-2026-07-30.md) y workflow `End-to-end`.
+Las actions están fijadas por versión mayor, no por SHA; ese criterio continúa abierto.
 
 ### CAD-221-02 — Previews y ambientes compartidos usan secretos, datos y permisos mínimos autorizados
 

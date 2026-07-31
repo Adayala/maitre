@@ -39,3 +39,13 @@ Contrato para detectar, entender y recuperar fallos de Maitre con telemetría po
 - [Contrato de telemetría I0](i0-telemetry-contract.md)
 
 I0 implementa correlación, logs seguros, health y evidencia local/CI. SLOs, dashboards y alertas permanecen `NOT_OPERATIONAL` hasta seleccionar un backend/canal y asignar owner.
+
+## Estado implementado del MVP Demo — 2026-07-30
+
+`TelemetryPort`, el adapter OpenTelemetry OTLP, RED HTTP, auth/context/DB, señales del recorrido,
+salud del outbox, métricas de audit y evidencia sanitizada están implementados y forman parte del
+quality/release gate. El exporter remoto está `AVAILABLE_NOT_CONFIGURED`.
+
+ADR-005 mantiene dashboards, alertas, paging y SLO/error-budget en `NOT_OPERATIONAL`; por eso la
+SPEC conserva su blocker de aprobación/owner. Consulta el [runbook](../../operations/observability-runbook.md)
+y la [matriz de cierre](../../operations/mvp-gap-closure-2026-07-30.md).

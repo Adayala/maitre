@@ -5,6 +5,19 @@ boundary. The route registry in `apps/api/src/http/mutation-audit.ts` is the
 source of truth for covered HTTP commands and stable business action codes.
 Application startup rejects a covered mutation route without a policy.
 
+## Coverage status
+
+| Domain | HTTP coverage | Representative release evidence |
+| --- | --- | --- |
+| Floor | Every state-changing route has policy | `VISIT_OPENED`, `VISIT_CLOSED` |
+| Ordering | Every state-changing route has policy | `ORDER_SUBMITTED`, `CHECK_SETTLED` |
+| Kitchen | Every state-changing route has policy | `KITCHEN_COMMAND_SERVED` |
+| Cash/Payment | Every state-changing route has policy | `PAYMENT_CAPTURED` |
+
+The coverage matrix proves mandatory instrumentation at the HTTP boundary. Exhaustive
+transition/idempotency assertions and transactional rollback remain open until the audit-aware
+unit of work exists. See the [MVP gap closure record](mvp-gap-closure-2026-07-30.md).
+
 ## Evidence contract
 
 Each terminal attempt records tenant, permitted branch when known, actor,

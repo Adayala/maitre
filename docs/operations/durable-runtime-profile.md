@@ -26,8 +26,8 @@ missing CORS origins.
 
 Provider status `Ready` is not release evidence by itself. After deployment, CI calls both
 `/health/live` and `/health/ready` on the immutable deployment URL and fails unless they return
-JSON with `ok` and `ready`. This catches serverless startup/configuration failures before the job is
-considered successful.
+JSON with status `ok` and `ready`, respectively. This catches serverless
+startup/configuration failures before the job is considered successful.
 
 Local and hermetic test commands may use:
 
@@ -38,5 +38,19 @@ AUTH_DRIVER=fixture
 ```
 
 That profile is explicitly non-release and does not prove migrations, RLS or restart durability.
-The authoritative release journey remains incomplete until CI provisions ephemeral
-PostgreSQL/Supabase, applies migrations from zero and verifies cleanup.
+The authoritative release journey provisions ephemeral PostgreSQL/Supabase, applies migrations
+from zero, executes MVP-J-001, restarts the API, verifies durable reads and destroys the stack
+without backup. That CI path is the release evidence; a memory-profile pass remains useful only
+for local feedback.
+
+## Validation commands
+
+```bash
+npm run runtime:profile:test
+npm run runtime:grants:test
+node tooling/deployment/check-runtime-profile.mjs --env-file <path> --expect demo
+node tooling/deployment/check-deployment-health.mjs <immutable-deployment-url>
+```
+
+The first two commands are hermetic. The latter two inspect a concrete candidate environment and
+deployment without printing credential values.

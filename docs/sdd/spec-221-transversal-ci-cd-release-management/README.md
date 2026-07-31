@@ -28,7 +28,7 @@ Contrato transversal para integrar, verificar, desplegar, promover y revertir ca
 - GitHub Actions es la autoridad de delivery: valida PR/main y despliega selectivamente desde
   `main` sin depender de la Vercel GitHub App.
 
-## Estado implementado — 2026-07-29
+## Estado implementado — 2026-07-30
 
 - `End-to-end` ejecuta Quality, matrices E2E y deploys Vercel.
 - `CodeQL` valida JavaScript/TypeScript por separado.
@@ -36,8 +36,15 @@ Contrato transversal para integrar, verificar, desplegar, promover y revertir ca
 - Cambios globales o desconocidos usan fallback conservador completo.
 - Cambios documentales no consumen E2E ni deployments.
 - `workflow_dispatch` valida y redespliega los siete proyectos.
+- `E2E gate` agrega matrices selectivas y el journey release autoritativo.
+- El journey usa Supabase efímero, migra desde cero y prueba persistencia después de reiniciar la
+  API.
+- Quality y journey publican evidencia sanitizada asociada al run/SHA.
+- El deploy de API valida el perfil descargado y prueba `/health/live` y `/health/ready` en la URL
+  inmutable.
 - El deploy desde PR permanece deshabilitado; sólo un push a `main` puede usar secretos de
   producción.
+- GitHub Actions, no la Vercel GitHub App, es la autoridad de validación y delivery.
 
 Siguen pendientes los controles indicados como blockers. Este estado operativo no equivale a
 habilitar producción comercial.
