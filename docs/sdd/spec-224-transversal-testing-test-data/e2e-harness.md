@@ -352,13 +352,74 @@ aplicación/journey y tienen trace/logs correlacionados.
 
 ## 17. Decisiones pendientes
 
-Antes de implementar deben resolverse y documentarse:
+El primer corte resolvió Supabase CLI local `2.110.0`, clock por
+`E2E_BUSINESS_CLOCK`, identidad/seed namespaced por run, puertos de los builds y catálogo
+MVP-J-001. Continúan pendientes:
 
-1. runtime local exacto de Supabase/PostgreSQL/Auth y versiones fijadas;
-2. mecanismo de clock de negocio exclusivo para `APP_ENV=e2e`;
-3. contrato de URLs/puertos para servir seis frontends en paralelo;
-4. mecanismo para construir una vez y promover el mismo artefacto en el proveedor inicial;
-5. ownership de cada grupo y del harness transversal;
-6. presupuesto CI medido y número de workers aceptable;
-7. política concreta de retención de traces/logs;
-8. capacidades que ya están suficientemente implementadas para integrar el primer catálogo.
+1. promover exactamente el mismo artefacto staged sin rebuild;
+2. asignar ownership formal de cada proyecto y del harness transversal;
+3. aprobar un presupuesto CI estable y workers aceptables a partir de runs históricos;
+4. aprobar la política de retención de traces/logs;
+5. ampliar journeys sólo cuando el riesgo lo justifique, sin convertir cantidad de UI tests en
+   sustituto del recorrido autoritativo.
+
+## 18. Implementación vigente — 2026-07-30
+
+La implementación difiere en nombres de la topología propuesta, pero conserva sus fronteras:
+
+```text
+playwright.config.mjs
+tests/e2e/
+├── apps/{dash,host,floor,kitchen,cash,guest}/
+└── journeys/
+    ├── fixtures.ts
+    ├── api-client.ts
+    ├── mvp-j-001.spec.ts
+    └── restart-durability.spec.ts
+
+tooling/e2e/
+├── check-authoritative-policy.mjs
+└── run-manifest.mjs
+```
+
+### Perfiles reales
+
+| Perfil | Comando | Evidencia |
+| --- | --- | --- |
+| Aplicación | `npm run test:e2e:run -- --project=<app>` | UI-contract/smoke de la superficie seleccionada |
+| Journey local | `npm run test:e2e:journey` | Feedback del recorrido con perfil local controlado |
+| Journey release | `npm run test:e2e:journey:run` | MVP-J-001 contra Supabase efímero en CI |
+| Durabilidad | `npm run test:e2e:journey:restart` | Lecturas del mismo estado después de reiniciar API |
+| Policy | `npm run e2e:journey:policy` | Prohíbe skips/fixme/only, mocks de requests de producto y aprobación por retry |
+
+### Gate autoritativo
+
+El job `E2E · Release journey (ephemeral Supabase)`:
+
+1. fija Node `20.19.0`, Playwright y Supabase CLI;
+2. genera run ID, seed, clock, bootstrap secret y tokens por rol;
+3. construye API, Dash, Floor, Kitchen y Cash;
+4. recrea PostgreSQL desde todas las migraciones;
+5. ejecuta MVP-J-001 sin mocks de requests de producto;
+6. guarda un checkpoint y reinicia la API;
+7. verifica estado durable, aislamiento Tenant B y audit;
+8. destruye Supabase sin backup y confirma que no queden recursos;
+9. publica manifest, clasificación, resultados y evidencia sanitizada.
+
+`E2E gate` exige el éxito de este job incluso cuando el cambio no afecta una aplicación
+individual. Los E2E por aplicación pueden filtrarse por impacto; MVP-J-001 no.
+
+### Semántica del baseline
+
+El perfil PostgreSQL incluye datos demo operativos intencionales. Por eso MVP-J-001 captura las
+métricas de Dash antes de crear su visita y exige que, tras pago y cierre, regresen exactamente al
+mismo baseline. La aserción detecta residuos del recorrido sin interpretar datos demo preexistentes
+como un fallo.
+
+### Estado de los criterios
+
+- E2E-H-01, E2E-H-02, E2E-H-04, E2E-H-06 y E2E-H-07 tienen evidencia automatizada.
+- E2E-H-03 está cubierto por proyectos de aplicación y MVP-J-001 para el recorrido core; J-001–J-005
+  no se mantienen como cinco journeys separados.
+- E2E-H-05 sigue parcial: el SHA queda trazado y el deploy depende de los gates, pero la promoción
+  staged sin rebuild continúa pendiente en SPEC-221.

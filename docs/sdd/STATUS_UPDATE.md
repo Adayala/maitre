@@ -1,189 +1,89 @@
 # SDD Status Update
 
-**Date:** 2026-07-20
+**Fecha:** 2026-07-30
 
----
+**Alcance:** cierre técnico del MVP Demo y estado de sus gates transversales
 
-## Fase 1 Progress
+## Resumen
 
-### Completed (✅)
+El corte integrado en `main` cerró los gaps detectados entre SPEC-215, SPEC-216, SPEC-222 y
+SPEC-224 para el **MVP Demo**. La fuente consolidada de implementación, evidencia y límites es
+[Cierre de gaps del MVP — 30 de julio de 2026](../operations/mvp-gap-closure-2026-07-30.md).
 
-**SPEC-001: Tenant Entity** — 100% COMPLETE (5/8 docs)
-- ✅ README.md (metadata, structure)
-- ✅ objective.md (propósito, 6 CAD)
-- ✅ specification.md (schema, reglas)
-- ✅ structure.md (detalles DB)
-- ✅ rules.md (invariantes)
-- ⏳ plan.md
-- ⏳ tasks.md
-- ⏳ verification.md
-- ⏳ notes.md
+Este estado no afirma que todo el catálogo SDD esté implementado ni cambia por sí mismo el
+lifecycle de una SPEC. Cada README sigue siendo autoritativo para metadata, aprobación, blockers y
+readiness.
 
-**Status:** DRAFT (40% completo para implementación)
+## Capacidades integradas
 
----
+| Área | Estado del corte MVP Demo | Evidencia principal |
+| --- | --- | --- |
+| Contrato HTTP | `IMPLEMENTED` | OpenAPI versionado, lint, drift/breaking gate, Problem Details y CORS allowlist exacta. |
+| Auditoría sensible | `IMPLEMENTED_HTTP_BOUNDARY` | Policy obligatoria para mutaciones Floor, Ordering, Kitchen y Cash, redacción y evidencia correlacionada. |
+| Observabilidad | `OPERATIONAL_LOCAL` / `OPERATIONAL_CI` | RED HTTP, trazas, señales de recorrido/audit/outbox, export test y artefacto sanitizado. |
+| Recorrido MVP | `OPERATIONAL_CI` | MVP-J-001: setup → mesa → pedido → cocina → cuenta → pago → cierre → Dash/audit. |
+| Runtime compartido | `IMPLEMENTED` | Supabase/auth explícitos, prohibición fail-closed de memory/fixture y CORS inseguro. |
+| Persistencia durable | `OPERATIONAL_CI` | Supabase efímero, migraciones desde cero, restart de API y relectura PostgreSQL. |
+| Delivery | `IMPLEMENTED_I0` | Quality/E2E antes de deploy, preflight de ambiente y probes post-deploy. |
 
-**SPEC-002: Brand Entity** — 100% COMPLETE (8/8 docs)
-- ✅ README.md
-- ✅ objective.md (propósito, 5 CAD)
-- ✅ specification.md (schema, reglas, ejemplos)
-- ✅ structure.md (DB schema, JSONB config)
-- ✅ rules.md (invariantes, cambios)
-- ✅ plan.md (estrategia, componentes, dependencias)
-- ✅ tasks.md (8 tasks × 4 fases, ~29h estimado)
-- ✅ verification.md (criterios, test plan)
-- ✅ notes.md (asunciones, riesgos, decisiones)
+## Validación reproducible
 
-**Status:** DRAFT (100% documentado, awaiting peer review)
+El pipeline `End-to-end` es la autoridad de delivery. Sus gates relevantes ejecutan, entre otros:
 
----
+```bash
+npm run sdd:validate
+npm run openapi:check
+npm run openapi:breaking
+npm run runtime:profile:test
+npm run runtime:grants:test
+npm run test:telemetry:export
+npm run observability:evidence
+npm run e2e:journey:policy
+npm run test:e2e:journey:run
+npm run test:e2e:journey:restart
+```
 
-### In Progress (🔄)
+El journey release debe producir evidencia sanitizada, terminar su cleanup y conservar lecturas
+durables después de reiniciar la API. `FAILED`, `INFRA_ERROR`, falta de evidencia o cleanup
+incompleto bloquean el deploy.
 
-**SPEC-003: FiscalEntity** — 20% (1/8 docs)
-- ✅ README.md (skeleton)
-- ✅ objective.md (propósito, 5 CAD)
-- ⏳ specification.md
-- ⏳ structure.md
-- ⏳ rules.md
-- ⏳ plan.md
-- ⏳ tasks.md
-- ⏳ verification.md
-- ⏳ notes.md
+## Pull requests del cierre
 
-**SPEC-004: Branch** — 20% (1/8 docs)
-**SPEC-005: Salon** — 10% (1/8 docs)
-**SPEC-006: Table** — 10% (1/8 docs)
+- Auditoría: [#58](https://github.com/Adayala/maitre/pull/58) y
+  [#64](https://github.com/Adayala/maitre/pull/64).
+- Observabilidad: [#59](https://github.com/Adayala/maitre/pull/59) y
+  [#65](https://github.com/Adayala/maitre/pull/65).
+- Contrato HTTP: [#60](https://github.com/Adayala/maitre/pull/60) y
+  [#66](https://github.com/Adayala/maitre/pull/66).
+- Journey y persistencia: [#61](https://github.com/Adayala/maitre/pull/61),
+  [#63](https://github.com/Adayala/maitre/pull/63),
+  [#68](https://github.com/Adayala/maitre/pull/68) y
+  [#72](https://github.com/Adayala/maitre/pull/72).
+- Runtime y deployment: [#67](https://github.com/Adayala/maitre/pull/67) y
+  [#70](https://github.com/Adayala/maitre/pull/70).
+- Integración consolidada: [#69](https://github.com/Adayala/maitre/pull/69) y
+  [#71](https://github.com/Adayala/maitre/pull/71).
 
----
+## No completado
 
-### Planned (🔲)
+Permanece fuera del cierre del MVP Demo:
 
-**SPEC-007 to SPEC-016:** Organization APIs, Events, RBAC — 10% (README only)
+- unit-of-work PostgreSQL atómico para estado de negocio, outbox y audit;
+- pruebas exhaustivas de rollback/idempotencia auditada por cada transición;
+- backend OTLP remoto, dashboards, alertas, paging y SLO/error-budget operativos;
+- previews aisladas, branch protection y promoción staged sin rebuild;
+- aprobación comercial, ASVS, DR, on-call y soporte del MVP Pilot.
 
-**SPEC-017 to SPEC-026:** Identity Domain — 5% (README only)
+Estas capacidades no deben rotularse `OPERATIONAL` hasta contar con backend/configuración,
+responsable y evidencia end-to-end cuando corresponda.
 
-**SPEC-027 to SPEC-036:** Subscription Domain — 5% (README only)
+## Próximas acciones
 
-**SPEC-037 to SPEC-048:** Catalog, Audit, Dashboard — 5% (README only)
+1. Resolver owners/reviewers y aprobar formalmente las SPEC transversales.
+2. Seleccionar y operar el backend OTLP conforme a ADR-005.
+3. Implementar la unidad transaccional audit/outbox y completar sus escenarios negativos.
+4. Completar los gates de promoción y readiness del MVP Pilot.
 
----
+**Owner:** UNASSIGNED
 
-## Velocity
-
-| Metric | Value |
-| --- | --- |
-| Specs with README | 48/48 (100%) |
-| Specs 100% documented | 1 (SPEC-002) |
-| Specs ~40% documented | 1 (SPEC-001) |
-| Specs ~20% documented | 4 (SPEC-003-006) |
-| Average completion | 10% |
-| Estimated Fase 1 timeline | 3-4 weeks (if parallelized) |
-
----
-
-## Quality Gate
-
-**SPEC-002 (Brand) is ready for peer review:**
-- All 8 documents complete
-- CAD clearly defined and testable
-- API contracts specified
-- DB schema designed
-- Tasks estimated (~29h)
-- Risks and assumptions documented
-
-**Recommended next:** 
-1. Peer review SPEC-002
-2. Parallel track: Complete SPEC-003 to SPEC-006 (other entities)
-3. Once SPEC-002 approved → implement alongside spec-003 documentation
-
----
-
-## Bottlenecks
-
-- **Documentation:** Writing each spec takes 4-6 hours
-  - Solution: Parallelize by domain (Team A: Organization, Team B: Identity, etc)
-  
-- **Dependencies:** SPEC-001 dependency blocks SPEC-002-006
-  - Status: Can proceed (SPEC-001 has objective, structure, rules defined)
-
-- **Peer review:** Each spec needs approval before implementation
-  - Solution: Batch reviews (review 5 specs per session)
-
----
-
-## Next Actions (Priority)
-
-### Immediate (Today)
-
-- [ ] Peer review SPEC-002 (Brand)
-- [ ] Complete objective.md for SPEC-003 to SPEC-010 (Organization)
-- [ ] Start implementation of SPEC-001 (Tenant) while writing remaining docs
-
-### This Week
-
-- [ ] Complete SPEC-003 to SPEC-010 (16 specs × 8 docs each = 128 docs)
-- [ ] Peer review batch 1 (SPEC-003 to SPEC-006, 4 specs)
-- [ ] Start implementation of SPEC-002 (Brand)
-
-### Next Week
-
-- [ ] Complete SPEC-017 to SPEC-026 (Identity, 10 specs)
-- [ ] Complete SPEC-027 to SPEC-036 (Subscription, 10 specs)
-- [ ] Implement SPEC-003 to SPEC-006 (in parallel with documentation)
-
-### By end of Month
-
-- [ ] All 48 SPEC-001 to SPEC-048 docs complete
-- [ ] SPEC-001 to SPEC-016 implemented and tested
-- [ ] Peer reviews completed for all Fase 1 specs
-- [ ] Implementation started for Identity domain
-
----
-
-## Files to track
-
-- `/docs/sdd/spec-XXX-name/` — Each spec directory
-- `/docs/sdd/STATUS_PHASE1.md` — Detailed checklist (update regularly)
-- `/docs/sdd/STATUS_UPDATE.md` — This file (update daily/weekly)
-- `/docs/sdd/SPECS.md` — Master catalog (update when spec status changes)
-
----
-
-## Success Criteria for Fase 1 Completion
-
-- [ ] All 48 specs have all 8 documents completed
-- [ ] All specs peer reviewed and approved
-- [ ] All 48 specs status = READY_FOR_IMPLEMENTATION
-- [ ] At least 30 specs implemented
-- [ ] All implemented specs have > 80% test coverage
-- [ ] Integration tests pass for multi-tenant isolation
-
----
-
-## Estimation
-
-If full-time parallelized effort:
-
-| Task | Specs | Docs per spec | Hours per doc | Total | Timeline |
-| --- | --- | --- | --- | --- | --- |
-| Write all specs | 48 | 8 | 0.5 | 192h | 2 weeks (12 devs) |
-| Peer review | 48 | 1 | 0.5 | 24h | 1 week |
-| Implement | 48 | - | 8-16 | 400-800h | 4-8 weeks |
-| Test | 48 | - | 4-8 | 200-400h | 2-4 weeks |
-| **TOTAL** | - | - | - | **816-1440h** | **8-16 weeks** |
-
----
-
-## Key Metrics
-
-- **Documentation velocity:** ~2 specs/day (when full focus)
-- **Implementation velocity:** ~1 spec/dev/week (including tests)
-- **Quality gate:** All CAD testable, no ambiguities
-- **Isolation:** 100% multi-tenant (verified by tests)
-
----
-
-**Owner:** @faguero  
-**Last updated:** 2026-07-20  
-**Next update:** Daily until all Fase 1 specs complete
+**Próxima revisión:** antes de declarar listo el MVP Pilot

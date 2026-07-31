@@ -27,6 +27,16 @@ Contrato transversal para APIs HTTP consistentes, seguras, observables y evoluti
 - Idempotencia obligatoria para comandos críticos o reintentables.
 - Paginación por cursor como default para colecciones mutables.
 
+## Estado implementado del MVP Demo — 2026-07-30
+
+El corte transversal ya posee OpenAPI versionado y regenerable, policy lint, detección de breaking
+changes, Problem Details `application/problem+json`, correlation ID y CORS por allowlist exacta.
+El runtime compartido y CI fallan cerrado ante drift o configuración insegura.
+
+La SPEC conserva estado `DRAFT/BLOCKED` porque owner/reviewer, paginación común, ETag y el contrato
+general de idempotencia siguen siendo criterios más amplios que este cierre. Consulta la
+[matriz de implementación y evidencia](../../operations/mvp-gap-closure-2026-07-30.md).
+
 ## Documentos
 
 - [Contrato](contract.md)

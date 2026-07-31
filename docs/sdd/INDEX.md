@@ -10,6 +10,9 @@ Roadmap histórico de capacidades y especificaciones de Maitre.
 Consulta [START_HERE.md](START_HERE.md) para navegación vigente. Este índice será una
 proyección generada cuando se implemente `npm run sdd:validate`.
 
+Estado reciente: [SDD Status Update](STATUS_UPDATE.md) y
+[cierre técnico del MVP Demo](../operations/mvp-gap-closure-2026-07-30.md).
+
 **Convención vigente:** Cada spec usa `spec-NNN-[type]-[name]/` y contiene múltiples documentos.
 
 ```

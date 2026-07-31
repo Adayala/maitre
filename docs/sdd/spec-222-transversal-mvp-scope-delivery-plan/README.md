@@ -27,6 +27,26 @@ Contrato de alcance y secuencia que transforma el catálogo completo de Maitre e
 - ARCA/IVA se desarrolla como slice fiscal con gate propio antes del piloto argentino.
 - Cada incremento termina desplegado, observable y reversible.
 
+## Evidencia del recorrido core — 2026-07-30
+
+MVP-J-001 ya demuestra con datos sintéticos y builds reales:
+
+```text
+Dash setup
+  → Floor abre mesa y pedido
+  → Kitchen procesa comanda
+  → Floor entrega y solicita cuenta
+  → Cash captura pago
+  → Floor cierra visita
+  → Dash muestra baseline operativo y auditoría
+  → API reinicia y PostgreSQL conserva el estado
+```
+
+El gate usa Supabase efímero con migraciones desde cero, aislamiento Tenant B, audit/correlation,
+evidencia sanitizada y cleanup verificado. Esto satisface el corte **MVP Demo**, pero no aprueba el
+MVP Pilot ni sus requisitos comerciales, fiscales, de seguridad, DR, soporte y operación remota.
+Consulta la [matriz de cierre](../../operations/mvp-gap-closure-2026-07-30.md).
+
 ## Documentos
 
 - [Contrato](contract.md)

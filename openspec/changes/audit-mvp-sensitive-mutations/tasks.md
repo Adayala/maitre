@@ -25,4 +25,7 @@ depend on task 1.4 rather than on missing route instrumentation.
 - [x] 3.2 Add a contract test that rejects uncovered sensitive mutations.
 - [ ] 3.3 Add audit append failure/rate/size metrics and an operational alert.
 - [x] 3.4 Document redaction, incident lookup, coverage boundary and rollback procedures.
-- [ ] 3.5 Run migrations, typecheck, domain/API tests and strict OpenSpec validation.
+- [x] 3.5 Run migrations, typecheck, domain/API tests and strict OpenSpec validation.
+
+Audit append/rate/size metrics are implemented and covered. Task 3.3 remains open only for the
+remote operational alert, which depends on the backend/owner/channel activation gate in ADR-005.

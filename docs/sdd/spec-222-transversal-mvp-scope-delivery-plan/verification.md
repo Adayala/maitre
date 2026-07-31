@@ -10,12 +10,17 @@
 
 ### CAD-222-02 — El MVP Demo recorre configuración, operación y cierre con datos sintéticos dentro del perímetro gratuito
 
-- [ ] admin configura sin DB/dashboard de proveedor;
-- [ ] mozo completa visita/pedido desde tablet;
-- [ ] kitchen recibe y actualiza comanda sin duplicación;
-- [ ] caja registra pago manual y cierra visita;
-- [ ] Dash refleja resultado y auditoría;
+- [x] admin configura sin DB/dashboard de proveedor;
+- [x] mozo completa visita/pedido desde tablet;
+- [x] kitchen recibe y actualiza comanda sin duplicación;
+- [x] caja registra pago manual y cierra visita;
+- [x] Dash refleja resultado y auditoría;
 - [ ] todo dato es sintético y el uso cumple términos free tier.
+
+MVP-J-001 demuestra los primeros cinco puntos con builds reales y datos sintéticos. La parte de
+datos sintéticos del sexto punto también está cubierta; la conformidad con términos/cuotas de un
+servicio remoto permanece pendiente hasta seleccionar y aprobar los proveedores del Pilot. Consulta
+[el cierre de gaps del MVP](../../operations/mvp-gap-closure-2026-07-30.md).
 
 ### CAD-222-03 — El MVP Pilot es un gate separado, con condiciones reales adicionales y sin promesas de producción general
 
