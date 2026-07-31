@@ -49,6 +49,7 @@ export function createRunManifest(env = process.env) {
     gitSha: env["GITHUB_SHA"] ?? env["GIT_COMMIT_SHA"] ?? "local",
     apiBaseUrl: env["E2E_API_URL"] ?? "http://127.0.0.1:3101",
     applications: {
+      dash: env["E2E_DASH_URL"] ?? "http://127.0.0.1:5273",
       floor: env["E2E_FLOOR_URL"] ?? "http://127.0.0.1:5276",
       kitchen: env["E2E_KITCHEN_URL"] ?? "http://127.0.0.1:5275",
       cash: env["E2E_CASH_URL"] ?? "http://127.0.0.1:5274",

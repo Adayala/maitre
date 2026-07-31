@@ -100,6 +100,77 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
   let payment!: Payment;
   let tableId!: string;
 
+  await test.step("Admin completes setup through Dash without provider tools", async () => {
+    await expect(
+      apps.dash.getByRole("heading", {
+        name: "Resumen del tenant",
+        exact: true,
+      }),
+    ).toBeVisible();
+
+    await apps.dash.goto(new URL("/brands", apps.dash.url()).toString());
+    await expect(
+      apps.dash.getByRole("heading", { name: "Marcas", exact: true }),
+    ).toBeVisible();
+    const brandName = `Marca ${testInfo.project.name} ${Date.now()}`;
+    await apps.dash.getByLabel("Nombre").first().fill(brandName);
+    await apps.dash
+      .getByLabel("Descripción")
+      .fill("Configuración sintética del recorrido MVP-J-001");
+    const [brandResponse] = await Promise.all([
+      apps.dash.waitForResponse(
+        (response) =>
+          response.request().method() === "POST" &&
+          new URL(response.url()).pathname === "/v1/brands",
+      ),
+      apps.dash.getByRole("button", { name: "Crear marca" }).click(),
+    ]);
+    expect(brandResponse.status()).toBe(201);
+    await expect(
+      apps.dash.getByRole("heading", { name: brandName, exact: true }),
+    ).toBeVisible();
+
+    await apps.dash.goto(new URL("/users", apps.dash.url()).toString());
+    await expect(
+      apps.dash.getByRole("heading", {
+        name: "Usuarios y perfiles",
+        exact: true,
+      }),
+    ).toBeVisible();
+    const invitedName = `Invitado ${testInfo.project.name}`;
+    await apps.dash.getByLabel("Nombre").first().fill(invitedName);
+    await apps.dash.getByLabel("Email").fill(`mvp-${Date.now()}@example.test`);
+    const [inviteResponse] = await Promise.all([
+      apps.dash.waitForResponse(
+        (response) =>
+          response.request().method() === "POST" &&
+          new URL(response.url()).pathname === "/v1/users",
+      ),
+      apps.dash.getByRole("button", { name: "Crear invitación" }).click(),
+    ]);
+    expect(inviteResponse.status()).toBe(201);
+    await expect(
+      apps.dash.getByRole("heading", { name: invitedName, exact: true }),
+    ).toBeVisible();
+
+    await apps.dash.goto(new URL("/setup", apps.dash.url()).toString());
+    await expect(
+      apps.dash.getByRole("heading", {
+        name: "Puesta en marcha",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      apps.dash.getByText("Base de setup cargada", { exact: true }),
+    ).toBeVisible();
+    evidence.adminSetup = {
+      brandName,
+      invitedName,
+      brandStatus: brandResponse.status(),
+      invitationStatus: inviteResponse.status(),
+    };
+  });
+
   await test.step("all deployable applications share one ready API", async () => {
     const readiness = await api.get<{ status: string }>(
       "waiter",
@@ -412,6 +483,41 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
       new Set(expected.map(([actionCode]) => actionCode)),
     );
     evidence.audit = entries;
+  });
+
+  await test.step("Dash reflects the closed service and its audit trail", async () => {
+    await apps.dash.goto(new URL("/", apps.dash.url()).toString());
+    await expect(
+      apps.dash.getByRole("heading", {
+        name: "Resumen del tenant",
+        exact: true,
+      }),
+    ).toBeVisible();
+    for (const label of [
+      "Visitas abiertas",
+      "Mesas ocupadas",
+      "Órdenes activas",
+      "Pagos pendientes",
+    ]) {
+      const term = apps.dash.locator("dt").filter({ hasText: label });
+      await expect(term).toBeVisible();
+      await expect(term.locator("xpath=following-sibling::dd")).toHaveText("0");
+    }
+
+    await apps.dash.goto(new URL("/audit", apps.dash.url()).toString());
+    await expect(
+      apps.dash.getByRole("heading", { name: "Auditoría", exact: true }),
+    ).toBeVisible();
+    await expect(
+      apps.dash.locator("td").filter({ hasText: visit.id }).first(),
+    ).toBeVisible();
+    await expect(
+      apps.dash.locator("td").filter({ hasText: payment.id }).first(),
+    ).toBeVisible();
+    evidence.dash = {
+      closedServiceVisible: true,
+      auditResourceIds: [visit.id, payment.id],
+    };
   });
 
   await attachEvidence(testInfo, evidence);

@@ -94,7 +94,7 @@ function webServersFor(selectedApp) {
   const isJourney =
     selectedApp === "journeys" || selectedApp === "journey-restart";
   const appNames = isJourney
-    ? ["floor", "kitchen", "cash"]
+    ? ["dash", "floor", "kitchen", "cash"]
     : selectedApp
       ? [selectedApp]
       : Object.keys(webapps);

@@ -7,10 +7,10 @@ import {
 } from "../http/request-context.js";
 import { insufficientScope, sendProblem } from "../http/problem-details.js";
 
-// SPEC-045 — GET /v1/audit-logs. Read-only; no create/update/delete exposed
-// (the entries themselves are appended internally by other modules' use
-// cases — see @maitre/audit's deferred-instrumentation note). CSV export
-// (SPEC-045 "GET /audit/export") is explicitly deferred to a future job/spec.
+// SPEC-045 — GET /v1/audit-logs. Read-only; no create/update/delete exposed.
+// Covered Floor, Ordering, Kitchen and Cash mutations are appended by the
+// mandatory policy registry. CSV export (SPEC-045 "GET /audit/export") is
+// explicitly deferred to a future job/spec.
 export async function registerAuditLogRoutes(
   app: FastifyInstance,
   container: Container,

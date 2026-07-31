@@ -11,7 +11,13 @@
 - [ ] 2.2 Instrument Ordering sensitive commands and test success, denial and idempotent replay.
 - [ ] 2.3 Instrument Kitchen sensitive commands and test transitions, rerouting and alert actions.
 - [ ] 2.4 Instrument Cash and Payment sensitive commands with monetary evidence and reason policies.
-- [ ] 2.5 Remove deferred-instrumentation notes once the coverage matrix is complete.
+- [x] 2.5 Remove deferred-instrumentation notes once the coverage matrix is complete.
+
+The mandatory HTTP policy matrix now covers every state-changing Floor,
+Ordering, Kitchen and Cash route and the release journey proves representative
+success evidence in all four domains. Tasks 2.1–2.4 remain open for their
+transactional rollback/idempotency and exhaustive transition assertions, which
+depend on task 1.4 rather than on missing route instrumentation.
 
 ## 3. Query, governance and operations
 

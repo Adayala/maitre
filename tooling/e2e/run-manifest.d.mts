@@ -10,6 +10,7 @@ export interface E2ERunManifest {
   gitSha: string;
   apiBaseUrl: string;
   applications: {
+    dash: string;
     floor: string;
     kitchen: string;
     cash: string;
