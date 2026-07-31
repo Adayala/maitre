@@ -5,6 +5,14 @@ import { test } from "./fixtures.js";
 
 const BRANCH_ID = "00000000-0000-0000-0000-000000000003";
 const CASH_REGISTER_ID = "00000000-0000-0000-0000-00000000000e";
+const DASH_OPERATION_LABELS = [
+  "Visitas abiertas",
+  "Mesas ocupadas",
+  "Órdenes activas",
+  "Pagos pendientes",
+] as const;
+
+type DashOperationLabel = (typeof DASH_OPERATION_LABELS)[number];
 
 interface ApiData<T> {
   data: T;
@@ -99,6 +107,7 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
   let cashSession!: CashSession;
   let payment!: Payment;
   let tableId!: string;
+  let operationsBaseline!: Record<DashOperationLabel, number>;
 
   await test.step("Admin completes setup through Dash without provider tools", async () => {
     await expect(
@@ -107,6 +116,7 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
         exact: true,
       }),
     ).toBeVisible();
+    operationsBaseline = await readDashOperations(apps.dash);
 
     await apps.dash.goto(new URL("/brands", apps.dash.url()).toString());
     await expect(
@@ -168,6 +178,7 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
       invitedName,
       brandStatus: brandResponse.status(),
       invitationStatus: inviteResponse.status(),
+      operationsBaseline,
     };
   });
 
@@ -493,16 +504,14 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
         exact: true,
       }),
     ).toBeVisible();
-    for (const label of [
-      "Visitas abiertas",
-      "Mesas ocupadas",
-      "Órdenes activas",
-      "Pagos pendientes",
-    ]) {
+    for (const label of DASH_OPERATION_LABELS) {
       const term = apps.dash.locator("dt").filter({ hasText: label });
       await expect(term).toBeVisible();
-      await expect(term.locator("xpath=following-sibling::dd")).toHaveText("0");
+      await expect(term.locator("xpath=following-sibling::dd")).toHaveText(
+        String(operationsBaseline[label]),
+      );
     }
+    const operationsAfterClose = await readDashOperations(apps.dash);
 
     await apps.dash.goto(new URL("/audit", apps.dash.url()).toString());
     await expect(
@@ -516,6 +525,8 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
     ).toBeVisible();
     evidence.dash = {
       closedServiceVisible: true,
+      operationsBaseline,
+      operationsAfterClose,
       auditResourceIds: [visit.id, payment.id],
     };
   });
@@ -542,6 +553,21 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
     );
   }
 });
+
+async function readDashOperations(
+  page: Page,
+): Promise<Record<DashOperationLabel, number>> {
+  const entries = await Promise.all(
+    DASH_OPERATION_LABELS.map(async (label) => {
+      const term = page.locator("dt").filter({ hasText: label });
+      await expect(term).toBeVisible();
+      const value = term.locator("xpath=following-sibling::dd");
+      await expect(value).toHaveText(/^\d+$/);
+      return [label, Number(await value.textContent())] as const;
+    }),
+  );
+  return Object.fromEntries(entries) as Record<DashOperationLabel, number>;
+}
 
 async function kitchenAction(
   page: Page,
