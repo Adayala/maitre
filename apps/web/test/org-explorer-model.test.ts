@@ -3,12 +3,14 @@ import test from "node:test";
 import {
   buildBranchEmploymentPayload,
   branchesForBrand,
+  editableMembershipStatus,
   employmentsForBranch,
   isOrganizationNodeSelected,
   organizationNodeFromSearch,
   organizationNodeHref,
   organizationNodeKey,
   organizationPanelTitle,
+  userForEmployment,
   type BranchEmployment,
   type OrganizationBranch,
   type OrganizationNode,
@@ -62,6 +64,44 @@ test("employmentsForBranch keeps assignments eligible for the requested branch",
     employments[1],
   ]);
   assert.deepEqual(employmentsForBranch(employments, "missing"), []);
+});
+
+test("userForEmployment resolves linked users by id or legacy email", () => {
+  const users = [
+    {
+      id: "user-a",
+      email: "a@maitre.test",
+      name: "Ana",
+      status: "ACTIVE",
+      roleIds: ["role_waiter"],
+    },
+    {
+      id: "user-b",
+      email: "legacy@maitre.test",
+      name: "Beto",
+      status: "INVITED",
+      roleIds: ["role_employee"],
+    },
+  ];
+  assert.equal(userForEmployment(users, employments[0]!), users[0]);
+  assert.equal(
+    userForEmployment(
+      users,
+      { ...employments[1]!, personRef: "legacy@maitre.test" },
+    ),
+    users[1],
+  );
+  assert.equal(
+    userForEmployment(users, { ...employments[1]!, personRef: "missing" }),
+    null,
+  );
+});
+
+test("editableMembershipStatus preserves editable states and maps pending variants", () => {
+  assert.equal(editableMembershipStatus(" active "), "ACTIVE");
+  assert.equal(editableMembershipStatus("SUSPENDED"), "SUSPENDED");
+  assert.equal(editableMembershipStatus("revoked"), "REVOKED");
+  assert.equal(editableMembershipStatus("PENDING"), "INVITED");
 });
 
 test("buildBranchEmploymentPayload scopes a trimmed active employment to its branch", () => {
@@ -128,6 +168,7 @@ test("organization nodes round-trip through durable sidebar URLs", () => {
     { type: "branch", id: "branch-a", parentId: "brand-a" },
     { type: "salon", id: null, parentId: "branch-a" },
     { type: "branch-employees", id: "branch-a" },
+    { type: "employee", id: "employment-a", parentId: "branch-a" },
   ];
 
   for (const node of nodes) {
@@ -148,6 +189,7 @@ test("organizationNodeFromSearch rejects incomplete or unknown selections", () =
   assert.equal(organizationNodeFromSearch("?node=unknown&id=value"), null);
   assert.equal(organizationNodeFromSearch("?node=branch&id=branch-a"), null);
   assert.equal(organizationNodeFromSearch("?node=salon&id=salon-a"), null);
+  assert.equal(organizationNodeFromSearch("?node=employee&id=employment-a"), null);
   assert.equal(organizationNodeFromSearch("?node=branch-employees"), null);
 });
 
@@ -155,7 +197,15 @@ test("organizationPanelTitle describes every detail and creation mode", () => {
   assert.equal(organizationPanelTitle(null), "Detalle pendiente");
   assert.equal(
     organizationPanelTitle({ type: "branch-employees", id: "branch-a" }),
-    "Empleados de la sucursal",
+    "Equipo de la sucursal",
+  );
+  assert.equal(
+    organizationPanelTitle({
+      type: "employee",
+      id: "employment-a",
+      parentId: "branch-a",
+    }),
+    "Detalle de integrante",
   );
   assert.equal(
     organizationPanelTitle({ type: "brand", id: "brand-a" }),

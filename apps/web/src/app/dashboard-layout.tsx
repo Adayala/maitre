@@ -3,13 +3,7 @@ import {
   NavLink,
   Outlet,
   useLocation,
-  useNavigate,
 } from "react-router-dom";
-import { OrganizationSidebar } from "../features/organization/organization-sidebar.js";
-import {
-  organizationNodeFromSearch,
-  organizationNodeHref,
-} from "../features/organization/org-explorer-model.js";
 import { useAuth } from "./auth-context.js";
 import { useTenantContext } from "./tenant-context.js";
 
@@ -38,13 +32,11 @@ const NAV_GROUPS = [
 
 export function DashboardLayout() {
   const { accessToken, email, signOut } = useAuth();
-  const { me, selectedTenantId, isLoading } = useTenantContext();
+  const { me, selectedTenantId, clearTenant, isLoading } = useTenantContext();
   const location = useLocation();
-  const navigate = useNavigate();
   const activeTenant = me?.tenants.find(
     (tenant) => tenant.id === selectedTenantId,
   );
-  const selectedOrganizationNode = organizationNodeFromSearch(location.search);
 
   if (!accessToken) return <Navigate to="/login" replace />;
   if (isLoading)
@@ -61,25 +53,29 @@ export function DashboardLayout() {
         <span className="dash-brand">Maitre Dash</span>
         <div className="dash-tenant-context">
           <span>
-            <small>Tenant activo</small>
+            <small>Trabajando en</small>
             {activeTenant?.name ?? "Tenant"}
           </span>
-          {me && me.tenants.length > 1 ? (
-            <NavLink to="/select-tenant">Cambiar</NavLink>
-          ) : null}
+          <NavLink to="/select-tenant">Cambiar tenant</NavLink>
         </div>
         <span className="dash-user">{email ?? me?.user.displayName ?? ""}</span>
-        <button type="button" onClick={() => void signOut()}>
+        <button
+          type="button"
+          onClick={() => {
+            clearTenant();
+            void signOut();
+          }}
+        >
           Salir
         </button>
       </header>
 
       <nav aria-label="Navegación principal" className="dash-nav">
-        <OrganizationSidebar
-          tenantName={activeTenant?.name ?? "Tenant activo"}
-          selectedNode={selectedOrganizationNode}
-          onSelect={(node) => navigate(organizationNodeHref(node))}
-        />
+        <NavLink className="dash-nav__organization-link" to="/organizacion">
+          <span>01 / Configuración</span>
+          <strong>Organización</strong>
+          <small>Marcas, sucursales, salones y equipo</small>
+        </NavLink>
         <ul className="dash-nav__groups">
           {NAV_GROUPS.map((group) => (
             <li key={group.label}>

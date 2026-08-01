@@ -7,6 +7,8 @@
   },
   "include": [
     "src/features/organization/org-explorer-model.ts",
-    "test/org-explorer-model.test.ts"
+    "src/app/tenant-context-model.ts",
+    "test/org-explorer-model.test.ts",
+    "test/tenant-context-model.test.ts"
   ]
 }

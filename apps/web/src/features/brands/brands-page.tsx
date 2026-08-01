@@ -7,7 +7,7 @@ import { useAuth } from "../../app/auth-context.js";
 import { useTenantContext } from "../../app/tenant-context.js";
 import { applyBrandPresentation } from "../../../../../packages/brand-presentation/src/index.js";
 
-interface Brand {
+export interface Brand {
   id: string;
   name: string;
   slug: string;
@@ -222,7 +222,7 @@ interface PresentationRecord {
   document: BrandPresentationDocument;
 }
 
-function BrandPresentationEditor({ brand }: { brand: Brand }) {
+export function BrandPresentationEditor({ brand }: { brand: Brand }) {
   const { accessToken } = useAuth();
   const { selectedTenantId } = useTenantContext();
   const { data, refetch } = useTenantQuery<{ data: { draft: PresentationRecord | null; published: PresentationRecord | null; history: PresentationRecord[] } }>(

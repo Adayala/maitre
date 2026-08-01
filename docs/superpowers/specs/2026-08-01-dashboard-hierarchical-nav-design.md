@@ -32,36 +32,39 @@ Dos pasos explícitos:
 ## Paso 1 — Selección de Tenant
 
 - Ruta nueva `/select-tenant`.
-- Si `me.tenants.length === 1`: auto-selección y redirect a `/`, sin mostrar
-  pantalla (comportamiento ya implícito en `tenant-context.tsx`, se preserva).
-- Si `me.tenants.length > 1`: grilla de cards (nombre del tenant), click llama a
+- Si todavía no existe una selección válida, incluso con un único tenant, se
+  muestra la pantalla para hacer explícito el perímetro de trabajo. Una selección
+  persistida sólo se acepta si continúa presente en `/v1/me/context`; IDs obsoletos
+  se descartan.
+- La grilla de cards (nombre del tenant), al hacer click, llama a
   `selectTenant(id)` y navega a `/`.
 - `DashboardLayout`: si `!selectedTenantId`, `<Navigate to="/select-tenant" />`
   en vez del bloque informativo actual.
 
 ## Paso 2 — Árbol + panel de detalle
 
-Layout de dos columnas dentro de `DashboardLayout`, reemplazando el `<Outlet />`
-plano por un nuevo `OrgExplorer`:
+Layout de dos columnas dentro de `OrgExplorer`, visible en el área central para
+que la jerarquía no quede comprimida dentro del rail global:
 
 - **Columna izquierda — árbol** (`org-tree.tsx`):
   - Nodo raíz fijo, no clickeable: nombre del tenant activo (solo contexto).
   - Hijos: Marcas (`/v1/brands`).
   - Hijos de cada Marca: Sucursales, filtradas por `brandId` desde `/v1/branches`
     (join en cliente).
-  - Hijos de cada Sucursal (lazy, solo al expandir): "Salones" (`/v1/salons?
-branchId=`) y "Empleados" (fetch de usuarios/asignaciones filtrado por esa
-    sucursal).
+  - Hijos visibles de cada Sucursal: grupos "Salones" (`/v1/salons?branchId=`) y
+    "Equipo / mozos". Los registros se cargan lazy al expandir cada grupo y cada
+    salón o relación laboral aparece como nodo individual editable.
   - Cada nodo clickeable setea `selectedNode` (tipo + id) en estado local del
     `OrgExplorer` (no en `tenant-context` — es navegación de UI, no contexto de
     sesión).
-  - Botones "+" en cada nivel (Marca, Sucursal, Salón) abren el panel derecho en
-    modo alta.
+  - Botones "+" en cada nivel (Marca, Sucursal, Salón y Equipo) abren el panel
+    derecho en modo alta.
 
 - **Columna derecha — panel de detalle** (`org-detail-panel.tsx`):
   - Despacha por `selectedNode.type`:
     `brand → BrandDetailPanel`, `branch → BranchDetailPanel`,
-    `salon → SalonDetailPanel`, `branch-employees → BranchEmployeesPanel`.
+    `salon → SalonDetailPanel`, `branch-employees → BranchEmployeesPanel`,
+    `employee → EmployeeDetailPanel`.
   - Cada `*DetailPanel` recibe `id` (o `null` en modo alta) como prop y encapsula
     su propio fetch + mutación, extraídos de los componentes actuales:
     - `BrandDetailPanel` ← lógica de `features/brands/brands-page.tsx`.
@@ -71,6 +74,10 @@ branchId=`) y "Empleados" (fetch de usuarios/asignaciones filtrado por esa
       `branches-page.tsx`.
     - `BranchEmployeesPanel` ← `features/users/users-page.tsx`, con filtro por
       `branchId` agregado.
+    - `EmployeeDetailPanel` edita perfil y acceso vía `/v1/users/:id`, además de
+      código, relación y estado laboral vía `PATCH /v1/employments/:id`.
+    - `BrandDetailPanel` conserva el editor de identidad visual existente, no sólo
+      nombre y estado.
   - Sin nodo seleccionado: estado vacío ("elegí un nodo del árbol").
 
 ## Navegación global
@@ -87,8 +94,8 @@ branchId=`) y "Empleados" (fetch de usuarios/asignaciones filtrado por esa
 
 - Drag & drop / mover sucursales entre marcas.
 - Bulk actions sobre múltiples nodos.
-- Cambios de API/backend — todo el trabajo es de composición en el cliente sobre
-  endpoints existentes.
+- Mover relaciones laborales entre sucursales desde el árbol. La API permite
+  editar sus atributos, pero el panel mantiene fija la sucursal padre.
 
 ## Riesgos / notas de implementación
 
@@ -103,10 +110,10 @@ branchId=`) y "Empleados" (fetch de usuarios/asignaciones filtrado por esa
 
 ## Contratos y decisiones cerradas durante la implementación
 
-- El árbol organizacional vive en el rail lateral persistente del dashboard, no
-  como una segunda navegación dentro de `/organizacion`. Los destinos globales
-  quedan agrupados bajo “Control operativo” y “Gobierno”, evitando una lista
-  plana que compita con la jerarquía Tenant → Marca → Sucursal.
+- El rail global conserva un único acceso a Organización y los grupos “Control
+  operativo” y “Gobierno”. El árbol editable vive dentro de `/organizacion`, en
+  una columna amplia junto al panel de detalle; así no compite con la navegación
+  global ni oculta formularios en un rail angosto.
 - La selección de un nodo se representa en la URL de `/organizacion` para que el
   panel derecho sobreviva refresh, deep link y navegación desde cualquier
   sección del dashboard.
@@ -122,7 +129,8 @@ branchId=`) y "Empleados" (fetch de usuarios/asignaciones filtrado por esa
   `/v1/users` cuando existe una identidad vinculable y usa `/v1/roles` para los
   nombres visibles. No se infiere una asignación desde una membership global.
 - Cambiar tenant vuelve a ser una acción explícita desde el header y abre
-  `/select-tenant`; no existe un selector inline en el dashboard.
+  `/select-tenant`; el header dice “Trabajando en …” y no existe un selector
+  ambiguo inline en el dashboard.
 - El alta desde “Empleados” crea primero la invitación (`/v1/users`) y luego la
   relación laboral scopeada a la sucursal (`/v1/employments`). Si falla el
   segundo paso, el reintento conserva el usuario creado y no duplica la
@@ -135,15 +143,18 @@ branchId=`) y "Empleados" (fetch de usuarios/asignaciones filtrado por esa
 1. Una sesión sin tenant seleccionado y con más de un tenant llega a
    `/select-tenant`, puede elegir una card y persiste el ID antes de entrar a
    `/organizacion`.
-2. Una sesión con un único tenant no muestra el selector y entra directamente
-   al dashboard.
-3. El árbol muestra Tenant → Marca → Sucursal; salones y empleados no se
-   solicitan hasta expandir la sucursal correspondiente.
-4. Seleccionar marca, sucursal, salón o empleados abre el panel correcto; sin
-   selección se muestra el estado vacío indicado por la spec.
-5. Los botones `+` permiten crear marca, sucursal dentro de su marca y salón
-   dentro de su sucursal, conservando el padre correcto.
+2. Una sesión sin selección explícita y con un único tenant también muestra su
+   card; una selección persistida válida entra directamente y una obsoleta vuelve
+   al selector.
+3. El árbol muestra Tenant → Marca → Sucursal → Salones / Equipo; salones y
+   relaciones laborales no se solicitan hasta expandir su grupo correspondiente.
+4. Seleccionar marca, sucursal, salón, equipo o persona abre el panel correcto;
+   sin selección se muestra el estado vacío indicado por la spec.
+5. Los botones `+` permiten crear marca, sucursal dentro de su marca, salón
+   dentro de su sucursal y una persona asignada al equipo correcto.
 6. Loading, empty, error con retry, validación y éxito de mutación son visibles
    y accesibles.
 7. En mobile el árbol y el detalle se apilan, los controles mantienen targets
    de al menos 44 px y no se introducen violaciones WCAG A/AA serias o críticas.
+8. Marca, sucursal, salón y persona/mozo pueden editarse desde el mismo árbol;
+   la persona conserva edición de perfil, acceso y relación laboral.

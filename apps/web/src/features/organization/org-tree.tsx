@@ -3,15 +3,16 @@ import { useTenantQuery } from "../../lib/use-tenant-query.js";
 import {
   branchesForBrand,
   isOrganizationNodeSelected,
+  userForEmployment,
   type BranchEmployment,
   type OrganizationBrand,
   type OrganizationBranch,
   type OrganizationNode,
   type OrganizationSalon,
+  type OrganizationUser,
 } from "./org-explorer-model.js";
 
 interface OrgTreeProps {
-  variant?: "panel" | "sidebar";
   tenantName: string;
   brands: OrganizationBrand[];
   branches: OrganizationBranch[];
@@ -20,36 +21,20 @@ interface OrgTreeProps {
 }
 
 export function OrgTree({
-  variant = "panel",
   tenantName,
   brands,
   branches,
   selectedNode,
   onSelect,
 }: OrgTreeProps) {
-  const [expandedBrands, setExpandedBrands] = useState<Set<string>>(
-    () => new Set(),
-  );
-
-  function toggleBrand(id: string) {
-    setExpandedBrands((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
-
-  const Root = variant === "sidebar" ? "section" : "aside";
-
   return (
-    <Root
-      className={`org-tree org-tree--${variant}`}
-      aria-label="Jerarquía de la organización"
+    <aside
+      className="org-tree org-tree--panel"
+      aria-label="Jerarquía editable de la organización"
     >
       <div className="org-tree__toolbar">
         <div>
-          <span>Mapa organizacional</span>
+          <span>Árbol editable</span>
           <strong>{brands.length} marca(s)</strong>
         </div>
         <button
@@ -64,7 +49,7 @@ export function OrgTree({
       <div className="org-tree__root">
         <span aria-hidden="true">◆</span>
         <strong>{tenantName}</strong>
-        <small>Tenant</small>
+        <small>Tenant de trabajo</small>
       </div>
       {brands.length === 0 ? (
         <p className="org-tree__empty">
@@ -73,21 +58,14 @@ export function OrgTree({
       ) : null}
       <ul className="org-tree__list">
         {brands.map((brand) => {
-          const expanded = expandedBrands.has(brand.id);
           const node = { type: "brand", id: brand.id } as const;
           const brandBranches = branchesForBrand(branches, brand.id);
           return (
             <li key={brand.id}>
               <div className="org-tree__row org-tree__row--brand">
-                <button
-                  type="button"
-                  className="org-tree__toggle"
-                  aria-expanded={expanded}
-                  aria-label={`${expanded ? "Contraer" : "Expandir"} ${brand.name}`}
-                  onClick={() => toggleBrand(brand.id)}
-                >
-                  {expanded ? "−" : "+"}
-                </button>
+                <span className="org-tree__connector" aria-hidden="true">
+                  ◇
+                </span>
                 <button
                   type="button"
                   className={
@@ -112,26 +90,24 @@ export function OrgTree({
                   +
                 </button>
               </div>
-              {expanded ? (
-                <ul>
-                  {brandBranches.map((branch) => (
-                    <BranchTreeNode
-                      key={branch.id}
-                      branch={branch}
-                      selectedNode={selectedNode}
-                      onSelect={onSelect}
-                    />
-                  ))}
-                  {brandBranches.length === 0 ? (
-                    <li className="org-tree__empty">Sin sucursales</li>
-                  ) : null}
-                </ul>
-              ) : null}
+              <ul>
+                {brandBranches.map((branch) => (
+                  <BranchTreeNode
+                    key={branch.id}
+                    branch={branch}
+                    selectedNode={selectedNode}
+                    onSelect={onSelect}
+                  />
+                ))}
+                {brandBranches.length === 0 ? (
+                  <li className="org-tree__empty">Sin sucursales</li>
+                ) : null}
+              </ul>
             </li>
           );
         })}
       </ul>
-    </Root>
+    </aside>
   );
 }
 
@@ -144,37 +120,42 @@ function BranchTreeNode({
   selectedNode: OrganizationNode | null;
   onSelect: (node: OrganizationNode) => void;
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const [salonsExpanded, setSalonsExpanded] = useState(false);
+  const [employeesExpanded, setEmployeesExpanded] = useState(false);
   const salonsQuery = useTenantQuery<{ data: OrganizationSalon[] }>(
     `salons-${branch.id}`,
     `/v1/salons?branchId=${encodeURIComponent(branch.id)}`,
-    { enabled: expanded },
+    { enabled: salonsExpanded },
   );
   const employmentsQuery = useTenantQuery<{ data: BranchEmployment[] }>(
     `branch-employments-${branch.id}`,
     `/v1/branches/${encodeURIComponent(branch.id)}/employments`,
-    { enabled: expanded },
+    { enabled: employeesExpanded },
+  );
+  const usersQuery = useTenantQuery<{ data: OrganizationUser[] }>(
+    "organization-users",
+    "/v1/users",
+    { enabled: employeesExpanded },
   );
   const salons = salonsQuery.data?.data ?? [];
   const employees = employmentsQuery.data?.data ?? [];
+  const users = usersQuery.data?.data ?? [];
   const node = {
     type: "branch",
     id: branch.id,
     parentId: branch.brandId,
   } as const;
+  const employeeGroupNode = {
+    type: "branch-employees",
+    id: branch.id,
+  } as const;
 
   return (
     <li>
       <div className="org-tree__row org-tree__row--branch">
-        <button
-          type="button"
-          className="org-tree__toggle"
-          aria-expanded={expanded}
-          aria-label={`${expanded ? "Contraer" : "Expandir"} ${branch.name}`}
-          onClick={() => setExpanded((value) => !value)}
-        >
-          {expanded ? "−" : "+"}
-        </button>
+        <span className="org-tree__connector" aria-hidden="true">
+          ├
+        </span>
         <button
           type="button"
           className={
@@ -187,31 +168,46 @@ function BranchTreeNode({
           <span>Sucursal · {branch.code}</span>
           <strong>{branch.name}</strong>
         </button>
-        <button
-          type="button"
-          className="org-tree__add"
-          aria-label={`Crear salón en ${branch.name}`}
-          title="Crear salón"
-          onClick={() =>
-            onSelect({ type: "salon", id: null, parentId: branch.id })
-          }
-        >
-          +
-        </button>
       </div>
-      {expanded ? (
-        <ul>
-          <li>
-            <div className="org-tree__group-label">
+      <ul className="org-tree__resources">
+        <li>
+          <div className="org-tree__resource-row">
+            <button
+              type="button"
+              className="org-tree__toggle"
+              aria-expanded={salonsExpanded}
+              aria-label={`${salonsExpanded ? "Contraer" : "Expandir"} salones de ${branch.name}`}
+              onClick={() => setSalonsExpanded((value) => !value)}
+            >
+              {salonsExpanded ? "−" : "+"}
+            </button>
+            <button
+              type="button"
+              className="org-tree__group-button"
+              onClick={() => setSalonsExpanded(true)}
+            >
               <span>Salones</span>
               <small>{salonsQuery.isLoading ? "…" : salons.length}</small>
-            </div>
-            {salonsQuery.error ? (
-              <TreeLoadError
-                label="salones"
-                onRetry={() => void salonsQuery.refetch()}
-              />
-            ) : null}
+            </button>
+            <button
+              type="button"
+              className="org-tree__add"
+              aria-label={`Crear salón en ${branch.name}`}
+              title="Crear salón"
+              onClick={() =>
+                onSelect({ type: "salon", id: null, parentId: branch.id })
+              }
+            >
+              +
+            </button>
+          </div>
+          {salonsExpanded && salonsQuery.error ? (
+            <TreeLoadError
+              label="salones"
+              onRetry={() => void salonsQuery.refetch()}
+            />
+          ) : null}
+          {salonsExpanded ? (
             <ul>
               {salons.map((salon) => {
                 const salonNode = {
@@ -231,8 +227,8 @@ function BranchTreeNode({
                       onClick={() => onSelect(salonNode)}
                     >
                       <span aria-hidden="true">└</span>
-                      {salon.name}
-                      <small>{salon.capacity}</small>
+                      <strong>{salon.name}</strong>
+                      <small>{salon.capacity} cubiertos</small>
                     </button>
                   </li>
                 );
@@ -243,36 +239,90 @@ function BranchTreeNode({
                 <li className="org-tree__empty">Sin salones</li>
               ) : null}
             </ul>
-          </li>
-          <li>
+          ) : null}
+        </li>
+        <li>
+          <div className="org-tree__resource-row">
+            <button
+              type="button"
+              className="org-tree__toggle"
+              aria-expanded={employeesExpanded}
+              aria-label={`${employeesExpanded ? "Contraer" : "Expandir"} equipo de ${branch.name}`}
+              onClick={() => setEmployeesExpanded((value) => !value)}
+            >
+              {employeesExpanded ? "−" : "+"}
+            </button>
             <button
               type="button"
               className={
-                isOrganizationNodeSelected(selectedNode, {
-                  type: "branch-employees",
-                  id: branch.id,
-                })
+                isOrganizationNodeSelected(selectedNode, employeeGroupNode)
                   ? "org-tree__group-button is-selected"
                   : "org-tree__group-button"
               }
-              onClick={() =>
-                onSelect({ type: "branch-employees", id: branch.id })
-              }
+              onClick={() => onSelect(employeeGroupNode)}
             >
-              <span>Empleados</span>
-              <small>
-                {employmentsQuery.isLoading ? "…" : employees.length}
-              </small>
+              <span>Equipo / mozos</span>
+              <small>{employmentsQuery.isLoading ? "…" : employees.length}</small>
             </button>
-            {employmentsQuery.error ? (
-              <TreeLoadError
-                label="empleados"
-                onRetry={() => void employmentsQuery.refetch()}
-              />
-            ) : null}
-          </li>
-        </ul>
-      ) : null}
+            <button
+              type="button"
+              className="org-tree__add"
+              aria-label={`Agregar persona al equipo de ${branch.name}`}
+              title="Agregar persona"
+              onClick={() => onSelect(employeeGroupNode)}
+            >
+              +
+            </button>
+          </div>
+          {employeesExpanded && (employmentsQuery.error || usersQuery.error) ? (
+            <TreeLoadError
+              label="el equipo"
+              onRetry={() =>
+                void Promise.all([
+                  employmentsQuery.refetch(),
+                  usersQuery.refetch(),
+                ])
+              }
+            />
+          ) : null}
+          {employeesExpanded ? (
+            <ul>
+              {employees.map((employment) => {
+                const user = userForEmployment(users, employment);
+                const employeeNode = {
+                  type: "employee",
+                  id: employment.id,
+                  parentId: branch.id,
+                } as const;
+                return (
+                  <li key={employment.id}>
+                    <button
+                      type="button"
+                      className={
+                        isOrganizationNodeSelected(selectedNode, employeeNode)
+                          ? "org-tree__leaf is-selected"
+                          : "org-tree__leaf"
+                      }
+                      onClick={() => onSelect(employeeNode)}
+                    >
+                      <span aria-hidden="true">└</span>
+                      <strong>{user?.name ?? employment.personRef}</strong>
+                      <small>
+                        {employment.employeeCode} · {user?.roleIds[0] ?? employment.relationshipType}
+                      </small>
+                    </button>
+                  </li>
+                );
+              })}
+              {!employmentsQuery.isLoading &&
+              !employmentsQuery.error &&
+              employees.length === 0 ? (
+                <li className="org-tree__empty">Sin personas asignadas</li>
+              ) : null}
+            </ul>
+          ) : null}
+        </li>
+      </ul>
     </li>
   );
 }

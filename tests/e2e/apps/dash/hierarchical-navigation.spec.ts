@@ -44,34 +44,34 @@ const employment = {
   relationshipType: "EMPLOYEE",
 };
 
-test("preserva la auto-selección cuando el usuario tiene un único tenant", async ({
+test("exige elegir el tenant antes de habilitar la edición, incluso si hay uno", async ({
   page,
 }) => {
-  await installSession(page);
+  await installSession(page, "ffffffff-ffff-ffff-ffff-ffffffffffff");
   await mockOrganizationApi(page, { tenants: [tenantA] });
   await page.goto("/select-tenant");
 
+  await expect(page).toHaveURL(/\/select-tenant$/);
+  await expect(
+    page.getByRole("heading", { name: "Elegí dónde vas a trabajar" }),
+  ).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(() => localStorage.getItem("maitre.selectedTenantId")),
+    )
+    .toBeNull();
+  await page.getByRole("button", { name: /Grupo Horizonte/ }).click();
   await expect(page).toHaveURL(/\/organizacion$/);
+  await expect(page.getByText("Trabajando en")).toBeVisible();
   await expect(
-    page.getByRole("heading", { level: 1, name: "Organización" }),
+    page.getByRole("link", { name: "Cambiar tenant" }),
   ).toBeVisible();
-  await expect(
-    page.getByText("Grupo Horizonte", { exact: true }).first(),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("heading", { name: "¿Qué organización vas a gestionar?" }),
-  ).toHaveCount(0);
-  await expect(
-    page
-      .getByRole("navigation", { name: "Navegación principal" })
-      .getByText("Marcas"),
-  ).toHaveCount(0);
   const primaryNavigation = page.getByRole("navigation", {
     name: "Navegación principal",
   });
   await expect(
-    primaryNavigation.getByRole("region", {
-      name: "Jerarquía de la organización",
+    page.getByRole("complementary", {
+      name: "Jerarquía editable de la organización",
     }),
   ).toBeVisible();
   await expect(primaryNavigation.getByText("Control operativo")).toBeVisible();
@@ -91,7 +91,7 @@ test("obliga a elegir entre múltiples tenants y persiste la selección explíci
   await page.goto("/");
   await expect(page).toHaveURL(/\/select-tenant$/);
   await expect(
-    page.getByRole("heading", { name: "¿Qué organización vas a gestionar?" }),
+    page.getByRole("heading", { name: "Elegí dónde vas a trabajar" }),
   ).toBeVisible();
   await expect(page.getByRole("listitem")).toHaveCount(2);
   await page.getByRole("button", { name: /Grupo Horizonte/ }).click();
@@ -107,7 +107,7 @@ test("obliga a elegir entre múltiples tenants y persiste la selección explíci
     .toBe(tenantA.id);
 });
 
-test("recorre Marca → Sucursal → Salones y Empleados con carga lazy y paneles de alta", async ({
+test("recorre Marca → Sucursal → Salones y Equipo con carga lazy y paneles de alta", async ({
   page,
 }) => {
   await installSession(page, tenantA.id);
@@ -120,7 +120,6 @@ test("recorre Marca → Sucursal → Salones y Empleados con carga lazy y panele
   await expect.poll(() => calls.salons).toBe(0);
   await expect.poll(() => calls.employments).toBe(0);
 
-  await page.getByRole("button", { name: "Expandir Casa Norte" }).click();
   await page
     .getByRole("button", { name: "Centro", exact: false })
     .filter({ hasText: "Sucursal" })
@@ -138,19 +137,25 @@ test("recorre Marca → Sucursal → Salones y Empleados con carga lazy y panele
     page.getByRole("heading", { name: "Detalle de sucursal" }),
   ).toBeVisible();
 
-  await page.getByRole("button", { name: "Expandir Casa Norte" }).click();
-  await page.getByRole("button", { name: "Expandir Centro" }).click();
+  await page
+    .getByRole("button", { name: "Expandir salones de Centro" })
+    .click();
   await expect.poll(() => calls.salons).toBe(1);
+  await expect.poll(() => calls.employments).toBe(0);
+  await page.getByRole("button", { name: "Expandir equipo de Centro" }).click();
   await expect.poll(() => calls.employments).toBe(1);
   await expect(
     page.getByRole("button", { name: /Salón principal/ }),
   ).toBeVisible();
 
-  await page.getByRole("button", { name: /Empleados/ }).click();
+  await page.getByRole("button", { name: /Equipo \/ mozos/ }).click();
   await expect(
     page.getByRole("heading", { name: "Empleados de la sucursal" }),
   ).toBeVisible();
-  await expect(page.getByText("Ada Operadora")).toBeVisible();
+  const assignedEmployees = page.getByRole("list", {
+    name: "Empleados asignados",
+  });
+  await expect(assignedEmployees.getByText("Ada Operadora")).toBeVisible();
   await expect(
     page
       .getByRole("list", { name: "Empleados asignados" })
@@ -175,7 +180,7 @@ test("recorre Marca → Sucursal → Salones y Empleados con carga lazy y panele
   ]);
   expect(invitationResponse.status()).toBe(201);
   expect(employmentResponse.status()).toBe(201);
-  await expect(page.getByText("Bruno Encargado")).toBeVisible();
+  await expect(assignedEmployees.getByText("Bruno Encargado")).toBeVisible();
   await expect(
     page.getByText("Empleado invitado y asignado correctamente.", {
       exact: true,
@@ -198,6 +203,70 @@ test("recorre Marca → Sucursal → Salones y Empleados con carga lazy y panele
     page.getByRole("heading", { name: "Detalle de salón" }),
   ).toBeVisible();
   await expect.poll(() => calls.createdSalons).toBe(1);
+});
+
+test("edita marca, sucursal, salón y mozo desde el mismo árbol", async ({
+  page,
+}) => {
+  await installSession(page, tenantA.id);
+  const calls = await mockOrganizationApi(page, { tenants: [tenantA] });
+  await page.goto("/organizacion");
+  const tree = page.getByRole("complementary", {
+    name: "Jerarquía editable de la organización",
+  });
+
+  await tree
+    .getByRole("button", { name: "Marca Casa Norte", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Detalle de marca" }),
+  ).toBeVisible();
+  await page.getByLabel("Nombre", { exact: true }).first().fill("Casa Sur");
+  await page.getByRole("button", { name: "Guardar cambios" }).first().click();
+  await expect.poll(() => calls.updatedBrands).toBe(1);
+  await expect(tree.getByText("Casa Sur", { exact: true })).toBeVisible();
+
+  await tree
+    .getByRole("button", { name: "Centro", exact: false })
+    .filter({ hasText: "Sucursal" })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Detalle de sucursal" }),
+  ).toBeVisible();
+  await page.getByLabel("Nombre", { exact: true }).fill("Centro Norte");
+  await page.getByRole("button", { name: "Guardar cambios" }).click();
+  await expect.poll(() => calls.updatedBranches).toBe(1);
+  await expect(tree.getByText("Centro Norte", { exact: true })).toBeVisible();
+
+  await tree
+    .getByRole("button", { name: "Expandir salones de Centro Norte" })
+    .click();
+  await tree.getByRole("button", { name: /Salón principal/ }).click();
+  const salonName = page.getByLabel("Nombre", { exact: true });
+  await expect(salonName).toHaveValue("Salón principal");
+  await salonName.fill("Salón Azul");
+  await page.getByLabel("Capacidad").fill("56");
+  await page.getByRole("button", { name: "Guardar cambios" }).click();
+  await expect.poll(() => calls.updatedSalons).toBe(1);
+  await expect(tree.getByText("Salón Azul", { exact: true })).toBeVisible();
+
+  await tree
+    .getByRole("button", { name: "Expandir equipo de Centro Norte" })
+    .click();
+  await tree.getByRole("button", { name: /Ada Operadora/ }).click();
+  await expect(
+    page.getByRole("heading", { name: "Ada Operadora" }),
+  ).toBeVisible();
+  await page.getByLabel("Perfil operativo").selectOption("role_waiter");
+  await page.getByLabel("Código de empleado").fill("MOZO-01");
+  await page.getByLabel("Tipo de relación").selectOption("EMPLOYEE");
+  await page.getByLabel("Estado laboral").selectOption("ACTIVE");
+  await page.getByRole("button", { name: "Guardar persona" }).click();
+  await expect(
+    page.getByText("Persona y relación laboral actualizadas correctamente."),
+  ).toBeVisible();
+  expect(calls.updatedEmployments).toBe(1);
+  expect(calls.updatedUsers).toBe(1);
 });
 
 test("cubre loading, retry, estado vacío, validación y error de mutación", async ({
@@ -246,9 +315,7 @@ test("reintenta una asignación fallida sin duplicar la invitación", async ({
     failFirstEmployment: true,
   });
   await page.goto("/organizacion");
-  await page.getByRole("button", { name: "Expandir Casa Norte" }).click();
-  await page.getByRole("button", { name: "Expandir Centro" }).click();
-  await page.getByRole("button", { name: /Empleados/ }).click();
+  await page.getByRole("button", { name: /Equipo \/ mozos/ }).click();
 
   await page.getByLabel("Nombre").fill("Cora Temporal");
   await page.getByLabel("Email").fill("cora@example.test");
@@ -260,7 +327,11 @@ test("reintenta una asignación fallida sin duplicar la invitación", async ({
   );
 
   await page.getByRole("button", { name: "Reintentar asignación" }).click();
-  await expect(page.getByText("Cora Temporal")).toBeVisible();
+  await expect(
+    page
+      .getByRole("list", { name: "Empleados asignados" })
+      .getByText("Cora Temporal"),
+  ).toBeVisible();
   expect(calls.invitedUsers).toBe(1);
   expect(calls.employmentAttempts).toBe(2);
   expect(calls.createdEmployments).toBe(1);
@@ -274,8 +345,8 @@ test("mantiene el explorer usable y accesible en viewport mobile", async ({
   await mockOrganizationApi(page, { tenants: [tenantA] });
   await page.goto("/organizacion");
 
-  const tree = page.getByRole("region", {
-    name: "Jerarquía de la organización",
+  const tree = page.getByRole("complementary", {
+    name: "Jerarquía editable de la organización",
   });
   const detail = page.getByRole("heading", { name: "Elegí un nodo del árbol" });
   await expect(tree).toBeVisible();
@@ -316,9 +387,16 @@ async function mockOrganizationApi(
     invitedUsers: 0,
     employmentAttempts: 0,
     createdEmployments: 0,
+    updatedBrands: 0,
+    updatedBranches: 0,
+    updatedSalons: 0,
+    updatedEmployments: 0,
+    updatedUsers: 0,
   };
-  const salons = [salon];
-  const employmentRecords = [employment];
+  const brandRecords = (options.brands ?? [brand]).map((item) => ({ ...item }));
+  const branchRecord = { ...branch };
+  const salons = [{ ...salon }];
+  const employmentRecords = [{ ...employment }];
   const users = [
     {
       id: employment.personRef,
@@ -351,16 +429,30 @@ async function mockOrganizationApi(
           { title: "No se pudo cargar marcas", type: "about:blank" },
           500,
         );
-      return json(route, { data: options.brands ?? [brand] });
+      return json(route, { data: brandRecords });
     }
     if (path === "/v1/branches" && method === "GET")
       return json(route, {
-        data: options.brands?.length === 0 ? [] : [branch],
+        data: brandRecords.length === 0 ? [] : [branchRecord],
       });
     if (path === `/v1/brands/${brand.id}` && method === "GET")
-      return json(route, { data: brand });
+      return json(route, { data: brandRecords[0] });
+    if (path === `/v1/brands/${brand.id}/presentation` && method === "GET")
+      return json(route, {
+        data: { draft: null, published: null, history: [] },
+      });
+    if (path === `/v1/brands/${brand.id}` && method === "PATCH") {
+      calls.updatedBrands += 1;
+      Object.assign(brandRecords[0]!, request.postDataJSON());
+      return json(route, { data: brandRecords[0] });
+    }
     if (path === `/v1/branches/${branch.id}` && method === "GET")
-      return json(route, { data: branch });
+      return json(route, { data: branchRecord });
+    if (path === `/v1/branches/${branch.id}` && method === "PATCH") {
+      calls.updatedBranches += 1;
+      Object.assign(branchRecord, request.postDataJSON());
+      return json(route, { data: branchRecord });
+    }
     if (path === "/v1/salons" && method === "GET") {
       calls.salons += 1;
       return json(route, { data: salons });
@@ -372,6 +464,20 @@ async function mockOrganizationApi(
       return requestedSalon
         ? json(route, { data: requestedSalon })
         : json(route, { title: "Salón inexistente", type: "about:blank" }, 404);
+    }
+    if (path.startsWith("/v1/salons/") && method === "PATCH") {
+      calls.updatedSalons += 1;
+      const requestedSalon = salons.find(
+        (item) => path === `/v1/salons/${item.id}`,
+      );
+      if (!requestedSalon)
+        return json(
+          route,
+          { title: "Salón inexistente", type: "about:blank" },
+          404,
+        );
+      Object.assign(requestedSalon, request.postDataJSON());
+      return json(route, { data: requestedSalon });
     }
     if (path === `/v1/branches/${branch.id}/employments`) {
       calls.employments += 1;
@@ -396,6 +502,51 @@ async function mockOrganizationApi(
       users.push(created);
       return json(route, { data: created }, 201);
     }
+    if (path.startsWith("/v1/users/") && method === "PATCH") {
+      calls.updatedUsers += 1;
+      const requestedUser = users.find(
+        (user) => path === `/v1/users/${user.id}`,
+      );
+      if (!requestedUser)
+        return json(
+          route,
+          { title: "Usuario inexistente", type: "about:blank" },
+          404,
+        );
+      const body = request.postDataJSON() as {
+        roleIds?: string[];
+        membershipStatus?: string;
+      };
+      if (body.roleIds) requestedUser.roleIds = body.roleIds;
+      if (body.membershipStatus) requestedUser.status = body.membershipStatus;
+      return json(route, { data: requestedUser });
+    }
+    if (path.startsWith("/v1/employments/") && method === "GET") {
+      const requestedEmployment = employmentRecords.find(
+        (item) => path === `/v1/employments/${item.id}`,
+      );
+      return requestedEmployment
+        ? json(route, { data: requestedEmployment })
+        : json(
+            route,
+            { title: "Relación inexistente", type: "about:blank" },
+            404,
+          );
+    }
+    if (path.startsWith("/v1/employments/") && method === "PATCH") {
+      calls.updatedEmployments += 1;
+      const requestedEmployment = employmentRecords.find(
+        (item) => path === `/v1/employments/${item.id}`,
+      );
+      if (!requestedEmployment)
+        return json(
+          route,
+          { title: "Relación inexistente", type: "about:blank" },
+          404,
+        );
+      Object.assign(requestedEmployment, request.postDataJSON());
+      return json(route, { data: requestedEmployment });
+    }
     if (path === "/v1/employments" && method === "POST") {
       calls.employmentAttempts += 1;
       if (options.failFirstEmployment && calls.employmentAttempts === 1) {
@@ -417,7 +568,10 @@ async function mockOrganizationApi(
     }
     if (path === "/v1/roles")
       return json(route, {
-        data: [{ id: "role_admin", name: "Administración" }],
+        data: [
+          { id: "role_admin", name: "Administración" },
+          { id: "role_waiter", name: "Mozo" },
+        ],
       });
     if (path === "/v1/salons" && method === "POST") {
       calls.createdSalons += 1;

@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import {
   createEmployment,
+  updateEmployment,
   DuplicateEmployeeCodeError,
   createWorkShift,
   publishWorkShift,
@@ -57,6 +58,21 @@ const createEmploymentBodySchema = z.object({
   validFrom: z.coerce.date(),
   validUntil: z.coerce.date().optional(),
 });
+
+const updateEmploymentBodySchema = z
+  .object({
+    employeeCode: z.string().min(1).optional(),
+    relationshipType: z
+      .enum(["EMPLOYEE", "CONTRACTOR", "TEMPORARY"])
+      .optional(),
+    eligibleBranchIds: z.array(z.string().uuid()).min(1).optional(),
+    status: z.enum(["ACTIVE", "INACTIVE", "TERMINATED"]).optional(),
+    validFrom: z.coerce.date().optional(),
+    validUntil: z.coerce.date().nullable().optional(),
+  })
+  .refine((body) => Object.values(body).some((value) => value !== undefined), {
+    message: "At least one employment field is required",
+  });
 
 const createWorkShiftBodySchema = z.object({
   timezone: z.string().min(1),
@@ -613,6 +629,44 @@ export async function registerWorkforceRoutes(
       return sendProblem(reply, correlationId, err);
     }
   });
+
+  app.patch<{ Params: { id: string } }>(
+    "/v1/employments/:id",
+    async (req, reply) => {
+      const correlationId = randomUUID();
+      try {
+        const ctx = await requireTenantContext(container, req);
+        requireWorkshiftPlanPermission(ctx);
+        const body = updateEmploymentBodySchema.parse(req.body);
+        const current = await container.employments!.findById(
+          ctx.tenantId,
+          req.params.id,
+        );
+        if (!current)
+          return sendProblem(reply, correlationId, notFound("Employment"));
+        const branchIds = body.eligibleBranchIds ?? current.eligibleBranchIds;
+        if (
+          ctx.branchScopeType !== "ALL_BRANCHES" &&
+          branchIds.some((branchId) => !ctx.branchIds.includes(branchId))
+        ) {
+          return sendProblem(reply, correlationId, notFound("Branch"));
+        }
+        const employment = await updateEmployment(
+          { employments: container.employments! },
+          { tenantId: ctx.tenantId, id: req.params.id, ...omitUndefined(body) },
+        );
+        return { data: employment };
+      } catch (err) {
+        if (err instanceof DuplicateEmployeeCodeError) {
+          return sendProblem(reply, correlationId, conflict(err.message));
+        }
+        if (err instanceof z.ZodError) {
+          return sendProblem(reply, correlationId, badRequest(err.message));
+        }
+        return sendProblem(reply, correlationId, err);
+      }
+    },
+  );
 
   app.get<{
     Params: { branchId: string };
