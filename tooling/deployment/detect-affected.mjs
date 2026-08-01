@@ -8,7 +8,7 @@ export const applications = [
   },
   {
     name: "web",
-    project_id: "prj_9qxMJEtIMVtq8k43SuzVTqsYewgd",
+    project_id: "prj_SbBXDmla9cSxEQX7dxwnaWQiDodW",
     e2e: { app: "dash", label: "Dash", workspace: "apps/web" },
   },
   {

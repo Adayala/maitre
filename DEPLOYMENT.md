@@ -25,15 +25,15 @@ push to `main`, after Quality and all selected E2E jobs succeed.
 
 ## Live URLs
 
-| App                        | URL                                 | Role                 |
-| -------------------------- | ----------------------------------- | -------------------- |
-| API (Fastify)              | https://maitre-api.vercel.app       | Backend for all apps |
-| Dash (`apps/web`)          | https://maitre-web-omega.vercel.app | Owner/Admin          |
-| Kitchen (`apps/kitchen`)   | https://maitre-kitchen.vercel.app   | Cooks (KDS)          |
-| Waiter (`apps/waiter`)     | https://maitre-waiter.vercel.app    | Mozos                |
-| Cashier (`apps/cashier`)   | https://maitre-cashier.vercel.app   | Caja                 |
-| Host (`apps/host`)         | https://maitre-host.vercel.app      | Maître/recepción     |
-| Customer (`apps/customer`) | https://maitre-customer.vercel.app  | Público (guest)      |
+| App                        | URL                                | Role                 |
+| -------------------------- | ---------------------------------- | -------------------- |
+| API (Fastify)              | https://maitre-api.vercel.app      | Backend for all apps |
+| Dash (`apps/web`)          | https://maitre-dash.vercel.app     | Owner/Admin          |
+| Kitchen (`apps/kitchen`)   | https://maitre-kitchen.vercel.app  | Cooks (KDS)          |
+| Waiter (`apps/waiter`)     | https://maitre-waiter.vercel.app   | Mozos                |
+| Cashier (`apps/cashier`)   | https://maitre-cashier.vercel.app  | Caja                 |
+| Host (`apps/host`)         | https://maitre-host.vercel.app     | Maître/recepción     |
+| Customer (`apps/customer`) | https://maitre-customer.vercel.app | Público (guest)      |
 
 ## Project settings (configured in Vercel, not in git, except `apps/api/vercel.json`)
 
@@ -127,7 +127,7 @@ For an exceptional CLI deployment from a correctly authorized checkout:
 
 ```bash
 git clone https://github.com/Adayala/maitre.git && cd maitre
-npx vercel link --yes --project maitre-api   # or maitre-web / maitre-kitchen / etc.
+npx vercel link --yes --project maitre-api   # or maitre-dash / maitre-kitchen / etc.
 npx vercel --prod --yes
 ```
 

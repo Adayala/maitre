@@ -11,6 +11,7 @@ import {
 } from "./org-explorer-model.js";
 
 interface OrgTreeProps {
+  variant?: "panel" | "sidebar";
   tenantName: string;
   brands: OrganizationBrand[];
   branches: OrganizationBranch[];
@@ -19,6 +20,7 @@ interface OrgTreeProps {
 }
 
 export function OrgTree({
+  variant = "panel",
   tenantName,
   brands,
   branches,
@@ -38,8 +40,13 @@ export function OrgTree({
     });
   }
 
+  const Root = variant === "sidebar" ? "section" : "aside";
+
   return (
-    <aside className="org-tree" aria-label="Jerarquía de la organización">
+    <Root
+      className={`org-tree org-tree--${variant}`}
+      aria-label="Jerarquía de la organización"
+    >
       <div className="org-tree__toolbar">
         <div>
           <span>Mapa organizacional</span>
@@ -124,7 +131,7 @@ export function OrgTree({
           );
         })}
       </ul>
-    </aside>
+    </Root>
   );
 }
 

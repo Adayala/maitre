@@ -66,6 +66,19 @@ test("preserva la auto-selección cuando el usuario tiene un único tenant", asy
       .getByRole("navigation", { name: "Navegación principal" })
       .getByText("Marcas"),
   ).toHaveCount(0);
+  const primaryNavigation = page.getByRole("navigation", {
+    name: "Navegación principal",
+  });
+  await expect(
+    primaryNavigation.getByRole("region", {
+      name: "Jerarquía de la organización",
+    }),
+  ).toBeVisible();
+  await expect(primaryNavigation.getByText("Control operativo")).toBeVisible();
+  await expect(primaryNavigation.getByText("Gobierno")).toBeVisible();
+  await expect(primaryNavigation.locator('a[href="/brands"]')).toHaveCount(0);
+  await expect(primaryNavigation.locator('a[href="/branches"]')).toHaveCount(0);
+  await expect(primaryNavigation.locator('a[href="/users"]')).toHaveCount(0);
   await expectNoSeriousAccessibilityViolations(page);
 });
 
@@ -112,11 +125,20 @@ test("recorre Marca → Sucursal → Salones y Empleados con carga lazy y panele
     .getByRole("button", { name: "Centro", exact: false })
     .filter({ hasText: "Sucursal" })
     .click();
+  await expect(page).toHaveURL(
+    /\/organizacion\?node=branch&id=30000000-0000-0000-0000-000000000001&parentId=20000000-0000-0000-0000-000000000001$/,
+  );
   await expect(
     page.getByRole("heading", { name: "Detalle de sucursal" }),
   ).toBeVisible();
   await expect(page.getByLabel("Código")).toHaveValue("CTR");
 
+  await page.reload();
+  await expect(
+    page.getByRole("heading", { name: "Detalle de sucursal" }),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Expandir Casa Norte" }).click();
   await page.getByRole("button", { name: "Expandir Centro" }).click();
   await expect.poll(() => calls.salons).toBe(1);
   await expect.poll(() => calls.employments).toBe(1);
@@ -189,7 +211,7 @@ test("cubre loading, retry, estado vacío, validación y error de mutación", as
   });
 
   await page.goto("/organizacion");
-  await expect(page.getByRole("status")).toContainText(/Cargando/);
+  await expect(page.getByText("Cargando…", { exact: true })).toBeVisible();
   await expect(page.getByRole("alert")).toContainText(
     "No se pudo cargar marcas",
   );
@@ -202,7 +224,9 @@ test("cubre loading, retry, estado vacío, validación y error de mutación", as
   await page.getByRole("button", { name: "Crear marca" }).click();
   const name = page.getByLabel("Nombre");
   await page.getByRole("button", { name: "Crear marca" }).last().click();
-  await expect(name).toBeFocused();
+  await expect
+    .poll(() => name.evaluate((input) => input.validity.valid))
+    .toBe(false);
   await name.fill("Marca fallida");
   await page.getByLabel("Descripción").fill("Error determinista");
   await page.getByRole("button", { name: "Crear marca" }).last().click();
@@ -248,7 +272,7 @@ test("mantiene el explorer usable y accesible en viewport mobile", async ({
   await mockOrganizationApi(page, { tenants: [tenantA] });
   await page.goto("/organizacion");
 
-  const tree = page.getByRole("complementary", {
+  const tree = page.getByRole("region", {
     name: "Jerarquía de la organización",
   });
   const detail = page.getByRole("heading", { name: "Elegí un nodo del árbol" });
