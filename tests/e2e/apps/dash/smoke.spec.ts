@@ -170,9 +170,9 @@ test("@ui-contract actualiza el perfil fiscal y declara un punto de venta ARCA",
   await page.getByLabel("Domicilio legal").fill("Av. Corrientes 1234");
   await page.getByLabel("Motivo del cambio").fill("Validación registral E2E");
   await page.getByRole("button", { name: "Guardar perfil fiscal" }).click();
-  await expect(page.getByRole("status")).toContainText(
-    "Datos fiscales actualizados y auditados.",
-  );
+  await expect(
+    page.getByText("Datos fiscales actualizados y auditados.", { exact: true }),
+  ).toBeVisible();
 
   await page.getByText("Declarar nuevo punto de venta").click();
   await page.getByLabel("Código oficial").fill("0002");

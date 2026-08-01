@@ -189,9 +189,9 @@ test("recorre Marca → Sucursal → Salones y Empleados con carga lazy y panele
   await page.getByLabel("Nombre").fill("Patio");
   await page.getByLabel("Capacidad").fill("24");
   await page.getByRole("button", { name: "Crear salón" }).last().click();
-  await expect(page.getByRole("status")).toContainText(
-    "Salón creado correctamente",
-  );
+  await expect(
+    page.getByText("Salón creado correctamente.", { exact: true }),
+  ).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Detalle de salón" }),
   ).toBeVisible();
