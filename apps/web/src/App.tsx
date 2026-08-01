@@ -11,10 +11,9 @@ import { BrandPresentationProvider } from "../../../packages/brand-presentation/
 const queryClient = new QueryClient();
 const LoginPage = lazyNamed(() => import("./features/login/login-page.js"), "LoginPage");
 const OverviewPage = lazyNamed(() => import("./features/overview/overview-page.js"), "OverviewPage");
+const SelectTenantPage = lazyNamed(() => import("./features/tenants/select-tenant-page.js"), "SelectTenantPage");
+const OrgExplorer = lazyNamed(() => import("./features/organization/org-explorer.js"), "OrgExplorer");
 const SetupPage = lazyNamed(() => import("./features/setup/setup-page.js"), "SetupPage");
-const BrandsPage = lazyNamed(() => import("./features/brands/brands-page.js"), "BrandsPage");
-const BranchesPage = lazyNamed(() => import("./features/branches/branches-page.js"), "BranchesPage");
-const UsersPage = lazyNamed(() => import("./features/users/users-page.js"), "UsersPage");
 const SubscriptionPage = lazyNamed(() => import("./features/subscription/subscription-page.js"), "SubscriptionPage");
 const FiscalSettingsPage = lazyNamed(() => import("./features/fiscal/fiscal-settings-page.js"), "FiscalSettingsPage");
 const AuditLogsPage = lazyNamed(() => import("./features/audit/audit-logs-page.js"), "AuditLogsPage");
@@ -68,6 +67,7 @@ export function App() {
             </a>
             <Routes>
               <Route path="/login" element={withSuspense(<LoginPage />)} />
+              <Route path="/select-tenant" element={withSuspense(<SelectTenantPage />)} />
               <Route path="/public" element={<PublicLayout />}>
                 <Route index element={withSuspense(<PublicHomePage />)} />
                 <Route path="menu" element={withSuspense(<PublicMenuPage />)} />
@@ -108,16 +108,18 @@ export function App() {
                 />
               </Route>
               <Route path="/" element={<DashboardLayout />}>
-                <Route index element={withSuspense(<OverviewPage />)} />
+                <Route index element={<Navigate to="/organizacion" replace />} />
+                <Route path="organizacion" element={withSuspense(<OrgExplorer />)} />
+                <Route path="overview" element={withSuspense(<OverviewPage />)} />
                 <Route path="setup" element={withSuspense(<SetupPage />)} />
-                <Route path="brands" element={withSuspense(<BrandsPage />)} />
-                <Route path="branches" element={withSuspense(<BranchesPage />)} />
-                <Route path="users" element={withSuspense(<UsersPage />)} />
+                <Route path="brands" element={<Navigate to="/organizacion" replace />} />
+                <Route path="branches" element={<Navigate to="/organizacion" replace />} />
+                <Route path="users" element={<Navigate to="/organizacion" replace />} />
                 <Route path="subscription" element={withSuspense(<SubscriptionPage />)} />
                 <Route path="fiscal" element={withSuspense(<FiscalSettingsPage />)} />
                 <Route path="audit" element={withSuspense(<AuditLogsPage />)} />
                 <Route path="settings" element={withSuspense(<SettingsPage />)} />
-                <Route path="profiles" element={<Navigate to="/users" replace />} />
+                <Route path="profiles" element={<Navigate to="/organizacion" replace />} />
               </Route>
             </Routes>
             </BrandTheme>
