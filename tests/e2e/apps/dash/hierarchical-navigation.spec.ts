@@ -176,9 +176,11 @@ test("recorre Marca → Sucursal → Salones y Empleados con carga lazy y panele
   expect(invitationResponse.status()).toBe(201);
   expect(employmentResponse.status()).toBe(201);
   await expect(page.getByText("Bruno Encargado")).toBeVisible();
-  await expect(page.getByRole("status")).toContainText(
-    "Empleado invitado y asignado correctamente",
-  );
+  await expect(
+    page.getByText("Empleado invitado y asignado correctamente.", {
+      exact: true,
+    }),
+  ).toBeVisible();
   expect(calls.invitedUsers).toBe(1);
   expect(calls.createdEmployments).toBe(1);
 
