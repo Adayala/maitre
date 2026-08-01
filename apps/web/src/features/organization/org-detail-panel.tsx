@@ -11,6 +11,8 @@ import {
   editableMembershipStatus,
   employmentsForBranch,
   organizationPanelTitle,
+  servicePeriodStatusLabel,
+  servicePeriodTypeLabel,
   userForEmployment,
   type BranchEmployment,
   type EmploymentRelationshipType,
@@ -81,7 +83,18 @@ export function OrgDetailPanel({
         <PlazaDetailPanel
           key={node.id ?? `new-${node.parentId}`}
           id={node.id}
-          salonId={node.parentId}
+          branchId={node.branchId}
+          servicePeriodId={node.parentId}
+          salonId={node.salonId}
+          onSelect={onSelect}
+          onNotify={onNotify}
+        />
+      ) : null}
+      {node.type === "service-period" ? (
+        <ServicePeriodDetailPanel
+          key={node.id ?? `new-${node.parentId}`}
+          id={node.id}
+          branchId={node.parentId}
           onSelect={onSelect}
           onNotify={onNotify}
         />
@@ -601,14 +614,256 @@ function TableDetailPanel({
   );
 }
 
+function ServicePeriodDetailPanel({
+  id,
+  branchId,
+  onSelect,
+  onNotify,
+}: {
+  id: string | null;
+  branchId: string;
+  onSelect: (node: OrganizationNode) => void;
+  onNotify: (message: string) => void;
+}) {
+  const queryClient = useQueryClient();
+  const branchQuery = useTenantQuery<{ data: OrganizationBranch }>(
+    `organization-parent-branch-${branchId}`,
+    `/v1/branches/${branchId}`,
+  );
+  const periodQuery = useTenantQuery<{ data: OrganizationServicePeriod }>(
+    `organization-service-period-${id ?? "new"}`,
+    `/v1/service-periods/${id ?? "new"}`,
+    { enabled: Boolean(id) },
+  );
+  const [name, setName] = useState("");
+  const [businessDate, setBusinessDate] = useState(() =>
+    new Date().toISOString().slice(0, 10),
+  );
+  const [type, setType] = useState<OrganizationServicePeriod["type"]>("OTHER");
+  const mutation = usePanelMutation();
+  const period = periodQuery.data?.data;
+
+  async function create(event: FormEvent) {
+    event.preventDefault();
+    const result = await mutation.run<{ data: OrganizationServicePeriod }>(
+      `/v1/branches/${branchId}/service-periods`,
+      "POST",
+      { name, businessDate, type },
+    );
+    if (!result) return;
+    await queryClient.invalidateQueries({
+      queryKey: [`organization-periods-${branchId}`],
+    });
+    onNotify("Jornada creada. Ya podés organizar sus plazas.");
+    onSelect({
+      type: "service-period",
+      id: result.data.id,
+      parentId: branchId,
+    });
+  }
+
+  async function transition(
+    action: "open" | "begin-close" | "close" | "cancel-planned",
+    message: string,
+  ) {
+    if (!id) return;
+    const result = await mutation.run<{ data: OrganizationServicePeriod }>(
+      `/v1/service-periods/${id}/${action}`,
+      "POST",
+    );
+    if (!result) return;
+    await Promise.all([
+      periodQuery.refetch(),
+      queryClient.invalidateQueries({
+        queryKey: [`organization-periods-${branchId}`],
+      }),
+    ]);
+    onNotify(message);
+  }
+
+  return (
+    <PanelFrame
+      kicker="Operación / Jornada de servicio"
+      title={id ? "Detalle de jornada" : "Nueva jornada"}
+      subtitle={`Ejecución operativa en ${branchQuery.data?.data.name ?? "la sucursal"}; sus plazas agrupan mesas y responsables.`}
+    >
+      <StateView
+        isLoading={
+          branchQuery.isLoading || (Boolean(id) && periodQuery.isLoading)
+        }
+        error={(branchQuery.error ?? periodQuery.error) as Error | null}
+        onRetry={() =>
+          void Promise.all([branchQuery.refetch(), periodQuery.refetch()])
+        }
+      >
+        {!id ? (
+          <form className="org-form" onSubmit={(event) => void create(event)}>
+            <label>
+              Nombre de la jornada
+              <input
+                required
+                minLength={2}
+                maxLength={80}
+                placeholder="Ej. Cena del sábado"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+              />
+            </label>
+            <label>
+              Fecha operativa
+              <input
+                required
+                type="date"
+                value={businessDate}
+                onChange={(event) => setBusinessDate(event.target.value)}
+              />
+            </label>
+            <label>
+              Tipo de servicio
+              <select
+                value={type}
+                onChange={(event) =>
+                  setType(
+                    event.target.value as OrganizationServicePeriod["type"],
+                  )
+                }
+              >
+                <option value="BREAKFAST">Desayuno</option>
+                <option value="LUNCH">Almuerzo</option>
+                <option value="DINNER">Cena</option>
+                <option value="OTHER">Otro servicio</option>
+              </select>
+            </label>
+            <PanelMutationFeedback mutation={mutation} />
+            <button type="submit" disabled={mutation.isSaving}>
+              {mutation.isSaving ? "Creando…" : "Crear jornada"}
+            </button>
+          </form>
+        ) : null}
+        {id && period ? (
+          <div className="org-period-detail">
+            <div className="org-period-detail__status">
+              <span
+                className={`org-status org-status--${period.status.toLowerCase()}`}
+              >
+                {servicePeriodStatusLabel(period.status)}
+              </span>
+              <p>
+                {servicePeriodTypeLabel(period.type)} · {period.businessDate}
+              </p>
+            </div>
+            <dl className="org-period-detail__facts">
+              <div>
+                <dt>Jornada</dt>
+                <dd>{period.name}</dd>
+              </div>
+              <div>
+                <dt>Sucursal</dt>
+                <dd>{branchQuery.data?.data.name}</dd>
+              </div>
+              <div>
+                <dt>Apertura real</dt>
+                <dd>
+                  {period.actualOpen
+                    ? new Date(period.actualOpen).toLocaleString("es-AR")
+                    : "Todavía no abierta"}
+                </dd>
+              </div>
+              <div>
+                <dt>Cierre real</dt>
+                <dd>
+                  {period.actualClose
+                    ? new Date(period.actualClose).toLocaleString("es-AR")
+                    : "Todavía no cerrada"}
+                </dd>
+              </div>
+            </dl>
+            <div className="org-period-detail__explanation">
+              <strong>Plazas de esta jornada</strong>
+              <p>
+                Volvé al árbol para crear cada Plaza, elegir su salón, agrupar
+                mesas y asignar un mozo. La mesa sigue perteneciendo físicamente
+                al salón.
+              </p>
+            </div>
+            <PanelMutationFeedback mutation={mutation} />
+            <div className="org-form__actions">
+              {period.status === "PLANNED" ? (
+                <>
+                  <button
+                    type="button"
+                    disabled={mutation.isSaving}
+                    onClick={() =>
+                      void transition("open", "Jornada abierta correctamente.")
+                    }
+                  >
+                    Abrir jornada
+                  </button>
+                  <button
+                    type="button"
+                    className="button-secondary"
+                    disabled={mutation.isSaving}
+                    onClick={() =>
+                      void transition(
+                        "cancel-planned",
+                        "Jornada cancelada correctamente.",
+                      )
+                    }
+                  >
+                    Cancelar jornada
+                  </button>
+                </>
+              ) : null}
+              {period.status === "OPEN" ? (
+                <button
+                  type="button"
+                  disabled={mutation.isSaving}
+                  onClick={() =>
+                    void transition(
+                      "begin-close",
+                      "La jornada entró en proceso de cierre.",
+                    )
+                  }
+                >
+                  Iniciar cierre
+                </button>
+              ) : null}
+              {period.status === "CLOSING" ? (
+                <button
+                  type="button"
+                  disabled={mutation.isSaving}
+                  onClick={() =>
+                    void transition("close", "Jornada cerrada correctamente.")
+                  }
+                >
+                  Cerrar jornada
+                </button>
+              ) : null}
+              {period.status === "CLOSED" || period.status === "CANCELLED" ? (
+                <p className="org-panel-note">
+                  Esta jornada ya no admite cambios operativos.
+                </p>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+      </StateView>
+    </PanelFrame>
+  );
+}
+
 function PlazaDetailPanel({
   id,
+  branchId,
+  servicePeriodId,
   salonId,
   onSelect,
   onNotify,
 }: {
   id: string | null;
-  salonId: string;
+  branchId: string;
+  servicePeriodId: string;
+  salonId: string | null;
   onSelect: (node: OrganizationNode) => void;
   onNotify: (message: string) => void;
 }) {
@@ -618,69 +873,56 @@ function PlazaDetailPanel({
     `/v1/plazas/${id ?? "new"}`,
     { enabled: Boolean(id) },
   );
-  const salonQuery = useTenantQuery<{ data: OrganizationSalon }>(
-    `organization-parent-salon-${salonId}`,
-    `/v1/salons/${salonId}`,
+  const periodQuery = useTenantQuery<{ data: OrganizationServicePeriod }>(
+    `organization-service-period-${servicePeriodId}`,
+    `/v1/service-periods/${servicePeriodId}`,
   );
-  const branchId = salonQuery.data?.data.branchId;
-  const periodsQuery = useTenantQuery<{ data: OrganizationServicePeriod[] }>(
-    `organization-periods-${branchId ?? "pending"}`,
-    `/v1/branches/${branchId ?? "pending"}/service-periods`,
-    { enabled: Boolean(branchId) },
+  const salonsQuery = useTenantQuery<{ data: OrganizationSalon[] }>(
+    `salons-${branchId}`,
+    `/v1/salons?branchId=${encodeURIComponent(branchId)}`,
   );
+  const [selectedSalonId, setSelectedSalonId] = useState(salonId ?? "");
   const tablesQuery = useTenantQuery<{ data: OrganizationTable[] }>(
-    `organization-tables-${salonId}`,
-    `/v1/tables?salonId=${encodeURIComponent(salonId)}`,
+    `organization-tables-${selectedSalonId || "pending"}`,
+    `/v1/tables?salonId=${encodeURIComponent(selectedSalonId || "pending")}`,
+    { enabled: Boolean(selectedSalonId) },
   );
   const employmentsQuery = useTenantQuery<{ data: BranchEmployment[] }>(
-    `branch-employments-${branchId ?? "pending"}`,
-    `/v1/branches/${branchId ?? "pending"}/employments`,
-    { enabled: Boolean(branchId) },
+    `branch-employments-${branchId}`,
+    `/v1/branches/${branchId}/employments`,
   );
   const usersQuery = useTenantQuery<{ data: OrganizationUser[] }>(
     "organization-users",
     "/v1/users",
-    { enabled: Boolean(branchId) },
   );
-  const editablePeriods = (periodsQuery.data?.data ?? []).filter(
-    (period) => period.status === "PLANNED" || period.status === "OPEN",
-  );
+  const salons = salonsQuery.data?.data ?? [];
   const tables = tablesQuery.data?.data ?? [];
-  const employments = branchId
-    ? employmentsForBranch(employmentsQuery.data?.data ?? [], branchId).filter(
-        (employment) => employment.status === "ACTIVE",
-      )
-    : [];
+  const employments = employmentsForBranch(
+    employmentsQuery.data?.data ?? [],
+    branchId,
+  ).filter((employment) => employment.status === "ACTIVE");
   const [name, setName] = useState("");
-  const [servicePeriodId, setServicePeriodId] = useState("");
   const [waiterEmploymentId, setWaiterEmploymentId] = useState("");
   const [tableIds, setTableIds] = useState<string[]>([]);
   const [isHydrated, setIsHydrated] = useState(!id);
   const mutation = usePanelMutation();
-  const periodMutation = usePanelMutation();
-  const [newPeriodName, setNewPeriodName] = useState("Servicio principal");
-  const [newPeriodDate, setNewPeriodDate] = useState(() =>
-    new Date().toISOString().slice(0, 10),
-  );
-  const [newPeriodType, setNewPeriodType] = useState<
-    "BREAKFAST" | "LUNCH" | "DINNER" | "OTHER"
-  >("OTHER");
+  const period = periodQuery.data?.data;
+  const isEditablePeriod =
+    period?.status === "PLANNED" || period?.status === "OPEN";
 
   useEffect(() => {
     const plaza = plazaQuery.data?.data;
     if (!plaza) return;
     setName(plaza.name);
-    setServicePeriodId(plaza.servicePeriodId);
+    setSelectedSalonId(plaza.salonId);
     setWaiterEmploymentId(plaza.waiterEmploymentId ?? "");
     setTableIds(plaza.tableIds);
     setIsHydrated(true);
   }, [plazaQuery.data]);
 
   useEffect(() => {
-    if (!id && !servicePeriodId && editablePeriods[0]) {
-      setServicePeriodId(editablePeriods[0].id);
-    }
-  }, [editablePeriods, id, servicePeriodId]);
+    if (!selectedSalonId && salons[0]) setSelectedSalonId(salons[0].id);
+  }, [salons, selectedSalonId]);
 
   function toggleTable(tableId: string) {
     setTableIds((current) =>
@@ -690,27 +932,18 @@ function PlazaDetailPanel({
     );
   }
 
-  async function createPeriod() {
-    if (!branchId) return;
-    const result = await periodMutation.run<{
-      data: OrganizationServicePeriod;
-    }>(`/v1/branches/${branchId}/service-periods`, "POST", {
-      businessDate: newPeriodDate,
-      name: newPeriodName,
-      type: newPeriodType,
-    });
-    if (!result) return;
-    setServicePeriodId(result.data.id);
-    await periodsQuery.refetch();
-  }
-
   async function save(event: FormEvent) {
     event.preventDefault();
     const result = await mutation.run<{ data: OrganizationPlaza }>(
       id ? `/v1/plazas/${id}` : "/v1/plazas",
       id ? "PATCH" : "POST",
       {
-        ...(id ? {} : { salonId, servicePeriodId }),
+        ...(id
+          ? {}
+          : {
+              salonId: selectedSalonId,
+              servicePeriodId,
+            }),
         name,
         waiterEmploymentId: waiterEmploymentId || null,
         tableIds,
@@ -718,43 +951,53 @@ function PlazaDetailPanel({
     );
     if (!result) return;
     await queryClient.invalidateQueries({
-      queryKey: [`organization-plazas-${salonId}`],
+      queryKey: [`organization-plazas-period-${servicePeriodId}`],
     });
     if (!id) {
       onNotify("Plaza creada y asignada a la jornada.");
-      onSelect({ type: "plaza", id: result.data.id, parentId: salonId });
+      onSelect({
+        type: "plaza",
+        id: result.data.id,
+        parentId: servicePeriodId,
+        branchId,
+        salonId: result.data.salonId,
+      });
     }
   }
 
   const loadError =
     plazaQuery.error ??
-    salonQuery.error ??
-    periodsQuery.error ??
+    periodQuery.error ??
+    salonsQuery.error ??
     tablesQuery.error ??
     employmentsQuery.error ??
     usersQuery.error;
 
   return (
     <PanelFrame
-      kicker="Nivel 04 / Plaza"
+      kicker="Operación / Plaza"
       title={id ? "Detalle de plaza" : "Nueva plaza"}
-      subtitle={`Agrupación operativa de mesas en ${salonQuery.data?.data.name ?? "el salón"}`}
+      subtitle={
+        period
+          ? `${period.name} · ${period.businessDate}. Agrupá mesas del mismo salón y asigná un responsable.`
+          : "Agrupación operativa de mesas para una jornada concreta."
+      }
     >
       <StateView
         isLoading={
-          salonQuery.isLoading ||
-          periodsQuery.isLoading ||
-          tablesQuery.isLoading ||
+          periodQuery.isLoading ||
+          salonsQuery.isLoading ||
           employmentsQuery.isLoading ||
           usersQuery.isLoading ||
+          (Boolean(selectedSalonId) && tablesQuery.isLoading) ||
           (Boolean(id) && (plazaQuery.isLoading || !isHydrated))
         }
         error={loadError as Error | null}
         onRetry={() =>
           void Promise.all([
             plazaQuery.refetch(),
-            salonQuery.refetch(),
-            periodsQuery.refetch(),
+            periodQuery.refetch(),
+            salonsQuery.refetch(),
             tablesQuery.refetch(),
             employmentsQuery.refetch(),
             usersQuery.refetch(),
@@ -762,91 +1005,66 @@ function PlazaDetailPanel({
         }
       >
         <form className="org-form" onSubmit={(event) => void save(event)}>
+          <div
+            className="org-operation-context"
+            aria-label="Contexto operativo"
+          >
+            <span>Jornada</span>
+            <strong>{period?.name}</strong>
+            <small>
+              {period
+                ? `${servicePeriodStatusLabel(period.status)} · ${servicePeriodTypeLabel(period.type)}`
+                : "Cargando…"}
+            </small>
+          </div>
+          {!isEditablePeriod ? (
+            <p className="org-panel-note" role="status">
+              Esta jornada ya no admite cambios de plazas.
+            </p>
+          ) : null}
           <label>
             Nombre de la plaza
             <input
               required
               minLength={2}
               maxLength={80}
+              disabled={!isEditablePeriod}
               placeholder="Ej. Terraza norte"
               value={name}
               onChange={(event) => setName(event.target.value)}
             />
           </label>
           <label>
-            Jornada de servicio
+            Salón físico
             <select
               required
-              disabled={Boolean(id)}
-              value={servicePeriodId}
-              onChange={(event) => setServicePeriodId(event.target.value)}
+              disabled={Boolean(id) || !isEditablePeriod}
+              value={selectedSalonId}
+              onChange={(event) => {
+                setSelectedSalonId(event.target.value);
+                setTableIds([]);
+              }}
             >
               <option value="" disabled>
-                Elegir jornada
+                Elegir salón
               </option>
-              {editablePeriods.map((period) => (
-                <option key={period.id} value={period.id}>
-                  {period.name} · {period.businessDate} · {period.status}
-                </option>
-              ))}
+              {salons
+                .filter((salon) => salon.status === "ACTIVE")
+                .map((salon) => (
+                  <option key={salon.id} value={salon.id}>
+                    {salon.name} · {salon.capacity} cubiertos máximos
+                  </option>
+                ))}
             </select>
-            {editablePeriods.length === 0 ? (
-              <small role="status">
-                Creá la primera jornada acá para poder organizar sus plazas.
-              </small>
-            ) : null}
+            <small>
+              La Plaza referencia mesas de un único salón; no cambia su
+              ubicación física.
+            </small>
           </label>
-          {editablePeriods.length === 0 ? (
-            <fieldset className="org-inline-period">
-              <legend>Primera jornada de servicio</legend>
-              <label>
-                Nombre
-                <input
-                  required
-                  value={newPeriodName}
-                  onChange={(event) => setNewPeriodName(event.target.value)}
-                />
-              </label>
-              <label>
-                Fecha operativa
-                <input
-                  required
-                  type="date"
-                  value={newPeriodDate}
-                  onChange={(event) => setNewPeriodDate(event.target.value)}
-                />
-              </label>
-              <label>
-                Tipo
-                <select
-                  value={newPeriodType}
-                  onChange={(event) =>
-                    setNewPeriodType(event.target.value as typeof newPeriodType)
-                  }
-                >
-                  <option value="BREAKFAST">Desayuno</option>
-                  <option value="LUNCH">Almuerzo</option>
-                  <option value="DINNER">Cena</option>
-                  <option value="OTHER">Otro servicio</option>
-                </select>
-              </label>
-              <PanelMutationFeedback mutation={periodMutation} />
-              <button
-                type="button"
-                disabled={
-                  periodMutation.isSaving ||
-                  !newPeriodName.trim() ||
-                  !newPeriodDate
-                }
-                onClick={() => void createPeriod()}
-              >
-                {periodMutation.isSaving ? "Creando…" : "Crear jornada"}
-              </button>
-            </fieldset>
-          ) : null}
           <label>
-            Mozo asignado
+            Mozo o responsable
             <select
+              disabled={!isEditablePeriod}
               value={waiterEmploymentId}
               onChange={(event) => setWaiterEmploymentId(event.target.value)}
             >
@@ -865,11 +1083,11 @@ function PlazaDetailPanel({
               })}
             </select>
           </label>
-          <fieldset className="org-table-picker">
-            <legend>Mesas de esta plaza</legend>
+          <fieldset className="org-table-picker" disabled={!isEditablePeriod}>
+            <legend>Mesas agrupadas en esta plaza</legend>
             <p>
-              Los cubiertos se calculan desde la capacidad de las mesas
-              elegidas.
+              Los cubiertos son la suma de capacidades de las mesas elegidas; no
+              son entidades separadas.
             </p>
             {tables.map((table) => (
               <label key={table.id}>
@@ -882,7 +1100,7 @@ function PlazaDetailPanel({
                 <small>{table.capacity} cubiertos</small>
               </label>
             ))}
-            {tables.length === 0 ? (
+            {selectedSalonId && tables.length === 0 ? (
               <p className="org-panel-note">
                 Creá al menos una mesa en el salón antes de armar una plaza.
               </p>
@@ -901,7 +1119,10 @@ function PlazaDetailPanel({
           <button
             type="submit"
             disabled={
-              mutation.isSaving || !servicePeriodId || tableIds.length === 0
+              mutation.isSaving ||
+              !isEditablePeriod ||
+              !selectedSalonId ||
+              tableIds.length === 0
             }
           >
             {mutation.isSaving

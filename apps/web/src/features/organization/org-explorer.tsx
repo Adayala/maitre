@@ -58,7 +58,11 @@ export function OrgExplorer() {
       (node.type === "branch" ? node.parentId : null) ??
       (node.type === "salon"
         ? branches.find((branch) => branch.id === node.parentId)?.brandId
-        : null);
+        : node.type === "service-period"
+          ? branches.find((branch) => branch.id === node.parentId)?.brandId
+          : node.type === "plaza"
+            ? branches.find((branch) => branch.id === node.branchId)?.brandId
+            : null);
     if (inferredBrandId) selectBrand(inferredBrandId);
     if (node.type === "brand" && !node.id) clearBrand();
     navigate(organizationNodeHref(node));
@@ -68,13 +72,13 @@ export function OrgExplorer() {
     <section className="org-explorer" aria-labelledby="organization-heading">
       <header className="org-explorer__header">
         <div>
-          <p className="org-kicker">Paso 02 / Estructura operativa</p>
+          <p className="org-kicker">Paso 02 / Modelo operativo</p>
           <h1 id="organization-heading">Organización</h1>
         </div>
         <p>
           Estás trabajando en{" "}
           <strong>{activeTenant?.name ?? "tu tenant"}</strong>. Expandí la
-          estructura y elegí cualquier elemento para editarlo.
+          estructura física, jornadas, plazas y equipo desde un mismo mapa.
         </p>
       </header>
       {announcement ? (

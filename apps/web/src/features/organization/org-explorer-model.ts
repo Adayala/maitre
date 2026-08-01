@@ -2,7 +2,14 @@ export type OrganizationNode =
   | { type: "brand"; id: string | null }
   | { type: "branch"; id: string | null; parentId: string }
   | { type: "salon"; id: string | null; parentId: string }
-  | { type: "plaza"; id: string | null; parentId: string }
+  | { type: "service-period"; id: string | null; parentId: string }
+  | {
+      type: "plaza";
+      id: string | null;
+      parentId: string;
+      branchId: string;
+      salonId: string | null;
+    }
   | { type: "table"; id: string | null; parentId: string }
   | { type: "branch-employees"; id: string }
   | { type: "employee"; id: string; parentId: string };
@@ -55,7 +62,42 @@ export interface OrganizationServicePeriod {
   branchId: string;
   businessDate: string;
   name: string;
+  type: "BREAKFAST" | "LUNCH" | "DINNER" | "OTHER";
+  plannedOpen?: string;
+  plannedClose?: string;
+  actualOpen?: string | null;
+  actualClose?: string | null;
   status: "PLANNED" | "OPEN" | "CLOSING" | "CLOSED" | "CANCELLED";
+}
+
+export function plazasForServicePeriod(
+  plazas: OrganizationPlaza[],
+  servicePeriodId: string,
+) {
+  return plazas.filter((plaza) => plaza.servicePeriodId === servicePeriodId);
+}
+
+export function servicePeriodTypeLabel(
+  type: OrganizationServicePeriod["type"],
+) {
+  return {
+    BREAKFAST: "Desayuno",
+    LUNCH: "Almuerzo",
+    DINNER: "Cena",
+    OTHER: "Otro servicio",
+  }[type];
+}
+
+export function servicePeriodStatusLabel(
+  status: OrganizationServicePeriod["status"],
+) {
+  return {
+    PLANNED: "Planificada",
+    OPEN: "Abierta",
+    CLOSING: "En cierre",
+    CLOSED: "Cerrada",
+    CANCELLED: "Cancelada",
+  }[status];
 }
 
 export interface BranchEmployment {
@@ -136,7 +178,12 @@ export function editableMembershipStatus(status: string) {
 
 export function organizationNodeKey(node: OrganizationNode | null) {
   if (!node) return "empty";
-  return `${node.type}:${node.id ?? "new"}:${"parentId" in node ? node.parentId : "root"}`;
+  const parent = "parentId" in node ? node.parentId : "root";
+  const plazaScope =
+    node.type === "plaza"
+      ? `:${node.branchId}:${node.salonId ?? "any-salon"}`
+      : "";
+  return `${node.type}:${node.id ?? "new"}:${parent}${plazaScope}`;
 }
 
 export function isOrganizationNodeSelected(
@@ -150,6 +197,10 @@ export function organizationNodeHref(node: OrganizationNode) {
   const params = new URLSearchParams({ node: node.type });
   if (node.id) params.set("id", node.id);
   if ("parentId" in node) params.set("parentId", node.parentId);
+  if (node.type === "plaza") {
+    params.set("branchId", node.branchId);
+    if (node.salonId) params.set("salonId", node.salonId);
+  }
   return `/organizacion?${params.toString()}`;
 }
 
@@ -162,12 +213,24 @@ export function organizationNodeFromSearch(search: string) {
   if (
     type === "branch" ||
     type === "salon" ||
-    type === "plaza" ||
+    type === "service-period" ||
     type === "table"
   ) {
     const parentId = params.get("parentId");
     if (!parentId) return null;
     return { type, id, parentId } satisfies OrganizationNode;
+  }
+  if (type === "plaza") {
+    const parentId = params.get("parentId");
+    const branchId = params.get("branchId");
+    if (!parentId || !branchId) return null;
+    return {
+      type,
+      id,
+      parentId,
+      branchId,
+      salonId: params.get("salonId"),
+    } satisfies OrganizationNode;
   }
   if (type === "employee") {
     const parentId = params.get("parentId");
@@ -188,6 +251,10 @@ export function organizationPanelTitle(node: OrganizationNode | null) {
     brand: { detail: "marca", create: "Nueva marca" },
     branch: { detail: "sucursal", create: "Nueva sucursal" },
     salon: { detail: "salón", create: "Nuevo salón" },
+    "service-period": {
+      detail: "jornada de servicio",
+      create: "Nueva jornada",
+    },
     plaza: { detail: "plaza", create: "Nueva plaza" },
     table: { detail: "mesa", create: "Nueva mesa" },
   } as const;
