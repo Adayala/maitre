@@ -266,6 +266,7 @@ function ownershipFor(url: string): { owner: string; spec: string } {
       "checks",
       "payments",
       "service-periods",
+      "plazas",
     ].includes(segment)
   ) {
     return { owner: "floor", spec: "SPEC-052..083" };

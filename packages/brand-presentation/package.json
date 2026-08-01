@@ -1,0 +1,21 @@
+{
+  "name": "@maitre/brand-presentation",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "test": "node --test dist/test/"
+  },
+  "dependencies": {
+    "@maitre/contracts": "*",
+    "react": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/react": "^19.2.17",
+    "typescript": "^6.0.3"
+  }
+}

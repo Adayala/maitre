@@ -19,20 +19,53 @@ export const PLATFORM_PRESENTATION: BrandPresentationDocument = {
   identity: { displayName: "Maitre" },
   assets: {},
   colors: {
-    primary: "#2B5CAD",
-    canvas: "#FFFFFF",
+    primary: "#5B5CE2",
+    secondary: "#111827",
+    accent: "#14B8A6",
+    canvas: "#F5F7FB",
     surface: "#FFFFFF",
-    text: "#1A1A1A",
-    mutedText: "#595959",
-    border: "#D0D0D0",
+    text: "#101828",
+    mutedText: "#667085",
+    border: "#DCE3EC",
   },
-  typography: {},
-  shape: { radius: "medium", elevation: "subtle" },
+  typography: {
+    heading: {
+      family: "Inter",
+      fallback: "ui-sans-serif, system-ui, sans-serif",
+      weights: [600, 700],
+    },
+    body: {
+      family: "Inter",
+      fallback: "ui-sans-serif, system-ui, sans-serif",
+      weights: [400, 500, 600],
+    },
+  },
+  shape: { radius: "large", elevation: "subtle" },
   templates: {},
   content: { locale: "es-AR" },
 };
 
+export function mergeBrandPresentation(
+  document: BrandPresentationDocument,
+): BrandPresentationDocument {
+  return {
+    ...PLATFORM_PRESENTATION,
+    ...document,
+    identity: { ...PLATFORM_PRESENTATION.identity, ...document.identity },
+    assets: { ...PLATFORM_PRESENTATION.assets, ...document.assets },
+    colors: { ...PLATFORM_PRESENTATION.colors, ...document.colors },
+    typography: {
+      ...PLATFORM_PRESENTATION.typography,
+      ...document.typography,
+    },
+    shape: { ...PLATFORM_PRESENTATION.shape, ...document.shape },
+    templates: { ...PLATFORM_PRESENTATION.templates, ...document.templates },
+    content: { ...PLATFORM_PRESENTATION.content, ...document.content },
+  };
+}
+
 export function applyBrandPresentation(document: BrandPresentationDocument) {
+  document = mergeBrandPresentation(document);
   const root = window.document.documentElement;
   clearBrandPresentation();
   const colors = document.colors;
@@ -54,6 +87,8 @@ export function applyBrandPresentation(document: BrandPresentationDocument) {
     "--brand-hero-image": document.assets.hero
       ? `url("${document.assets.hero.url}")`
       : undefined,
+    "--brand-radius": radiusToken(document.shape.radius),
+    "--brand-elevation": elevationToken(document.shape.elevation),
   };
   Object.entries(variables).forEach(([key, value]) => {
     if (value) root.style.setProperty(key, value);
@@ -88,6 +123,7 @@ interface ProviderProps {
   tenantId: string | null;
   branchId?: string | null;
   brandId?: string | null;
+  autoResolveBrand?: boolean;
   surface: string;
   children: ReactNode;
 }
@@ -112,7 +148,9 @@ export function BrandPresentationProvider(props: ProviderProps) {
         ? resolveAuthenticatedPresentation(props, controller.signal)
         : resolvePublicPresentation(props, controller.signal)
     )
-      .then((document) => document ?? PLATFORM_PRESENTATION)
+      .then((document) =>
+        mergeBrandPresentation(document ?? PLATFORM_PRESENTATION),
+      )
       .then((document) => {
         setPresentation(document);
         applyBrandPresentation(document);
@@ -137,21 +175,21 @@ export function BrandPresentationProvider(props: ProviderProps) {
   ]);
 
   const style = {
-    "--color-accent": presentation.colors.primary,
-    "--color-bg": presentation.colors.canvas,
-    "--color-fg": presentation.colors.text,
-    "--color-border": presentation.colors.border,
-    "--primary": presentation.colors.primary,
-    "--accent": presentation.colors.accent,
-    "--bg": presentation.colors.canvas,
-    "--surface": presentation.colors.surface,
-    "--surface-2": presentation.colors.surface,
-    "--surface-3": presentation.colors.surface,
-    "--text": presentation.colors.text,
-    "--muted": presentation.colors.mutedText,
-    "--border": presentation.colors.border,
-    backgroundColor: presentation.colors.canvas,
-    color: presentation.colors.text,
+    "--color-accent": presentation.colors.primary ?? "#5B5CE2",
+    "--color-bg": presentation.colors.canvas ?? "#F5F7FB",
+    "--color-fg": presentation.colors.text ?? "#101828",
+    "--color-border": presentation.colors.border ?? "#DCE3EC",
+    "--primary": presentation.colors.primary ?? "#5B5CE2",
+    "--accent": presentation.colors.accent ?? "#14B8A6",
+    "--bg": presentation.colors.canvas ?? "#F5F7FB",
+    "--surface": presentation.colors.surface ?? "#FFFFFF",
+    "--surface-2": presentation.colors.surface ?? "#FFFFFF",
+    "--surface-3": presentation.colors.surface ?? "#FFFFFF",
+    "--text": presentation.colors.text ?? "#101828",
+    "--muted": presentation.colors.mutedText ?? "#667085",
+    "--border": presentation.colors.border ?? "#DCE3EC",
+    backgroundColor: presentation.colors.canvas ?? "#F5F7FB",
+    color: presentation.colors.text ?? "#101828",
     minHeight: "100vh",
     fontFamily: presentation.typography.body
       ? `${presentation.typography.body.family}, ${presentation.typography.body.fallback}`
@@ -306,6 +344,7 @@ async function resolvePublicPresentation(
 
 async function resolveBrandId(props: ProviderProps, signal: AbortSignal) {
   if (props.brandId) return props.brandId;
+  if (props.autoResolveBrand === false) return null;
   const path = props.branchId ? `/v1/branches/${props.branchId}` : "/v1/brands";
   const response = await fetch(`${props.apiUrl}${path}`, {
     headers: {
@@ -321,6 +360,22 @@ async function resolveBrandId(props: ProviderProps, signal: AbortSignal) {
   return Array.isArray(payload.data)
     ? (payload.data[0]?.id ?? null)
     : (payload.data.brandId ?? null);
+}
+
+function radiusToken(radius: BrandPresentationDocument["shape"]["radius"]) {
+  return { none: "0px", small: "6px", medium: "10px", large: "16px" }[
+    radius ?? "large"
+  ];
+}
+
+function elevationToken(
+  elevation: BrandPresentationDocument["shape"]["elevation"],
+) {
+  return {
+    flat: "none",
+    subtle: "0 8px 24px rgba(16, 24, 40, 0.08)",
+    expressive: "0 18px 48px rgba(16, 24, 40, 0.16)",
+  }[elevation ?? "subtle"];
 }
 
 export function BrandMark({

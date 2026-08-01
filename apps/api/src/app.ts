@@ -31,6 +31,7 @@ import { registerTableStatusRoutes } from "./routes/table-status.js";
 import { registerCheckRoutes } from "./routes/checks.js";
 import { registerPaymentRoutes } from "./routes/payments.js";
 import { registerServicePeriodRoutes } from "./routes/service-periods.js";
+import { registerPlazaRoutes } from "./routes/plazas.js";
 import { registerReservationRoutes } from "./routes/reservations.js";
 import { registerCustomerReservationRoutes } from "./routes/customer-reservations.js";
 import { registerGuestRoutes } from "./routes/guests.js";
@@ -162,6 +163,7 @@ export async function buildApp(
   await registerCheckRoutes(app, resolvedContainer);
   await registerPaymentRoutes(app, resolvedContainer);
   await registerServicePeriodRoutes(app, resolvedContainer);
+  await registerPlazaRoutes(app, resolvedContainer);
   await registerReservationRoutes(app, resolvedContainer);
   await registerCustomerReservationRoutes(app, resolvedContainer);
   await registerGuestRoutes(app, resolvedContainer);

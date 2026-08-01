@@ -24,6 +24,7 @@ export * from "./occupancy-repository.js";
 export * from "./check-repository.js";
 export * from "./payment-repository.js";
 export * from "./service-period-repository.js";
+export * from "./plaza-repository.js";
 export * from "./reservation-repository.js";
 export * from "./guest-repository.js";
 export * from "./waitlist-entry-repository.js";

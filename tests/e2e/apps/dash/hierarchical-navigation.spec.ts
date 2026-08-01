@@ -35,6 +35,21 @@ const salon = {
   capacity: 48,
   status: "ACTIVE",
 };
+const servicePeriod = {
+  id: "70000000-0000-0000-0000-000000000001",
+  branchId: branch.id,
+  businessDate: "2026-08-01",
+  name: "Cena",
+  status: "OPEN",
+};
+const table = {
+  id: "80000000-0000-0000-0000-000000000001",
+  branchId: branch.id,
+  salonId: salon.id,
+  number: "1",
+  name: "Ventana",
+  capacity: 4,
+};
 const employment = {
   id: "50000000-0000-0000-0000-000000000001",
   personRef: "60000000-0000-0000-0000-000000000001",
@@ -145,7 +160,9 @@ test("recorre Marca → Sucursal → Salones y Equipo con carga lazy y paneles d
   await page.getByRole("button", { name: "Expandir equipo de Centro" }).click();
   await expect.poll(() => calls.employments).toBe(1);
   await expect(
-    page.getByRole("button", { name: /Salón principal/ }),
+    page
+      .locator(".org-tree__group-button")
+      .filter({ hasText: "Salón principal" }),
   ).toBeVisible();
 
   await page.getByRole("button", { name: /Equipo \/ mozos/ }).click();
@@ -241,7 +258,10 @@ test("edita marca, sucursal, salón y mozo desde el mismo árbol", async ({
   await tree
     .getByRole("button", { name: "Expandir salones de Centro Norte" })
     .click();
-  await tree.getByRole("button", { name: /Salón principal/ }).click();
+  await tree
+    .locator(".org-tree__group-button")
+    .filter({ hasText: "Salón principal" })
+    .click();
   const salonName = page.getByLabel("Nombre", { exact: true });
   await expect(salonName).toHaveValue("Salón principal");
   await salonName.fill("Salón Azul");
@@ -267,6 +287,87 @@ test("edita marca, sucursal, salón y mozo desde el mismo árbol", async ({
   ).toBeVisible();
   expect(calls.updatedEmployments).toBe(1);
   expect(calls.updatedUsers).toBe(1);
+});
+
+test("arma Salón → Plaza → Mesas, edita cubiertos y aplica la marca elegida", async ({
+  page,
+}) => {
+  await installSession(page, tenantA.id);
+  const calls = await mockOrganizationApi(page, { tenants: [tenantA] });
+  await page.goto("/organizacion");
+
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        getComputedStyle(document.documentElement)
+          .getPropertyValue("--brand-primary")
+          .trim(),
+      ),
+    )
+    .toBe("#5B5CE2");
+  await page
+    .getByRole("button", { name: "Marca Casa Norte", exact: true })
+    .click();
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        getComputedStyle(document.documentElement)
+          .getPropertyValue("--brand-primary")
+          .trim(),
+      ),
+    )
+    .toBe("#7C3AED");
+  await expect
+    .poll(() =>
+      page.evaluate(
+        (tenantId) =>
+          localStorage.getItem(`maitre.selectedBrandId.${tenantId}`),
+        tenantA.id,
+      ),
+    )
+    .toBe(brand.id);
+
+  await page
+    .getByRole("button", { name: "Expandir salones de Centro" })
+    .click();
+  await page.getByRole("button", { name: "Expandir Salón principal" }).click();
+  await expect(page.getByText("Plazas por jornada")).toBeVisible();
+  await expect(page.getByText("Mesas sin plaza")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /Ventana.*4 cubiertos/ }),
+  ).toBeVisible();
+
+  await page
+    .getByRole("button", { name: "Crear mesa en Salón principal" })
+    .click();
+  await expect(page.getByRole("heading", { name: "Nueva mesa" })).toBeVisible();
+  await page.getByLabel("Número").fill("2");
+  await page.getByLabel("Nombre visible").fill("Patio");
+  await page.getByLabel("Cubiertos").fill("6");
+  await page.getByRole("button", { name: "Crear mesa", exact: true }).click();
+  await expect(page.getByText("Mesa creada correctamente.")).toBeVisible();
+  expect(calls.createdTables).toBe(1);
+
+  await page
+    .getByRole("button", { name: "Crear plaza en Salón principal" })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Nueva plaza" }),
+  ).toBeVisible();
+  await page.getByLabel("Nombre de la plaza").fill("Terraza norte");
+  await page.getByLabel("Mozo asignado").selectOption(employment.id);
+  await page.getByLabel(/Ventana/).check();
+  await page.getByLabel(/Patio/).check();
+  await expect(page.getByText("10 cubiertos potenciales")).toBeVisible();
+  await page.getByRole("button", { name: "Crear plaza", exact: true }).click();
+  await expect(
+    page.getByText("Plaza creada y asignada a la jornada."),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Detalle de plaza" }),
+  ).toBeVisible();
+  expect(calls.createdPlazas).toBe(1);
+  await expectNoSeriousAccessibilityViolations(page);
 });
 
 test("cubre loading, retry, estado vacío, validación y error de mutación", async ({
@@ -304,6 +405,62 @@ test("cubre loading, retry, estado vacío, validación y error de mutación", as
   await expect(page.getByRole("alert")).toContainText(
     "No se pudo crear la marca",
   );
+});
+
+test("muestra validación y conflicto al guardar una plaza", async ({
+  page,
+}) => {
+  await installSession(page, tenantA.id);
+  await mockOrganizationApi(page, {
+    tenants: [tenantA],
+    failPlazaCreate: true,
+  });
+  await page.goto("/organizacion");
+  await page
+    .getByRole("button", { name: "Expandir salones de Centro" })
+    .click();
+  await page.getByRole("button", { name: "Expandir Salón principal" }).click();
+  await page
+    .getByRole("button", { name: "Crear plaza en Salón principal" })
+    .click();
+  const plazaName = page.getByLabel("Nombre de la plaza");
+  await plazaName.fill("x");
+  await page.getByLabel(/Ventana/).check();
+  await page.getByRole("button", { name: "Crear plaza", exact: true }).click();
+  await expect
+    .poll(() => plazaName.evaluate((input) => input.validity.valid))
+    .toBe(false);
+  await plazaName.fill("Terraza norte");
+  await page.getByRole("button", { name: "Crear plaza", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText(
+    "La mesa ya pertenece a otra plaza",
+  );
+});
+
+test("crea la primera jornada sin salir del alta de plaza", async ({
+  page,
+}) => {
+  await installSession(page, tenantA.id);
+  const calls = await mockOrganizationApi(page, {
+    tenants: [tenantA],
+    noServicePeriods: true,
+  });
+  await page.goto("/organizacion");
+  await page
+    .getByRole("button", { name: "Expandir salones de Centro" })
+    .click();
+  await page.getByRole("button", { name: "Expandir Salón principal" }).click();
+  await page
+    .getByRole("button", { name: "Crear plaza en Salón principal" })
+    .click();
+  await expect(page.getByText("Creá la primera jornada acá")).toBeVisible();
+  await page.getByLabel("Nombre", { exact: true }).fill("Almuerzo sábado");
+  await page.getByLabel("Tipo").selectOption("LUNCH");
+  await page.getByRole("button", { name: "Crear jornada" }).click();
+  await expect(page.getByLabel("Jornada de servicio")).toHaveValue(
+    servicePeriod.id,
+  );
+  expect(calls.createdPeriods).toBe(1);
 });
 
 test("reintenta una asignación fallida sin duplicar la invitación", async ({
@@ -378,6 +535,8 @@ async function mockOrganizationApi(
     delayBrands?: boolean;
     shouldFailBrands?: () => boolean;
     failFirstEmployment?: boolean;
+    failPlazaCreate?: boolean;
+    noServicePeriods?: boolean;
   },
 ) {
   const calls = {
@@ -392,11 +551,27 @@ async function mockOrganizationApi(
     updatedSalons: 0,
     updatedEmployments: 0,
     updatedUsers: 0,
+    createdTables: 0,
+    updatedTables: 0,
+    createdPlazas: 0,
+    updatedPlazas: 0,
+    createdPeriods: 0,
   };
   const brandRecords = (options.brands ?? [brand]).map((item) => ({ ...item }));
   const branchRecord = { ...branch };
   const salons = [{ ...salon }];
   const employmentRecords = [{ ...employment }];
+  const tableRecords = [{ ...table }];
+  const plazaRecords: Array<{
+    id: string;
+    branchId: string;
+    salonId: string;
+    servicePeriodId: string;
+    name: string;
+    waiterEmploymentId: string | null;
+    tableIds: string[];
+  }> = [];
+  const periodRecords = options.noServicePeriods ? [] : [{ ...servicePeriod }];
   const users = [
     {
       id: employment.personRef,
@@ -441,6 +616,24 @@ async function mockOrganizationApi(
       return json(route, {
         data: { draft: null, published: null, history: [] },
       });
+    if (
+      path === `/v1/brands/${brand.id}/presentation/effective` &&
+      method === "GET"
+    )
+      return json(route, {
+        data: {
+          document: {
+            schemaVersion: 1,
+            identity: { displayName: "Casa Norte" },
+            assets: {},
+            colors: { primary: "#7C3AED" },
+            typography: {},
+            shape: {},
+            templates: {},
+            content: {},
+          },
+        },
+      });
     if (path === `/v1/brands/${brand.id}` && method === "PATCH") {
       calls.updatedBrands += 1;
       Object.assign(brandRecords[0]!, request.postDataJSON());
@@ -478,6 +671,98 @@ async function mockOrganizationApi(
         );
       Object.assign(requestedSalon, request.postDataJSON());
       return json(route, { data: requestedSalon });
+    }
+    if (path === "/v1/tables" && method === "GET")
+      return json(route, { data: tableRecords });
+    if (path === "/v1/tables" && method === "POST") {
+      calls.createdTables += 1;
+      const body = request.postDataJSON() as Omit<
+        typeof table,
+        "id" | "branchId"
+      >;
+      const created = {
+        id: "80000000-0000-0000-0000-000000000002",
+        branchId: branch.id,
+        ...body,
+      };
+      tableRecords.push(created);
+      return json(route, { data: created }, 201);
+    }
+    if (path.startsWith("/v1/tables/") && method === "GET") {
+      const record = tableRecords.find(
+        (item) => path === `/v1/tables/${item.id}`,
+      );
+      return record
+        ? json(route, { data: record })
+        : json(route, { title: "Mesa inexistente", type: "about:blank" }, 404);
+    }
+    if (path.startsWith("/v1/tables/") && method === "PATCH") {
+      calls.updatedTables += 1;
+      const record = tableRecords.find(
+        (item) => path === `/v1/tables/${item.id}`,
+      );
+      if (!record) return json(route, { title: "Mesa inexistente" }, 404);
+      Object.assign(record, request.postDataJSON());
+      return json(route, { data: record });
+    }
+    if (
+      path === `/v1/branches/${branch.id}/service-periods` &&
+      method === "GET"
+    )
+      return json(route, { data: periodRecords });
+    if (
+      path === `/v1/branches/${branch.id}/service-periods` &&
+      method === "POST"
+    ) {
+      calls.createdPeriods += 1;
+      const body = request.postDataJSON() as {
+        businessDate: string;
+        name: string;
+        type: string;
+      };
+      const created = { ...servicePeriod, ...body };
+      periodRecords.push(created);
+      return json(route, { data: created }, 201);
+    }
+    if (path === "/v1/plazas" && method === "GET")
+      return json(route, { data: plazaRecords });
+    if (path === "/v1/plazas" && method === "POST") {
+      if (options.failPlazaCreate) {
+        return json(
+          route,
+          { title: "La mesa ya pertenece a otra plaza", type: "about:blank" },
+          409,
+        );
+      }
+      calls.createdPlazas += 1;
+      const body = request.postDataJSON() as Omit<
+        (typeof plazaRecords)[number],
+        "id" | "branchId"
+      >;
+      const created = {
+        id: "90000000-0000-0000-0000-000000000001",
+        branchId: branch.id,
+        ...body,
+      };
+      plazaRecords.push(created);
+      return json(route, { data: created }, 201);
+    }
+    if (path.startsWith("/v1/plazas/") && method === "GET") {
+      const record = plazaRecords.find(
+        (item) => path === `/v1/plazas/${item.id}`,
+      );
+      return record
+        ? json(route, { data: record })
+        : json(route, { title: "Plaza inexistente", type: "about:blank" }, 404);
+    }
+    if (path.startsWith("/v1/plazas/") && method === "PATCH") {
+      calls.updatedPlazas += 1;
+      const record = plazaRecords.find(
+        (item) => path === `/v1/plazas/${item.id}`,
+      );
+      if (!record) return json(route, { title: "Plaza inexistente" }, 404);
+      Object.assign(record, request.postDataJSON());
+      return json(route, { data: record });
     }
     if (path === `/v1/branches/${branch.id}/employments`) {
       calls.employments += 1;

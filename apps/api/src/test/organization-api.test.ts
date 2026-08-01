@@ -88,7 +88,10 @@ async function seedManager(container: Container, tenantId: string) {
 }
 
 async function getTenantId(container: Container): Promise<string> {
-  const owner = await container.users.findByExternalIdentity("fixture", "demo-owner");
+  const owner = await container.users.findByExternalIdentity(
+    "fixture",
+    "demo-owner",
+  );
   const memberships = await container.memberships.listActiveByUser(owner!.id);
   return memberships[0]!.tenantId;
 }
@@ -100,14 +103,28 @@ test("POST /v1/brands without X-Tenant-Id returns 403 insufficient-scope", async
     method: "POST",
     url: "/v1/brands",
     headers: { authorization: `Bearer ${container.demoAccessToken}` },
-    payload: { name: "Nueva Marca", config: { language: "es", currency: "ARS" } },
+    payload: {
+      name: "Nueva Marca",
+      config: { language: "es", currency: "ARS" },
+    },
   });
   assert.equal(response.statusCode, 403);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
+    new Set([
+      "type",
+      "title",
+      "status",
+      "detail",
+      "instance",
+      "code",
+      "correlationId",
+    ]),
   );
-  assert.equal(response.json().type, "https://docs.maitre.app/problems/insufficient-scope");
+  assert.equal(
+    response.json().type,
+    "https://docs.maitre.app/problems/insufficient-scope",
+  );
   assert.equal(response.json().detail, "Insufficient scope");
   assert.equal(response.json().status, 403);
   await app.close();
@@ -124,7 +141,10 @@ test("POST /v1/brands as OWNER succeeds and derives a slug", async () => {
       authorization: `Bearer ${container.demoAccessToken}`,
       "x-tenant-id": tenantId,
     },
-    payload: { name: "Pizzeria Bella", config: { language: "es", currency: "ARS" } },
+    payload: {
+      name: "Pizzeria Bella",
+      config: { language: "es", currency: "ARS" },
+    },
   });
   assert.equal(response.statusCode, 201);
   assert.deepEqual(
@@ -159,14 +179,28 @@ test("POST /v1/brands as EMPLOYEE returns 403 (SPEC-016: EMPLOYEE cannot manage 
     method: "POST",
     url: "/v1/brands",
     headers: { authorization: `Bearer ${token}`, "x-tenant-id": tenantId },
-    payload: { name: "Pizzeria Bella", config: { language: "es", currency: "ARS" } },
+    payload: {
+      name: "Pizzeria Bella",
+      config: { language: "es", currency: "ARS" },
+    },
   });
   assert.equal(response.statusCode, 403);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
+    new Set([
+      "type",
+      "title",
+      "status",
+      "detail",
+      "instance",
+      "code",
+      "correlationId",
+    ]),
   );
-  assert.equal(response.json().type, "https://docs.maitre.app/problems/insufficient-scope");
+  assert.equal(
+    response.json().type,
+    "https://docs.maitre.app/problems/insufficient-scope",
+  );
   assert.equal(response.json().detail, "Insufficient scope");
   assert.equal(response.json().status, 403);
   await app.close();
@@ -185,9 +219,20 @@ test("GET /v1/brands as EMPLOYEE returns 403 (brand:read not granted to EMPLOYEE
   assert.equal(response.statusCode, 403);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
+    new Set([
+      "type",
+      "title",
+      "status",
+      "detail",
+      "instance",
+      "code",
+      "correlationId",
+    ]),
   );
-  assert.equal(response.json().type, "https://docs.maitre.app/problems/insufficient-scope");
+  assert.equal(
+    response.json().type,
+    "https://docs.maitre.app/problems/insufficient-scope",
+  );
   assert.equal(response.json().detail, "Insufficient scope");
   assert.equal(response.json().status, 403);
   await app.close();
@@ -247,9 +292,20 @@ test("GET /v1/brands/:id returns 404 for an unknown id", async () => {
   assert.equal(response.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
+    new Set([
+      "type",
+      "title",
+      "status",
+      "detail",
+      "instance",
+      "code",
+      "correlationId",
+    ]),
   );
-  assert.equal(response.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(
+    response.json().type,
+    "https://docs.maitre.app/problems/not-found",
+  );
   assert.equal(response.json().detail, "Brand not found");
   assert.equal(response.json().status, 404);
   await app.close();
@@ -305,9 +361,20 @@ test("POST /v1/fiscal-entities as EMPLOYEE returns 403 (OWNER only per SPEC-009)
   assert.equal(response.statusCode, 403);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
+    new Set([
+      "type",
+      "title",
+      "status",
+      "detail",
+      "instance",
+      "code",
+      "correlationId",
+    ]),
   );
-  assert.equal(response.json().type, "https://docs.maitre.app/problems/insufficient-scope");
+  assert.equal(
+    response.json().type,
+    "https://docs.maitre.app/problems/insufficient-scope",
+  );
   assert.equal(response.json().detail, "Insufficient scope");
   assert.equal(response.json().status, 403);
   await app.close();
@@ -364,14 +431,29 @@ test("POST /v1/fiscal-entities with a duplicate CUIT returns 409 conflict", asyn
     method: "POST",
     url: "/v1/fiscal-entities",
     headers,
-    payload: { name: "Otra Razón Social", cuit: "27-12345678-0", taxCondition: "RI" },
+    payload: {
+      name: "Otra Razón Social",
+      cuit: "27-12345678-0",
+      taxCondition: "RI",
+    },
   });
   assert.equal(response.statusCode, 409);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
+    new Set([
+      "type",
+      "title",
+      "status",
+      "detail",
+      "instance",
+      "code",
+      "correlationId",
+    ]),
   );
-  assert.equal(response.json().type, "https://docs.maitre.app/problems/conflict");
+  assert.equal(
+    response.json().type,
+    "https://docs.maitre.app/problems/conflict",
+  );
   assert.equal(
     response.json().detail,
     `CUIT "27123456780" already exists for tenant ${tenantId}`,
@@ -539,14 +621,19 @@ test("GET /v1/fiscal-entities as MANAGER returns redacted fiscal fields", async 
   const list = await app.inject({
     method: "GET",
     url: "/v1/fiscal-entities",
-    headers: { authorization: `Bearer ${managerToken}`, "x-tenant-id": tenantId },
+    headers: {
+      authorization: `Bearer ${managerToken}`,
+      "x-tenant-id": tenantId,
+    },
   });
   assert.equal(list.statusCode, 200);
   assert.deepEqual(
     new Set(Object.keys(list.json() as Record<string, unknown>)),
     new Set(["data", "meta"]),
   );
-  const listed = list.json().data.find((item: { id: string }) => item.id === entityId);
+  const listed = list
+    .json()
+    .data.find((item: { id: string }) => item.id === entityId);
   assert.ok(listed);
   assert.deepEqual(
     new Set(Object.keys(listed as Record<string, unknown>)),
@@ -571,7 +658,10 @@ test("GET /v1/fiscal-entities as MANAGER returns redacted fiscal fields", async 
   const detail = await app.inject({
     method: "GET",
     url: `/v1/fiscal-entities/${entityId}`,
-    headers: { authorization: `Bearer ${managerToken}`, "x-tenant-id": tenantId },
+    headers: {
+      authorization: `Bearer ${managerToken}`,
+      "x-tenant-id": tenantId,
+    },
   });
   assert.equal(detail.statusCode, 200);
   assert.deepEqual(
@@ -628,9 +718,20 @@ test("PATCH /v1/fiscal-entities requires valid If-Match and rejects stale revisi
   assert.equal(missingIfMatch.statusCode, 400);
   assert.deepEqual(
     new Set(Object.keys(missingIfMatch.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
+    new Set([
+      "type",
+      "title",
+      "status",
+      "detail",
+      "instance",
+      "code",
+      "correlationId",
+    ]),
   );
-  assert.equal(missingIfMatch.json().type, "https://docs.maitre.app/problems/bad-request");
+  assert.equal(
+    missingIfMatch.json().type,
+    "https://docs.maitre.app/problems/bad-request",
+  );
   assert.equal(missingIfMatch.json().detail, "Missing If-Match header");
   assert.equal(missingIfMatch.json().status, 400);
 
@@ -644,7 +745,11 @@ test("PATCH /v1/fiscal-entities requires valid If-Match and rejects stale revisi
   const patched = await app.inject({
     method: "PATCH",
     url: `/v1/fiscal-entities/${entityId}`,
-    headers: { ...headers, "if-match": etag, "x-step-up-at": new Date().toISOString() },
+    headers: {
+      ...headers,
+      "if-match": etag,
+      "x-step-up-at": new Date().toISOString(),
+    },
     payload: {
       name: "Fiscal Dos Actualizada",
       legalAddress: "Dir nueva",
@@ -668,9 +773,20 @@ test("PATCH /v1/fiscal-entities requires valid If-Match and rejects stale revisi
   assert.equal(stalePatch.statusCode, 409);
   assert.deepEqual(
     new Set(Object.keys(stalePatch.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
+    new Set([
+      "type",
+      "title",
+      "status",
+      "detail",
+      "instance",
+      "code",
+      "correlationId",
+    ]),
   );
-  assert.equal(stalePatch.json().type, "https://docs.maitre.app/problems/conflict");
+  assert.equal(
+    stalePatch.json().type,
+    "https://docs.maitre.app/problems/conflict",
+  );
   assert.equal(stalePatch.json().status, 409);
 
   await app.close();
@@ -706,30 +822,62 @@ test("PATCH /v1/fiscal-entities sensitive changes require reason and recent step
   const missingReason = await app.inject({
     method: "PATCH",
     url: `/v1/fiscal-entities/${entityId}`,
-    headers: { ...headers, "if-match": etag, "x-step-up-at": new Date().toISOString() },
+    headers: {
+      ...headers,
+      "if-match": etag,
+      "x-step-up-at": new Date().toISOString(),
+    },
     payload: { legalAddress: "Nueva 123" },
   });
   assert.equal(missingReason.statusCode, 400);
   assert.deepEqual(
     new Set(Object.keys(missingReason.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
+    new Set([
+      "type",
+      "title",
+      "status",
+      "detail",
+      "instance",
+      "code",
+      "correlationId",
+    ]),
   );
-  assert.equal(missingReason.json().type, "https://docs.maitre.app/problems/bad-request");
-  assert.equal(missingReason.json().detail, "Missing reason for sensitive fiscal change");
+  assert.equal(
+    missingReason.json().type,
+    "https://docs.maitre.app/problems/bad-request",
+  );
+  assert.equal(
+    missingReason.json().detail,
+    "Missing reason for sensitive fiscal change",
+  );
   assert.equal(missingReason.json().status, 400);
 
   const missingStepUp = await app.inject({
     method: "PATCH",
     url: `/v1/fiscal-entities/${entityId}`,
     headers: { ...headers, "if-match": etag },
-    payload: { legalAddress: "Nueva 123", reason: "Cambio de domicilio fiscal" },
+    payload: {
+      legalAddress: "Nueva 123",
+      reason: "Cambio de domicilio fiscal",
+    },
   });
   assert.equal(missingStepUp.statusCode, 403);
   assert.deepEqual(
     new Set(Object.keys(missingStepUp.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
+    new Set([
+      "type",
+      "title",
+      "status",
+      "detail",
+      "instance",
+      "code",
+      "correlationId",
+    ]),
   );
-  assert.equal(missingStepUp.json().type, "https://docs.maitre.app/problems/step-up-required");
+  assert.equal(
+    missingStepUp.json().type,
+    "https://docs.maitre.app/problems/step-up-required",
+  );
   assert.equal(missingStepUp.json().detail, "Step-up required");
   assert.equal(missingStepUp.json().status, 403);
 
@@ -810,14 +958,28 @@ test("GET and PATCH /v1/fiscal-entities hide cross-tenant resources as 404", asy
   const hiddenGet = await app.inject({
     method: "GET",
     url: `/v1/fiscal-entities/${entityId}`,
-    headers: { authorization: `Bearer ${otherToken}`, "x-tenant-id": otherTenantId },
+    headers: {
+      authorization: `Bearer ${otherToken}`,
+      "x-tenant-id": otherTenantId,
+    },
   });
   assert.equal(hiddenGet.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(hiddenGet.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
+    new Set([
+      "type",
+      "title",
+      "status",
+      "detail",
+      "instance",
+      "code",
+      "correlationId",
+    ]),
   );
-  assert.equal(hiddenGet.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(
+    hiddenGet.json().type,
+    "https://docs.maitre.app/problems/not-found",
+  );
   assert.equal(hiddenGet.json().detail, "FiscalEntity not found");
   assert.equal(hiddenGet.json().status, 404);
 
@@ -834,9 +996,20 @@ test("GET and PATCH /v1/fiscal-entities hide cross-tenant resources as 404", asy
   assert.equal(hiddenPatch.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(hiddenPatch.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
+    new Set([
+      "type",
+      "title",
+      "status",
+      "detail",
+      "instance",
+      "code",
+      "correlationId",
+    ]),
   );
-  assert.equal(hiddenPatch.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(
+    hiddenPatch.json().type,
+    "https://docs.maitre.app/problems/not-found",
+  );
   assert.equal(hiddenPatch.json().detail, "FiscalEntity not found");
   assert.equal(hiddenPatch.json().status, 404);
 
@@ -848,7 +1021,8 @@ test("GET /v1/tables includes a derived status", async () => {
   const tenantId = await getTenantId(container);
   const app = await buildApp(container);
   const branchId = (await container.branches.listByTenant(tenantId))[0]!.id;
-  const salonId = (await container.salons.listByBranch(tenantId, branchId))[0]!.id;
+  const salonId = (await container.salons.listByBranch(tenantId, branchId))[0]!
+    .id;
 
   const response = await app.inject({
     method: "GET",
@@ -887,13 +1061,53 @@ test("GET /v1/tables includes a derived status", async () => {
   await app.close();
 });
 
+test("PATCH /v1/tables edits cubiertos while preserving salon invariants", async () => {
+  const container = await buildContainer();
+  const tenantId = await getTenantId(container);
+  const branches = await container.branches.listByTenant(tenantId);
+  const salons = await container.salons.listByBranch(tenantId, branches[0]!.id);
+  const tables = await container.tables.listBySalon(tenantId, salons[0]!.id);
+  const app = await buildApp(container);
+  const headers = {
+    authorization: `Bearer ${container.demoAccessToken}`,
+    "x-tenant-id": tenantId,
+  };
+  const updated = await app.inject({
+    method: "PATCH",
+    url: `/v1/tables/${tables[0]!.id}`,
+    headers,
+    payload: { name: "Ventana", capacity: 5 },
+  });
+  assert.equal(updated.statusCode, 200);
+  assert.equal(updated.json().data.name, "Ventana");
+  assert.equal(updated.json().data.capacity, 5);
+  assert.equal(typeof updated.json().data.updatedBy, "string");
+
+  const duplicate = await app.inject({
+    method: "PATCH",
+    url: `/v1/tables/${tables[0]!.id}`,
+    headers,
+    payload: { number: tables[1]!.number },
+  });
+  assert.equal(duplicate.statusCode, 409);
+  const invalid = await app.inject({
+    method: "PATCH",
+    url: `/v1/tables/${tables[0]!.id}`,
+    headers,
+    payload: { capacity: 21 },
+  });
+  assert.equal(invalid.statusCode, 400);
+  await app.close();
+});
+
 test("GET /v1/tables as EMPLOYEE succeeds (SPEC-012: EMPLOYEE may read tables)", async () => {
   const container = await buildContainer();
   const tenantId = await getTenantId(container);
   const token = await seedEmployee(container, tenantId);
   const app = await buildApp(container);
   const branchId = (await container.branches.listByTenant(tenantId))[0]!.id;
-  const salonId = (await container.salons.listByBranch(tenantId, branchId))[0]!.id;
+  const salonId = (await container.salons.listByBranch(tenantId, branchId))[0]!
+    .id;
 
   const response = await app.inject({
     method: "GET",
@@ -971,9 +1185,20 @@ test("PATCH /v1/tenants/:id for a tenant outside the caller's membership returns
   assert.equal(response.statusCode, 403);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
+    new Set([
+      "type",
+      "title",
+      "status",
+      "detail",
+      "instance",
+      "code",
+      "correlationId",
+    ]),
   );
-  assert.equal(response.json().type, "https://docs.maitre.app/problems/insufficient-scope");
+  assert.equal(
+    response.json().type,
+    "https://docs.maitre.app/problems/insufficient-scope",
+  );
   assert.equal(response.json().detail, "Insufficient scope");
   assert.equal(response.json().status, 403);
   await app.close();
@@ -1009,12 +1234,18 @@ test("POST /v1/brands appends BrandCreated to the outbox", async () => {
       authorization: `Bearer ${container.demoAccessToken}`,
       "x-tenant-id": tenantId,
     },
-    payload: { name: "Pizzeria Bella", config: { language: "es", currency: "ARS" } },
+    payload: {
+      name: "Pizzeria Bella",
+      config: { language: "es", currency: "ARS" },
+    },
   });
   const records = outboxOf(container).all();
   assert.equal(records.length, before + 1);
   assert.equal(records[records.length - 1]!.eventName, "BrandCreated");
-  assert.equal(records[records.length - 1]!.aggregateId, response.json().data.id);
+  assert.equal(
+    records[records.length - 1]!.aggregateId,
+    response.json().data.id,
+  );
   await app.close();
 });
 
@@ -1043,14 +1274,26 @@ test("POST /v1/fiscal-entities appends FiscalEntityCreated to the outbox and wri
   const records = outboxOf(container).all();
   assert.equal(records.length, beforeOutbox + 1);
   assert.equal(records[records.length - 1]!.eventName, "FiscalEntityCreated");
-  assert.equal(records[records.length - 1]!.aggregateId, response.json().data.id);
-  const auditPage = await container.auditLogs.query({ tenantId, resourceType: "FISCAL_ENTITY" });
+  assert.equal(
+    records[records.length - 1]!.aggregateId,
+    response.json().data.id,
+  );
+  const auditPage = await container.auditLogs.query({
+    tenantId,
+    resourceType: "FISCAL_ENTITY",
+  });
   assert.equal(auditPage.items.length, 1);
   assert.equal(auditPage.items[0]!.action, "CREATE");
-  const auditState = auditPage.items[0]!.newState as { cuitMasked?: string; hasLegalAddress?: boolean };
+  const auditState = auditPage.items[0]!.newState as {
+    cuitMasked?: string;
+    hasLegalAddress?: boolean;
+  };
   assert.equal(auditState.cuitMasked, "***6781");
   assert.equal(auditState.hasLegalAddress, true);
-  assert.equal("legalAddress" in (auditPage.items[0]!.newState as object), false);
+  assert.equal(
+    "legalAddress" in (auditPage.items[0]!.newState as object),
+    false,
+  );
   await app.close();
 });
 
@@ -1094,12 +1337,23 @@ test("PATCH /v1/fiscal-entities writes sanitized audit diff", async () => {
     },
   });
   assert.equal(patch.statusCode, 200);
-  const auditPage = await container.auditLogs.query({ tenantId, resourceType: "FISCAL_ENTITY" });
+  const auditPage = await container.auditLogs.query({
+    tenantId,
+    resourceType: "FISCAL_ENTITY",
+  });
   assert.equal(auditPage.items.length >= 2, true);
-  const updateEntry = auditPage.items.find((item) => item.action === "UPDATE" && item.resourceId === entityId);
+  const updateEntry = auditPage.items.find(
+    (item) => item.action === "UPDATE" && item.resourceId === entityId,
+  );
   assert.ok(updateEntry);
-  const previousState = updateEntry!.previousState as { cuitMasked?: string; hasActivityCode?: boolean };
-  const newState = updateEntry!.newState as { cuitMasked?: string; hasActivityCode?: boolean };
+  const previousState = updateEntry!.previousState as {
+    cuitMasked?: string;
+    hasActivityCode?: boolean;
+  };
+  const newState = updateEntry!.newState as {
+    cuitMasked?: string;
+    hasActivityCode?: boolean;
+  };
   assert.equal(previousState.cuitMasked, "***6780");
   assert.equal(previousState.hasActivityCode, false);
   assert.equal(newState.hasActivityCode, true);

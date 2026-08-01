@@ -3,6 +3,7 @@
   "references": [
     { "path": "packages/arca-client" },
     { "path": "packages/contracts" },
+    { "path": "packages/brand-presentation" },
     { "path": "packages/telemetry" },
     { "path": "packages/modules/organization" },
     { "path": "packages/modules/identity" },

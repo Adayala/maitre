@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { StateView } from "../../components/state-view.js";
 import { useTenantContext } from "../../app/tenant-context.js";
+import { useBrandSelection } from "../../app/brand-selection-context.js";
+import { resolveSelectedBrandId } from "../../app/brand-selection-model.js";
 import { useTenantQuery } from "../../lib/use-tenant-query.js";
 import { OrgDetailPanel } from "./org-detail-panel.js";
 import { OrgTree } from "./org-tree.js";
@@ -16,6 +18,7 @@ export function OrgExplorer() {
   const location = useLocation();
   const navigate = useNavigate();
   const { me, selectedTenantId } = useTenantContext();
+  const { selectedBrandId, selectBrand, clearBrand } = useBrandSelection();
   const selectedNode = organizationNodeFromSearch(location.search);
   const [announcement, setAnnouncement] = useState<string | null>(null);
   const activeTenant = me?.tenants.find(
@@ -29,6 +32,37 @@ export function OrgExplorer() {
     "organization-branches",
     "/v1/branches",
   );
+  const brands = brandsQuery.data?.data ?? [];
+  const branches = branchesQuery.data?.data ?? [];
+
+  useEffect(() => {
+    if (!brandsQuery.data) return;
+    if (
+      selectedBrandId &&
+      !resolveSelectedBrandId(
+        selectedBrandId,
+        brands.map((brand) => brand.id),
+      )
+    ) {
+      clearBrand();
+    }
+  }, [brands, brandsQuery.data, clearBrand, selectedBrandId]);
+
+  function selectNode(
+    node: Parameters<typeof organizationNodeHref>[0],
+    brandId?: string,
+  ) {
+    const inferredBrandId =
+      brandId ??
+      (node.type === "brand" ? node.id : null) ??
+      (node.type === "branch" ? node.parentId : null) ??
+      (node.type === "salon"
+        ? branches.find((branch) => branch.id === node.parentId)?.brandId
+        : null);
+    if (inferredBrandId) selectBrand(inferredBrandId);
+    if (node.type === "brand" && !node.id) clearBrand();
+    navigate(organizationNodeHref(node));
+  }
 
   return (
     <section className="org-explorer" aria-labelledby="organization-heading">
@@ -38,8 +72,9 @@ export function OrgExplorer() {
           <h1 id="organization-heading">Organización</h1>
         </div>
         <p>
-          Estás trabajando en <strong>{activeTenant?.name ?? "tu tenant"}</strong>.
-          Expandí la estructura y elegí cualquier elemento para editarlo.
+          Estás trabajando en{" "}
+          <strong>{activeTenant?.name ?? "tu tenant"}</strong>. Expandí la
+          estructura y elegí cualquier elemento para editarlo.
         </p>
       </header>
       {announcement ? (
@@ -57,14 +92,14 @@ export function OrgExplorer() {
         <div className="org-explorer__workspace">
           <OrgTree
             tenantName={activeTenant?.name ?? "Tenant activo"}
-            brands={brandsQuery.data?.data ?? []}
-            branches={branchesQuery.data?.data ?? []}
+            brands={brands}
+            branches={branches}
             selectedNode={selectedNode}
-            onSelect={(node) => navigate(organizationNodeHref(node))}
+            onSelect={selectNode}
           />
           <OrgDetailPanel
             node={selectedNode}
-            onSelect={(node) => navigate(organizationNodeHref(node))}
+            onSelect={(node) => selectNode(node)}
             onNotify={setAnnouncement}
           />
         </div>

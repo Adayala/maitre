@@ -85,10 +85,10 @@ test("userForEmployment resolves linked users by id or legacy email", () => {
   ];
   assert.equal(userForEmployment(users, employments[0]!), users[0]);
   assert.equal(
-    userForEmployment(
-      users,
-      { ...employments[1]!, personRef: "legacy@maitre.test" },
-    ),
+    userForEmployment(users, {
+      ...employments[1]!,
+      personRef: "legacy@maitre.test",
+    }),
     users[1],
   );
   assert.equal(
@@ -167,6 +167,8 @@ test("organization nodes round-trip through durable sidebar URLs", () => {
     { type: "brand", id: null },
     { type: "branch", id: "branch-a", parentId: "brand-a" },
     { type: "salon", id: null, parentId: "branch-a" },
+    { type: "plaza", id: "plaza-a", parentId: "salon-a" },
+    { type: "table", id: "table-a", parentId: "salon-a" },
     { type: "branch-employees", id: "branch-a" },
     { type: "employee", id: "employment-a", parentId: "branch-a" },
   ];
@@ -189,7 +191,12 @@ test("organizationNodeFromSearch rejects incomplete or unknown selections", () =
   assert.equal(organizationNodeFromSearch("?node=unknown&id=value"), null);
   assert.equal(organizationNodeFromSearch("?node=branch&id=branch-a"), null);
   assert.equal(organizationNodeFromSearch("?node=salon&id=salon-a"), null);
-  assert.equal(organizationNodeFromSearch("?node=employee&id=employment-a"), null);
+  assert.equal(organizationNodeFromSearch("?node=plaza&id=plaza-a"), null);
+  assert.equal(organizationNodeFromSearch("?node=table&id=table-a"), null);
+  assert.equal(
+    organizationNodeFromSearch("?node=employee&id=employment-a"),
+    null,
+  );
   assert.equal(organizationNodeFromSearch("?node=branch-employees"), null);
 });
 
@@ -238,5 +245,29 @@ test("organizationPanelTitle describes every detail and creation mode", () => {
   assert.equal(
     organizationPanelTitle({ type: "salon", id: null, parentId: "branch-a" }),
     "Nuevo salón",
+  );
+  assert.equal(
+    organizationPanelTitle({
+      type: "plaza",
+      id: "plaza-a",
+      parentId: "salon-a",
+    }),
+    "Detalle de plaza",
+  );
+  assert.equal(
+    organizationPanelTitle({ type: "plaza", id: null, parentId: "salon-a" }),
+    "Nueva plaza",
+  );
+  assert.equal(
+    organizationPanelTitle({
+      type: "table",
+      id: "table-a",
+      parentId: "salon-a",
+    }),
+    "Detalle de mesa",
+  );
+  assert.equal(
+    organizationPanelTitle({ type: "table", id: null, parentId: "salon-a" }),
+    "Nueva mesa",
   );
 });

@@ -24,6 +24,7 @@ import {
   InMemoryCheckRepository,
   InMemoryPaymentRepository,
   InMemoryServicePeriodRepository,
+  InMemoryPlazaRepository,
   InMemoryReservationRepository,
   InMemoryGuestRepository,
   InMemoryWaitlistEntryRepository,
@@ -81,6 +82,7 @@ import {
   SupabaseCheckRepository,
   SupabasePaymentRepository,
   SupabaseServicePeriodRepository,
+  SupabasePlazaRepository,
   SupabaseReservationRepository,
   SupabaseGuestRepository,
   SupabaseWaitlistEntryRepository,
@@ -172,6 +174,7 @@ import type {
   CheckRepositoryPort,
   PaymentRepositoryPort,
   ServicePeriodRepositoryPort,
+  PlazaRepositoryPort,
 } from "@maitre/floor";
 import {
   deriveBusinessDate,
@@ -290,6 +293,7 @@ export interface Container {
   checks: CheckRepositoryPort;
   payments: PaymentRepositoryPort;
   servicePeriods: ServicePeriodRepositoryPort;
+  plazas: PlazaRepositoryPort;
   reservations: ReservationRepositoryPort;
   guests: GuestRepositoryPort;
   waitlistEntries: WaitlistEntryRepositoryPort;
@@ -842,6 +846,7 @@ interface Repositories {
   checks: CheckRepositoryPort;
   payments: PaymentRepositoryPort;
   servicePeriods: ServicePeriodRepositoryPort;
+  plazas: PlazaRepositoryPort;
   reservations: ReservationRepositoryPort;
   guests: GuestRepositoryPort;
   waitlistEntries: WaitlistEntryRepositoryPort;
@@ -1001,6 +1006,7 @@ function buildRepositories(profile: RuntimeProfile): Repositories {
       checks: new SupabaseCheckRepository(client),
       payments: new SupabasePaymentRepository(client),
       servicePeriods: new SupabaseServicePeriodRepository(client),
+      plazas: new SupabasePlazaRepository(client),
       reservations: new SupabaseReservationRepository(client),
       guests: new SupabaseGuestRepository(client),
       waitlistEntries: new SupabaseWaitlistEntryRepository(client),
@@ -1072,6 +1078,7 @@ function buildRepositories(profile: RuntimeProfile): Repositories {
     checks: new InMemoryCheckRepository(),
     payments: new InMemoryPaymentRepository(),
     servicePeriods: new InMemoryServicePeriodRepository(),
+    plazas: new InMemoryPlazaRepository(),
     reservations: new InMemoryReservationRepository(),
     guests: new InMemoryGuestRepository(),
     waitlistEntries: new InMemoryWaitlistEntryRepository(),
