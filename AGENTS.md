@@ -2,6 +2,16 @@
 
 Estas instrucciones aplican a todos los agentes y asistentes que creen o modifiquen código en Maitre. Son obligatorias en todo el repositorio salvo que un `AGENTS.md` más específico imponga requisitos todavía más estrictos.
 
+## Invariantes de producto y arquitectura
+
+Maitre es un sistema **multi-tenant, de marca blanca y altamente configurable**. Toda implementación debe:
+
+- seleccionar y conservar explícitamente el tenant de trabajo;
+- aislar datos, autorización, cachés, eventos y efectos laterales por tenant, sin cruces entre tenants;
+- resolver identidad, navegación, módulos, permisos, textos, estilos y comportamiento desde configuración por tenant o marca;
+- evitar nombres, assets, estilos, permisos, módulos o defaults globales hardcodeados que impidan la personalización;
+- cubrir con tests los límites de tenant y las variantes configurables afectadas por cada cambio.
+
 ## Definition of Done de una feature
 
 Una feature nueva no está terminada ni puede proponerse para merge si no cumple todo lo siguiente:
