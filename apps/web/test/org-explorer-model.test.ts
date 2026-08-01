@@ -5,6 +5,8 @@ import {
   branchesForBrand,
   employmentsForBranch,
   isOrganizationNodeSelected,
+  organizationNodeFromSearch,
+  organizationNodeHref,
   organizationNodeKey,
   organizationPanelTitle,
   type BranchEmployment,
@@ -117,6 +119,36 @@ test("isOrganizationNodeSelected compares the complete navigation identity", () 
     isOrganizationNodeSelected(null, { type: "brand", id: "brand-a" }),
     false,
   );
+});
+
+test("organization nodes round-trip through durable sidebar URLs", () => {
+  const nodes: OrganizationNode[] = [
+    { type: "brand", id: "brand-a" },
+    { type: "brand", id: null },
+    { type: "branch", id: "branch-a", parentId: "brand-a" },
+    { type: "salon", id: null, parentId: "branch-a" },
+    { type: "branch-employees", id: "branch-a" },
+  ];
+
+  for (const node of nodes) {
+    const href = organizationNodeHref(node);
+    assert.deepEqual(
+      organizationNodeFromSearch(new URL(href, "https://maitre.test").search),
+      node,
+    );
+  }
+  assert.equal(
+    organizationNodeHref({ type: "brand", id: "marca con espacios" }),
+    "/organizacion?node=brand&id=marca+con+espacios",
+  );
+});
+
+test("organizationNodeFromSearch rejects incomplete or unknown selections", () => {
+  assert.equal(organizationNodeFromSearch(""), null);
+  assert.equal(organizationNodeFromSearch("?node=unknown&id=value"), null);
+  assert.equal(organizationNodeFromSearch("?node=branch&id=branch-a"), null);
+  assert.equal(organizationNodeFromSearch("?node=salon&id=salon-a"), null);
+  assert.equal(organizationNodeFromSearch("?node=branch-employees"), null);
 });
 
 test("organizationPanelTitle describes every detail and creation mode", () => {

@@ -352,7 +352,11 @@ jobs:
               --env-file .vercel/.env.production.local \
               --expect demo
           fi
-          deployment_url="$(npx --yes vercel@57 deploy --prod --yes --token="$VERCEL_TOKEN")"
+          if [[ "${{ matrix.name }}" == "web" ]]; then
+            deployment_url="$(npx --yes vercel@57 deploy --prod --yes --token="$VERCEL_TOKEN" --local-config vercel.spa.json)"
+          else
+            deployment_url="$(npx --yes vercel@57 deploy --prod --yes --token="$VERCEL_TOKEN")"
+          fi
           echo "Deployment ready at $deployment_url"
           if [[ "${{ matrix.name }}" == "api" ]]; then
             node tooling/deployment/check-deployment-health.mjs "$deployment_url"

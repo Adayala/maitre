@@ -103,6 +103,15 @@ branchId=`) y "Empleados" (fetch de usuarios/asignaciones filtrado por esa
 
 ## Contratos y decisiones cerradas durante la implementación
 
+- El árbol organizacional vive en el rail lateral persistente del dashboard, no
+  como una segunda navegación dentro de `/organizacion`. Los destinos globales
+  quedan agrupados bajo “Control operativo” y “Gobierno”, evitando una lista
+  plana que compita con la jerarquía Tenant → Marca → Sucursal.
+- La selección de un nodo se representa en la URL de `/organizacion` para que el
+  panel derecho sobreviva refresh, deep link y navegación desde cualquier
+  sección del dashboard.
+- El proyecto productivo canónico del Dash es `maitre-dash.vercel.app`; el
+  pipeline no debe desplegar la aplicación en un proyecto alternativo.
 - `/` es un redirect de compatibilidad a `/organizacion`; Overview queda en
   `/overview` y Setup en `/setup`.
 - Las rutas legacy `/brands`, `/branches`, `/users` y `/profiles` redirigen a

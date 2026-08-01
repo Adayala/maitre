@@ -170,9 +170,9 @@ test("@ui-contract actualiza el perfil fiscal y declara un punto de venta ARCA",
   await page.getByLabel("Domicilio legal").fill("Av. Corrientes 1234");
   await page.getByLabel("Motivo del cambio").fill("Validación registral E2E");
   await page.getByRole("button", { name: "Guardar perfil fiscal" }).click();
-  await expect(page.getByRole("status")).toContainText(
-    "Datos fiscales actualizados y auditados.",
-  );
+  await expect(
+    page.getByText("Datos fiscales actualizados y auditados.", { exact: true }),
+  ).toBeVisible();
 
   await page.getByText("Declarar nuevo punto de venta").click();
   await page.getByLabel("Código oficial").fill("0002");
@@ -180,9 +180,9 @@ test("@ui-contract actualiza el perfil fiscal y declara un punto de venta ARCA",
   await page.getByLabel("Etiqueta del domicilio").fill("Sucursal Centro");
   await page.getByRole("button", { name: "Declarar punto" }).click();
 
-  await expect(page.getByRole("status")).toContainText(
-    "Punto de venta declarado.",
-  );
+  await expect(
+    page.getByText("Punto de venta declarado.", { exact: true }),
+  ).toBeVisible();
   await expect(page.getByText("PV 0002")).toBeVisible();
   await expect(page.getByText("HOMOLOGATION")).toBeVisible();
   await expect(page.getByText("FACTURA A · 00000007")).toBeVisible();
@@ -191,8 +191,10 @@ test("@ui-contract actualiza el perfil fiscal y declara un punto de venta ARCA",
   await page.getByRole("button", { name: "Descargar PDF" }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toBe("factura-a-00001-00000007.pdf");
-  await expect(page.getByRole("status")).toContainText(
-    "Comprobante FACTURA A · 00000007 descargado.",
-  );
+  await expect(
+    page.getByText("Comprobante FACTURA A · 00000007 descargado.", {
+      exact: true,
+    }),
+  ).toBeVisible();
   await expectNoSeriousAccessibilityViolations(page);
 });

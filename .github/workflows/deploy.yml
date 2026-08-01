@@ -13,7 +13,7 @@ jobs:
           - name: api
             project_id: prj_gAFxIYi8bL5TkpbwpoBYlRyaHqZk
           - name: web
-            project_id: prj_9qxMJEtIMVtq8k43SuzVTqsYewgd
+            project_id: prj_SbBXDmla9cSxEQX7dxwnaWQiDodW
           - name: kitchen
             project_id: prj_DRbMDZIlV9NrPZApEw2CHVxnZD1K
           - name: waiter
@@ -44,9 +44,16 @@ jobs:
               --env-file .vercel/.env.production.local \
               --expect demo
           fi
-          deployment_url="$(npx --yes vercel@57 deploy --prod --yes --token="$VERCEL_TOKEN" \
-            --build-env VITE_GIT_COMMIT_SHA="$GITHUB_SHA" \
-            --build-env VITE_DEPLOYED_AT="$DEPLOYED_AT")"
+          if [[ "${{ matrix.name }}" == "web" ]]; then
+            deployment_url="$(npx --yes vercel@57 deploy --prod --yes --token="$VERCEL_TOKEN" \
+              --local-config vercel.spa.json \
+              --build-env VITE_GIT_COMMIT_SHA="$GITHUB_SHA" \
+              --build-env VITE_DEPLOYED_AT="$DEPLOYED_AT")"
+          else
+            deployment_url="$(npx --yes vercel@57 deploy --prod --yes --token="$VERCEL_TOKEN" \
+              --build-env VITE_GIT_COMMIT_SHA="$GITHUB_SHA" \
+              --build-env VITE_DEPLOYED_AT="$DEPLOYED_AT")"
+          fi
           echo "Deployment ready at $deployment_url"
           if [[ "${{ matrix.name }}" == "api" ]]; then
             node tooling/deployment/check-deployment-health.mjs "$deployment_url"

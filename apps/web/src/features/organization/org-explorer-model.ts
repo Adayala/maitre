@@ -85,6 +85,30 @@ export function isOrganizationNodeSelected(
   return organizationNodeKey(current) === organizationNodeKey(candidate);
 }
 
+export function organizationNodeHref(node: OrganizationNode) {
+  const params = new URLSearchParams({ node: node.type });
+  if (node.id) params.set("id", node.id);
+  if ("parentId" in node) params.set("parentId", node.parentId);
+  return `/organizacion?${params.toString()}`;
+}
+
+export function organizationNodeFromSearch(search: string) {
+  const params = new URLSearchParams(search);
+  const type = params.get("node");
+  const id = params.get("id") || null;
+
+  if (type === "brand") return { type, id } satisfies OrganizationNode;
+  if (type === "branch" || type === "salon") {
+    const parentId = params.get("parentId");
+    if (!parentId) return null;
+    return { type, id, parentId } satisfies OrganizationNode;
+  }
+  if (type === "branch-employees" && id) {
+    return { type, id } satisfies OrganizationNode;
+  }
+  return null;
+}
+
 export function organizationPanelTitle(node: OrganizationNode | null) {
   if (!node) return "Detalle pendiente";
   if (node.type === "branch-employees") return "Empleados de la sucursal";
