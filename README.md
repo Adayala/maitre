@@ -42,6 +42,13 @@ La arquitectura mantiene dominio, datos e integraciones desacoplados de Vercel p
 | Cashier | [maitre-cashier.vercel.app](https://maitre-cashier.vercel.app) |
 | Dash | [maitre-dash.vercel.app](https://maitre-dash.vercel.app) |
 
+### Credenciales de demo
+
+> Usuario de prueba, no productivo. Rotar antes de cualquier demo pública o release.
+
+- **Email:** `owner@demo.maitre`
+- **Password:** `Demo-Maitre-2026!`
+
 ## Documentación
 
 ### Producto y fundamentos
