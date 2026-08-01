@@ -13,7 +13,12 @@ import {
   createPointOfSale,
   setPointOfSaleRegistration,
 } from "../application/point-of-sale-commands.js";
-import { createTaxRate, publishTaxRate, resolveTaxRateQuery, supersedeTaxRate } from "../application/tax-rate-commands.js";
+import {
+  createTaxRate,
+  publishTaxRate,
+  resolveTaxRateQuery,
+  supersedeTaxRate,
+} from "../application/tax-rate-commands.js";
 import {
   createInvoice,
   validateInvoice,
@@ -24,11 +29,26 @@ import {
   type InvoiceDeps,
 } from "../application/invoice-commands.js";
 import { buildInvoiceExportManifest } from "../application/invoice-export.js";
-import { createTemplate, publishTemplate } from "../application/template-commands.js";
+import { renderAuthorizedInvoiceDocument } from "../application/invoice-document.js";
+import { renderAuthorizedInvoicePdfDocument } from "../application/invoice-pdf-document.js";
+import {
+  createTemplate,
+  publishTemplate,
+} from "../application/template-commands.js";
 import { buildFiscalQrCode } from "../domain/fiscal-qr-code.js";
-import { OverlappingTaxRateError, NoEffectiveTaxRateError } from "../domain/tax-rate.js";
-import { InvalidInvoiceTransitionError, InvoiceNotCreditableError, InvalidInvoiceTemplateTransitionError } from "../index.js";
-import { PointOfSaleRegistrationError, assertCanEmit } from "../domain/fiscal-point-of-sale.js";
+import {
+  OverlappingTaxRateError,
+  NoEffectiveTaxRateError,
+} from "../domain/tax-rate.js";
+import {
+  InvalidInvoiceTransitionError,
+  InvoiceNotCreditableError,
+  InvalidInvoiceTemplateTransitionError,
+} from "../index.js";
+import {
+  PointOfSaleRegistrationError,
+  assertCanEmit,
+} from "../domain/fiscal-point-of-sale.js";
 
 const NOW = new Date("2026-07-20T12:00:00.000Z");
 const clock = () => NOW;
@@ -147,7 +167,15 @@ async function seedDraft(deps: ReturnType<typeof makeDeps>, posId: string) {
     pointOfSaleId: posId,
     voucherType: "FACTURA_A",
     currency: "ARS",
-    lines: [{ id: "l1", description: "Item", quantity: 2, unit: "unit", unitNetMinorUnits: 100000 }],
+    lines: [
+      {
+        id: "l1",
+        description: "Item",
+        quantity: 2,
+        unit: "unit",
+        unitNetMinorUnits: 100000,
+      },
+    ],
     sourceCheckId: "check-1",
     sourceCheckRevision: 3,
   });
@@ -182,16 +210,31 @@ test("state machine: DRAFT -> VALIDATED -> AUTHORIZED with fake CAE and number 1
   const deps = makeDeps();
   const { pos } = await seedRateAndPos(deps);
   const draft = await seedDraft(deps, pos.id);
-  const validated = await validateInvoice(deps, { tenantId: TENANT, id: draft.id });
+  const validated = await validateInvoice(deps, {
+    tenantId: TENANT,
+    id: draft.id,
+  });
   assert.equal(validated.status, "VALIDATED");
-  assert.ok(deps.outbox.records.some((r) => r.eventName === "fiscal.invoice.validated.v1"));
+  assert.ok(
+    deps.outbox.records.some(
+      (r) => r.eventName === "fiscal.invoice.validated.v1",
+    ),
+  );
 
-  const issued = await issueInvoice(deps, { tenantId: TENANT, id: draft.id, cuit: "20111111112" });
+  const issued = await issueInvoice(deps, {
+    tenantId: TENANT,
+    id: draft.id,
+    cuit: "20111111112",
+  });
   assert.equal(issued.status, "AUTHORIZED");
   assert.equal(issued.number, 1);
   assert.ok(issued.cae && issued.cae.startsWith("SIM"));
   assert.ok(issued.caeExpiresAt instanceof Date);
-  assert.ok(deps.outbox.records.some((r) => r.eventName === "fiscal.invoice.authorized.v1"));
+  assert.ok(
+    deps.outbox.records.some(
+      (r) => r.eventName === "fiscal.invoice.authorized.v1",
+    ),
+  );
   assert.equal(deps.authorizationAttempts.items.length, 1);
   assert.equal(deps.authorizationAttempts.items[0]?.status, "AUTHORIZED");
   assert.equal(deps.authorizationAttempts.items[0]?.requestedNumber, 1);
@@ -224,7 +267,10 @@ test("ambiguous authorization is persisted and reconciliation authorizes it", as
   });
   assert.equal(pending.status, "PENDING_RECONCILIATION");
   assert.equal(pending.number, 17);
-  assert.equal(deps.authorizationAttempts.items[0]?.status, "PENDING_RECONCILIATION");
+  assert.equal(
+    deps.authorizationAttempts.items[0]?.status,
+    "PENDING_RECONCILIATION",
+  );
 
   const authorized = await reconcileInvoice(deps, {
     tenantId: TENANT,
@@ -237,7 +283,9 @@ test("ambiguous authorization is persisted and reconciliation authorizes it", as
   assert.equal(deps.authorizationAttempts.items[0]?.status, "AUTHORIZED");
   assert.ok(deps.authorizationAttempts.items[0]?.resolvedAt);
   assert.ok(
-    deps.outbox.records.some((record) => record.eventName === "fiscal.invoice.authorized.v1"),
+    deps.outbox.records.some(
+      (record) => record.eventName === "fiscal.invoice.authorized.v1",
+    ),
   );
 });
 
@@ -245,9 +293,18 @@ test("AUTHORIZED invoice is immutable: re-issuing conflicts", async () => {
   const deps = makeDeps();
   const { pos } = await seedRateAndPos(deps);
   const draft = await seedDraft(deps, pos.id);
-  await issueInvoice(deps, { tenantId: TENANT, id: draft.id, cuit: "20111111112" });
+  await issueInvoice(deps, {
+    tenantId: TENANT,
+    id: draft.id,
+    cuit: "20111111112",
+  });
   await assert.rejects(
-    () => issueInvoice(deps, { tenantId: TENANT, id: draft.id, cuit: "20111111112" }),
+    () =>
+      issueInvoice(deps, {
+        tenantId: TENANT,
+        id: draft.id,
+        cuit: "20111111112",
+      }),
     InvalidInvoiceTransitionError,
   );
 });
@@ -255,9 +312,21 @@ test("AUTHORIZED invoice is immutable: re-issuing conflicts", async () => {
 test("sequential numbering per (pointOfSale, voucherType): no gaps, no reuse", async () => {
   const deps = makeDeps();
   const { pos } = await seedRateAndPos(deps);
-  const first = await issueInvoice(deps, { tenantId: TENANT, id: (await seedDraft(deps, pos.id)).id, cuit: "20111111112" });
-  const second = await issueInvoice(deps, { tenantId: TENANT, id: (await seedDraft(deps, pos.id)).id, cuit: "20111111112" });
-  const third = await issueInvoice(deps, { tenantId: TENANT, id: (await seedDraft(deps, pos.id)).id, cuit: "20111111112" });
+  const first = await issueInvoice(deps, {
+    tenantId: TENANT,
+    id: (await seedDraft(deps, pos.id)).id,
+    cuit: "20111111112",
+  });
+  const second = await issueInvoice(deps, {
+    tenantId: TENANT,
+    id: (await seedDraft(deps, pos.id)).id,
+    cuit: "20111111112",
+  });
+  const third = await issueInvoice(deps, {
+    tenantId: TENANT,
+    id: (await seedDraft(deps, pos.id)).id,
+    cuit: "20111111112",
+  });
   assert.deepEqual([first.number, second.number, third.number], [1, 2, 3]);
 });
 
@@ -265,15 +334,30 @@ test("void-draft is allowed before issue and is terminal", async () => {
   const deps = makeDeps();
   const { pos } = await seedRateAndPos(deps);
   const draft = await seedDraft(deps, pos.id);
-  const voided = await voidDraftInvoice(deps, { tenantId: TENANT, id: draft.id });
+  const voided = await voidDraftInvoice(deps, {
+    tenantId: TENANT,
+    id: draft.id,
+  });
   assert.equal(voided.status, "VOIDED_DRAFT");
-  await assert.rejects(() => issueInvoice(deps, { tenantId: TENANT, id: draft.id, cuit: "20111111112" }), InvalidInvoiceTransitionError);
+  await assert.rejects(
+    () =>
+      issueInvoice(deps, {
+        tenantId: TENANT,
+        id: draft.id,
+        cuit: "20111111112",
+      }),
+    InvalidInvoiceTransitionError,
+  );
 });
 
 test("credit note links to the original AUTHORIZED invoice without mutating it", async () => {
   const deps = makeDeps();
   const { pos } = await seedRateAndPos(deps);
-  const original = await issueInvoice(deps, { tenantId: TENANT, id: (await seedDraft(deps, pos.id)).id, cuit: "20111111112" });
+  const original = await issueInvoice(deps, {
+    tenantId: TENANT,
+    id: (await seedDraft(deps, pos.id)).id,
+    cuit: "20111111112",
+  });
   const note = await creditInvoice(deps, { tenantId: TENANT, id: original.id });
   assert.equal(note.voucherType, "NOTA_CREDITO_A");
   assert.equal(note.linkedInvoiceId, original.id);
@@ -288,7 +372,11 @@ test("credit note links to the original AUTHORIZED invoice without mutating it",
   assert.equal(reloaded?.linkedInvoiceId, null);
 
   // The note goes through the same issue/numbering flow (own sequence).
-  const issuedNote = await issueInvoice(deps, { tenantId: TENANT, id: note.id, cuit: "20111111112" });
+  const issuedNote = await issueInvoice(deps, {
+    tenantId: TENANT,
+    id: note.id,
+    cuit: "20111111112",
+  });
   assert.equal(issuedNote.status, "AUTHORIZED");
   assert.equal(issuedNote.number, 1); // first NOTA_CREDITO_A on this POS
 });
@@ -297,7 +385,10 @@ test("credit/debit only applies to AUTHORIZED invoices", async () => {
   const deps = makeDeps();
   const { pos } = await seedRateAndPos(deps);
   const draft = await seedDraft(deps, pos.id);
-  await assert.rejects(() => creditInvoice(deps, { tenantId: TENANT, id: draft.id }), InvoiceNotCreditableError);
+  await assert.rejects(
+    () => creditInvoice(deps, { tenantId: TENANT, id: draft.id }),
+    InvoiceNotCreditableError,
+  );
 });
 
 test("TaxRate publish rejects overlapping intervals for the same key", async () => {
@@ -323,12 +414,19 @@ test("TaxRate publish rejects overlapping intervals for the same key", async () 
     effectiveFrom: new Date("2026-06-01T00:00:00.000Z"),
     normativeSourceVersion: "v2",
   });
-  await assert.rejects(() => publishTaxRate(deps, { id: b.id }), OverlappingTaxRateError);
+  await assert.rejects(
+    () => publishTaxRate(deps, { id: b.id }),
+    OverlappingTaxRateError,
+  );
 });
 
 test("TaxRate resolve fails closed for an unknown key", async () => {
   const deps = makeDeps();
-  const res = await resolveTaxRateQuery(deps, { jurisdiction: "AR", taxType: "GANANCIAS", at: NOW });
+  const res = await resolveTaxRateQuery(deps, {
+    jurisdiction: "AR",
+    taxType: "GANANCIAS",
+    at: NOW,
+  });
   assert.equal(res.resolved, null);
 });
 
@@ -381,11 +479,150 @@ test("FiscalQrCode payload/hash is deterministic across two calls", async () => 
   assert.equal(a.payloadHash.length, 64);
 });
 
+test("authorized invoice document is deterministic, complete and escapes untrusted text", async () => {
+  const deps = makeDeps();
+  const { pos } = await seedRateAndPos(deps);
+  const draft = await createInvoice(deps, {
+    tenantId: TENANT,
+    fiscalEntityId: FE,
+    environment: "HOMOLOGATION",
+    pointOfSaleId: pos.id,
+    voucherType: "FACTURA_A",
+    currency: "ARS",
+    lines: [
+      {
+        id: "unsafe-line",
+        description: '<script>alert("x")</script>',
+        quantity: 1,
+        unit: "unit",
+        unitNetMinorUnits: 100000,
+      },
+    ],
+  });
+  const invoice = await issueInvoice(deps, {
+    tenantId: TENANT,
+    id: draft.id,
+    cuit: "20111111112",
+  });
+  assert.ok(
+    invoice.number != null &&
+      invoice.cae &&
+      invoice.caeExpiresAt &&
+      invoice.authorizedAt,
+  );
+  const qr = buildFiscalQrCode({
+    cuit: "20111111112",
+    voucherType: invoice.voucherType,
+    pointOfSaleCode: pos.officialCode,
+    number: invoice.number,
+    amountMinorUnits: invoice.totals.grossMinorUnits,
+    currency: invoice.currency,
+    cae: invoice.cae,
+    caeExpiresAt: invoice.caeExpiresAt,
+    authorizedAt: invoice.authorizedAt,
+  });
+  const input = {
+    invoice,
+    issuer: {
+      cuit: "20111111112",
+      legalName: "Maitre Test SA",
+      displayName: "Maitre",
+      fiscalAddress: "Av. Corrientes 1234",
+      taxCondition: "RI",
+    },
+    pointOfSale: { officialCode: pos.officialCode },
+    qr,
+  };
+
+  const first = renderAuthorizedInvoiceDocument(input);
+  const second = renderAuthorizedInvoiceDocument(input);
+
+  assert.equal(first.contentHash, second.contentHash);
+  assert.equal(first.html, second.html);
+  assert.match(first.html, /HOMOLOGACIÓN · SIN VALIDEZ FISCAL PRODUCTIVA/);
+  assert.match(first.html, /Maitre Test SA/);
+  assert.match(first.html, /CAE/);
+  assert.match(first.html, new RegExp(qr.payloadHash));
+  assert.doesNotMatch(first.html, /<script\b/i);
+  assert.match(first.html, /&lt;script&gt;alert/);
+});
+
+test("authorized invoice PDF is deterministic", async () => {
+  const deps = makeDeps();
+  const { pos } = await seedRateAndPos(deps);
+  const draft = await createInvoice(deps, {
+    tenantId: TENANT,
+    fiscalEntityId: FE,
+    environment: "HOMOLOGATION",
+    pointOfSaleId: pos.id,
+    voucherType: "FACTURA_A",
+    currency: "ARS",
+    lines: [
+      {
+        id: "pdf-line",
+        description: "Menu del dia",
+        quantity: 1,
+        unit: "unit",
+        unitNetMinorUnits: 100000,
+      },
+    ],
+  });
+  const invoice = await issueInvoice(deps, {
+    tenantId: TENANT,
+    id: draft.id,
+    cuit: "20111111112",
+  });
+  assert.ok(
+    invoice.number &&
+      invoice.cae &&
+      invoice.caeExpiresAt &&
+      invoice.authorizedAt,
+  );
+  const qr = buildFiscalQrCode({
+    cuit: "20111111112",
+    voucherType: invoice.voucherType,
+    pointOfSaleCode: pos.officialCode,
+    number: invoice.number,
+    amountMinorUnits: invoice.totals.grossMinorUnits,
+    currency: invoice.currency,
+    cae: invoice.cae,
+    caeExpiresAt: invoice.caeExpiresAt,
+    authorizedAt: invoice.authorizedAt,
+  });
+  const input = {
+    invoice,
+    issuer: {
+      cuit: "20111111112",
+      legalName: "Maitre Test SA",
+      taxCondition: "RI",
+    },
+    pointOfSale: { officialCode: pos.officialCode },
+    qr,
+  };
+
+  const first = await renderAuthorizedInvoicePdfDocument(input);
+  const second = await renderAuthorizedInvoicePdfDocument(input);
+
+  assert.equal(first.mediaType, "application/pdf");
+  assert.match(first.fileName, /\.pdf$/);
+  assert.equal(Buffer.from(first.bytes.subarray(0, 5)).toString(), "%PDF-");
+  assert.equal(first.contentHash, second.contentHash);
+  assert.deepEqual(first.bytes, second.bytes);
+});
+
 test("invoice export manifest sums authorized totals and lists exceptions", async () => {
   const deps = makeDeps();
   const { pos } = await seedRateAndPos(deps);
-  await issueInvoice(deps, { tenantId: TENANT, id: (await seedDraft(deps, pos.id)).id, cuit: "20111111112" });
-  await issueInvoice(deps, { tenantId: TENANT, id: (await seedDraft(deps, pos.id)).id, cuit: "20111111112" });
+  await issueInvoice(deps, {
+    tenantId: TENANT,
+    id: (await seedDraft(deps, pos.id)).id,
+    cuit: "20111111112",
+  });
+  await issueInvoice(deps, {
+    tenantId: TENANT,
+    id: (await seedDraft(deps, pos.id)).id,
+    cuit: "20111111112",
+  });
   // A DRAFT (never issued) must appear in exceptions, not in totals.
   await seedDraft(deps, pos.id);
 
@@ -400,7 +637,9 @@ test("invoice export manifest sums authorized totals and lists exceptions", asyn
   assert.equal(manifest.grandTotalTaxMinorUnits, 84000);
   assert.equal(manifest.exceptions.length, 1);
   assert.equal(manifest.presented, false);
-  const factA = manifest.totalsByVoucher.find((v) => v.voucherType === "FACTURA_A");
+  const factA = manifest.totalsByVoucher.find(
+    (v) => v.voucherType === "FACTURA_A",
+  );
   assert.equal(factA?.count, 2);
 });
 
@@ -414,11 +653,16 @@ test("InvoiceTemplate publish freezes and blocks further publish", async () => {
     variableSchemaVersion: 1,
     layoutNormativeVersion: "layout-1",
   });
-  const published = await publishTemplate(deps, { tenantId: TENANT, id: t.id, publishedBy: "u1" });
+  const published = await publishTemplate(deps, {
+    tenantId: TENANT,
+    id: t.id,
+    publishedBy: "u1",
+  });
   assert.equal(published.status, "PUBLISHED");
   assert.ok(published.publishedAt);
   await assert.rejects(
-    () => publishTemplate(deps, { tenantId: TENANT, id: t.id, publishedBy: "u1" }),
+    () =>
+      publishTemplate(deps, { tenantId: TENANT, id: t.id, publishedBy: "u1" }),
     InvalidInvoiceTemplateTransitionError,
   );
 });

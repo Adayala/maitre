@@ -113,10 +113,10 @@ test("POST /v1/users as EMPLOYEE returns 403 (user:create not granted)", async (
   assert.equal(response.statusCode, 403);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(response.json().type, "insufficient-scope");
-  assert.equal(response.json().title, "Insufficient scope");
+  assert.equal(response.json().type, "https://docs.maitre.app/problems/insufficient-scope");
+  assert.equal(response.json().detail, "Insufficient scope");
   assert.equal(response.json().status, 403);
   await app.close();
 });
@@ -167,10 +167,10 @@ test("GET /v1/users/:id returns 404 for an unknown id", async () => {
   assert.equal(response.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(response.json().type, "not-found");
-  assert.equal(response.json().title, "User not found");
+  assert.equal(response.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(response.json().detail, "User not found");
   assert.equal(response.json().status, 404);
   await app.close();
 });
@@ -264,10 +264,10 @@ test("GET /v1/roles/:id returns 404 for an unknown role", async () => {
   assert.equal(response.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(response.json().type, "not-found");
-  assert.equal(response.json().title, "Role not found");
+  assert.equal(response.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(response.json().detail, "Role not found");
   assert.equal(response.json().status, 404);
   await app.close();
 });

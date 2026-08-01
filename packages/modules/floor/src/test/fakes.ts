@@ -60,6 +60,11 @@ export class FakeCheckRepository implements CheckRepositoryPort {
   async findByVisit(tenantId: string, visitId: string) {
     return this.items.find((c) => c.tenantId === tenantId && c.visitId === visitId) ?? null;
   }
+  async listByBranch(tenantId: string, branchId: string) {
+    return this.items
+      .filter((c) => c.tenantId === tenantId && c.branchId === branchId)
+      .sort((left, right) => right.updatedAt.getTime() - left.updatedAt.getTime());
+  }
   async save(check: Check) {
     const i = this.items.findIndex((c) => c.id === check.id);
     if (i >= 0) this.items[i] = check;

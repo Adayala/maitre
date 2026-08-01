@@ -174,7 +174,7 @@ Formato: **SPEC-NNN | Título | Tipo | Dominio | Fase | Prioridad | Estado | Rea
 
 ## Platform / Engineering
 
-- [ ] **SPEC-207** | Engineering Quality & SDD Gates | Transversal | Platform / Engineering | Fase Todas, antes del primer código productivo | P0 | DRAFT | BLOCKED
+- [x] **SPEC-207** | Engineering Quality & SDD Gates | Transversal | Platform / Engineering | Fase Todas, antes del primer código productivo | P0 | ACTIVE | IMPLEMENTED
 - [ ] **SPEC-209** | Monorepo Architecture | Transversal | Platform / Engineering | Fase Antes del scaffolding | P0 | DRAFT | BLOCKED
 - [ ] **SPEC-211** | Implementation Toolchain | Transversal | Platform / Engineering | Fase Antes del scaffolding | P0 | DRAFT | BLOCKED
 - [ ] **SPEC-226** | I0 Platform Validation Spikes | Transversal | Platform / Engineering | Fase Antes de I0 READY_FOR_IMPLEMENTATION | P0 | DRAFT | BLOCKED
@@ -210,7 +210,7 @@ Formato: **SPEC-NNN | Título | Tipo | Dominio | Fase | Prioridad | Estado | Rea
 - [ ] **SPEC-214** | Environments, Configuration & Secrets | Transversal | Platform / Operations | Fase Antes del primer despliegue compartido | P0 | DRAFT | BLOCKED
 - [ ] **SPEC-216** | Observability & Reliability | Transversal | Platform / Operations | Fase Antes del ambiente demo estable | P0 | DRAFT | BLOCKED
 - [ ] **SPEC-218** | Offline Operation & Synchronization | Transversal | Platform / Operations | Fase Antes del piloto operativo | P0 | DRAFT | BLOCKED
-- [ ] **SPEC-221** | CI/CD & Release Management | Transversal | Platform / Operations | Fase Antes de automatizar el primer deployment | P0 | DRAFT | BLOCKED
+- [ ] **SPEC-221** | CI/CD & Release Management | Transversal | Platform / Operations | Fase Antes de automatizar el primer deployment | P0 | DRAFT | PARTIAL
 - [ ] **SPEC-223** | Realtime State Distribution | Transversal | Platform / Operations | Fase Antes de SPEC-222 I3 | P0 | DRAFT | BLOCKED
 
 ---

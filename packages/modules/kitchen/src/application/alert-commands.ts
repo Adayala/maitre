@@ -65,17 +65,29 @@ export async function createAlertIfNotDuplicate(deps: AlertDeps, input: CreateAl
   return alert;
 }
 
-async function transition(deps: AlertDeps, alert: KitchenAlert, to: AlertStatus, patch: Partial<KitchenAlert>): Promise<KitchenAlert> {
+async function transition(
+  deps: AlertDeps,
+  alert: KitchenAlert,
+  to: AlertStatus,
+  patch: Partial<KitchenAlert>,
+  transitionedAt = nowFrom(deps),
+): Promise<KitchenAlert> {
   assertAlertTransition(alert.status, to);
-  const now = nowFrom(deps);
-  const updated: KitchenAlert = { ...alert, ...patch, status: to, revision: alert.revision + 1, updatedAt: now };
+  const updated: KitchenAlert = {
+    ...alert,
+    ...patch,
+    status: to,
+    revision: alert.revision + 1,
+    updatedAt: transitionedAt,
+  };
   await deps.alerts.save(updated);
   return updated;
 }
 
 export async function acknowledgeAlert(deps: AlertDeps, input: { tenantId: string; id: string }): Promise<KitchenAlert> {
   const alert = await loadAlert(deps, input.tenantId, input.id);
-  return transition(deps, alert, "ACKNOWLEDGED", { acknowledgedAt: nowFrom(deps) });
+  const now = nowFrom(deps);
+  return transition(deps, alert, "ACKNOWLEDGED", { acknowledgedAt: now }, now);
 }
 
 export async function resolveAlert(
@@ -83,7 +95,8 @@ export async function resolveAlert(
   input: { tenantId: string; id: string; reasonCode: string },
 ): Promise<KitchenAlert> {
   const alert = await loadAlert(deps, input.tenantId, input.id);
-  return transition(deps, alert, "RESOLVED", { resolvedAt: nowFrom(deps), resolutionReason: input.reasonCode });
+  const now = nowFrom(deps);
+  return transition(deps, alert, "RESOLVED", { resolvedAt: now, resolutionReason: input.reasonCode }, now);
 }
 
 // ESCALATED conserves the operational severity and raises escalationLevel.

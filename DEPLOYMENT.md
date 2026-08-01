@@ -1,23 +1,39 @@
 # Deployment (Vercel)
 
-All 7 workspaces are deployed as separate Vercel projects under the `faguero-gmailcoms-projects`
-team, each connected to this monorepo via `npx vercel --prod` (manual deploy — no GitHub App
-integration is configured, since the repo owner and deployer are different accounts and inviting
-a second member requires a paid Vercel plan). Redeploying after a change requires running
-`vercel --prod` again from a checkout with the matching `.vercel/project.json` linked (see
-"Redeploying" below).
+All 7 workspaces are deployed as separate Vercel projects. Production deployment is managed by
+the `End-to-end` GitHub Actions workflow rather than the Vercel GitHub App. A push to `main`
+deploys only the applications affected by that commit, after the quality gate and relevant E2E
+tests pass.
+
+## Delivery flow
+
+The repository does not rely on the Vercel GitHub App for authoritative delivery. GitHub Actions
+uses the `VERCEL_TOKEN` repository secret plus the non-secret organization and project IDs
+declared in `.github/workflows/e2e.yml`.
+
+```text
+pull request
+  → detect affected applications
+  → Quality gate + affected E2E + CodeQL
+  → merge
+  → repeat validation on the exact main SHA
+  → deploy affected Vercel projects
+```
+
+Production deployment is never run for a pull request. The deploy matrix is enabled only for a
+push to `main`, after Quality and all selected E2E jobs succeed.
 
 ## Live URLs
 
-| App | URL | Role |
-| --- | --- | --- |
-| API (Fastify) | https://maitre-api.vercel.app | Backend for all apps |
-| Dash (`apps/web`) | https://maitre-web-omega.vercel.app | Owner/Admin |
-| Kitchen (`apps/kitchen`) | https://maitre-kitchen.vercel.app | Cooks (KDS) |
-| Waiter (`apps/waiter`) | https://maitre-waiter.vercel.app | Mozos |
-| Cashier (`apps/cashier`) | https://maitre-cashier.vercel.app | Caja |
-| Host (`apps/host`) | https://maitre-host.vercel.app | Maître/recepción |
-| Customer (`apps/customer`) | https://maitre-customer.vercel.app | Público (guest) |
+| App                        | URL                                 | Role                 |
+| -------------------------- | ----------------------------------- | -------------------- |
+| API (Fastify)              | https://maitre-api.vercel.app       | Backend for all apps |
+| Dash (`apps/web`)          | https://maitre-web-omega.vercel.app | Owner/Admin          |
+| Kitchen (`apps/kitchen`)   | https://maitre-kitchen.vercel.app   | Cooks (KDS)          |
+| Waiter (`apps/waiter`)     | https://maitre-waiter.vercel.app    | Mozos                |
+| Cashier (`apps/cashier`)   | https://maitre-cashier.vercel.app   | Caja                 |
+| Host (`apps/host`)         | https://maitre-host.vercel.app      | Maître/recepción     |
+| Customer (`apps/customer`) | https://maitre-customer.vercel.app  | Público (guest)      |
 
 ## Project settings (configured in Vercel, not in git, except `apps/api/vercel.json`)
 
@@ -39,13 +55,75 @@ The API project (`apps/api`) uses the committed `apps/api/vercel.json` (declares
 - Root Directory: `apps/api`
 - Install Command: `cd ../.. && npm install`
 - Build Command: `cd ../.. && npm run build --workspace apps/api`
-- Env: `SUPABASE_URL`, `SUPABASE_SECRET_KEY` (production) — this makes the API auto-select the
-  Supabase persistence/auth drivers (see `apps/api/src/composition/container.ts`).
+- Node.js: `20.x`, aligned with the repository floor `20.19.0`.
+- Env: `APP_ENV`, `PERSISTENCE_DRIVER=supabase`, `AUTH_DRIVER=supabase`, `SUPABASE_URL`,
+  `SUPABASE_SECRET_KEY` and `CORS_ALLOWED_ORIGINS`.
 
-## Redeploying
+Shared environments never infer a memory/fixture fallback. The API and deployment preflight reject
+missing/unknown drivers, incomplete Supabase credentials and wildcard or malformed CORS origins.
+`SUPABASE_SERVICE_ROLE_KEY` is accepted only as a legacy server-side alias and must not reach a
+browser build or artifact. See the [durable runtime profile](docs/operations/durable-runtime-profile.md).
 
-No GitHub-integration auto-deploy is configured (manual account/permission constraint, see above),
-so a push to `main` does **not** automatically redeploy. To redeploy after a change:
+## Selective deployment
+
+`tooling/deployment/detect-affected.mjs` builds the E2E and deployment matrices:
+
+- A change under an individual frontend workspace tests and deploys only that frontend.
+- An API or Supabase change deploys only the API, but runs every client E2E suite.
+- A shared package, adapter, dependency lockfile, workflow, or root build configuration change
+  tests and deploys every application.
+- An E2E-only change runs the E2E suites without deploying production.
+- A documentation-only change runs the quality gate without E2E or production deployment.
+- An unknown runtime path falls back to all applications to avoid missing a required deployment.
+
+The detector has unit coverage through `npm run deploy:affected:test`. A manually dispatched
+`End-to-end` workflow intentionally selects every application.
+
+| Changed path                                                     | E2E selection | Production deployment |
+| ---------------------------------------------------------------- | ------------- | --------------------- |
+| `apps/<frontend>/**`                                             | that frontend | that frontend         |
+| `apps/api/**`, `supabase/**`, `vercel.api.json`                  | all clients   | API                   |
+| `packages/**`, `adapters/**`, lockfile or shared build/CI config | all clients   | all projects          |
+| `tests/e2e/**`, `playwright.config.mjs`                          | all clients   | none                  |
+| docs/specs only                                                  | none          | none                  |
+| unknown runtime path                                             | all clients   | all projects          |
+
+The detector reports its JSON decision in the GitHub Actions step summary. Its ordering is stable
+and project IDs never come from changed files or pull-request input.
+
+## Deployment identity
+
+The deployed UI exposes the commit metadata produced by the build. Vercel supplies Git metadata
+for the checked-out repository, and the manual full-deploy workflow additionally injects
+`VITE_GIT_COMMIT_SHA` and `VITE_DEPLOYED_AT`. Use the visible commit SHA together with the GitHub
+Actions run to confirm that the running application corresponds to the merged revision.
+
+The authoritative evidence for an automatic release is:
+
+- merged `main` commit SHA;
+- `End-to-end` workflow run and selected matrix;
+- individual `Deploy · <application>` job;
+- Vercel deployment generated by that job.
+
+For the API, the deploy job additionally validates `/health/live` and `/health/ready` on the
+immutable Vercel URL. A provider deployment marked `Ready` without those successful probes is not
+release evidence.
+
+## Failure and retry
+
+- A failed Quality or selected E2E job prevents every production deployment in that run.
+- A failure in one Vercel matrix entry does not cancel the other application deployments.
+- Fix the cause and merge a new commit; do not bypass the gates.
+- For an operational retry of the exact current code, dispatch `End-to-end` manually. Manual
+  dispatch deliberately validates and deploys all seven projects.
+- The separate `Deploy to Vercel` manual workflow is retained as a full-deploy operational
+  fallback and must not replace normal gated delivery.
+- Statuses produced by a legacy Vercel GitHub App are non-authoritative. The GitHub Actions
+  `Quality gate`, `E2E gate` and `Deploy · <application>` jobs determine delivery.
+
+## Manual redeployment
+
+For an exceptional CLI deployment from a correctly authorized checkout:
 
 ```bash
 git clone https://github.com/Adayala/maitre.git && cd maitre
@@ -53,6 +131,5 @@ npx vercel link --yes --project maitre-api   # or maitre-web / maitre-kitchen / 
 npx vercel --prod --yes
 ```
 
-Repeat per project. A future improvement would be a GitHub Actions workflow that runs the same
-`vercel --prod` command for each project on push to `main`, using a `VERCEL_TOKEN` secret — this
-was not set up in this pass to avoid touching CI/CD scope (SPEC-221) beyond what was requested.
+Repeat per project when using the CLI. Normally, use the `workflow_dispatch` trigger on the
+`End-to-end` workflow to validate and redeploy all projects.

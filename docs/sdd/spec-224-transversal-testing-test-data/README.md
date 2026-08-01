@@ -40,3 +40,11 @@ Contrato transversal para obtener evidencia confiable con tests rápidos, manten
 - [Diseño del harness E2E reproducible](e2e-harness.md)
 
 La ejecución CI y sus comandos pertenecen a la [matriz de SPEC-207](../spec-207-transversal-engineering-quality/quality-gates.md); esta spec define qué evidencia producen los tests.
+
+## Estado implementado del harness — 2026-07-30
+
+Playwright ya ofrece proyectos independientes para las aplicaciones y un proyecto `journeys`.
+MVP-J-001 se ejecuta siempre en el release gate contra Supabase efímero, aplica migraciones desde
+cero, usa fixtures por rol/tenant, valida el recorrido completo y repite lecturas después de
+reiniciar la API. La [sección 18 del diseño](e2e-harness.md#18-implementación-vigente--2026-07-30)
+documenta la topología y los comandos reales.

@@ -4,7 +4,9 @@ import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
+import { NoopTelemetry, type TelemetryPort } from "@maitre/telemetry";
 import { buildContainer, type Container } from "./composition/container.js";
+import { registerHttpObservability } from "./http/observability.js";
 import { registerHealthRoutes } from "./routes/health.js";
 import { registerMeRoutes } from "./routes/me.js";
 import { registerTenantRoutes } from "./routes/tenants.js";
@@ -52,10 +54,23 @@ import { registerInvoiceRoutes } from "./routes/invoices.js";
 import { registerTaxRateRoutes } from "./routes/tax-rates.js";
 import { registerFiscalPrinterRoutes } from "./routes/fiscal-printers.js";
 import { registerInvoiceTemplateRoutes } from "./routes/invoice-templates.js";
+import {
+  openApiConfiguration,
+  registerOpenApiContractMetadata,
+} from "./http/openapi-contract.js";
+import { sendProblem } from "./http/problem-details.js";
+import { randomUUID } from "node:crypto";
+import { registerMutationAudit } from "./http/mutation-audit.js";
+import { ContextPropagatingOutbox } from "./composition/observable-outbox.js";
+import { registerJourneyObservability } from "./observability/journey.js";
+import { registerOutboxOperationsRoutes } from "./routes/outbox-operations.js";
 
 // SPEC-211 — app.ts instantiates and wires plugins/routes without listen().
 // server.ts (local/process) and api/serverless.ts (Vercel) both consume this.
-export async function buildApp(container?: Container): Promise<FastifyInstance> {
+export async function buildApp(
+  container?: Container,
+  telemetry: TelemetryPort = new NoopTelemetry(),
+): Promise<FastifyInstance> {
   const app = Fastify({
     logger: true,
     bodyLimit: 1_048_576,
@@ -63,7 +78,26 @@ export async function buildApp(container?: Container): Promise<FastifyInstance> 
     requestTimeout: 30_000,
     connectionTimeout: 10_000,
   });
-  const resolvedContainer = container ?? (await buildContainer());
+  const baseContainer = container ?? (await buildContainer());
+  const contextualOutbox =
+    baseContainer.outbox instanceof ContextPropagatingOutbox
+      ? baseContainer.outbox
+      : new ContextPropagatingOutbox(baseContainer.outbox);
+  const resolvedContainer = new Proxy(baseContainer, {
+    get(target, property, receiver) {
+      return property === "outbox"
+        ? contextualOutbox
+        : Reflect.get(target, property, receiver);
+    },
+  });
+  registerHttpObservability(app, telemetry);
+  registerJourneyObservability(app, resolvedContainer.outbox, telemetry);
+  registerMutationAudit(app, resolvedContainer, telemetry);
+
+  registerOpenApiContractMetadata(app);
+  app.setErrorHandler((error, _request, reply) => {
+    sendProblem(reply, randomUUID(), error);
+  });
 
   await app.register(helmet, {
     // Swagger UI needs inline assets. Product frontends define their CSP at
@@ -83,7 +117,15 @@ export async function buildApp(container?: Container): Promise<FastifyInstance> 
   await app.register(cors, {
     origin: resolveCorsOrigins(),
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Tenant-Id", "X-Branch-Id"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Tenant-Id",
+      "X-Branch-Id",
+      "X-Correlation-Id",
+      "Traceparent",
+    ],
+    exposedHeaders: ["Content-Disposition", "ETag", "X-Correlation-Id"],
     credentials: false,
     maxAge: 600,
   });
@@ -92,15 +134,11 @@ export async function buildApp(container?: Container): Promise<FastifyInstance> 
   // the handler rather than a Fastify route `schema`, so this generates a
   // real, browsable endpoint catalog (path/method per route) without detailed
   // per-route request/response bodies. Served at /docs, separate from /v1/*.
-  await app.register(swagger, {
-    openapi: {
-      info: { title: "Maitre API", version: "0.0.1" },
-      servers: [{ url: "/" }],
-    },
-  });
+  await app.register(swagger, openApiConfiguration);
   await app.register(swaggerUi, { routePrefix: "/docs" });
 
-  await registerHealthRoutes(app, resolvedContainer);
+  await registerHealthRoutes(app, resolvedContainer, telemetry);
+  await registerOutboxOperationsRoutes(app, resolvedContainer);
   await registerMeRoutes(app, resolvedContainer);
   await registerTenantRoutes(app, resolvedContainer);
   await registerBrandRoutes(app, resolvedContainer);
@@ -151,16 +189,49 @@ export async function buildApp(container?: Container): Promise<FastifyInstance> 
   return app;
 }
 
-function resolveCorsOrigins(): true | string[] {
+export function resolveCorsOrigins(): string[] {
   const configured = process.env["CORS_ALLOWED_ORIGINS"]
     ?.split(",")
     .map((origin) => origin.trim())
     .filter(Boolean);
-  if (configured?.length) return configured;
-  if (process.env["APP_ENV"] === "production") {
-    throw new Error("CORS_ALLOWED_ORIGINS must be configured in production");
+  if (configured?.length) return [...new Set(configured.map(normalizeOrigin))];
+
+  const environment = process.env["APP_ENV"] ?? "local";
+  if (!["local", "test", "e2e"].includes(environment)) {
+    throw new Error(
+      `CORS_ALLOWED_ORIGINS must be configured in ${environment}`,
+    );
   }
-  return true;
+  const localOrigins = [
+    "http://127.0.0.1:5173",
+    "http://localhost:5173",
+    "http://127.0.0.1:5273",
+    "http://localhost:5273",
+  ];
+  if (environment !== "e2e") return localOrigins;
+
+  // Playwright gives each application a dedicated preview port. Keep this
+  // allowlist exact so the authoritative multi-app journey works without
+  // reopening CORS to arbitrary origins.
+  return [
+    ...localOrigins,
+    ...[5274, 5275, 5276, 5278, 5279].flatMap((port) => [
+      `http://127.0.0.1:${port}`,
+      `http://localhost:${port}`,
+    ]),
+  ];
+}
+
+function normalizeOrigin(origin: string): string {
+  const parsed = new URL(origin);
+  if (
+    !["http:", "https:"].includes(parsed.protocol) ||
+    parsed.username ||
+    parsed.password
+  ) {
+    throw new Error(`Invalid CORS origin: ${origin}`);
+  }
+  return parsed.origin;
 }
 
 function resolveTrustProxy(): boolean | number {

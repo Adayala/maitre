@@ -1,6 +1,7 @@
 import type { FastifyRequest } from "fastify";
 import { isUserEligibleForSession, hasPermission } from "@maitre/identity";
 import { isTenantOperable } from "@maitre/organization";
+import { TELEMETRY_SIGNALS } from "@maitre/telemetry";
 import type { Container } from "../composition/container.js";
 import { resolveDomainUser } from "../composition/resolve-domain-user.js";
 import {
@@ -9,6 +10,10 @@ import {
   identityNotEnabled,
   insufficientScope,
 } from "./problem-details.js";
+import {
+  incrementRequestTelemetry,
+  startRequestTelemetrySpan,
+} from "./observability.js";
 
 export interface AuthenticatedContext {
   userId: string;
@@ -24,6 +29,14 @@ export interface TenantContext extends AuthenticatedContext {
   externalIdentityId: string;
 }
 
+const tenantContextByRequest = new WeakMap<FastifyRequest, TenantContext>();
+
+export function tenantContextForRequest(
+  request: FastifyRequest,
+): TenantContext | undefined {
+  return tenantContextByRequest.get(request);
+}
+
 function extractBearerToken(header: string | undefined): string | null {
   if (!header) return null;
   const [scheme, token] = header.split(" ");
@@ -36,24 +49,45 @@ export async function requireAuthenticatedContext(
   container: Container,
   req: FastifyRequest,
 ): Promise<AuthenticatedContext> {
+  const authSpan = startRequestTelemetrySpan(req, "auth verify access token", {
+    kind: "INTERNAL",
+    attributes: { "auth.operation": "verify_access_token" },
+  });
   const token = extractBearerToken(req.headers.authorization);
-  if (!token) throw authenticationRequired();
+  if (!token) {
+    authSpan?.end("ERROR");
+    authMetric(req, "denied");
+    throw authenticationRequired();
+  }
 
   let principal;
   try {
     principal = await container.sessions.verifyAccessToken(token);
   } catch (err) {
     req.log.warn(
-      { errorName: err instanceof Error ? err.name : "UnknownError", errorMessage: err instanceof Error ? err.message : "token verification failed" },
+      {
+        errorName: err instanceof Error ? err.name : "UnknownError",
+        errorMessage:
+          err instanceof Error ? err.message : "token verification failed",
+      },
       "access token verification failed",
     );
-    if (err instanceof Error && err.message === "session-expired") throw sessionExpired();
+    authSpan?.end("ERROR");
+    authMetric(req, "denied");
+    if (err instanceof Error && err.message === "session-expired")
+      throw sessionExpired();
     throw authenticationRequired();
   }
 
   const user = await resolveDomainUser(container, principal);
-  if (!user || !isUserEligibleForSession(user)) throw identityNotEnabled();
+  if (!user || !isUserEligibleForSession(user)) {
+    authSpan?.end("ERROR");
+    authMetric(req, "denied");
+    throw identityNotEnabled();
+  }
 
+  authSpan?.end("OK");
+  authMetric(req, "success");
   return {
     userId: user.id,
     sessionIssuedAt: principal.issuedAt,
@@ -67,39 +101,83 @@ export async function requireTenantContext(
   container: Container,
   req: FastifyRequest,
 ): Promise<TenantContext> {
-  const auth = await requireAuthenticatedContext(container, req);
-
-  const tenantId = req.headers["x-tenant-id"] as string | undefined;
-  if (!tenantId) throw insufficientScope();
-
-  const tenant = await container.tenants.findById(tenantId);
-  if (!tenant || !isTenantOperable(tenant)) throw insufficientScope();
-
-  const membership = await container.memberships.findActiveByUserAndTenant(
-    auth.userId,
-    tenantId,
+  const contextSpan = startRequestTelemetrySpan(
+    req,
+    "auth resolve tenant context",
+    {
+      kind: "INTERNAL",
+      attributes: { "auth.operation": "resolve_tenant_context" },
+    },
   );
-  if (!membership) throw insufficientScope();
+  try {
+    const auth = await requireAuthenticatedContext(container, req);
 
-  const user = await container.users.findById(auth.userId);
-  if (!user || !isUserEligibleForSession(user)) throw identityNotEnabled();
+    const tenantId = req.headers["x-tenant-id"] as string | undefined;
+    if (!tenantId) throw insufficientScope();
 
-  return {
-    userId: auth.userId,
-    sessionIssuedAt: auth.sessionIssuedAt,
-    sessionExpiresAt: auth.sessionExpiresAt,
-    tenantId,
-    roleIds: membership.roleIds,
-    branchScopeType: membership.branchScopeType,
-    branchIds: membership.branchIds,
-    externalIdentityId: user.externalIdentityId,
-  };
+    const tenant = await container.tenants.findById(tenantId);
+    if (!tenant || !isTenantOperable(tenant)) throw insufficientScope();
+
+    const membership = await container.memberships.findActiveByUserAndTenant(
+      auth.userId,
+      tenantId,
+    );
+    if (!membership) throw insufficientScope();
+
+    const user = await container.users.findById(auth.userId);
+    if (!user || !isUserEligibleForSession(user)) throw identityNotEnabled();
+
+    const context: TenantContext = {
+      userId: auth.userId,
+      sessionIssuedAt: auth.sessionIssuedAt,
+      sessionExpiresAt: auth.sessionExpiresAt,
+      tenantId,
+      roleIds: membership.roleIds,
+      branchScopeType: membership.branchScopeType,
+      branchIds: membership.branchIds,
+      externalIdentityId: user.externalIdentityId,
+    };
+    tenantContextByRequest.set(req, context);
+    contextSpan?.end("OK");
+    contextMetric(req, "success");
+    return context;
+  } catch (error) {
+    contextSpan?.end("ERROR");
+    contextMetric(req, "failure");
+    throw error;
+  }
 }
 
-export function requirePermission(context: TenantContext, permissionId: string): void {
+export function requirePermission(
+  context: TenantContext,
+  permissionId: string,
+): void {
   if (!hasPermission(context.roleIds, permissionId)) throw insufficientScope();
 }
 
-export function hasContextPermission(context: TenantContext, permissionId: string): boolean {
+export function hasContextPermission(
+  context: TenantContext,
+  permissionId: string,
+): boolean {
   return hasPermission(context.roleIds, permissionId);
+}
+
+function authMetric(
+  request: FastifyRequest,
+  outcome: "success" | "denied",
+): void {
+  incrementRequestTelemetry(request, TELEMETRY_SIGNALS.authAttempts, {
+    operation: "verify_access_token",
+    outcome,
+  });
+}
+
+function contextMetric(
+  request: FastifyRequest,
+  outcome: "success" | "failure",
+): void {
+  incrementRequestTelemetry(request, TELEMETRY_SIGNALS.contextResolution, {
+    operation: "resolve_tenant_context",
+    outcome,
+  });
 }

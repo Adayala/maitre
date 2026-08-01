@@ -48,28 +48,31 @@ Bienvenido a las especificaciones ejecutables de Maitre.
 1. Lee [`_guides/README.md`](_guides/README.md)
 2. Mira [`_guides/SPEC_STRUCTURE.md`](_guides/SPEC_STRUCTURE.md)
 3. Revisa [`TECH_STACK.md`](TECH_STACK.md) para la implementación vigente con React.js, Node.js y Vercel
-4. Aplica [`SPEC-207`](spec-207-transversal-engineering-quality/) para calidad y gates SDD
-5. Aplica [`SPEC-208`](spec-208-transversal-zero-cost-mvp/) para operar el MVP dentro de free tiers
-6. Usa [`SPEC-209`](spec-209-transversal-monorepo-architecture/) para crear el monorepo y respetar sus límites
-7. Aplica [`SPEC-210`](spec-210-transversal-data-identity-platform/) para PostgreSQL, identidad y almacenamiento con Supabase
-8. Aplica [`SPEC-211`](spec-211-transversal-implementation-toolchain/) para el toolchain React.js/Node.js y sus verificaciones
-9. Aplica [`SPEC-212`](spec-212-transversal-design-system-accessibility/) para UI consistente, responsive y accesible
-10. Implementa [`SPEC-213`](spec-213-transversal-mvp-walking-skeleton/) como primer corte vertical desplegable
-11. Aplica [`SPEC-214`](spec-214-transversal-environments-configuration-secrets/) para ambientes, configuración y secretos
-12. Usa [`SPEC-215`](spec-215-transversal-http-api-standards/) como contrato común de todas las APIs HTTP
-13. Aplica [`SPEC-216`](spec-216-transversal-observability-reliability/) para observabilidad, SLOs y recuperación
-14. Usa [`SPEC-217`](spec-217-transversal-events-async-processing/) para eventos, outbox y procesamiento asíncrono
-15. Aplica [`SPEC-218`](spec-218-transversal-offline-sync/) para operación offline y sincronización
-16. Verifica [`SPEC-219`](spec-219-transversal-security-privacy/) para seguridad, privacidad y aislamiento multi-tenant
-17. Aplica [`SPEC-220`](spec-220-transversal-data-lifecycle-disaster-recovery/) para ciclo de vida, backups y disaster recovery
-18. Usa [`SPEC-221`](spec-221-transversal-ci-cd-release-management/) para CI/CD, promoción y releases recuperables
-19. Ejecuta [`SPEC-222`](spec-222-transversal-mvp-scope-delivery-plan/) para mantener alcance y secuencia del MVP
-20. Aplica [`SPEC-223`](spec-223-transversal-realtime-state-distribution/) para actualización live de Floor y Kitchen
-21. Usa [`SPEC-224`](spec-224-transversal-testing-test-data/) para estrategia de tests y datos sintéticos
-22. Aplica [`SPEC-225`](spec-225-transversal-spec-adr-governance/) para lifecycle, aprobación y ADRs
-23. Revisa [`I0_READINESS_REVIEW.md`](I0_READINESS_REVIEW.md) antes de iniciar scaffolding
-24. Resuelve [`I0_FUNCTIONAL_CONTRACT_REVIEW.md`](I0_FUNCTIONAL_CONTRACT_REVIEW.md) para alinear Tenant, User, Membership y Auth
-25. Ejecuta [`SPEC-226`](spec-226-transversal-i0-platform-validation-spikes/) para decidir Supabase y toolchain con evidencia
+4. Consulta el [cierre operativo de gaps del MVP](../operations/mvp-gap-closure-2026-07-30.md)
+   para distinguir qué partes de SPEC-215/216/222/224 están implementadas y cuáles siguen
+   diferidas a Pilot
+5. Aplica [`SPEC-207`](spec-207-transversal-engineering-quality/) para calidad y gates SDD
+6. Aplica [`SPEC-208`](spec-208-transversal-zero-cost-mvp/) para operar el MVP dentro de free tiers
+7. Usa [`SPEC-209`](spec-209-transversal-monorepo-architecture/) para crear el monorepo y respetar sus límites
+8. Aplica [`SPEC-210`](spec-210-transversal-data-identity-platform/) para PostgreSQL, identidad y almacenamiento con Supabase
+9. Aplica [`SPEC-211`](spec-211-transversal-implementation-toolchain/) para el toolchain React.js/Node.js y sus verificaciones
+10. Aplica [`SPEC-212`](spec-212-transversal-design-system-accessibility/) para UI consistente, responsive y accesible
+11. Implementa [`SPEC-213`](spec-213-transversal-mvp-walking-skeleton/) como primer corte vertical desplegable
+12. Aplica [`SPEC-214`](spec-214-transversal-environments-configuration-secrets/) para ambientes, configuración y secretos
+13. Usa [`SPEC-215`](spec-215-transversal-http-api-standards/) como contrato común de todas las APIs HTTP
+14. Aplica [`SPEC-216`](spec-216-transversal-observability-reliability/) para observabilidad, SLOs y recuperación
+15. Usa [`SPEC-217`](spec-217-transversal-events-async-processing/) para eventos, outbox y procesamiento asíncrono
+16. Aplica [`SPEC-218`](spec-218-transversal-offline-sync/) para operación offline y sincronización
+17. Verifica [`SPEC-219`](spec-219-transversal-security-privacy/) para seguridad, privacidad y aislamiento multi-tenant
+18. Aplica [`SPEC-220`](spec-220-transversal-data-lifecycle-disaster-recovery/) para ciclo de vida, backups y disaster recovery
+19. Usa [`SPEC-221`](spec-221-transversal-ci-cd-release-management/) para CI/CD, promoción y releases recuperables
+20. Ejecuta [`SPEC-222`](spec-222-transversal-mvp-scope-delivery-plan/) para mantener alcance y secuencia del MVP
+21. Aplica [`SPEC-223`](spec-223-transversal-realtime-state-distribution/) para actualización live de Floor y Kitchen
+22. Usa [`SPEC-224`](spec-224-transversal-testing-test-data/) para estrategia de tests y datos sintéticos
+23. Aplica [`SPEC-225`](spec-225-transversal-spec-adr-governance/) para lifecycle, aprobación y ADRs
+24. Revisa [`I0_READINESS_REVIEW.md`](I0_READINESS_REVIEW.md) antes de iniciar scaffolding
+25. Resuelve [`I0_FUNCTIONAL_CONTRACT_REVIEW.md`](I0_FUNCTIONAL_CONTRACT_REVIEW.md) para alinear Tenant, User, Membership y Auth
+26. Ejecuta [`SPEC-226`](spec-226-transversal-i0-platform-validation-spikes/) para decidir Supabase y toolchain con evidencia
 
 ### Para ver un ejemplo completo
 
@@ -122,6 +125,7 @@ Cada spec es **autocontendida** — todo lo que necesitas sobre una entidad/API/
 | Entender cómo se crean apps | Leer `_guides/15-applications-and-devices.md` |
 | Ver APIs que usa cada app | Leer `_guides/16-api-specifications.md` |
 | Entender cómo se comunican dominios | Leer `_guides/17-event-specifications.md` |
+| Ver qué está realmente implementado y operativo | Leer `../operations/README.md` |
 
 ---
 

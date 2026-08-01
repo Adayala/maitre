@@ -4,7 +4,8 @@
 - [x] Crear plantilla/directorio de evidencia (estructura documental, no resultado técnico).
 - [ ] Asignar owner/reviewer a cada spike.
 - [ ] Ejecutar las porciones locales de SPK-01 y SPK-05.
-- [ ] Confirmar repo, Vercel y Supabase conectados mediante integración/invitaciones.
+- [x] Confirmar repo y proyectos Vercel conectados mediante GitHub Actions.
+- [ ] Completar la evidencia separada de conexión/ambientes Supabase y previews.
 - [ ] Auditar variables Development/Preview/Production sin registrar valores.
 - [ ] Registrar cuotas gratuitas, baseline y stop conditions antes de ejecutar remoto.
 - [ ] Preparar ambiente sintético y cleanup.

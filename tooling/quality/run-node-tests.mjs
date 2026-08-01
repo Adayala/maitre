@@ -1,18 +1,14 @@
-import { readdirSync } from "node:fs";
+import { mkdirSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
+import { coverageFailures, parseCoverageSummary } from "./coverage-gate.mjs";
 
 const roots = ["apps", "packages", "adapters"];
-const quarantined = new Set([
-  "apps/api/dist/test/kitchen-api.test.js",
-  "apps/api/dist/test/ordering-api.test.js",
-  "apps/api/dist/test/organization-api.test.js",
-  "apps/api/dist/test/reservations-api.test.js",
-  "apps/api/dist/test/workforce-api.test.js",
-]);
+const quarantined = new Set(["apps/api/dist/test/organization-api.test.js"]);
 const discovered = roots.flatMap((root) => collectTests(root));
 const testFiles = discovered.filter((file) => !quarantined.has(file));
 const coverage = process.argv.includes("--coverage");
+const coverageReportPath = "coverage/node-test-coverage.txt";
 
 if (testFiles.length === 0) {
   console.error("No compiled test files were found. Run the build first.");
@@ -26,10 +22,32 @@ const args = [
   ...(coverage ? ["--experimental-test-coverage"] : []),
   "--test",
   "--test-concurrency=1",
+  ...(coverage
+    ? [
+        "--test-reporter=spec",
+        `--test-reporter-destination=${coverageReportPath}`,
+      ]
+    : []),
   ...testFiles,
 ];
+if (coverage) mkdirSync("coverage", { recursive: true });
 const result = spawnSync(process.execPath, args, { stdio: "inherit" });
-process.exit(result.status ?? 1);
+if (result.error) throw result.error;
+if (result.status !== 0) process.exit(result.status ?? 1);
+if (!coverage) process.exit(0);
+
+const thresholds = JSON.parse(
+  readFileSync(new URL("./coverage-thresholds.json", import.meta.url), "utf8"),
+);
+const summary = parseCoverageSummary(readFileSync(coverageReportPath, "utf8"));
+const failures = coverageFailures(summary, thresholds);
+if (failures.length) {
+  console.error(`Coverage gate failed:\n${failures.join("\n")}`);
+  process.exit(1);
+}
+console.log(
+  `Coverage gate passed: lines ${summary.lines}%, branches ${summary.branches}%, functions ${summary.functions}%.`,
+);
 
 function collectTests(root) {
   const results = [];

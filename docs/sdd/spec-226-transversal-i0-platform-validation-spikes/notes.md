@@ -2,9 +2,12 @@
 
 ## Estado inicial
 
-No hay spikes ejecutados. Esta spec define el método y no constituye evidencia a favor de Supabase, Drizzle, Fastify o Vite.
+Los workflows Quality/E2E y los deployments Vercel se ejecutan remotamente desde `main`. Esta
+evidencia confirma conectividad operativa del delivery, pero no completa por sí sola los criterios
+SPK-01–06 ni constituye aceptación integral de Supabase, Drizzle, Fastify o Vite.
 
-La conexión del proyecto Supabase con GitHub/Vercel es un prerrequisito externo pendiente y tampoco constituye evidencia de aceptación. Mientras tanto pueden avanzar SPK-01 local y los gates locales de SPK-05.
+La evidencia de ambientes Supabase, pooling, Auth, RLS, restore y cuotas sigue pendiente. Pueden
+avanzar los criterios locales y remotos que no dependan de esos accesos.
 
 ## Fuentes a fijar al ejecutar
 

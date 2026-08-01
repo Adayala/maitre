@@ -1,0 +1,185 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type {
+  InvoiceDelivery,
+  InvoiceDeliveryRepositoryPort,
+} from "@maitre/fiscal";
+
+const TABLE = "fiscal_invoice_deliveries";
+
+function fromRow(row: Record<string, unknown>): InvoiceDelivery {
+  return {
+    id: String(row["id"]),
+    tenantId: String(row["tenant_id"]),
+    invoiceId: String(row["invoice_id"]),
+    channel: "EMAIL",
+    recipientEmail:
+      row["recipient_email"] === null ? null : String(row["recipient_email"]),
+    format: row["format"] as InvoiceDelivery["format"],
+    idempotencyKey: String(row["idempotency_key"]),
+    status: row["status"] as InvoiceDelivery["status"],
+    attempts: Number(row["attempts"]),
+    createdAt: new Date(String(row["created_at"])),
+    updatedAt: new Date(String(row["updated_at"])),
+    ...(row["sent_at"] ? { sentAt: new Date(String(row["sent_at"])) } : {}),
+    ...(row["failure_reason"]
+      ? { failureReason: String(row["failure_reason"]) }
+      : {}),
+    ...(row["redacted_at"]
+      ? { redactedAt: new Date(String(row["redacted_at"])) }
+      : {}),
+  };
+}
+
+export class SupabaseInvoiceDeliveryRepository
+  implements InvoiceDeliveryRepositoryPort
+{
+  constructor(private readonly client: SupabaseClient) {}
+
+  async findById(tenantId: string, id: string) {
+    const { data, error } = await this.client
+      .from(TABLE)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("id", id)
+      .maybeSingle();
+    if (error) throw error;
+    return data ? fromRow(data as Record<string, unknown>) : null;
+  }
+
+  async findByIdempotencyKey(tenantId: string, idempotencyKey: string) {
+    const { data, error } = await this.client
+      .from(TABLE)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("idempotency_key", idempotencyKey)
+      .maybeSingle();
+    if (error) throw error;
+    return data ? fromRow(data as Record<string, unknown>) : null;
+  }
+
+  async listByInvoice(tenantId: string, invoiceId: string) {
+    const { data, error } = await this.client
+      .from(TABLE)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("invoice_id", invoiceId)
+      .order("created_at");
+    if (error) throw error;
+    return (data ?? []).map((row) => fromRow(row as Record<string, unknown>));
+  }
+
+  async listProcessable(limit: number, staleBefore: Date) {
+    const { data, error } = await this.client
+      .from(TABLE)
+      .select("*")
+      .or(
+        `status.in.(QUEUED,FAILED),and(status.eq.PROCESSING,updated_at.lt.${staleBefore.toISOString()})`,
+      )
+      .order("created_at")
+      .limit(limit);
+    if (error) throw error;
+    return (data ?? []).map((row) => fromRow(row as Record<string, unknown>));
+  }
+
+  async getSummary(tenantId: string) {
+    const statuses = ["QUEUED", "PROCESSING", "SENT", "FAILED"] as const;
+    const counts = await Promise.all(
+      statuses.map(async (status) => {
+        const { count, error } = await this.client
+          .from(TABLE)
+          .select("id", { count: "exact", head: true })
+          .eq("tenant_id", tenantId)
+          .eq("status", status);
+        if (error) throw error;
+        return count ?? 0;
+      }),
+    );
+    const { data, error } = await this.client
+      .from(TABLE)
+      .select("created_at")
+      .eq("tenant_id", tenantId)
+      .in("status", ["QUEUED", "PROCESSING"])
+      .order("created_at")
+      .limit(1)
+      .maybeSingle();
+    if (error) throw error;
+    return {
+      tenantId,
+      total: counts.reduce((sum, count) => sum + count, 0),
+      queued: counts[0]!,
+      processing: counts[1]!,
+      sent: counts[2]!,
+      failed: counts[3]!,
+      oldestPendingAt: data
+        ? new Date(String((data as Record<string, unknown>)["created_at"]))
+        : null,
+    };
+  }
+
+  async claimForProcessing(
+    tenantId: string,
+    id: string,
+    updatedAt: Date,
+    staleBefore: Date,
+  ) {
+    const { data, error } = await this.client
+      .from(TABLE)
+      .update({ status: "PROCESSING", updated_at: updatedAt.toISOString() })
+      .eq("tenant_id", tenantId)
+      .eq("id", id)
+      .or(
+        `status.in.(QUEUED,FAILED),and(status.eq.PROCESSING,updated_at.lt.${staleBefore.toISOString()})`,
+      )
+      .select("*")
+      .maybeSingle();
+    if (error) throw error;
+    return data ? fromRow(data as Record<string, unknown>) : null;
+  }
+
+  async redactSentBefore(cutoff: Date, redactedAt: Date, limit: number) {
+    const { data: candidates, error: selectError } = await this.client
+      .from(TABLE)
+      .select("id")
+      .eq("status", "SENT")
+      .not("recipient_email", "is", null)
+      .lte("sent_at", cutoff.toISOString())
+      .order("sent_at")
+      .limit(limit);
+    if (selectError) throw selectError;
+    const ids = (candidates ?? []).map((row) => String(row["id"]));
+    if (ids.length === 0) return 0;
+    const { data, error } = await this.client
+      .from(TABLE)
+      .update({
+        recipient_email: null,
+        redacted_at: redactedAt.toISOString(),
+        updated_at: redactedAt.toISOString(),
+      })
+      .in("id", ids)
+      .eq("status", "SENT")
+      .not("recipient_email", "is", null)
+      .select("id");
+    if (error) throw error;
+    return data?.length ?? 0;
+  }
+
+  async save(delivery: InvoiceDelivery) {
+    const { error } = await this.client.from(TABLE).upsert({
+      id: delivery.id,
+      tenant_id: delivery.tenantId,
+      invoice_id: delivery.invoiceId,
+      channel: delivery.channel,
+      recipient_email: delivery.recipientEmail,
+      format: delivery.format,
+      idempotency_key: delivery.idempotencyKey,
+      status: delivery.status,
+      attempts: delivery.attempts,
+      created_at: delivery.createdAt.toISOString(),
+      updated_at: delivery.updatedAt.toISOString(),
+      sent_at: delivery.sentAt?.toISOString() ?? null,
+      failure_reason: delivery.failureReason ?? null,
+      redacted_at: delivery.redactedAt?.toISOString() ?? null,
+    });
+    if (error) throw error;
+  }
+}

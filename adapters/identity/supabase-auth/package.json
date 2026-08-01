@@ -11,10 +11,10 @@
   },
   "dependencies": {
     "@maitre/identity": "*",
-    "jose": "^5.9.6"
+    "jose": "^6.2.4"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
-    "typescript": "^5.5.4"
+    "typescript": "^6.0.3"
   }
 }

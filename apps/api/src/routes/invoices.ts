@@ -1,5 +1,5 @@
 import type { FastifyInstance, FastifyReply } from "fastify";
-import { randomUUID } from "node:crypto";
+import { randomUUID, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 import {
   createInvoice,
@@ -15,11 +15,22 @@ import {
   setPointOfSaleRegistration,
   buildInvoiceExportManifest,
   buildFiscalQrCode,
+  renderAuthorizedInvoiceDocument,
+  renderAuthorizedInvoicePdfDocument,
+  queueInvoiceEmailDelivery,
+  processInvoiceDelivery,
+  processInvoiceDeliveryBatch,
+  redactExpiredInvoiceDeliveryPii,
+  ResendInvoiceEmailSender,
+  type InvoiceDeliveryDocumentPort,
+  renderInvoiceEmailTemplate,
   type TaxLineInput,
   type InvoiceDeps,
   InvalidInvoiceTransitionError,
   ImmutableInvoiceError,
   InvoiceNotCreditableError,
+  InvoiceDocumentNotRenderableError,
+  InvoiceDeliveryIdempotencyConflictError,
   NoEffectiveTaxRateError,
   DuplicatePointOfSaleError,
   PointOfSaleInactiveError,
@@ -27,8 +38,17 @@ import {
   VoucherTypeNotAllowedError,
 } from "@maitre/fiscal";
 import type { Container } from "../composition/container.js";
-import { requireTenantContext, requirePermission } from "../http/request-context.js";
-import { sendProblem, notFound, conflict, badRequest } from "../http/problem-details.js";
+import {
+  requireTenantContext,
+  requirePermission,
+} from "../http/request-context.js";
+import {
+  sendProblem,
+  notFound,
+  conflict,
+  badRequest,
+  authenticationRequired,
+} from "../http/problem-details.js";
 
 // SPEC-144/145/147/150/155 — Invoices + FiscalPointOfSale + QR + Export API.
 //
@@ -94,32 +114,41 @@ const createPosBody = z.object({
   allowedVoucherTypes: z.array(voucherTypeEnum).min(1),
 });
 
-const registrationBody = z.object({
-  status: z.enum(["DECLARED", "VERIFIED", "REJECTED", "INACTIVE"]),
-  evidenceRef: z.string().min(1).optional(),
-  rejectionReason: z.string().min(1).optional(),
-}).superRefine((body, ctx) => {
-  if (body.status === "VERIFIED" && !body.evidenceRef) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ["evidenceRef"],
-      message: "Registration evidence is required to verify an ARCA point of sale",
-    });
-  }
-  if (body.status === "REJECTED" && !body.rejectionReason) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ["rejectionReason"],
-      message: "A rejection reason is required to reject an ARCA point of sale",
-    });
-  }
-});
+const registrationBody = z
+  .object({
+    status: z.enum(["DECLARED", "VERIFIED", "REJECTED", "INACTIVE"]),
+    evidenceRef: z.string().min(1).optional(),
+    rejectionReason: z.string().min(1).optional(),
+  })
+  .superRefine((body, ctx) => {
+    if (body.status === "VERIFIED" && !body.evidenceRef) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["evidenceRef"],
+        message:
+          "Registration evidence is required to verify an ARCA point of sale",
+      });
+    }
+    if (body.status === "REJECTED" && !body.rejectionReason) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["rejectionReason"],
+        message:
+          "A rejection reason is required to reject an ARCA point of sale",
+      });
+    }
+  });
 
 const exportBody = z.object({
   fiscalEntityId: z.string().min(1),
   pointOfSaleId: z.string().min(1).optional(),
   periodFrom: z.string().datetime(),
   periodTo: z.string().datetime(),
+});
+
+const deliveryBody = z.object({
+  recipientEmail: z.string().email(),
+  format: z.enum(["PDF", "HTML"]).default("PDF"),
 });
 
 function invoiceDeps(container: Container): InvoiceDeps {
@@ -133,18 +162,150 @@ function invoiceDeps(container: Container): InvoiceDeps {
   };
 }
 
-function mapFiscalError(err: unknown): { kind: "conflict" | "badrequest" | "notfound"; message: string } | null {
+function deliveryDocuments(container: Container): InvoiceDeliveryDocumentPort {
+  return {
+    async render(input) {
+      const invoice = await container.invoices.findById(
+        input.tenantId,
+        input.invoiceId,
+      );
+      if (!invoice) throw new Error(`Invoice ${input.invoiceId} not found`);
+      const pointOfSale = await container.fiscalPointsOfSale.findById(
+        input.tenantId,
+        invoice.pointOfSaleId,
+      );
+      const issuer = await container.fiscalEntities.findById(
+        input.tenantId,
+        invoice.fiscalEntityId,
+      );
+      if (!pointOfSale || !issuer) {
+        throw new Error("Fiscal document dependency not found");
+      }
+      if (
+        invoice.number == null ||
+        !invoice.cae ||
+        !invoice.caeExpiresAt ||
+        !invoice.authorizedAt
+      ) {
+        throw new InvoiceDocumentNotRenderableError(invoice.id);
+      }
+      const qr = buildFiscalQrCode({
+        cuit: issuer.cuit,
+        voucherType: invoice.voucherType,
+        pointOfSaleCode: pointOfSale.officialCode,
+        number: invoice.number,
+        amountMinorUnits: invoice.totals.grossMinorUnits,
+        currency: invoice.currency,
+        cae: invoice.cae,
+        caeExpiresAt: invoice.caeExpiresAt,
+        authorizedAt: invoice.authorizedAt,
+      });
+      const documentInput = {
+        invoice,
+        issuer: {
+          cuit: issuer.cuit,
+          legalName: issuer.legalName ?? issuer.name,
+          ...(issuer.displayName ? { displayName: issuer.displayName } : {}),
+          ...(issuer.fiscalAddress
+            ? { fiscalAddress: issuer.fiscalAddress }
+            : {}),
+          taxCondition: issuer.taxCondition,
+        },
+        pointOfSale: {
+          officialCode: pointOfSale.officialCode,
+          ...(pointOfSale.arcaDomicileLabel
+            ? { domicileLabel: pointOfSale.arcaDomicileLabel }
+            : {}),
+        },
+        qr,
+      };
+      const templates = await container.invoiceTemplates.listByTenant(
+        input.tenantId,
+      );
+      const emailTemplate =
+        templates
+          .filter(
+            (template) =>
+              template.channel === "EMAIL" &&
+              template.status === "PUBLISHED" &&
+              !template.brandId,
+          )
+          .sort(
+            (a, b) =>
+              (b.publishedAt?.getTime() ?? 0) -
+              (a.publishedAt?.getTime() ?? 0),
+          )[0] ?? null;
+      const email = renderInvoiceEmailTemplate(emailTemplate, {
+        issuerName: issuer.displayName ?? issuer.legalName ?? issuer.name,
+        voucherType: invoice.voucherType,
+        voucherNumber: `${pointOfSale.officialCode.padStart(5, "0")}-${String(invoice.number).padStart(8, "0")}`,
+        total: (invoice.totals.grossMinorUnits / 100).toFixed(2),
+        currency: invoice.currency,
+        environment: invoice.environment,
+      });
+      if (input.format === "PDF") {
+        const document =
+          await renderAuthorizedInvoicePdfDocument(documentInput);
+        return {
+          fileName: document.fileName,
+          mediaType: document.mediaType,
+          content: document.bytes,
+          contentHash: document.contentHash,
+          emailSubject: email.subject,
+          emailText: email.text,
+          emailHtml: email.html,
+        };
+      }
+      const document = renderAuthorizedInvoiceDocument(documentInput);
+      return {
+        fileName: document.fileName,
+        mediaType: document.mediaType,
+        content: new TextEncoder().encode(document.html),
+        contentHash: document.contentHash,
+        emailSubject: email.subject,
+        emailText: email.text,
+        emailHtml: email.html,
+      };
+    },
+  };
+}
+
+function configuredEmailSender(): ResendInvoiceEmailSender {
+  const apiKey = process.env["RESEND_API_KEY"];
+  const from = process.env["FISCAL_EMAIL_FROM"];
+  if (!apiKey || !from) {
+    throw new Error("RESEND_API_KEY and FISCAL_EMAIL_FROM are required");
+  }
+  return new ResendInvoiceEmailSender({ apiKey, from });
+}
+
+function hasCronAuthorization(header: string | undefined): boolean {
+  const secret = process.env["CRON_SECRET"];
+  if (!secret || !header?.startsWith("Bearer ")) return false;
+  const provided = Buffer.from(header.slice(7));
+  const expected = Buffer.from(secret);
+  return provided.length === expected.length && timingSafeEqual(provided, expected);
+}
+
+function mapFiscalError(
+  err: unknown,
+): { kind: "conflict" | "badrequest" | "notfound"; message: string } | null {
   if (
     err instanceof InvalidInvoiceTransitionError ||
     err instanceof ImmutableInvoiceError ||
     err instanceof InvoiceNotCreditableError ||
+    err instanceof InvoiceDocumentNotRenderableError ||
+    err instanceof InvoiceDeliveryIdempotencyConflictError ||
     err instanceof DuplicatePointOfSaleError ||
     err instanceof PointOfSaleInactiveError ||
     err instanceof PointOfSaleRegistrationError
   ) {
     return { kind: "conflict", message: err.message };
   }
-  if (err instanceof NoEffectiveTaxRateError || err instanceof VoucherTypeNotAllowedError) {
+  if (
+    err instanceof NoEffectiveTaxRateError ||
+    err instanceof VoucherTypeNotAllowedError
+  ) {
     return { kind: "badrequest", message: err.message };
   }
   if (err instanceof Error && err.message.includes("not found")) {
@@ -153,12 +314,23 @@ function mapFiscalError(err: unknown): { kind: "conflict" | "badrequest" | "notf
   return null;
 }
 
-export async function registerInvoiceRoutes(app: FastifyInstance, container: Container): Promise<void> {
-  const sendMapped = (reply: FastifyReply, correlationId: string, err: unknown, notFoundLabel: string) => {
+export async function registerInvoiceRoutes(
+  app: FastifyInstance,
+  container: Container,
+): Promise<void> {
+  const sendMapped = (
+    reply: FastifyReply,
+    correlationId: string,
+    err: unknown,
+    notFoundLabel: string,
+  ) => {
     const mapped = mapFiscalError(err);
-    if (mapped?.kind === "conflict") return sendProblem(reply, correlationId, conflict(mapped.message));
-    if (mapped?.kind === "badrequest") return sendProblem(reply, correlationId, badRequest(mapped.message));
-    if (mapped?.kind === "notfound") return sendProblem(reply, correlationId, notFound(notFoundLabel));
+    if (mapped?.kind === "conflict")
+      return sendProblem(reply, correlationId, conflict(mapped.message));
+    if (mapped?.kind === "badrequest")
+      return sendProblem(reply, correlationId, badRequest(mapped.message));
+    if (mapped?.kind === "notfound")
+      return sendProblem(reply, correlationId, notFound(notFoundLabel));
     return sendProblem(reply, correlationId, err);
   };
 
@@ -169,15 +341,24 @@ export async function registerInvoiceRoutes(app: FastifyInstance, container: Con
       const ctx = await requireTenantContext(container, req);
       requirePermission(ctx, "fiscal-pos:manage");
       const body = createPosBody.parse(req.body);
-      const fe = await container.fiscalEntities.findById(ctx.tenantId, body.fiscalEntityId);
-      if (!fe) return sendProblem(reply, correlationId, notFound("FiscalEntity"));
-      const branch = await container.branches.findById(ctx.tenantId, body.branchId);
+      const fe = await container.fiscalEntities.findById(
+        ctx.tenantId,
+        body.fiscalEntityId,
+      );
+      if (!fe)
+        return sendProblem(reply, correlationId, notFound("FiscalEntity"));
+      const branch = await container.branches.findById(
+        ctx.tenantId,
+        body.branchId,
+      );
       if (!branch) return sendProblem(reply, correlationId, notFound("Branch"));
       if (branch.fiscalEntityId !== body.fiscalEntityId) {
         return sendProblem(
           reply,
           correlationId,
-          badRequest("Branch must be explicitly associated with the same fiscal entity"),
+          badRequest(
+            "Branch must be explicitly associated with the same fiscal entity",
+          ),
         );
       }
       const pos = await createPointOfSale(
@@ -202,7 +383,8 @@ export async function registerInvoiceRoutes(app: FastifyInstance, container: Con
       reply.code(201);
       return { data: pos };
     } catch (err) {
-      if (err instanceof z.ZodError) return sendProblem(reply, correlationId, badRequest(err.message));
+      if (err instanceof z.ZodError)
+        return sendProblem(reply, correlationId, badRequest(err.message));
       return sendMapped(reply, correlationId, err, "FiscalPointOfSale");
     }
   });
@@ -223,7 +405,9 @@ export async function registerInvoiceRoutes(app: FastifyInstance, container: Con
             status: body.status,
             actorId: ctx.userId,
             ...(body.evidenceRef ? { evidenceRef: body.evidenceRef } : {}),
-            ...(body.rejectionReason ? { rejectionReason: body.rejectionReason } : {}),
+            ...(body.rejectionReason
+              ? { rejectionReason: body.rejectionReason }
+              : {}),
           },
         );
         return { data: pos };
@@ -236,30 +420,103 @@ export async function registerInvoiceRoutes(app: FastifyInstance, container: Con
     },
   );
 
-  app.get<{ Querystring: { fiscalEntityId?: string } }>("/v1/fiscal-points-of-sale", async (req, reply) => {
+  app.get(
+    "/internal/fiscal/invoice-deliveries/process",
+    {
+      config: {
+        rateLimit: {
+          max: 10,
+          timeWindow: "1 minute",
+        },
+      },
+    },
+    async (req, reply) => {
+      const correlationId = randomUUID();
+      try {
+        if (!hasCronAuthorization(req.headers.authorization)) {
+          return sendProblem(reply, correlationId, authenticationRequired());
+        }
+        const retention = await redactExpiredInvoiceDeliveryPii(
+          {
+            deliveries: container.invoiceDeliveries,
+            ...(container.now ? { now: container.now } : {}),
+          },
+          {
+            retentionDays: Number(
+              process.env["FISCAL_DELIVERY_PII_RETENTION_DAYS"] ?? "30",
+            ),
+          },
+        );
+        const result = await processInvoiceDeliveryBatch(
+          {
+            deliveries: container.invoiceDeliveries,
+            documents: deliveryDocuments(container),
+            sender: configuredEmailSender(),
+            outbox: container.outbox,
+          },
+          { limit: 10, correlationId },
+        );
+        return { data: { ...result, retention } };
+      } catch (err) {
+        return sendProblem(reply, correlationId, err);
+      }
+    },
+  );
+
+  app.get("/v1/invoice-deliveries/summary", async (req, reply) => {
     const correlationId = randomUUID();
     try {
       const ctx = await requireTenantContext(container, req);
       requirePermission(ctx, "invoice:read");
-      if (!req.query.fiscalEntityId) return sendProblem(reply, correlationId, badRequest("fiscalEntityId query param is required"));
-      const list = await listPointsOfSale({ pointsOfSale: container.fiscalPointsOfSale }, ctx.tenantId, req.query.fiscalEntityId);
-      return { data: list };
+      const summary = await container.invoiceDeliveries.getSummary(ctx.tenantId);
+      return { data: summary };
     } catch (err) {
       return sendProblem(reply, correlationId, err);
     }
   });
 
-  app.post<{ Params: { id: string } }>("/v1/fiscal-points-of-sale/:id/deactivate", async (req, reply) => {
-    const correlationId = randomUUID();
-    try {
-      const ctx = await requireTenantContext(container, req);
-      requirePermission(ctx, "fiscal-pos:manage");
-      const pos = await setPointOfSaleStatus({ pointsOfSale: container.fiscalPointsOfSale }, { tenantId: ctx.tenantId, id: req.params.id, status: "INACTIVE" });
-      return { data: pos };
-    } catch (err) {
-      return sendMapped(reply, correlationId, err, "FiscalPointOfSale");
-    }
-  });
+  app.get<{ Querystring: { fiscalEntityId?: string } }>(
+    "/v1/fiscal-points-of-sale",
+    async (req, reply) => {
+      const correlationId = randomUUID();
+      try {
+        const ctx = await requireTenantContext(container, req);
+        requirePermission(ctx, "invoice:read");
+        if (!req.query.fiscalEntityId)
+          return sendProblem(
+            reply,
+            correlationId,
+            badRequest("fiscalEntityId query param is required"),
+          );
+        const list = await listPointsOfSale(
+          { pointsOfSale: container.fiscalPointsOfSale },
+          ctx.tenantId,
+          req.query.fiscalEntityId,
+        );
+        return { data: list };
+      } catch (err) {
+        return sendProblem(reply, correlationId, err);
+      }
+    },
+  );
+
+  app.post<{ Params: { id: string } }>(
+    "/v1/fiscal-points-of-sale/:id/deactivate",
+    async (req, reply) => {
+      const correlationId = randomUUID();
+      try {
+        const ctx = await requireTenantContext(container, req);
+        requirePermission(ctx, "fiscal-pos:manage");
+        const pos = await setPointOfSaleStatus(
+          { pointsOfSale: container.fiscalPointsOfSale },
+          { tenantId: ctx.tenantId, id: req.params.id, status: "INACTIVE" },
+        );
+        return { data: pos };
+      } catch (err) {
+        return sendMapped(reply, correlationId, err, "FiscalPointOfSale");
+      }
+    },
+  );
 
   // ---- Invoices ------------------------------------------------------------
   app.post("/v1/invoices", async (req, reply) => {
@@ -274,7 +531,10 @@ export async function registerInvoiceRoutes(app: FastifyInstance, container: Con
       let lines: TaxLineInput[];
       let sourceCheckRevision: number | undefined;
       if (body.sourceCheckId) {
-        const check = await container.checks.findById(ctx.tenantId, body.sourceCheckId);
+        const check = await container.checks.findById(
+          ctx.tenantId,
+          body.sourceCheckId,
+        );
         if (!check) return sendProblem(reply, correlationId, notFound("Check"));
         lines = check.lines.map((l) => ({
           id: l.id,
@@ -292,10 +552,16 @@ export async function registerInvoiceRoutes(app: FastifyInstance, container: Con
           quantity: l.quantity,
           unit: l.unit,
           unitNetMinorUnits: l.unitNetMinorUnits,
-          ...(l.discountsAppliedMinorUnits != null ? { discountsAppliedMinorUnits: l.discountsAppliedMinorUnits } : {}),
+          ...(l.discountsAppliedMinorUnits != null
+            ? { discountsAppliedMinorUnits: l.discountsAppliedMinorUnits }
+            : {}),
         }));
       } else {
-        return sendProblem(reply, correlationId, badRequest("Provide either sourceCheckId or a non-empty lines array"));
+        return sendProblem(
+          reply,
+          correlationId,
+          badRequest("Provide either sourceCheckId or a non-empty lines array"),
+        );
       }
 
       const recipient = body.recipient
@@ -323,191 +589,471 @@ export async function registerInvoiceRoutes(app: FastifyInstance, container: Con
       reply.code(201);
       return { data: invoice };
     } catch (err) {
-      if (err instanceof z.ZodError) return sendProblem(reply, correlationId, badRequest(err.message));
+      if (err instanceof z.ZodError)
+        return sendProblem(reply, correlationId, badRequest(err.message));
       return sendMapped(reply, correlationId, err, "FiscalPointOfSale");
     }
   });
 
-  app.get<{ Querystring: { fiscalEntityId?: string } }>("/v1/invoices", async (req, reply) => {
-    const correlationId = randomUUID();
-    try {
-      const ctx = await requireTenantContext(container, req);
-      requirePermission(ctx, "invoice:read");
-      const list = req.query.fiscalEntityId
-        ? await container.invoices.listByFiscalEntity(ctx.tenantId, req.query.fiscalEntityId)
-        : await container.invoices.listByTenant(ctx.tenantId);
-      return { data: list };
-    } catch (err) {
-      return sendProblem(reply, correlationId, err);
-    }
-  });
+  app.get<{ Querystring: { fiscalEntityId?: string } }>(
+    "/v1/invoices",
+    async (req, reply) => {
+      const correlationId = randomUUID();
+      try {
+        const ctx = await requireTenantContext(container, req);
+        requirePermission(ctx, "invoice:read");
+        const list = req.query.fiscalEntityId
+          ? await container.invoices.listByFiscalEntity(
+              ctx.tenantId,
+              req.query.fiscalEntityId,
+            )
+          : await container.invoices.listByTenant(ctx.tenantId);
+        return { data: list };
+      } catch (err) {
+        return sendProblem(reply, correlationId, err);
+      }
+    },
+  );
 
-  app.get<{ Params: { id: string } }>("/v1/invoices/:id", async (req, reply) => {
-    const correlationId = randomUUID();
-    try {
-      const ctx = await requireTenantContext(container, req);
-      requirePermission(ctx, "invoice:read");
-      const invoice = await container.invoices.findById(ctx.tenantId, req.params.id);
-      if (!invoice) return sendProblem(reply, correlationId, notFound("Invoice"));
-      return { data: invoice };
-    } catch (err) {
-      return sendProblem(reply, correlationId, err);
-    }
-  });
+  app.get<{ Params: { id: string } }>(
+    "/v1/invoices/:id",
+    async (req, reply) => {
+      const correlationId = randomUUID();
+      try {
+        const ctx = await requireTenantContext(container, req);
+        requirePermission(ctx, "invoice:read");
+        const invoice = await container.invoices.findById(
+          ctx.tenantId,
+          req.params.id,
+        );
+        if (!invoice)
+          return sendProblem(reply, correlationId, notFound("Invoice"));
+        return { data: invoice };
+      } catch (err) {
+        return sendProblem(reply, correlationId, err);
+      }
+    },
+  );
 
-  app.post<{ Params: { id: string } }>("/v1/invoices/:id/validate", async (req, reply) => {
-    const correlationId = randomUUID();
-    try {
-      const ctx = await requireTenantContext(container, req);
-      requirePermission(ctx, "invoice:issue");
-      const invoice = await validateInvoice(invoiceDeps(container), { tenantId: ctx.tenantId, id: req.params.id, correlationId });
-      return { data: invoice };
-    } catch (err) {
-      return sendMapped(reply, correlationId, err, "Invoice");
-    }
-  });
+  app.post<{ Params: { id: string } }>(
+    "/v1/invoices/:id/validate",
+    async (req, reply) => {
+      const correlationId = randomUUID();
+      try {
+        const ctx = await requireTenantContext(container, req);
+        requirePermission(ctx, "invoice:issue");
+        const invoice = await validateInvoice(invoiceDeps(container), {
+          tenantId: ctx.tenantId,
+          id: req.params.id,
+          correlationId,
+        });
+        return { data: invoice };
+      } catch (err) {
+        return sendMapped(reply, correlationId, err, "Invoice");
+      }
+    },
+  );
 
   // POST /v1/invoices/:id/issue — SIMULATED ARCA authorization (fake CAE).
-  app.post<{ Params: { id: string } }>("/v1/invoices/:id/issue", async (req, reply) => {
-    const correlationId = randomUUID();
-    try {
-      const ctx = await requireTenantContext(container, req);
-      requirePermission(ctx, "invoice:issue");
-      const invoice = await container.invoices.findById(ctx.tenantId, req.params.id);
-      if (!invoice) return sendProblem(reply, correlationId, notFound("Invoice"));
-      const fe = await container.fiscalEntities.findById(ctx.tenantId, invoice.fiscalEntityId);
-      if (!fe) return sendProblem(reply, correlationId, notFound("FiscalEntity"));
-      if (invoice.environment === "PRODUCTION") {
+  app.post<{ Params: { id: string } }>(
+    "/v1/invoices/:id/issue",
+    async (req, reply) => {
+      const correlationId = randomUUID();
+      try {
+        const ctx = await requireTenantContext(container, req);
+        requirePermission(ctx, "invoice:issue");
+        const invoice = await container.invoices.findById(
+          ctx.tenantId,
+          req.params.id,
+        );
+        if (!invoice)
+          return sendProblem(reply, correlationId, notFound("Invoice"));
+        const fe = await container.fiscalEntities.findById(
+          ctx.tenantId,
+          invoice.fiscalEntityId,
+        );
+        if (!fe)
+          return sendProblem(reply, correlationId, notFound("FiscalEntity"));
+        if (invoice.environment === "PRODUCTION") {
+          if (
+            fe.status !== "ACTIVE" ||
+            !fe.certificate ||
+            fe.certificate.validTo.getTime() <= Date.now()
+          ) {
+            return sendProblem(
+              reply,
+              correlationId,
+              conflict(
+                "Production emission requires an active fiscal entity and valid certificate",
+              ),
+            );
+          }
+          const pos = await container.fiscalPointsOfSale.findById(
+            ctx.tenantId,
+            invoice.pointOfSaleId,
+          );
+          if (!pos?.branchId || !pos.arcaDomicileCode) {
+            return sendProblem(
+              reply,
+              correlationId,
+              conflict(
+                "Production point of sale requires an explicit branch and ARCA domicile",
+              ),
+            );
+          }
+          const branch = await container.branches.findById(
+            ctx.tenantId,
+            pos.branchId,
+          );
+          if (
+            !branch ||
+            branch.status !== "ACTIVE" ||
+            branch.fiscalEntityId !== invoice.fiscalEntityId
+          ) {
+            return sendProblem(
+              reply,
+              correlationId,
+              conflict(
+                "Production point of sale branch is inactive or has a different fiscal owner",
+              ),
+            );
+          }
+        }
+        const issued = await issueInvoice(invoiceDeps(container), {
+          tenantId: ctx.tenantId,
+          id: req.params.id,
+          cuit: fe.cuit,
+          correlationId,
+        });
+        return { data: issued };
+      } catch (err) {
+        return sendMapped(reply, correlationId, err, "Invoice");
+      }
+    },
+  );
+
+  app.post<{ Params: { id: string } }>(
+    "/v1/invoices/:id/reconcile",
+    async (req, reply) => {
+      const correlationId = randomUUID();
+      try {
+        const ctx = await requireTenantContext(container, req);
+        requirePermission(ctx, "invoice:issue");
+        const current = await container.invoices.findById(
+          ctx.tenantId,
+          req.params.id,
+        );
+        if (!current)
+          return sendProblem(reply, correlationId, notFound("Invoice"));
+        const fe = await container.fiscalEntities.findById(
+          ctx.tenantId,
+          current.fiscalEntityId,
+        );
+        if (!fe)
+          return sendProblem(reply, correlationId, notFound("FiscalEntity"));
+        const invoice = await reconcileInvoice(invoiceDeps(container), {
+          tenantId: ctx.tenantId,
+          id: req.params.id,
+          cuit: fe.cuit,
+          correlationId,
+        });
+        return { data: invoice };
+      } catch (err) {
+        return sendMapped(reply, correlationId, err, "Invoice");
+      }
+    },
+  );
+
+  app.post<{ Params: { id: string } }>(
+    "/v1/invoices/:id/credit",
+    async (req, reply) => {
+      const correlationId = randomUUID();
+      try {
+        const ctx = await requireTenantContext(container, req);
+        requirePermission(ctx, "invoice:credit");
+        const note = await creditInvoice(invoiceDeps(container), {
+          tenantId: ctx.tenantId,
+          id: req.params.id,
+        });
+        reply.code(201);
+        return { data: note };
+      } catch (err) {
+        return sendMapped(reply, correlationId, err, "Invoice");
+      }
+    },
+  );
+
+  app.post<{ Params: { id: string } }>(
+    "/v1/invoices/:id/debit",
+    async (req, reply) => {
+      const correlationId = randomUUID();
+      try {
+        const ctx = await requireTenantContext(container, req);
+        requirePermission(ctx, "invoice:credit");
+        const note = await debitInvoice(invoiceDeps(container), {
+          tenantId: ctx.tenantId,
+          id: req.params.id,
+        });
+        reply.code(201);
+        return { data: note };
+      } catch (err) {
+        return sendMapped(reply, correlationId, err, "Invoice");
+      }
+    },
+  );
+
+  app.post<{ Params: { id: string } }>(
+    "/v1/invoices/:id/void-draft",
+    async (req, reply) => {
+      const correlationId = randomUUID();
+      try {
+        const ctx = await requireTenantContext(container, req);
+        requirePermission(ctx, "invoice:void");
+        const invoice = await voidDraftInvoice(invoiceDeps(container), {
+          tenantId: ctx.tenantId,
+          id: req.params.id,
+        });
+        return { data: invoice };
+      } catch (err) {
+        return sendMapped(reply, correlationId, err, "Invoice");
+      }
+    },
+  );
+
+  // GET /v1/invoices/:id/qr — SPEC-141/147 deterministic canonical payload+hash.
+  app.get<{ Params: { id: string } }>(
+    "/v1/invoices/:id/qr",
+    async (req, reply) => {
+      const correlationId = randomUUID();
+      try {
+        const ctx = await requireTenantContext(container, req);
+        requirePermission(ctx, "invoice:read");
+        const invoice = await container.invoices.findById(
+          ctx.tenantId,
+          req.params.id,
+        );
+        if (!invoice)
+          return sendProblem(reply, correlationId, notFound("Invoice"));
         if (
-          fe.status !== "ACTIVE" ||
-          !fe.certificate ||
-          fe.certificate.validTo.getTime() <= Date.now()
+          invoice.status !== "AUTHORIZED" ||
+          invoice.number == null ||
+          !invoice.cae ||
+          !invoice.caeExpiresAt ||
+          !invoice.authorizedAt
         ) {
           return sendProblem(
             reply,
             correlationId,
-            conflict("Production emission requires an active fiscal entity and valid certificate"),
+            conflict(
+              "A fiscal QR code can only be derived from an AUTHORIZED invoice",
+            ),
           );
         }
         const pos = await container.fiscalPointsOfSale.findById(
           ctx.tenantId,
           invoice.pointOfSaleId,
         );
-        if (!pos?.branchId || !pos.arcaDomicileCode) {
+        const fe = await container.fiscalEntities.findById(
+          ctx.tenantId,
+          invoice.fiscalEntityId,
+        );
+        const qr = buildFiscalQrCode({
+          cuit: fe?.cuit ?? "",
+          voucherType: invoice.voucherType,
+          pointOfSaleCode: pos?.officialCode ?? "",
+          number: invoice.number,
+          amountMinorUnits: invoice.totals.grossMinorUnits,
+          currency: invoice.currency,
+          cae: invoice.cae,
+          caeExpiresAt: invoice.caeExpiresAt,
+          authorizedAt: invoice.authorizedAt,
+        });
+        return { data: { invoiceId: invoice.id, ...qr } };
+      } catch (err) {
+        return sendProblem(reply, correlationId, err);
+      }
+    },
+  );
+
+  app.get<{
+    Params: { id: string };
+    Querystring: { format?: "html" | "pdf" };
+  }>(
+    "/v1/invoices/:id/document",
+    {
+      config: {
+        rateLimit: {
+          max: 30,
+          timeWindow: "1 minute",
+        },
+      },
+      handler: async (req, reply) => {
+        const correlationId = randomUUID();
+        try {
+          const ctx = await requireTenantContext(container, req);
+          requirePermission(ctx, "invoice:read");
+          const invoice = await container.invoices.findById(
+            ctx.tenantId,
+            req.params.id,
+          );
+          if (!invoice)
+            return sendProblem(reply, correlationId, notFound("Invoice"));
+          const pointOfSale = await container.fiscalPointsOfSale.findById(
+            ctx.tenantId,
+            invoice.pointOfSaleId,
+          );
+          const issuer = await container.fiscalEntities.findById(
+            ctx.tenantId,
+            invoice.fiscalEntityId,
+          );
+          if (!pointOfSale || !issuer) {
+            return sendProblem(
+              reply,
+              correlationId,
+              notFound("Fiscal document dependency"),
+            );
+          }
+          if (
+            invoice.status !== "AUTHORIZED" ||
+            invoice.number == null ||
+            !invoice.cae ||
+            !invoice.caeExpiresAt ||
+            !invoice.authorizedAt
+          ) {
+            return sendProblem(
+              reply,
+              correlationId,
+              conflict(
+                "A fiscal document can only be rendered from an AUTHORIZED invoice",
+              ),
+            );
+          }
+          const qr = buildFiscalQrCode({
+            cuit: issuer.cuit,
+            voucherType: invoice.voucherType,
+            pointOfSaleCode: pointOfSale.officialCode,
+            number: invoice.number,
+            amountMinorUnits: invoice.totals.grossMinorUnits,
+            currency: invoice.currency,
+            cae: invoice.cae,
+            caeExpiresAt: invoice.caeExpiresAt,
+            authorizedAt: invoice.authorizedAt,
+          });
+          const documentInput = {
+            invoice,
+            issuer: {
+              cuit: issuer.cuit,
+              legalName: issuer.legalName ?? issuer.name,
+              ...(issuer.displayName ? { displayName: issuer.displayName } : {}),
+              ...(issuer.fiscalAddress
+                ? { fiscalAddress: issuer.fiscalAddress }
+                : {}),
+              taxCondition: issuer.taxCondition,
+            },
+            pointOfSale: {
+              officialCode: pointOfSale.officialCode,
+              ...(pointOfSale.arcaDomicileLabel
+                ? { domicileLabel: pointOfSale.arcaDomicileLabel }
+                : {}),
+            },
+            qr,
+          };
+          if (req.query.format === "pdf") {
+            const document =
+              await renderAuthorizedInvoicePdfDocument(documentInput);
+            reply
+              .header("Content-Type", document.mediaType)
+              .header(
+                "Content-Disposition",
+                `attachment; filename="${document.fileName}"`,
+              )
+              .header("ETag", `"${document.contentHash}"`);
+            return Buffer.from(document.bytes);
+          }
+          const document = renderAuthorizedInvoiceDocument(documentInput);
+          reply
+            .header("Content-Type", `${document.mediaType}; charset=utf-8`)
+            .header(
+              "Content-Disposition",
+              `attachment; filename="${document.fileName}"`,
+            )
+            .header("ETag", `"${document.contentHash}"`);
+          return document.html;
+        } catch (err) {
+          return sendMapped(reply, correlationId, err, "Invoice");
+        }
+      },
+    },
+  );
+
+  app.post<{ Params: { id: string } }>(
+    "/v1/invoices/:id/deliveries",
+    async (req, reply) => {
+      const correlationId = randomUUID();
+      try {
+        const ctx = await requireTenantContext(container, req);
+        requirePermission(ctx, "invoice:issue");
+        const idempotencyKey = req.headers["idempotency-key"];
+        if (typeof idempotencyKey !== "string" || !idempotencyKey.trim()) {
           return sendProblem(
             reply,
             correlationId,
-            conflict("Production point of sale requires an explicit branch and ARCA domicile"),
+            badRequest("Idempotency-Key header is required"),
           );
         }
-        const branch = await container.branches.findById(ctx.tenantId, pos.branchId);
-        if (
-          !branch ||
-          branch.status !== "ACTIVE" ||
-          branch.fiscalEntityId !== invoice.fiscalEntityId
-        ) {
-          return sendProblem(
-            reply,
+        const body = deliveryBody.parse(req.body);
+        const result = await queueInvoiceEmailDelivery(
+          {
+            invoices: container.invoices,
+            deliveries: container.invoiceDeliveries,
+            outbox: container.outbox,
+          },
+          {
+            tenantId: ctx.tenantId,
+            invoiceId: req.params.id,
+            recipientEmail: body.recipientEmail,
+            format: body.format,
+            idempotencyKey: idempotencyKey.trim(),
             correlationId,
-            conflict("Production point of sale branch is inactive or has a different fiscal owner"),
-          );
+          },
+        );
+        reply.code(result.created ? 202 : 200);
+        return { data: result.delivery, meta: { idempotentReplay: !result.created } };
+      } catch (err) {
+        if (err instanceof z.ZodError) {
+          return sendProblem(reply, correlationId, badRequest(err.message));
         }
+        return sendMapped(reply, correlationId, err, "Invoice");
       }
-      const issued = await issueInvoice(invoiceDeps(container), { tenantId: ctx.tenantId, id: req.params.id, cuit: fe.cuit, correlationId });
-      return { data: issued };
-    } catch (err) {
-      return sendMapped(reply, correlationId, err, "Invoice");
-    }
-  });
+    },
+  );
 
-  app.post<{ Params: { id: string } }>("/v1/invoices/:id/reconcile", async (req, reply) => {
-    const correlationId = randomUUID();
-    try {
-      const ctx = await requireTenantContext(container, req);
-      requirePermission(ctx, "invoice:issue");
-      const current = await container.invoices.findById(ctx.tenantId, req.params.id);
-      if (!current) return sendProblem(reply, correlationId, notFound("Invoice"));
-      const fe = await container.fiscalEntities.findById(ctx.tenantId, current.fiscalEntityId);
-      if (!fe) return sendProblem(reply, correlationId, notFound("FiscalEntity"));
-      const invoice = await reconcileInvoice(invoiceDeps(container), {
-        tenantId: ctx.tenantId,
-        id: req.params.id,
-        cuit: fe.cuit,
-        correlationId,
-      });
-      return { data: invoice };
-    } catch (err) {
-      return sendMapped(reply, correlationId, err, "Invoice");
-    }
-  });
-
-  app.post<{ Params: { id: string } }>("/v1/invoices/:id/credit", async (req, reply) => {
-    const correlationId = randomUUID();
-    try {
-      const ctx = await requireTenantContext(container, req);
-      requirePermission(ctx, "invoice:credit");
-      const note = await creditInvoice(invoiceDeps(container), { tenantId: ctx.tenantId, id: req.params.id });
-      reply.code(201);
-      return { data: note };
-    } catch (err) {
-      return sendMapped(reply, correlationId, err, "Invoice");
-    }
-  });
-
-  app.post<{ Params: { id: string } }>("/v1/invoices/:id/debit", async (req, reply) => {
-    const correlationId = randomUUID();
-    try {
-      const ctx = await requireTenantContext(container, req);
-      requirePermission(ctx, "invoice:credit");
-      const note = await debitInvoice(invoiceDeps(container), { tenantId: ctx.tenantId, id: req.params.id });
-      reply.code(201);
-      return { data: note };
-    } catch (err) {
-      return sendMapped(reply, correlationId, err, "Invoice");
-    }
-  });
-
-  app.post<{ Params: { id: string } }>("/v1/invoices/:id/void-draft", async (req, reply) => {
-    const correlationId = randomUUID();
-    try {
-      const ctx = await requireTenantContext(container, req);
-      requirePermission(ctx, "invoice:void");
-      const invoice = await voidDraftInvoice(invoiceDeps(container), { tenantId: ctx.tenantId, id: req.params.id });
-      return { data: invoice };
-    } catch (err) {
-      return sendMapped(reply, correlationId, err, "Invoice");
-    }
-  });
-
-  // GET /v1/invoices/:id/qr — SPEC-141/147 deterministic canonical payload+hash.
-  app.get<{ Params: { id: string } }>("/v1/invoices/:id/qr", async (req, reply) => {
-    const correlationId = randomUUID();
-    try {
-      const ctx = await requireTenantContext(container, req);
-      requirePermission(ctx, "invoice:read");
-      const invoice = await container.invoices.findById(ctx.tenantId, req.params.id);
-      if (!invoice) return sendProblem(reply, correlationId, notFound("Invoice"));
-      if (invoice.status !== "AUTHORIZED" || invoice.number == null || !invoice.cae || !invoice.caeExpiresAt || !invoice.authorizedAt) {
-        return sendProblem(reply, correlationId, conflict("A fiscal QR code can only be derived from an AUTHORIZED invoice"));
+  app.post<{ Params: { id: string } }>(
+    "/v1/invoice-deliveries/:id/process",
+    async (req, reply) => {
+      const correlationId = randomUUID();
+      try {
+        const ctx = await requireTenantContext(container, req);
+        requirePermission(ctx, "invoice:issue");
+        const delivery = await processInvoiceDelivery(
+          {
+            deliveries: container.invoiceDeliveries,
+            documents: deliveryDocuments(container),
+            sender: configuredEmailSender(),
+            outbox: container.outbox,
+          },
+          {
+            tenantId: ctx.tenantId,
+            deliveryId: req.params.id,
+            correlationId,
+          },
+        );
+        return { data: delivery };
+      } catch (err) {
+        return sendMapped(reply, correlationId, err, "InvoiceDelivery");
       }
-      const pos = await container.fiscalPointsOfSale.findById(ctx.tenantId, invoice.pointOfSaleId);
-      const fe = await container.fiscalEntities.findById(ctx.tenantId, invoice.fiscalEntityId);
-      const qr = buildFiscalQrCode({
-        cuit: fe?.cuit ?? "",
-        voucherType: invoice.voucherType,
-        pointOfSaleCode: pos?.officialCode ?? "",
-        number: invoice.number,
-        amountMinorUnits: invoice.totals.grossMinorUnits,
-        currency: invoice.currency,
-        cae: invoice.cae,
-        caeExpiresAt: invoice.caeExpiresAt,
-        authorizedAt: invoice.authorizedAt,
-      });
-      return { data: { invoiceId: invoice.id, ...qr } };
-    } catch (err) {
-      return sendProblem(reply, correlationId, err);
-    }
-  });
+    },
+  );
 
   // POST /v1/invoice-exports — SPEC-150 synchronous Libro IVA manifest (no job
   // queue, no file artifact, never "presented" to ARCA).
@@ -529,7 +1075,8 @@ export async function registerInvoiceRoutes(app: FastifyInstance, container: Con
       );
       return { data: manifest };
     } catch (err) {
-      if (err instanceof z.ZodError) return sendProblem(reply, correlationId, badRequest(err.message));
+      if (err instanceof z.ZodError)
+        return sendProblem(reply, correlationId, badRequest(err.message));
       return sendProblem(reply, correlationId, err);
     }
   });

@@ -95,6 +95,7 @@ La arquitectura mantiene dominio, datos e integraciones desacoplados de Vercel p
 - [Seguridad, privacidad y aislamiento multi-tenant](docs/sdd/spec-219-transversal-security-privacy/)
 - [Ciclo de vida, backups y disaster recovery](docs/sdd/spec-220-transversal-data-lifecycle-disaster-recovery/)
 - [CI/CD y gestión de releases](docs/sdd/spec-221-transversal-ci-cd-release-management/)
+- [Operación y despliegue en Vercel](DEPLOYMENT.md)
 - [Alcance y secuencia del MVP](docs/sdd/spec-222-transversal-mvp-scope-delivery-plan/)
 - [Distribución de estado en tiempo real](docs/sdd/spec-223-transversal-realtime-state-distribution/)
 - [Estrategia de testing y datos de prueba](docs/sdd/spec-224-transversal-testing-test-data/)
@@ -102,6 +103,8 @@ La arquitectura mantiene dominio, datos e integraciones desacoplados de Vercel p
 - [Readiness review del primer incremento](docs/sdd/I0_READINESS_REVIEW.md)
 - [Revisión de contratos funcionales de I0](docs/sdd/I0_FUNCTIONAL_CONTRACT_REVIEW.md)
 - [Registro de decisiones arquitectónicas](docs/adr/)
+- [Estado operativo y runbooks](docs/operations/)
+- [Cierre de gaps del MVP — 30 de julio de 2026](docs/operations/mvp-gap-closure-2026-07-30.md)
 - [Spikes de validación de plataforma I0](docs/sdd/spec-226-transversal-i0-platform-validation-spikes/)
 
 ## Roadmap resumido
@@ -115,13 +118,28 @@ La arquitectura mantiene dominio, datos e integraciones desacoplados de Vercel p
 
 ## Estado del repositorio
 
-Este repositorio contiene actualmente la definición funcional, estratégica y técnica de Maitre. Las especificaciones actúan como contrato para las futuras implementaciones de backend, frontend, integraciones y pruebas.
+Este repositorio contiene las especificaciones y la implementación activa de Maitre: API, seis
+aplicaciones web, módulos de dominio, adaptadores, migraciones y pruebas automatizadas. Las
+especificaciones siguen actuando como contrato de la implementación.
+
+Los pull requests ejecutan Quality, CodeQL y los E2E afectados, resumidos por el check estable
+`E2E gate`. Después de un merge a `main`, el workflow `End-to-end` despliega en Vercel únicamente
+la API o las aplicaciones alcanzadas por el cambio, siempre que `Quality gate` y `E2E gate` pasen;
+los cambios compartidos usan una selección conservadora completa. Consulta
+[Operación y despliegue en Vercel](DEPLOYMENT.md).
 
 ## Estado operativo local actual
 
-- El backend `apps/api` ya puede correr contra Supabase como persistencia y auth principal cuando existen `SUPABASE_URL` y una credencial server-side (`SUPABASE_SECRET_KEY` o `SUPABASE_SERVICE_ROLE_KEY`).
+- Todo ambiente compartido del backend exige explícitamente Supabase para persistencia y auth,
+  credencial server-side y una allowlist CORS exacta; una configuración incompleta aborta startup
+  y deployment.
 - En el proyecto Supabase conectado ya hay datos reales mínimos para probar organización, floor, reservations, ordering, kitchen y cash.
-- Los adapters `memory` y `fixture` quedan como fallback de desarrollo local sin credenciales o para tests, no como camino operativo principal.
+- Los adapters `memory` y `fixture` quedan restringidos a desarrollo local y tests herméticos; no
+  son un fallback permitido para preview, development compartido, demo ni production.
+- OpenAPI versionado, Problem Details RFC 9457, breaking-change detection, telemetría OTLP portable,
+  señales de outbox/audit y el journey durable MVP-J-001 forman parte de los gates de CI.
+- El backend remoto de telemetría, dashboards, alertas y SLOs continúa `NOT_OPERATIONAL` para el
+  MVP Demo según ADR-005.
 - El rollout fiscal ya quedó aplicado en el proyecto Supabase conectado mediante [supabase/migrations/20260727143000_fiscal_domain.sql](supabase/migrations/20260727143000_fiscal_domain.sql), con schema cache recargado y seed fiscal operativo.
 - El flujo fiscal técnico ya fue validado en vivo el **27 de julio de 2026**: creación, validación, emisión y QR de una `FACTURA_A` sobre Supabase. La autorización ARCA sigue siendo **simulada** (`FISCAL_ARCA_DRIVER=simulated`), por lo que el CAE emitido no es legal/fiscal real.
 - La app `host` ya quedó re-alineada como superficie de recepción/maître; su shell y documentación ya no presentan el rol como `waiter/mozo`.

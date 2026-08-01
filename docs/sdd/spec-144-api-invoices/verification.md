@@ -5,6 +5,7 @@
 ### CAD-144-01 — La API expone recursos y comandos fiscales con lifecycle explícito
 
 - [ ] recursos y comandos exponen lifecycle fiscal explícito.
+- [ ] el fallback descargable sólo existe para AUTHORIZED y conserva hash determinístico.
 
 ### CAD-144-02 — Create e issue usan idempotencia; drafts usan concurrencia optimista
 

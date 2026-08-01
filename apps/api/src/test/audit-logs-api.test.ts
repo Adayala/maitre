@@ -11,7 +11,10 @@ function sessionsOf(container: Container): FixtureSessionVerificationPort {
 }
 
 async function getTenantId(container: Container): Promise<string> {
-  const owner = await container.users.findByExternalIdentity("fixture", "demo-owner");
+  const owner = await container.users.findByExternalIdentity(
+    "fixture",
+    "demo-owner",
+  );
   const memberships = await container.memberships.listActiveByUser(owner!.id);
   return memberships[0]!.tenantId;
 }
@@ -84,7 +87,16 @@ test("GET /v1/audit-logs returns entries appended via the repository, filtered a
   assert.equal(response.json().data.length, 2);
   assert.deepEqual(
     new Set(Object.keys(response.json().data[0] as Record<string, unknown>)),
-    new Set(["id", "tenantId", "actorType", "actorId", "action", "resourceType", "resourceId", "occurredAt"]),
+    new Set([
+      "id",
+      "tenantId",
+      "actorType",
+      "actorId",
+      "action",
+      "resourceType",
+      "resourceId",
+      "occurredAt",
+    ]),
   );
   assert.equal(response.json().data[0].action, "UPDATE"); // most recent first
   assert.equal(response.json().meta.limit, 100);
@@ -191,6 +203,50 @@ test("GET /v1/audit-logs supports resource_type, from/to, limit clamp and cursor
   await app.close();
 });
 
+test("GET /v1/audit-logs filters sensitive evidence metadata", async () => {
+  const container = await buildContainer();
+  const tenantId = await getTenantId(container);
+  const branchId = (await container.branches.listByTenant(tenantId))[0]!.id;
+  const app = await buildApp(container);
+
+  await container.auditLogs.append({
+    id: "44444444-4444-4444-8444-444444444444",
+    tenantId,
+    actorType: "USER",
+    actorId: "55555555-5555-4555-8555-555555555555",
+    action: "UPDATE",
+    actionCode: "CASH_POST_PAYMENTS",
+    outcome: "SUCCEEDED",
+    branchId,
+    reasonCode: "HTTP_SUCCESS",
+    requestId: "req-sensitive-1",
+    resourceType: "PAYMENTS",
+    resourceId: "66666666-6666-4666-8666-666666666666",
+    correlationId: "77777777-7777-4777-8777-777777777777",
+    occurredAt: new Date("2026-07-30T12:00:00Z"),
+  });
+
+  const response = await app.inject({
+    method: "GET",
+    url:
+      `/v1/audit-logs?branch_id=${branchId}` +
+      "&action_code=CASH_POST_PAYMENTS&outcome=SUCCEEDED" +
+      "&resource_id=66666666-6666-4666-8666-666666666666" +
+      "&correlation_id=77777777-7777-4777-8777-777777777777",
+    headers: {
+      authorization: `Bearer ${container.demoAccessToken}`,
+      "x-tenant-id": tenantId,
+    },
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.json().data.length, 1);
+  assert.equal(response.json().data[0].actionCode, "CASH_POST_PAYMENTS");
+  assert.equal(response.json().data[0].outcome, "SUCCEEDED");
+  assert.equal(response.json().data[0].branchId, branchId);
+  await app.close();
+});
+
 test("GET /v1/audit-logs requires tenant context (403 without X-Tenant-Id)", async () => {
   const container = await buildContainer();
   const app = await buildApp(container);
@@ -203,10 +259,21 @@ test("GET /v1/audit-logs requires tenant context (403 without X-Tenant-Id)", asy
   assert.equal(response.statusCode, 403);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set([
+      "type",
+      "title",
+      "status",
+      "detail",
+      "instance",
+      "code",
+      "correlationId",
+    ]),
   );
-  assert.equal(response.json().type, "insufficient-scope");
-  assert.equal(response.json().title, "Insufficient scope");
+  assert.equal(
+    response.json().type,
+    "https://docs.maitre.app/problems/insufficient-scope",
+  );
+  assert.equal(response.json().detail, "Insufficient scope");
   assert.equal(response.json().status, 403);
   await app.close();
 });
@@ -255,10 +322,71 @@ test("GET /v1/audit-logs as EMPLOYEE returns 403 (audit:read is OWNER/ADMIN only
   assert.equal(response.statusCode, 403);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set([
+      "type",
+      "title",
+      "status",
+      "detail",
+      "instance",
+      "code",
+      "correlationId",
+    ]),
   );
-  assert.equal(response.json().type, "insufficient-scope");
-  assert.equal(response.json().title, "Insufficient scope");
+  assert.equal(
+    response.json().type,
+    "https://docs.maitre.app/problems/insufficient-scope",
+  );
+  assert.equal(response.json().detail, "Insufficient scope");
   assert.equal(response.json().status, 403);
+  await app.close();
+});
+
+test("GET /v1/audit-logs rejects a branch filter outside the actor scope", async () => {
+  const container = await buildContainer();
+  const tenantId = await getTenantId(container);
+  const branchId = (await container.branches.listByTenant(tenantId))[0]!.id;
+  const now = new Date();
+  const admin = {
+    id: "88888888-8888-4888-8888-888888888888",
+    identityProvider: "fixture",
+    externalIdentityId: "scoped-admin-audit",
+    displayName: "Scoped Audit Admin",
+    status: "ACTIVE" as const,
+    createdAt: now,
+    updatedAt: now,
+  };
+  await container.users.save(admin);
+  await container.memberships.save({
+    id: "99999999-9999-4999-8999-999999999999",
+    tenantId,
+    userId: admin.id,
+    status: "ACTIVE",
+    branchScopeType: "SELECTED_BRANCHES",
+    roleIds: ["role_admin"],
+    branchIds: [branchId],
+    activatedAt: now,
+    createdAt: now,
+    updatedAt: now,
+  });
+  const token = "scoped-admin-audit-token";
+  sessionsOf(container).registerToken(token, {
+    provider: "fixture",
+    subject: admin.externalIdentityId,
+    issuedAt: now,
+    expiresAt: new Date(now.getTime() + 60 * 60 * 1000),
+  });
+  const app = await buildApp(container);
+
+  const response = await app.inject({
+    method: "GET",
+    url: "/v1/audit-logs?branch_id=aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    headers: {
+      authorization: `Bearer ${token}`,
+      "x-tenant-id": tenantId,
+    },
+  });
+
+  assert.equal(response.statusCode, 403);
+  assert.equal(response.json().code, "INSUFFICIENT_SCOPE");
   await app.close();
 });

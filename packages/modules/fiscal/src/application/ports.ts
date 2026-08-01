@@ -5,6 +5,10 @@ import type { FiscalCertificate } from "../domain/fiscal-certificate.js";
 import type { InvoiceTemplate } from "../domain/invoice-template.js";
 import type { TaxRate } from "../domain/tax-rate.js";
 import type { AuthorizationAttempt } from "../domain/authorization-attempt.js";
+import type {
+  InvoiceDelivery,
+  InvoiceDeliverySummary,
+} from "../domain/invoice-delivery.js";
 
 export interface InvoiceRepositoryPort {
   findById(tenantId: string, id: string): Promise<Invoice | null>;
@@ -26,6 +30,29 @@ export interface InvoiceRepositoryPort {
 export interface AuthorizationAttemptRepositoryPort {
   findLatestByInvoice(tenantId: string, invoiceId: string): Promise<AuthorizationAttempt | null>;
   save(attempt: AuthorizationAttempt): Promise<void>;
+}
+
+export interface InvoiceDeliveryRepositoryPort {
+  findById(tenantId: string, id: string): Promise<InvoiceDelivery | null>;
+  findByIdempotencyKey(
+    tenantId: string,
+    idempotencyKey: string,
+  ): Promise<InvoiceDelivery | null>;
+  listByInvoice(tenantId: string, invoiceId: string): Promise<InvoiceDelivery[]>;
+  listProcessable(limit: number, staleBefore: Date): Promise<InvoiceDelivery[]>;
+  getSummary(tenantId: string): Promise<InvoiceDeliverySummary>;
+  claimForProcessing(
+    tenantId: string,
+    id: string,
+    updatedAt: Date,
+    staleBefore: Date,
+  ): Promise<InvoiceDelivery | null>;
+  redactSentBefore(
+    cutoff: Date,
+    redactedAt: Date,
+    limit: number,
+  ): Promise<number>;
+  save(delivery: InvoiceDelivery): Promise<void>;
 }
 
 export interface FiscalPointOfSaleRepositoryPort {

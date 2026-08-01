@@ -473,7 +473,7 @@ test("Workforce clock-out rejects when there is an OPEN break", async () => {
     },
   });
   assert.equal(clockOut.statusCode, 409);
-  assert.match(clockOut.json().title, /cannot clock-out while BreakLog .* remains OPEN/i);
+  assert.match(clockOut.json().detail, /cannot clock-out while BreakLog .* remains OPEN/i);
 
   await app.close();
 });
@@ -2293,6 +2293,7 @@ test("Workforce list endpoints support status filters", async () => {
   const { container, app } = await buildWorkforceTestApp();
   const { tenantId, branchId } = await getContext(container);
   const headers = ownerHeaders(container, tenantId);
+  container.now = () => new Date("2026-07-24T10:00:03Z");
 
   const employment = (
     await app.inject({
@@ -2377,6 +2378,7 @@ test("Workforce list endpoints support status filters", async () => {
   });
   assert.equal(closeEntry.statusCode, 200);
 
+  container.now = () => new Date("2026-07-24T15:00:03Z");
   const secondOpenClockIn = await app.inject({
     method: "POST",
     url: "/v1/time-entries/clock-in",
@@ -7666,7 +7668,7 @@ test("Workforce time export requires recent step-up and writes audit evidence", 
     provider: "fixture",
     subject: "demo-owner",
     issuedAt: new Date("2026-07-25T00:00:00Z"),
-    expiresAt: new Date("2026-07-25T23:59:59Z"),
+    expiresAt: new Date("2100-01-01T00:00:00Z"),
   });
   const headers = { authorization: `Bearer ${exportToken}`, "x-tenant-id": tenantId };
 
@@ -7753,7 +7755,7 @@ test("Workforce time export denies missing or stale step-up", async () => {
     provider: "fixture",
     subject: "demo-owner",
     issuedAt: new Date("2026-07-25T00:00:00Z"),
-    expiresAt: new Date("2026-07-25T23:59:59Z"),
+    expiresAt: new Date("2100-01-01T00:00:00Z"),
   });
   const headers = { authorization: `Bearer ${exportToken}`, "x-tenant-id": tenantId };
 
@@ -7768,7 +7770,7 @@ test("Workforce time export denies missing or stale step-up", async () => {
     },
   });
   assert.equal(missingStepUp.statusCode, 403);
-  assert.equal(missingStepUp.json().type, "step-up-required");
+  assert.equal(missingStepUp.json().type, "https://docs.maitre.app/problems/step-up-required");
 
   const staleStepUp = await app.inject({
     method: "POST",
@@ -7781,7 +7783,7 @@ test("Workforce time export denies missing or stale step-up", async () => {
     },
   });
   assert.equal(staleStepUp.statusCode, 403);
-  assert.equal(staleStepUp.json().type, "step-up-required");
+  assert.equal(staleStepUp.json().type, "https://docs.maitre.app/problems/step-up-required");
 
   await app.close();
 });
@@ -7810,7 +7812,7 @@ test("Workforce time export fails for expired sessions", async () => {
     },
   });
   assert.equal(exportResponse.statusCode, 401);
-  assert.equal(exportResponse.json().type, "session-expired");
+  assert.equal(exportResponse.json().type, "https://docs.maitre.app/problems/session-expired");
 
   await app.close();
 });
@@ -7824,7 +7826,7 @@ test("Workforce time export list and detail deny resources outside branch scope"
     provider: "fixture",
     subject: "demo-owner",
     issuedAt: new Date("2026-07-25T00:00:00Z"),
-    expiresAt: new Date("2026-07-25T23:59:59Z"),
+    expiresAt: new Date("2100-01-01T00:00:00Z"),
   });
   const headers = { authorization: `Bearer ${exportOwnerToken}`, "x-tenant-id": tenantId };
 
@@ -7910,7 +7912,7 @@ test("Workforce time export list and detail deny resources outside branch scope"
     provider: "fixture",
     subject: scopedAdmin.externalIdentityId,
     issuedAt: new Date("2026-07-25T00:00:00Z"),
-    expiresAt: new Date("2026-07-25T23:59:59Z"),
+    expiresAt: new Date("2100-01-01T00:00:00Z"),
   });
   const scopedHeaders = { authorization: `Bearer ${scopedToken}`, "x-tenant-id": tenantId };
 
@@ -7963,7 +7965,7 @@ test("Workforce labor policy review is branch-scoped and does not grant time exp
     provider: "fixture",
     subject: manager.externalIdentityId,
     issuedAt: new Date("2026-07-25T00:00:00Z"),
-    expiresAt: new Date("2026-07-25T23:59:59Z"),
+    expiresAt: new Date("2100-01-01T00:00:00Z"),
   });
   const managerHeaders = { authorization: `Bearer ${managerToken}`, "x-tenant-id": tenantId };
 
@@ -7988,7 +7990,7 @@ test("Workforce labor policy review is branch-scoped and does not grant time exp
     },
   });
   assert.equal(exportDenied.statusCode, 403);
-  assert.equal(exportDenied.json().type, "insufficient-scope");
+  assert.equal(exportDenied.json().type, "https://docs.maitre.app/problems/insufficient-scope");
 
   await app.close();
 });
@@ -8034,7 +8036,7 @@ test("Workforce labor policy review denies roles without labor policy permission
     headers: { authorization: `Bearer ${cookToken}`, "x-tenant-id": tenantId },
   });
   assert.equal(denied.statusCode, 403);
-  assert.equal(denied.json().type, "insufficient-scope");
+  assert.equal(denied.json().type, "https://docs.maitre.app/problems/insufficient-scope");
 
   await app.close();
 });
@@ -8150,7 +8152,7 @@ test("Workforce labor policy manage is separate from review", async () => {
     },
   });
   assert.equal(deniedCreate.statusCode, 403);
-  assert.equal(deniedCreate.json().type, "insufficient-scope");
+  assert.equal(deniedCreate.json().type, "https://docs.maitre.app/problems/insufficient-scope");
 
   await app.close();
 });
@@ -8383,7 +8385,7 @@ test("Workforce labor policy activation requires manage permission", async () =>
     },
   });
   assert.equal(denied.statusCode, 403);
-  assert.equal(denied.json().type, "insufficient-scope");
+  assert.equal(denied.json().type, "https://docs.maitre.app/problems/insufficient-scope");
 
   await app.close();
 });
@@ -8421,7 +8423,7 @@ test("Workforce labor policy activation denies self supersession", async () => {
     },
   });
   assert.equal(denied.statusCode, 400);
-  assert.match(denied.json().title, /cannot supersede itself/i);
+  assert.match(denied.json().detail, /cannot supersede itself/i);
 
   await app.close();
 });
@@ -8524,7 +8526,7 @@ test("Workforce labor policy create denies invalid superseded policy references"
     },
   });
   assert.equal(invalidDateSupersede.statusCode, 400);
-  assert.match(invalidDateSupersede.json().title, /effectivefrom must be later than or equal/i);
+  assert.match(invalidDateSupersede.json().detail, /effectivefrom must be later than or equal/i);
 
   await app.close();
 });

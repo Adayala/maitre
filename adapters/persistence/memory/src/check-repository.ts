@@ -14,6 +14,12 @@ export class InMemoryCheckRepository implements CheckRepositoryPort {
     );
   }
 
+  async listByBranch(tenantId: string, branchId: string): Promise<Check[]> {
+    return [...this.byId.values()]
+      .filter((check) => check.tenantId === tenantId && check.branchId === branchId)
+      .sort((left, right) => right.updatedAt.getTime() - left.updatedAt.getTime());
+  }
+
   async save(check: Check): Promise<void> {
     this.byId.set(check.id, check);
   }

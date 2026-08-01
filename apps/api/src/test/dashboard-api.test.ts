@@ -7,7 +7,10 @@ import { buildContainer, type Container } from "../composition/container.js";
 // SPEC-047 (Overview).
 
 async function getTenantId(container: Container): Promise<string> {
-  const owner = await container.users.findByExternalIdentity("fixture", "demo-owner");
+  const owner = await container.users.findByExternalIdentity(
+    "fixture",
+    "demo-owner",
+  );
   const memberships = await container.memberships.listActiveByUser(owner!.id);
   return memberships[0]!.tenantId;
 }
@@ -104,17 +107,95 @@ test("GET /v1/dashboard/setup-status requires tenant context (403 without X-Tena
   assert.equal(response.statusCode, 403);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set([
+      "type",
+      "title",
+      "status",
+      "detail",
+      "instance",
+      "code",
+      "correlationId",
+    ]),
   );
-  assert.equal(response.json().type, "insufficient-scope");
-  assert.equal(response.json().title, "Insufficient scope");
+  assert.equal(
+    response.json().type,
+    "https://docs.maitre.app/problems/insufficient-scope",
+  );
+  assert.equal(response.json().detail, "Insufficient scope");
   assert.equal(response.json().status, 403);
   await app.close();
 });
 
-test("GET /v1/dashboard/overview reports setup AVAILABLE and operations UNAVAILABLE (Fase 2 not implemented)", async () => {
+test("GET /v1/dashboard/overview derives available operational metrics", async () => {
   const container = await buildContainer();
   const tenantId = await getTenantId(container);
+  const branch = (await container.branches.listByTenant(tenantId))[0]!;
+  const now = new Date("2026-07-30T12:00:00.000Z");
+  await container.visits.save({
+    id: "overview-visit",
+    tenantId,
+    branchId: branch.id,
+    tableIds: ["overview-table"],
+    guestCount: 2,
+    status: "OPEN",
+    revision: 1,
+    createdAt: now,
+    updatedAt: now,
+  });
+  await container.occupancies.save({
+    id: "overview-occupancy",
+    tenantId,
+    branchId: branch.id,
+    tableId: "overview-table",
+    visitId: "overview-visit",
+    guestCount: 2,
+    status: "ACTIVE",
+    startedAt: now,
+    revision: 1,
+  });
+  await container.orders.save({
+    id: "overview-order",
+    tenantId,
+    branchId: branch.id,
+    visitId: "overview-visit",
+    currency: "ARS",
+    items: [],
+    adjustments: [],
+    status: "DRAFT",
+    subtotalMinorUnits: 0,
+    taxTotalMinorUnits: 0,
+    grandTotalMinorUnits: 0,
+    revision: 1,
+    createdAt: now,
+    updatedAt: now,
+  });
+  await container.checks.save({
+    id: "overview-check",
+    tenantId,
+    branchId: branch.id,
+    visitId: "overview-visit",
+    currency: "ARS",
+    lines: [],
+    adjustments: [],
+    status: "PAYMENT_PENDING",
+    revision: 1,
+    createdAt: now,
+    updatedAt: now,
+  });
+  await container.payments.save({
+    id: "overview-payment",
+    tenantId,
+    branchId: branch.id,
+    checkId: "overview-check",
+    amountMinorUnits: 1_000,
+    currency: "ARS",
+    method: "CARD",
+    status: "PENDING",
+    idempotencyKey: "overview-payment-key",
+    revision: 1,
+    createdAt: now,
+    updatedAt: now,
+  });
   const app = await buildApp(container);
   const response = await app.inject({
     method: "GET",
@@ -148,20 +229,46 @@ test("GET /v1/dashboard/overview reports setup AVAILABLE and operations UNAVAILA
     new Set([
       "status",
       "asOf",
-      "reason",
       "openVisits",
       "occupiedTables",
       "activeOrders",
       "pendingPayments",
     ]),
   );
-  assert.equal(body.operations.status, "UNAVAILABLE");
+  assert.equal(body.operations.status, "AVAILABLE");
   assert.equal(typeof body.operations.asOf, "string");
-  assert.equal(body.operations.reason, "Floor/Ordering/Payments domains not implemented yet (Fase 2)");
+  assert.equal(body.operations.openVisits, 1);
+  assert.equal(body.operations.occupiedTables, 1);
+  assert.equal(body.operations.activeOrders, 1);
+  assert.equal(body.operations.pendingPayments, 1);
+  assert.equal(typeof body.lastUpdated, "string");
+  await app.close();
+});
+
+test("GET /v1/dashboard/overview degrades operations without fabricating zeroes", async () => {
+  const container = await buildContainer();
+  const tenantId = await getTenantId(container);
+  container.visits.listByBranch = async () => {
+    throw new Error("operations-source-unavailable");
+  };
+  const app = await buildApp(container);
+  const response = await app.inject({
+    method: "GET",
+    url: "/v1/dashboard/overview",
+    headers: {
+      authorization: `Bearer ${container.demoAccessToken}`,
+      "x-tenant-id": tenantId,
+    },
+  });
+
+  assert.equal(response.statusCode, 200);
+  const body = response.json().data;
+  assert.equal(body.setup.status, "AVAILABLE");
+  assert.equal(body.operations.status, "UNAVAILABLE");
+  assert.equal(body.operations.reason, "Operational sources unavailable");
   assert.equal(body.operations.openVisits, null);
   assert.equal(body.operations.occupiedTables, null);
   assert.equal(body.operations.activeOrders, null);
   assert.equal(body.operations.pendingPayments, null);
-  assert.equal(typeof body.lastUpdated, "string");
   await app.close();
 });

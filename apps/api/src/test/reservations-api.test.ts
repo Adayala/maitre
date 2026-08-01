@@ -190,7 +190,7 @@ serialTest("Reservation create/detail preserve source while list redacts it", as
   const listed = list.json().data.find((item: { id: string }) => item.id === create.json().data.id);
   assert.ok(listed);
   assert.equal("source" in listed, false);
-  assert.equal(listed.guestId, "guest-list-redaction");
+  assert.equal(listed.guestId, create.json().data.guestId);
   assert.equal(listed.notes, "window");
   assert.deepEqual(Object.keys(listed).sort(), [
     "branchId",
@@ -218,7 +218,7 @@ serialTest("Reservation create/detail preserve source while list redacts it", as
     new Set(["data"]),
   );
   assert.equal(detail.json().data.source, "PHONE");
-  assert.equal(detail.json().data.guestId, "guest-list-redaction");
+  assert.equal(detail.json().data.guestId, create.json().data.guestId);
   assert.equal(detail.json().data.notes, "window");
   assert.deepEqual(Object.keys(detail.json().data).sort(), [
     "branchId",
@@ -323,10 +323,10 @@ serialTest("Reservation detail returns the reservation and hides cross-tenant re
   assert.equal(crossTenant.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(crossTenant.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(crossTenant.json().type, "not-found");
-  assert.equal(crossTenant.json().title, "Reservation not found");
+  assert.equal(crossTenant.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(crossTenant.json().detail, "Reservation not found");
   assert.equal(crossTenant.json().status, 404);
 
   await app.close();
@@ -641,10 +641,10 @@ serialTest("Reservation confirm and seat hide cross-tenant reservations as 404",
   assert.equal(crossTenantConfirm.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(crossTenantConfirm.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(crossTenantConfirm.json().type, "not-found");
-  assert.equal(crossTenantConfirm.json().title, "Reservation not found");
+  assert.equal(crossTenantConfirm.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(crossTenantConfirm.json().detail, "Reservation not found");
   assert.equal(crossTenantConfirm.json().status, 404);
 
   const crossTenantSeat = await app.inject({
@@ -655,10 +655,10 @@ serialTest("Reservation confirm and seat hide cross-tenant reservations as 404",
   assert.equal(crossTenantSeat.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(crossTenantSeat.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(crossTenantSeat.json().type, "not-found");
-  assert.equal(crossTenantSeat.json().title, "Reservation not found");
+  assert.equal(crossTenantSeat.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(crossTenantSeat.json().detail, "Reservation not found");
   assert.equal(crossTenantSeat.json().status, 404);
 
   await app.close();
@@ -843,7 +843,7 @@ serialTest("Reservation confirm returns 409 when branch capacity is unavailable"
     method: "POST",
     url: `/v1/branches/${branchId}/reservations`,
     headers,
-    payload: { partySize: 4, startAt: "2026-08-19T20:00:00Z", durationMinutes: 60 },
+    payload: { partySize: 6, startAt: "2026-08-19T20:00:00Z", durationMinutes: 60 },
   });
   assert.equal(firstCreate.statusCode, 201);
   const firstReservation = firstCreate.json().data;
@@ -859,7 +859,7 @@ serialTest("Reservation confirm returns 409 when branch capacity is unavailable"
     method: "POST",
     url: `/v1/branches/${branchId}/reservations`,
     headers,
-    payload: { partySize: 4, startAt: "2026-08-19T20:00:00Z", durationMinutes: 60 },
+    payload: { partySize: 6, startAt: "2026-08-19T20:00:00Z", durationMinutes: 60 },
   });
   assert.equal(secondCreate.statusCode, 201);
   const secondReservation = secondCreate.json().data;
@@ -934,10 +934,10 @@ serialTest("Reservation cancel and no-show hide cross-tenant reservations as 404
   assert.equal(cancel.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(cancel.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(cancel.json().type, "not-found");
-  assert.equal(cancel.json().title, "Reservation not found");
+  assert.equal(cancel.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(cancel.json().detail, "Reservation not found");
   assert.equal(cancel.json().status, 404);
 
   const noShow = await app.inject({
@@ -949,10 +949,10 @@ serialTest("Reservation cancel and no-show hide cross-tenant reservations as 404
   assert.equal(noShow.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(noShow.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(noShow.json().type, "not-found");
-  assert.equal(noShow.json().title, "Reservation not found");
+  assert.equal(noShow.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(noShow.json().detail, "Reservation not found");
   assert.equal(noShow.json().status, 404);
 
   await app.close();
@@ -973,10 +973,10 @@ serialTest("Reservation command routes return 404 for unknown reservation ids", 
   assert.equal(confirm.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(confirm.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(confirm.json().type, "not-found");
-  assert.equal(confirm.json().title, "Reservation not found");
+  assert.equal(confirm.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(confirm.json().detail, "Reservation not found");
   assert.equal(confirm.json().status, 404);
 
   const cancel = await app.inject({
@@ -988,10 +988,10 @@ serialTest("Reservation command routes return 404 for unknown reservation ids", 
   assert.equal(cancel.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(cancel.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(cancel.json().type, "not-found");
-  assert.equal(cancel.json().title, "Reservation not found");
+  assert.equal(cancel.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(cancel.json().detail, "Reservation not found");
   assert.equal(cancel.json().status, 404);
 
   const seat = await app.inject({
@@ -1002,10 +1002,10 @@ serialTest("Reservation command routes return 404 for unknown reservation ids", 
   assert.equal(seat.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(seat.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(seat.json().type, "not-found");
-  assert.equal(seat.json().title, "Reservation not found");
+  assert.equal(seat.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(seat.json().detail, "Reservation not found");
   assert.equal(seat.json().status, 404);
 
   const noShow = await app.inject({
@@ -1017,10 +1017,10 @@ serialTest("Reservation command routes return 404 for unknown reservation ids", 
   assert.equal(noShow.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(noShow.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(noShow.json().type, "not-found");
-  assert.equal(noShow.json().title, "Reservation not found");
+  assert.equal(noShow.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(noShow.json().detail, "Reservation not found");
   assert.equal(noShow.json().status, 404);
 
   await app.close();
@@ -1088,7 +1088,7 @@ serialTest("Reservation read endpoints require reservation:read and allow waiter
   assert.equal(waiterList.json().data.length, 1);
   assert.equal(waiterList.json().data[0].id, reservation.id);
   assert.equal("source" in waiterList.json().data[0], false);
-  assert.equal(waiterList.json().data[0].guestId, "guest-waiter-read");
+  assert.equal(waiterList.json().data[0].guestId, reservation.guestId);
   assert.equal(waiterList.json().data[0].notes, "allergy context");
 
   const waiterDetail = await app.inject({
@@ -1099,7 +1099,7 @@ serialTest("Reservation read endpoints require reservation:read and allow waiter
   assert.equal(waiterDetail.statusCode, 200);
   assert.equal(waiterDetail.json().data.id, reservation.id);
   assert.equal(waiterDetail.json().data.source, "PHONE");
-  assert.equal(waiterDetail.json().data.guestId, "guest-waiter-read");
+  assert.equal(waiterDetail.json().data.guestId, reservation.guestId);
   assert.equal(waiterDetail.json().data.notes, "allergy context");
 
   const cook = {
@@ -2367,7 +2367,7 @@ serialTest("Availability GET returns free tables", async () => {
 
   const unavailable = await app.inject({
     method: "GET",
-    url: `/v1/branches/${branchId}/availability?partySize=5&startAt=2026-08-01T21:00:00Z&durationMinutes=60`,
+    url: `/v1/branches/${branchId}/availability?partySize=7&startAt=2026-08-01T21:00:00Z&durationMinutes=60`,
     headers: ownerHeaders(container, tenantId),
   });
   assert.equal(unavailable.statusCode, 200);
@@ -2784,10 +2784,10 @@ serialTest("Reservation notifications require notification permission and reserv
   assert.equal(forbidden.statusCode, 403);
   assert.deepEqual(
     new Set(Object.keys(forbidden.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(forbidden.json().type, "insufficient-scope");
-  assert.equal(forbidden.json().title, "Insufficient scope");
+  assert.equal(forbidden.json().type, "https://docs.maitre.app/problems/insufficient-scope");
+  assert.equal(forbidden.json().detail, "Insufficient scope");
   assert.equal(forbidden.json().status, 403);
 
   const notFound = await app.inject({
@@ -2798,10 +2798,10 @@ serialTest("Reservation notifications require notification permission and reserv
   assert.equal(notFound.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(notFound.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(notFound.json().type, "not-found");
-  assert.equal(notFound.json().title, "Reservation not found");
+  assert.equal(notFound.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(notFound.json().detail, "Reservation not found");
   assert.equal(notFound.json().status, 404);
   await app.close();
 });
@@ -2867,10 +2867,10 @@ serialTest("Notification intent detail requires notification permission and hide
   assert.equal(forbidden.statusCode, 403);
   assert.deepEqual(
     new Set(Object.keys(forbidden.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(forbidden.json().type, "insufficient-scope");
-  assert.equal(forbidden.json().title, "Insufficient scope");
+  assert.equal(forbidden.json().type, "https://docs.maitre.app/problems/insufficient-scope");
+  assert.equal(forbidden.json().detail, "Insufficient scope");
   assert.equal(forbidden.json().status, 403);
 
   const otherTenantId = randomUUID();
@@ -2906,10 +2906,10 @@ serialTest("Notification intent detail requires notification permission and hide
   assert.equal(crossTenant.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(crossTenant.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(crossTenant.json().type, "not-found");
-  assert.equal(crossTenant.json().title, "NotificationIntent not found");
+  assert.equal(crossTenant.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(crossTenant.json().detail, "NotificationIntent not found");
   assert.equal(crossTenant.json().status, 404);
 
   await app.close();
@@ -2973,10 +2973,10 @@ serialTest("Notification intent creation hides cross-tenant reservations as 404 
     assert.equal(response.statusCode, 404);
     assert.deepEqual(
       new Set(Object.keys(response.json() as Record<string, unknown>)),
-      new Set(["type", "title", "status", "correlationId"]),
+      new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
     );
-    assert.equal(response.json().type, "not-found");
-    assert.equal(response.json().title, "Reservation not found");
+    assert.equal(response.json().type, "https://docs.maitre.app/problems/not-found");
+    assert.equal(response.json().detail, "Reservation not found");
     assert.equal(response.json().status, 404);
   }
 
@@ -2996,10 +2996,10 @@ serialTest("Notification intent detail returns 404 for unknown ids", async () =>
   assert.equal(response.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(response.json().type, "not-found");
-  assert.equal(response.json().title, "NotificationIntent not found");
+  assert.equal(response.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(response.json().detail, "NotificationIntent not found");
   assert.equal(response.json().status, 404);
 
   await app.close();
@@ -3259,10 +3259,10 @@ serialTest("Reservation preferences enforce create/read permissions and query va
   assert.equal(createForbidden.statusCode, 403);
   assert.deepEqual(
     new Set(Object.keys(createForbidden.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(createForbidden.json().type, "insufficient-scope");
-  assert.equal(createForbidden.json().title, "Insufficient scope");
+  assert.equal(createForbidden.json().type, "https://docs.maitre.app/problems/insufficient-scope");
+  assert.equal(createForbidden.json().detail, "Insufficient scope");
   assert.equal(createForbidden.json().status, 403);
 
   const listAllowed = await app.inject({
@@ -3282,11 +3282,11 @@ serialTest("Reservation preferences enforce create/read permissions and query va
   assert.equal(invalidQuery.statusCode, 400);
   assert.deepEqual(
     new Set(Object.keys(invalidQuery.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(invalidQuery.json().type, "bad-request");
+  assert.equal(invalidQuery.json().type, "https://docs.maitre.app/problems/bad-request");
   assert.equal(invalidQuery.json().status, 400);
-  assert.match(String(invalidQuery.json().title), /subjectId/i);
+  assert.match(String(invalidQuery.json().detail), /subjectId/i);
 
   const invalidBody = await app.inject({
     method: "POST",
@@ -3302,11 +3302,11 @@ serialTest("Reservation preferences enforce create/read permissions and query va
   assert.equal(invalidBody.statusCode, 400);
   assert.deepEqual(
     new Set(Object.keys(invalidBody.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(invalidBody.json().type, "bad-request");
+  assert.equal(invalidBody.json().type, "https://docs.maitre.app/problems/bad-request");
   assert.equal(invalidBody.json().status, 400);
-  assert.match(String(invalidBody.json().title), /kind/i);
+  assert.match(String(invalidBody.json().detail), /kind/i);
 
   await app.close();
 });

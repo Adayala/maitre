@@ -29,13 +29,25 @@ jobs:
       VERCEL_ORG_ID: team_cvlEbUCNF87Ldam2yzMhKBkc
       VERCEL_PROJECT_ID: ${{ matrix.project_id }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 20.19.0
 
       - name: Deploy ${{ matrix.name }} to Vercel
         run: |
+          DEPLOYED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           npx --yes vercel@57 pull --yes --environment=production --token="$VERCEL_TOKEN"
-          npx --yes vercel@57 deploy --prod --yes --token="$VERCEL_TOKEN"
+          if [[ "${{ matrix.name }}" == "api" ]]; then
+            node tooling/deployment/check-runtime-profile.mjs \
+              --env-file .vercel/.env.production.local \
+              --expect demo
+          fi
+          deployment_url="$(npx --yes vercel@57 deploy --prod --yes --token="$VERCEL_TOKEN" \
+            --build-env VITE_GIT_COMMIT_SHA="$GITHUB_SHA" \
+            --build-env VITE_DEPLOYED_AT="$DEPLOYED_AT")"
+          echo "Deployment ready at $deployment_url"
+          if [[ "${{ matrix.name }}" == "api" ]]; then
+            node tooling/deployment/check-deployment-health.mjs "$deployment_url"
+          fi

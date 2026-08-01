@@ -10,9 +10,10 @@
     "test": "node --test dist/test/"
   },
   "dependencies": {
-    "@maitre/arca-client": "*"
+    "@maitre/arca-client": "*",
+    "pdf-lib": "^1.17.1"
   },
   "devDependencies": {
-    "typescript": "^5.5.4"
+    "typescript": "^6.0.3"
   }
 }

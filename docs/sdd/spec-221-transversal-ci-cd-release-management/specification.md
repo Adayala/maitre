@@ -45,7 +45,11 @@ Orden de feedback recomendado:
 7. integration/RLS/migrations;
 8. Playwright/accessibility en preview cuando corresponda.
 
-Jobs independientes corren en paralelo. Concurrency cancela ejecuciones obsoletas de la misma rama. Path filtering puede omitir trabajo irrelevante sólo si un check agregador demuestra que ningún gate requerido quedó sin ejecutar.
+Jobs independientes corren en paralelo. Concurrency cancela ejecuciones obsoletas de la misma
+rama. Path filtering puede omitir trabajo irrelevante sólo si un detector versionado y probado
+demuestra qué gates aplican. La implementación actual usa
+`tooling/deployment/detect-affected.mjs`: cambios compartidos o desconocidos seleccionan todo;
+docs-only omite E2E/deploy pero no Quality.
 
 ## 4. Ambientes y promoción
 
@@ -133,17 +137,17 @@ En I0 no existe error-budget gate operativo según SPEC-216. Se evalúan health,
 
 ## 10. Gates por tipo de cambio
 
-| Cambio | Evidencia adicional |
-| --- | --- |
-| Docs/spec | links, formato, consistencia y aprobación |
-| UI | Storybook, axe, keyboard, screenshots/E2E |
-| API | OpenAPI, contract/breaking checks y auth negativo |
-| DB/RLS | migration, integration, cross-tenant y restore |
-| Dependencia | SCA, licencia, bundle y justificación |
-| Offline | chaos/sync/conflict y compatibilidad cliente |
-| Evento | schema, outbox/inbox, replay y consumidor |
+| Cambio      | Evidencia adicional                                  |
+| ----------- | ---------------------------------------------------- |
+| Docs/spec   | links, formato, consistencia y aprobación            |
+| UI          | Storybook, axe, keyboard, screenshots/E2E            |
+| API         | OpenAPI, contract/breaking checks y auth negativo    |
+| DB/RLS      | migration, integration, cross-tenant y restore       |
+| Dependencia | SCA, licencia, bundle y justificación                |
+| Offline     | chaos/sync/conflict y compatibilidad cliente         |
+| Evento      | schema, outbox/inbox, replay y consumidor            |
 | Fiscal/pago | idempotencia, reconciliación, auditoría y aprobación |
-| Seguridad | threat model/ASVS evidence y abuso |
+| Seguridad   | threat model/ASVS evidence y abuso                   |
 
 ## 11. Release de emergencia
 
@@ -161,6 +165,19 @@ En I0 no existe error-budget gate operativo según SPEC-216. Se evalúan health,
 - Integration/E2E costosos se activan por impacto más un schedule completo.
 - Nightly/scheduled jobs tienen owner, presupuesto y política de fallo.
 - Si una optimización oculta defectos o vuelve opcional un gate, se revierte.
+
+### Implementación selectiva vigente
+
+- Frontend aislado: E2E y deploy de esa aplicación.
+- API/Supabase: todos los E2E de clientes y deploy sólo de API.
+- Paquete/adaptador/lockfile/config compartida: todos los E2E y deploys.
+- Tests E2E: todos los E2E sin deploy.
+- Documentación: Quality sin E2E ni deploy.
+- Ruta no clasificada: fallback completo.
+- Ejecución manual: validación y deploy completo.
+
+La matriz de deploy sólo se evalúa en `push` a `main` y depende de Quality más todos los E2E
+seleccionados.
 
 ## 13. Restricciones del proveedor inicial
 

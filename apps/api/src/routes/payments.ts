@@ -3,7 +3,6 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import {
   createPayment,
-  capturePayment,
   voidPayment,
   refundPayment,
   failPayment,
@@ -12,8 +11,20 @@ import {
 } from "@maitre/floor";
 import type { Container } from "../composition/container.js";
 import { requireTenantContext, requirePermission } from "../http/request-context.js";
-import { sendProblem, notFound, conflict, badRequest } from "../http/problem-details.js";
+import {
+  sendProblem,
+  notFound,
+  conflict,
+  badRequest,
+  insufficientScope,
+} from "../http/problem-details.js";
 import { omitUndefined } from "../http/omit-undefined.js";
+import {
+  capturePaymentWithCash,
+  CashSessionMismatchError,
+  CashSessionNotFoundError,
+  CashSessionRequiredError,
+} from "../floor/capture-payment-with-cash.js";
 
 // SPEC-059 — Payments API. Idempotency-Key is mandatory for create-intent
 // (create-intent/authorize/capture are collapsed per the simplified,
@@ -31,6 +42,10 @@ const refundBodySchema = z.object({
   amountMinorUnits: z.number().int().nonnegative(),
 });
 
+const captureBodySchema = z.object({
+  cashSessionId: z.string().uuid().optional(),
+});
+
 export async function registerPaymentRoutes(app: FastifyInstance, container: Container): Promise<void> {
   const deps = () => ({ payments: container.payments, checks: container.checks, outbox: container.outbox });
 
@@ -40,9 +55,14 @@ export async function registerPaymentRoutes(app: FastifyInstance, container: Con
       const ctx = await requireTenantContext(container, req);
       requirePermission(ctx, "payment:create");
       const body = createPaymentBodySchema.parse(req.body);
+      const check = await container.checks.findById(ctx.tenantId, req.params.id);
+      if (!check) return sendProblem(reply, correlationId, notFound("Check"));
+      if (ctx.branchScopeType !== "ALL_BRANCHES" && !ctx.branchIds.includes(check.branchId)) {
+        throw insufficientScope();
+      }
       const payment = await createPayment(deps(), {
         tenantId: ctx.tenantId,
-        branchId: req.headers["x-branch-id"] as string,
+        branchId: check.branchId,
         checkId: req.params.id,
         ...omitUndefined(body),
       });
@@ -85,9 +105,31 @@ export async function registerPaymentRoutes(app: FastifyInstance, container: Con
     try {
       const ctx = await requireTenantContext(container, req);
       requirePermission(ctx, "payment:capture");
-      const payment = await capturePayment(deps(), { tenantId: ctx.tenantId, paymentId: req.params.id, correlationId });
+      const body = captureBodySchema.parse(req.body ?? {});
+      const existingPayment = await container.payments.findById(ctx.tenantId, req.params.id);
+      if (!existingPayment) return sendProblem(reply, correlationId, notFound("Payment"));
+      if (
+        ctx.branchScopeType !== "ALL_BRANCHES" &&
+        !ctx.branchIds.includes(existingPayment.branchId)
+      ) {
+        throw insufficientScope();
+      }
+      const payment = await capturePaymentWithCash(container, {
+        tenantId: ctx.tenantId,
+        paymentId: req.params.id,
+        actorId: ctx.userId,
+        correlationId,
+        ...omitUndefined(body),
+      });
       return { data: payment };
     } catch (err) {
+      if (err instanceof z.ZodError) return sendProblem(reply, correlationId, badRequest(err.message));
+      if (err instanceof CashSessionRequiredError || err instanceof CashSessionMismatchError) {
+        return sendProblem(reply, correlationId, conflict(err.message));
+      }
+      if (err instanceof CashSessionNotFoundError) {
+        return sendProblem(reply, correlationId, notFound("CashSession"));
+      }
       if (err instanceof PaymentExceedsBalanceError) return sendProblem(reply, correlationId, badRequest(err.message));
       if (err instanceof InvalidPaymentTransitionError) return sendProblem(reply, correlationId, conflict(err.message));
       if (err instanceof Error && err.message.includes("not found")) return sendProblem(reply, correlationId, notFound("Payment"));

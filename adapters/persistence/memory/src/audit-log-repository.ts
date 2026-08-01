@@ -25,8 +25,19 @@ export class InMemoryAuditLogRepository implements AuditLogRepositoryPort {
   async query(params: AuditLogQuery): Promise<AuditLogPage> {
     let items = this.items.filter((i) => i.tenantId === params.tenantId);
     if (params.actorId) items = items.filter((i) => i.actorId === params.actorId);
+    if (params.branchId) items = items.filter((i) => i.branchId === params.branchId);
+    if (params.actionCode) {
+      items = items.filter((i) => i.actionCode === params.actionCode);
+    }
+    if (params.outcome) items = items.filter((i) => i.outcome === params.outcome);
     if (params.resourceType) {
       items = items.filter((i) => i.resourceType === params.resourceType);
+    }
+    if (params.resourceId) {
+      items = items.filter((i) => i.resourceId === params.resourceId);
+    }
+    if (params.correlationId) {
+      items = items.filter((i) => i.correlationId === params.correlationId);
     }
     if (params.from) items = items.filter((i) => i.occurredAt >= params.from!);
     if (params.to) items = items.filter((i) => i.occurredAt <= params.to!);

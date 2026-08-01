@@ -21,6 +21,7 @@ export interface OccupancyRepositoryPort {
 export interface CheckRepositoryPort {
   findById(tenantId: string, id: string): Promise<Check | null>;
   findByVisit(tenantId: string, visitId: string): Promise<Check | null>;
+  listByBranch(tenantId: string, branchId: string): Promise<Check[]>;
   save(check: Check): Promise<void>;
 }
 

@@ -15,13 +15,50 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  affected:
+    name: Detect affected applications
+    runs-on: ubuntu-24.04
+    outputs:
+      deploy: ${{ steps.detect.outputs.deploy }}
+      e2e: ${{ steps.detect.outputs.e2e }}
+      has_deploy: ${{ steps.detect.outputs.has_deploy }}
+      has_e2e: ${{ steps.detect.outputs.has_e2e }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: detect
+        name: Build selective test and deployment matrices
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            result="$(node tooling/deployment/detect-affected.mjs --all </dev/null)"
+          else
+            base="$BEFORE_SHA"
+            if [[ "$EVENT_NAME" == "pull_request" ]]; then
+              base="$BASE_SHA"
+            fi
+            result="$(git diff --name-only "$base" "$HEAD_SHA" | node tooling/deployment/detect-affected.mjs)"
+          fi
+          echo "deploy=$(node -e 'const value=JSON.parse(process.argv[1]); process.stdout.write(JSON.stringify(value.deploy))' "$result")" >> "$GITHUB_OUTPUT"
+          echo "e2e=$(node -e 'const value=JSON.parse(process.argv[1]); process.stdout.write(JSON.stringify(value.e2e))' "$result")" >> "$GITHUB_OUTPUT"
+          echo "has_deploy=$(node -e 'const value=JSON.parse(process.argv[1]); process.stdout.write(String(value.has_deploy))' "$result")" >> "$GITHUB_OUTPUT"
+          echo "has_e2e=$(node -e 'const value=JSON.parse(process.argv[1]); process.stdout.write(String(value.has_e2e))' "$result")" >> "$GITHUB_OUTPUT"
+          echo "$result" >> "$GITHUB_STEP_SUMMARY"
+
   quality:
     name: Quality gate
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
         with:
           node-version: 20.19.0
           cache: npm
@@ -32,9 +69,21 @@ jobs:
           npm run lint
           npm run typecheck
           npm run deps:check
+          npm run deploy:affected:test
+          npm run runtime:profile:test
+          npm run runtime:grants:test
+          npm run coverage:gate:test
+          npm run e2e:journey:policy
+          npm run e2e:journey:policy:test
           npm run sdd:validate
+          npm run openapi:check
+          npm run openapi:breaking
       - name: Unit tests and coverage
         run: npm run test:coverage
+      - name: OpenTelemetry export integration
+        run: npm run test:telemetry:export
+      - name: Generate sanitized observability evidence
+        run: npm run observability:evidence > observability-evidence.json
       - name: Security controls
         run: |
           npm run secrets:scan
@@ -48,12 +97,15 @@ jobs:
           name: quality-evidence-${{ github.run_attempt }}
           path: |
             maitre-sbom.json
+            observability-evidence.json
             coverage/
           if-no-files-found: ignore
           retention-days: 14
 
   playwright:
     name: E2E · ${{ matrix.label }}
+    if: needs.affected.outputs.has_e2e == 'true'
+    needs: affected
     runs-on: ubuntu-24.04
     container: mcr.microsoft.com/playwright:v1.62.0-noble
     timeout-minutes: 20
@@ -61,32 +113,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - app: dash
-            label: Dash
-            workspace: apps/web
-          - app: host
-            label: Host
-            workspace: apps/host
-          - app: floor
-            label: Floor
-            workspace: apps/waiter
-          - app: kitchen
-            label: Kitchen
-            workspace: apps/kitchen
-          - app: cash
-            label: Cash
-            workspace: apps/cashier
-          - app: guest
-            label: Guest
-            workspace: apps/customer
+        include: ${{ fromJSON(needs.affected.outputs.e2e) }}
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: 20.19.0
           cache: npm
@@ -119,40 +153,207 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+  release-journey:
+    name: E2E · Release journey (ephemeral Supabase)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      APP_ENV: e2e
+      AUTH_DRIVER: fixture
+      CI: "true"
+      E2E_BUSINESS_CLOCK: "2026-07-30T12:00:00.000Z"
+      E2E_FIXTURES_ENABLED: "1"
+      E2E_PROFILE: release-postgres
+      E2E_RUN_ID: e2e-${{ github.run_id }}-${{ github.run_attempt }}
+      E2E_SEED: "215"
+      PERSISTENCE_DRIVER: supabase
+      VITE_API_URL: http://127.0.0.1:3101
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 20.19.0
+          cache: npm
+
+      - name: Set up pinned Supabase CLI
+        uses: supabase/setup-cli@v2
+        with:
+          version: 2.110.0
+
+      - name: Prepare isolated run identity
+        shell: bash
+        run: |
+          evidence_dir="$RUNNER_TEMP/maitre-release-evidence"
+          mkdir -p "$evidence_dir"
+          {
+            echo "E2E_BOOTSTRAP_SECRET=${E2E_RUN_ID}.$(openssl rand -hex 32)"
+            echo "E2E_WAITER_TOKEN=${E2E_RUN_ID}.waiter.$(openssl rand -hex 24)"
+            echo "E2E_COOK_TOKEN=${E2E_RUN_ID}.cook.$(openssl rand -hex 24)"
+            echo "E2E_CASHIER_TOKEN=${E2E_RUN_ID}.cashier.$(openssl rand -hex 24)"
+            echo "E2E_AUDITOR_TOKEN=${E2E_RUN_ID}.auditor.$(openssl rand -hex 24)"
+            echo "E2E_TENANT_B_TOKEN=${E2E_RUN_ID}.tenant-b.$(openssl rand -hex 24)"
+            echo "E2E_DURABILITY_CHECKPOINT=$evidence_dir/durability-checkpoint.json"
+            echo "E2E_EVIDENCE_DIR=$evidence_dir"
+          } >> "$GITHUB_ENV"
+          echo "INFRA_ERROR: isolated stack has not completed startup" > "$evidence_dir/classification.txt"
+          {
+            echo "run_id=$E2E_RUN_ID"
+            echo "profile=$E2E_PROFILE"
+            echo "seed=$E2E_SEED"
+            echo "business_clock=$E2E_BUSINESS_CLOCK"
+            echo "git_sha=$GITHUB_SHA"
+          } > "$evidence_dir/run.txt"
+
+      - name: Install dependencies and Chromium
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Build API, Dash, Floor, Kitchen and Cash
+        run: |
+          npm run build --workspace apps/api
+          npm run build --workspace apps/web
+          npm run build --workspace apps/waiter
+          npm run build --workspace apps/kitchen
+          npm run build --workspace apps/cashier
+
+      - name: Recreate ephemeral database from migrations
+        shell: bash
+        run: |
+          if ! supabase start --exclude edge-runtime,imgproxy,logflare,mailpit,postgres-meta,realtime,studio,supavisor,vector; then
+            echo "INFRA_ERROR: Supabase local stack failed to start" > "$E2E_EVIDENCE_DIR/classification.txt"
+            exit 1
+          fi
+          if ! supabase db reset --local --no-seed; then
+            echo "INFRA_ERROR: migrations failed from an empty database" > "$E2E_EVIDENCE_DIR/classification.txt"
+            exit 1
+          fi
+          supabase migration list --local > "$E2E_EVIDENCE_DIR/migrations.txt"
+          status_env="$RUNNER_TEMP/supabase-status.env"
+          supabase status -o env > "$status_env"
+          set -a
+          source "$status_env"
+          set +a
+          if [[ -z "${API_URL:-}" || -z "${SERVICE_ROLE_KEY:-}" ]]; then
+            echo "INFRA_ERROR: Supabase status did not provide API_URL and SERVICE_ROLE_KEY" > "$E2E_EVIDENCE_DIR/classification.txt"
+            exit 1
+          fi
+          echo "::add-mask::$SERVICE_ROLE_KEY"
+          {
+            echo "SUPABASE_URL=$API_URL"
+            echo "SUPABASE_SECRET_KEY=$SERVICE_ROLE_KEY"
+          } >> "$GITHUB_ENV"
+          echo "PRODUCT_FAILURE: authoritative journey has not completed" > "$E2E_EVIDENCE_DIR/classification.txt"
+
+      - name: Run authoritative MVP journey
+        shell: bash
+        run: |
+          if ! npm run test:e2e:journey:run; then
+            echo "PRODUCT_FAILURE: MVP-J-001 failed" > "$E2E_EVIDENCE_DIR/classification.txt"
+            exit 1
+          fi
+          mkdir -p "$E2E_EVIDENCE_DIR/initial-process"
+          cp -R test-results playwright-report "$E2E_EVIDENCE_DIR/initial-process/"
+          echo "PRODUCT_FAILURE: durable state has not survived an API restart" > "$E2E_EVIDENCE_DIR/classification.txt"
+
+      - name: Restart API and prove persisted state
+        shell: bash
+        run: |
+          if ! npm run test:e2e:journey:restart; then
+            echo "PRODUCT_FAILURE: state was not durable across API restart" > "$E2E_EVIDENCE_DIR/classification.txt"
+            exit 1
+          fi
+          mkdir -p "$E2E_EVIDENCE_DIR/restarted-process"
+          cp -R test-results playwright-report "$E2E_EVIDENCE_DIR/restarted-process/"
+          echo "PASS: MVP-J-001 completed and survived an API restart" > "$E2E_EVIDENCE_DIR/classification.txt"
+
+      - name: Destroy ephemeral database and verify cleanup
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          evidence_dir="${E2E_EVIDENCE_DIR:-$RUNNER_TEMP/maitre-release-evidence}"
+          mkdir -p "$evidence_dir"
+          if supabase status >/dev/null 2>&1; then
+            if ! supabase stop --no-backup; then
+              echo "CLEANUP_FAILURE: Supabase teardown failed" > "$evidence_dir/classification.txt"
+              exit 1
+            fi
+          fi
+          if supabase status >/dev/null 2>&1; then
+            echo "CLEANUP_FAILURE: Supabase resources remain active" > "$evidence_dir/classification.txt"
+            exit 1
+          fi
+          echo "cleanup=verified" > "$evidence_dir/cleanup.txt"
+
+      - name: Upload release journey evidence
+        if: ${{ always() && !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-journey-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/maitre-release-evidence/
+          if-no-files-found: error
+          retention-days: 14
+
+  e2e-gate:
+    name: E2E gate
+    if: ${{ always() }}
+    needs: [affected, playwright, release-journey]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require every affected project and the release journey
+        env:
+          HAS_E2E: ${{ needs.affected.outputs.has_e2e }}
+          PLAYWRIGHT_RESULT: ${{ needs.playwright.result }}
+          RELEASE_JOURNEY_RESULT: ${{ needs.release-journey.result }}
+        run: |
+          if [[ "$HAS_E2E" == "true" && "$PLAYWRIGHT_RESULT" != "success" ]]; then
+            echo "Affected E2E projects did not all pass: $PLAYWRIGHT_RESULT"
+            exit 1
+          fi
+          if [[ "$RELEASE_JOURNEY_RESULT" != "success" ]]; then
+            echo "Authoritative release journey did not pass: $RELEASE_JOURNEY_RESULT"
+            exit 1
+          fi
+          echo "E2E gate passed (affected=$HAS_E2E, matrix=$PLAYWRIGHT_RESULT, release=$RELEASE_JOURNEY_RESULT)."
+
   deploy:
     name: Deploy · ${{ matrix.name }}
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [quality, playwright]
+    if: >-
+      always() &&
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      needs.affected.outputs.has_deploy == 'true' &&
+      needs.quality.result == 'success' &&
+      needs.e2e-gate.result == 'success'
+    needs: [affected, quality, e2e-gate]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - name: api
-            project_id: prj_gAFxIYi8bL5TkpbwpoBYlRyaHqZk
-          - name: web
-            project_id: prj_9qxMJEtIMVtq8k43SuzVTqsYewgd
-          - name: kitchen
-            project_id: prj_DRbMDZIlV9NrPZApEw2CHVxnZD1K
-          - name: waiter
-            project_id: prj_np4ZH8Whi8gfoTj9MuTGoojBOEcH
-          - name: cashier
-            project_id: prj_VBaKDObIvmSTKWuD2eJsyegtoxni
-          - name: host
-            project_id: prj_QMdvmmgsDT9S6os663n4vOv8BpeH
-          - name: customer
-            project_id: prj_MpM495erYWa5cbtprfEYQTjKCX0r
+        include: ${{ fromJSON(needs.affected.outputs.deploy) }}
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: team_cvlEbUCNF87Ldam2yzMhKBkc
       VERCEL_PROJECT_ID: ${{ matrix.project_id }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 20.19.0
       - name: Deploy after all required checks
         run: |
           npx --yes vercel@57 pull --yes --environment=production --token="$VERCEL_TOKEN"
-          npx --yes vercel@57 deploy --prod --yes --token="$VERCEL_TOKEN"
+          if [[ "${{ matrix.name }}" == "api" ]]; then
+            node tooling/deployment/check-runtime-profile.mjs \
+              --env-file .vercel/.env.production.local \
+              --expect demo
+          fi
+          deployment_url="$(npx --yes vercel@57 deploy --prod --yes --token="$VERCEL_TOKEN")"
+          echo "Deployment ready at $deployment_url"
+          if [[ "${{ matrix.name }}" == "api" ]]; then
+            node tooling/deployment/check-deployment-health.mjs "$deployment_url"
+          fi

@@ -19,3 +19,14 @@ proveedor cuando el resultado es ambiguo. `POST /invoices/{invoiceId}:credit` y 
 nuevo documento enlazado al comprobante origen; `POST /invoices/{invoiceId}:void-draft` sólo aplica a
 documentos no autorizados. Errores usan `404` para scope ajeno, `409` para lifecycle conflict, `412`
 para revisión obsoleta y `422` para invalidaciones fiscales semánticas.
+
+`GET /invoices/{invoiceId}/document` entrega un fallback HTML descargable únicamente para
+comprobantes `AUTHORIZED`. El contenido se deriva del snapshot fiscal, titular y punto de venta
+autoritativos; escapa texto no confiable, incluye CAE y referencia de verificación, expone hash/ETag
+determinístico y marca homologación sin ambigüedad. No interpreta templates, no genera PDF y no
+afirma que la referencia QR simulada sea el QR oficial de producción.
+
+La dirección de email de una entrega es metadata operacional, no parte del comprobante fiscal.
+Después de una ventana configurable (30 días por defecto), el mantenimiento interno la redacta
+únicamente en entregas `SENT`, conservando IDs, estado, timestamps e idempotencia para auditoría.
+No elimina ni altera el comprobante, su snapshot fiscal, CAE, PDF regenerable o eventos.

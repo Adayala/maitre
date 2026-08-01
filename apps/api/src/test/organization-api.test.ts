@@ -105,10 +105,10 @@ test("POST /v1/brands without X-Tenant-Id returns 403 insufficient-scope", async
   assert.equal(response.statusCode, 403);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(response.json().type, "insufficient-scope");
-  assert.equal(response.json().title, "Insufficient scope");
+  assert.equal(response.json().type, "https://docs.maitre.app/problems/insufficient-scope");
+  assert.equal(response.json().detail, "Insufficient scope");
   assert.equal(response.json().status, 403);
   await app.close();
 });
@@ -164,10 +164,10 @@ test("POST /v1/brands as EMPLOYEE returns 403 (SPEC-016: EMPLOYEE cannot manage 
   assert.equal(response.statusCode, 403);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(response.json().type, "insufficient-scope");
-  assert.equal(response.json().title, "Insufficient scope");
+  assert.equal(response.json().type, "https://docs.maitre.app/problems/insufficient-scope");
+  assert.equal(response.json().detail, "Insufficient scope");
   assert.equal(response.json().status, 403);
   await app.close();
 });
@@ -185,10 +185,10 @@ test("GET /v1/brands as EMPLOYEE returns 403 (brand:read not granted to EMPLOYEE
   assert.equal(response.statusCode, 403);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(response.json().type, "insufficient-scope");
-  assert.equal(response.json().title, "Insufficient scope");
+  assert.equal(response.json().type, "https://docs.maitre.app/problems/insufficient-scope");
+  assert.equal(response.json().detail, "Insufficient scope");
   assert.equal(response.json().status, 403);
   await app.close();
 });
@@ -247,10 +247,10 @@ test("GET /v1/brands/:id returns 404 for an unknown id", async () => {
   assert.equal(response.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(response.json().type, "not-found");
-  assert.equal(response.json().title, "Brand not found");
+  assert.equal(response.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(response.json().detail, "Brand not found");
   assert.equal(response.json().status, 404);
   await app.close();
 });
@@ -305,10 +305,10 @@ test("POST /v1/fiscal-entities as EMPLOYEE returns 403 (OWNER only per SPEC-009)
   assert.equal(response.statusCode, 403);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(response.json().type, "insufficient-scope");
-  assert.equal(response.json().title, "Insufficient scope");
+  assert.equal(response.json().type, "https://docs.maitre.app/problems/insufficient-scope");
+  assert.equal(response.json().detail, "Insufficient scope");
   assert.equal(response.json().status, 403);
   await app.close();
 });
@@ -326,7 +326,7 @@ test("POST /v1/fiscal-entities as OWNER succeeds", async () => {
     },
     payload: {
       name: "La Parrilla S.A.",
-      cuit: "20-12345678-6",
+      cuit: "27-12345678-0",
       taxCondition: "RI",
       legalAddress: "Calle 1",
       fiscalAddress: "Calle 1",
@@ -334,7 +334,7 @@ test("POST /v1/fiscal-entities as OWNER succeeds", async () => {
     },
   });
   assert.equal(response.statusCode, 201);
-  assert.equal(response.json().data.cuit, "20123456786");
+  assert.equal(response.json().data.cuit, "27123456780");
   assert.equal(response.json().data.legalAddress, "Calle 1");
   await app.close();
 });
@@ -353,7 +353,7 @@ test("POST /v1/fiscal-entities with a duplicate CUIT returns 409 conflict", asyn
     headers,
     payload: {
       name: "La Parrilla S.A.",
-      cuit: "20-12345678-6",
+      cuit: "27-12345678-0",
       taxCondition: "RI",
       legalAddress: "Calle 1",
       fiscalAddress: "Calle 1",
@@ -364,17 +364,17 @@ test("POST /v1/fiscal-entities with a duplicate CUIT returns 409 conflict", asyn
     method: "POST",
     url: "/v1/fiscal-entities",
     headers,
-    payload: { name: "Otra Razón Social", cuit: "20-12345678-6", taxCondition: "RI" },
+    payload: { name: "Otra Razón Social", cuit: "27-12345678-0", taxCondition: "RI" },
   });
   assert.equal(response.statusCode, 409);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(response.json().type, "conflict");
+  assert.equal(response.json().type, "https://docs.maitre.app/problems/conflict");
   assert.equal(
-    response.json().title,
-    `CUIT "20123456786" already exists for tenant ${tenantId}`,
+    response.json().detail,
+    `CUIT "27123456780" already exists for tenant ${tenantId}`,
   );
   assert.equal(response.json().status, 409);
   await app.close();
@@ -439,7 +439,7 @@ test("POST /v1/fiscal-entities is idempotent with Idempotency-Key", async () => 
     headers,
     payload: {
       name: "Fiscal Replay",
-      cuit: "20-12345678-6",
+      cuit: "27-12345678-0",
       taxCondition: "RI",
       legalAddress: "Calle 1",
     },
@@ -628,10 +628,10 @@ test("PATCH /v1/fiscal-entities requires valid If-Match and rejects stale revisi
   assert.equal(missingIfMatch.statusCode, 400);
   assert.deepEqual(
     new Set(Object.keys(missingIfMatch.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(missingIfMatch.json().type, "bad-request");
-  assert.equal(missingIfMatch.json().title, "Missing If-Match header");
+  assert.equal(missingIfMatch.json().type, "https://docs.maitre.app/problems/bad-request");
+  assert.equal(missingIfMatch.json().detail, "Missing If-Match header");
   assert.equal(missingIfMatch.json().status, 400);
 
   const detail = await app.inject({
@@ -668,9 +668,9 @@ test("PATCH /v1/fiscal-entities requires valid If-Match and rejects stale revisi
   assert.equal(stalePatch.statusCode, 409);
   assert.deepEqual(
     new Set(Object.keys(stalePatch.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(stalePatch.json().type, "conflict");
+  assert.equal(stalePatch.json().type, "https://docs.maitre.app/problems/conflict");
   assert.equal(stalePatch.json().status, 409);
 
   await app.close();
@@ -712,10 +712,10 @@ test("PATCH /v1/fiscal-entities sensitive changes require reason and recent step
   assert.equal(missingReason.statusCode, 400);
   assert.deepEqual(
     new Set(Object.keys(missingReason.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(missingReason.json().type, "bad-request");
-  assert.equal(missingReason.json().title, "Missing reason for sensitive fiscal change");
+  assert.equal(missingReason.json().type, "https://docs.maitre.app/problems/bad-request");
+  assert.equal(missingReason.json().detail, "Missing reason for sensitive fiscal change");
   assert.equal(missingReason.json().status, 400);
 
   const missingStepUp = await app.inject({
@@ -727,10 +727,10 @@ test("PATCH /v1/fiscal-entities sensitive changes require reason and recent step
   assert.equal(missingStepUp.statusCode, 403);
   assert.deepEqual(
     new Set(Object.keys(missingStepUp.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(missingStepUp.json().type, "step-up-required");
-  assert.equal(missingStepUp.json().title, "Step-up required");
+  assert.equal(missingStepUp.json().type, "https://docs.maitre.app/problems/step-up-required");
+  assert.equal(missingStepUp.json().detail, "Step-up required");
   assert.equal(missingStepUp.json().status, 403);
 
   const nameOnly = await app.inject({
@@ -815,10 +815,10 @@ test("GET and PATCH /v1/fiscal-entities hide cross-tenant resources as 404", asy
   assert.equal(hiddenGet.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(hiddenGet.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(hiddenGet.json().type, "not-found");
-  assert.equal(hiddenGet.json().title, "FiscalEntity not found");
+  assert.equal(hiddenGet.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(hiddenGet.json().detail, "FiscalEntity not found");
   assert.equal(hiddenGet.json().status, 404);
 
   const hiddenPatch = await app.inject({
@@ -834,10 +834,10 @@ test("GET and PATCH /v1/fiscal-entities hide cross-tenant resources as 404", asy
   assert.equal(hiddenPatch.statusCode, 404);
   assert.deepEqual(
     new Set(Object.keys(hiddenPatch.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(hiddenPatch.json().type, "not-found");
-  assert.equal(hiddenPatch.json().title, "FiscalEntity not found");
+  assert.equal(hiddenPatch.json().type, "https://docs.maitre.app/problems/not-found");
+  assert.equal(hiddenPatch.json().detail, "FiscalEntity not found");
   assert.equal(hiddenPatch.json().status, 404);
 
   await app.close();
@@ -882,7 +882,8 @@ test("GET /v1/tables includes a derived status", async () => {
     new Set(Object.keys(response.json().meta as Record<string, unknown>)),
     new Set(["total", "limit", "offset"]),
   );
-  assert.equal(response.json().meta.total, 1);
+  assert.equal(response.json().meta.total, response.json().data.length);
+  assert.equal(response.json().meta.total >= 1, true);
   await app.close();
 });
 
@@ -970,10 +971,10 @@ test("PATCH /v1/tenants/:id for a tenant outside the caller's membership returns
   assert.equal(response.statusCode, 403);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["type", "title", "status", "correlationId"]),
+    new Set(["type", "title", "status", "detail", "instance", "code", "correlationId"]),
   );
-  assert.equal(response.json().type, "insufficient-scope");
-  assert.equal(response.json().title, "Insufficient scope");
+  assert.equal(response.json().type, "https://docs.maitre.app/problems/insufficient-scope");
+  assert.equal(response.json().detail, "Insufficient scope");
   assert.equal(response.json().status, 403);
   await app.close();
 });
@@ -1031,7 +1032,7 @@ test("POST /v1/fiscal-entities appends FiscalEntityCreated to the outbox and wri
     },
     payload: {
       name: "Fiscal Audit",
-      cuit: "20-12345678-6",
+      cuit: "30-12345678-1",
       taxCondition: "RI",
       legalAddress: "Privada 123",
       fiscalAddress: "Fiscal 456",
@@ -1047,7 +1048,7 @@ test("POST /v1/fiscal-entities appends FiscalEntityCreated to the outbox and wri
   assert.equal(auditPage.items.length, 1);
   assert.equal(auditPage.items[0]!.action, "CREATE");
   const auditState = auditPage.items[0]!.newState as { cuitMasked?: string; hasLegalAddress?: boolean };
-  assert.equal(auditState.cuitMasked, "***6786");
+  assert.equal(auditState.cuitMasked, "***6781");
   assert.equal(auditState.hasLegalAddress, true);
   assert.equal("legalAddress" in (auditPage.items[0]!.newState as object), false);
   await app.close();

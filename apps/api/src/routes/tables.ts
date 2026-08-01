@@ -15,11 +15,11 @@ import { requireTenantContext, requirePermission } from "../http/request-context
 import { sendProblem, notFound, conflict, badRequest } from "../http/problem-details.js";
 import { parsePagination, paginate } from "../http/pagination.js";
 import { omitUndefined } from "../http/omit-undefined.js";
+import { projectTableStatus } from "../floor/table-status-projection.js";
 
-// SPEC-012 — Tables API. Status is DERIVED (never persisted); until Floor
-// (SPEC-057+) and Reservations (SPEC-095+) exist, no visit/reservation state
-// is available, so every table currently resolves to AVAILABLE or BLOCKED
-// (BLOCKED/CLEANING are the only inputs this route can source today).
+// SPEC-012 — Tables API. Status is derived and never persisted. CRUD
+// responses retain the Organization-level default; the dedicated status
+// endpoint uses the live Floor + Reservations projection.
 const createTableBodySchema = z.object({
   salonId: z.string().uuid(),
   number: z.string().min(1).max(10),
@@ -142,8 +142,12 @@ export async function registerTableRoutes(
       const ctx = await requireTenantContext(container, req);
       const table = await container.tables.findById(ctx.tenantId, req.params.id);
       if (!table) return sendProblem(reply, correlationId, notFound("Table"));
-      const { status } = withDerivedStatus(table);
-      return { status, occupancy: null };
+      const projection = await projectTableStatus(
+        container,
+        ctx.tenantId,
+        table,
+      );
+      return { data: projection };
     } catch (err) {
       return sendProblem(reply, correlationId, err);
     }

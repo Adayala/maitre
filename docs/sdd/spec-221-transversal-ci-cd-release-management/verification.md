@@ -4,14 +4,18 @@
 
 ### CAD-221-01 — CI entrega feedback rápido, determinista y bloquea cambios inválidos antes del merge
 
-- [ ] checkout limpio reproduce instalación, tests y build;
+- [x] checkout limpio reproduce instalación, tests y build;
 - [ ] commit inválido y secret canario bloquean pipeline;
-- [ ] cambio breaking OpenAPI no aprobado falla;
+- [x] cambio breaking OpenAPI no aprobado falla;
 - [ ] violación arquitectónica, RLS o Sonar bloquea merge;
-- [ ] run obsoleto se cancela sin cancelar otra rama;
-- [ ] path filtering nunca produce un gate requerido ausente;
-- [ ] `ci/required` reporta resultado único y no queda pending en docs-only;
+- [x] run obsoleto se cancela por workflow/ref sin cancelar otra rama;
+- [x] detector de impacto tiene tests y usa fallback completo para rutas compartidas/desconocidas;
+- [x] `E2E gate` agrega matrices selectivas y el journey release sin quedar pending en docs-only;
 - [ ] workflows declaran permisos mínimos y third-party actions están fijadas por SHA.
+
+Evidencia operativa actual:
+[cierre de gaps del MVP](../../operations/mvp-gap-closure-2026-07-30.md) y workflow `End-to-end`.
+Las actions están fijadas por versión mayor, no por SHA; ese criterio continúa abierto.
 
 ### CAD-221-02 — Previews y ambientes compartidos usan secretos, datos y permisos mínimos autorizados
 

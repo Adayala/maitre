@@ -2,11 +2,9 @@
 // mandatory fiscal content. Simple CRUD with a DRAFT -> PUBLISHED -> DEACTIVATED
 // lifecycle; publish freezes the template.
 //
-// DEFERRED (documented): the actual HTML/CSS rendering engine, the typed
-// variable allowlist, asset sanitization and length limits. `contentRef` is an
-// opaque string and `variableSchemaVersion` is a plain int. `preview` returns a
-// canned synthetic-fixture placeholder — it never renders real content and never
-// touches real customer/CAE/token data.
+// EMAIL content uses a constrained variable allowlist and escaped generated
+// HTML. Arbitrary template-driven HTML/CSS and remote assets remain unsupported.
+// Preview always uses synthetic data and never touches customer/CAE/token data.
 
 export type InvoiceTemplateStatus = "DRAFT" | "PUBLISHED" | "DEACTIVATED";
 
@@ -27,7 +25,10 @@ export interface InvoiceTemplate {
   updatedAt: Date;
 }
 
-const allowedTransitions: Record<InvoiceTemplateStatus, InvoiceTemplateStatus[]> = {
+const allowedTransitions: Record<
+  InvoiceTemplateStatus,
+  InvoiceTemplateStatus[]
+> = {
   DRAFT: ["PUBLISHED", "DEACTIVATED"],
   PUBLISHED: ["DEACTIVATED"],
   DEACTIVATED: [],
@@ -40,7 +41,10 @@ export class InvalidInvoiceTemplateTransitionError extends Error {
   }
 }
 
-export function assertTemplateTransition(from: InvoiceTemplateStatus, to: InvoiceTemplateStatus): void {
+export function assertTemplateTransition(
+  from: InvoiceTemplateStatus,
+  to: InvoiceTemplateStatus,
+): void {
   if (!allowedTransitions[from].includes(to)) {
     throw new InvalidInvoiceTemplateTransitionError(from, to);
   }
@@ -49,7 +53,6 @@ export function assertTemplateTransition(from: InvoiceTemplateStatus, to: Invoic
 export interface InvoiceTemplatePreview {
   templateId: string;
   status: InvoiceTemplateStatus;
-  // Canned synthetic-fixture placeholder — NOT a real render (deferred).
   renderedPlaceholder: string;
   fixtureOnly: true;
 }

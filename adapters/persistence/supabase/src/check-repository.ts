@@ -74,6 +74,17 @@ export class SupabaseCheckRepository implements CheckRepositoryPort {
     return data ? fromRow(data as CheckRow) : null;
   }
 
+  async listByBranch(tenantId: string, branchId: string): Promise<Check[]> {
+    const { data, error } = await this.client
+      .from(TABLE)
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .eq("branch_id", branchId)
+      .order("updated_at", { ascending: false });
+    if (error) throw error;
+    return (data as CheckRow[]).map(fromRow);
+  }
+
   async save(check: Check): Promise<void> {
     const { error } = await this.client.from(TABLE).upsert(toRow(check));
     if (error) throw error;

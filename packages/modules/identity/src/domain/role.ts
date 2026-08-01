@@ -408,6 +408,9 @@ export const ROLE_REGISTRY: Readonly<Record<string, Role>> = Object.freeze({
     name: "Waiter",
     description: "Order taking — operates Visit/Check per branch/ownership",
     permissions: [
+      // Required to resolve the selected branch's brand and active menu.
+      // Branch identity is non-sensitive operational metadata.
+      "branch:read",
       "menu:read",
       "category:read",
       "product:read",
@@ -454,7 +457,8 @@ export const ROLE_REGISTRY: Readonly<Record<string, Role>> = Object.freeze({
   role_cook: {
     id: "role_cook",
     name: "Cook",
-    description: "Kitchen operations — claims and drives production commands, reads worked orders",
+    description:
+      "Kitchen operations — claims and drives production commands, reads worked orders",
     permissions: [
       "table-status:read",
       "order:read",
