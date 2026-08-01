@@ -4,9 +4,10 @@
 
 El dashboard (`apps/web`) es completamente plano: Marcas, Sucursales y Usuarios son
 páginas separadas conectadas solo por dropdowns internos, sin jerarquía visual ni
-contexto persistente más allá del tenant. El modelo de dominio real es
-`Tenant → Marca → Sucursal → Salón` (`docs/foundation/06-domain-model.md`), pero
-nada en la UI lo refleja.
+contexto persistente más allá del tenant. El modelo físico real es
+`Tenant → Marca → Sucursal → Salón → Mesa` y la operación agrega
+`Jornada de servicio → Plaza → Mesas asignadas` (`docs/foundation/05-domain-glossary.md`),
+pero nada en la UI lo refleja.
 
 ## Objetivo
 
@@ -14,7 +15,12 @@ Dos pasos explícitos:
 
 1. **Selección de Tenant** (raíz) — pantalla dedicada, no un dropdown escondido.
 2. **Operación dentro del tenant activo** — árbol jerárquico `Marca → Sucursal →
-(Salones, Empleados)` con panel de detalle a la derecha.
+(Salones → Plazas → Mesas, Empleados)` con panel de detalle a la derecha.
+
+Una Plaza no es una mesa ni una medida de capacidad. Es una agrupación operativa
+de mesas de un mismo salón para una jornada de servicio, normalmente asignada a
+un mozo. Los cubiertos son la capacidad de cada mesa y se muestran como métrica,
+no como entidades CRUD individuales.
 
 ## Estado actual reusable
 
@@ -54,6 +60,9 @@ que la jerarquía no quede comprimida dentro del rail global:
   - Hijos visibles de cada Sucursal: grupos "Salones" (`/v1/salons?branchId=`) y
     "Equipo / mozos". Los registros se cargan lazy al expandir cada grupo y cada
     salón o relación laboral aparece como nodo individual editable.
+  - Cada salón puede expandir sus plazas. Cada plaza declara jornada, mesas y mozo
+    asignado; sus mesas muestran capacidad en cubiertos. Una misma mesa no puede
+    pertenecer a dos plazas de la misma jornada.
   - Cada nodo clickeable setea `selectedNode` (tipo + id) en estado local del
     `OrgExplorer` (no en `tenant-context` — es navegación de UI, no contexto de
     sesión).
@@ -63,7 +72,8 @@ que la jerarquía no quede comprimida dentro del rail global:
 - **Columna derecha — panel de detalle** (`org-detail-panel.tsx`):
   - Despacha por `selectedNode.type`:
     `brand → BrandDetailPanel`, `branch → BranchDetailPanel`,
-    `salon → SalonDetailPanel`, `branch-employees → BranchEmployeesPanel`,
+    `salon → SalonDetailPanel`, `plaza → PlazaDetailPanel`,
+    `table → TableDetailPanel`, `branch-employees → BranchEmployeesPanel`,
     `employee → EmployeeDetailPanel`.
   - Cada `*DetailPanel` recibe `id` (o `null` en modo alta) como prop y encapsula
     su propio fetch + mutación, extraídos de los componentes actuales:
@@ -72,6 +82,12 @@ que la jerarquía no quede comprimida dentro del rail global:
       (parte de sucursal).
     - `SalonDetailPanel` ← lógica de salones, hoy embebida en
       `branches-page.tsx`.
+    - `PlazaDetailPanel` crea/edita una plaza por jornada, limita las mesas al
+      salón padre y permite elegir un empleo/mozo elegible para la sucursal. Si
+      todavía no existe una jornada editable, permite crear la primera dentro
+      del mismo flujo.
+    - `TableDetailPanel` crea/edita número, nombre y capacidad en cubiertos usando
+      `/v1/tables` y `/v1/tables/:id`.
     - `BranchEmployeesPanel` ← `features/users/users-page.tsx`, con filtro por
       `branchId` agregado.
     - `EmployeeDetailPanel` edita perfil y acceso vía `/v1/users/:id`, además de
@@ -89,6 +105,19 @@ que la jerarquía no quede comprimida dentro del rail global:
   fusiona; el `OrgExplorer` vive en `/organizacion`. Esto evita perder la vista
   de estado/checklist ya construida en `overview-page.tsx`).
 - `setup-page.tsx` (`/setup`) no cambia — sigue siendo onboarding.
+
+## Presentación moderna y marca blanca
+
+- Sin una marca elegida el Dash usa el tema moderno de plataforma: sans
+  contemporánea, canvas frío claro, superficies blancas, bordes suaves, radios
+  medianos, profundidad contenida y un único acento índigo.
+- El theme de una marca no se aplica por ser la primera marca devuelta por la API.
+  Se aplica únicamente cuando el usuario elige explícitamente esa marca o un nodo
+  descendiente suyo y queda persistido por tenant.
+- El documento de presentación publicado reemplaza fonts, colores, assets, radio
+  y elevación; los tokens ausentes heredan el tema moderno de plataforma.
+- Cambiar tenant descarta cualquier marca seleccionada de otro tenant. No hay
+  fugas visuales ni de datos entre tenants.
 
 ## Fuera de alcance (esta iteración)
 
@@ -158,3 +187,8 @@ que la jerarquía no quede comprimida dentro del rail global:
    de al menos 44 px y no se introducen violaciones WCAG A/AA serias o críticas.
 8. Marca, sucursal, salón y persona/mozo pueden editarse desde el mismo árbol;
    la persona conserva edición de perfil, acceso y relación laboral.
+9. Un salón muestra plazas por jornada; una plaza puede editar nombre, jornada,
+   mozo y mesas, y cada mesa muestra/edita su capacidad en cubiertos.
+10. Sin marca elegida se renderiza el tema moderno de plataforma. Elegir Marca A
+    aplica sólo su presentación publicada; cambiar a Marca B o de tenant reemplaza
+    los tokens sin conservar valores de la marca anterior.

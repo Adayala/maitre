@@ -17,7 +17,10 @@ import {
   type OrganizationBrand,
   type OrganizationBranch,
   type OrganizationNode,
+  type OrganizationPlaza,
   type OrganizationSalon,
+  type OrganizationServicePeriod,
+  type OrganizationTable,
   type OrganizationUser,
 } from "./org-explorer-model.js";
 
@@ -70,6 +73,24 @@ export function OrgDetailPanel({
           key={node.id ?? `new-${node.parentId}`}
           id={node.id}
           branchId={node.parentId}
+          onSelect={onSelect}
+          onNotify={onNotify}
+        />
+      ) : null}
+      {node.type === "plaza" ? (
+        <PlazaDetailPanel
+          key={node.id ?? `new-${node.parentId}`}
+          id={node.id}
+          salonId={node.parentId}
+          onSelect={onSelect}
+          onNotify={onNotify}
+        />
+      ) : null}
+      {node.type === "table" ? (
+        <TableDetailPanel
+          key={node.id ?? `new-${node.parentId}`}
+          id={node.id}
+          salonId={node.parentId}
           onSelect={onSelect}
           onNotify={onNotify}
         />
@@ -456,6 +477,439 @@ function SalonDetailPanel({
               </button>
             ) : null}
           </div>
+        </form>
+      </StateView>
+    </PanelFrame>
+  );
+}
+
+function TableDetailPanel({
+  id,
+  salonId,
+  onSelect,
+  onNotify,
+}: {
+  id: string | null;
+  salonId: string;
+  onSelect: (node: OrganizationNode) => void;
+  onNotify: (message: string) => void;
+}) {
+  const queryClient = useQueryClient();
+  const tableQuery = useTenantQuery<{ data: OrganizationTable }>(
+    `organization-table-${id ?? "new"}`,
+    `/v1/tables/${id ?? "new"}`,
+    { enabled: Boolean(id) },
+  );
+  const salonQuery = useTenantQuery<{ data: OrganizationSalon }>(
+    `organization-parent-salon-${salonId}`,
+    `/v1/salons/${salonId}`,
+  );
+  const [number, setNumber] = useState("");
+  const [name, setName] = useState("");
+  const [capacity, setCapacity] = useState(2);
+  const [isHydrated, setIsHydrated] = useState(!id);
+  const mutation = usePanelMutation();
+
+  useEffect(() => {
+    if (!tableQuery.data?.data) return;
+    setNumber(tableQuery.data.data.number);
+    setName(tableQuery.data.data.name ?? "");
+    setCapacity(tableQuery.data.data.capacity);
+    setIsHydrated(true);
+  }, [tableQuery.data]);
+
+  async function save(event: FormEvent) {
+    event.preventDefault();
+    const result = await mutation.run<{ data: OrganizationTable }>(
+      id ? `/v1/tables/${id}` : "/v1/tables",
+      id ? "PATCH" : "POST",
+      {
+        ...(id ? {} : { salonId }),
+        number,
+        capacity,
+        ...(name.trim() ? { name: name.trim() } : {}),
+      },
+    );
+    if (!result) return;
+    await queryClient.invalidateQueries({
+      queryKey: [`organization-tables-${salonId}`],
+    });
+    if (!id) {
+      onNotify("Mesa creada correctamente.");
+      onSelect({ type: "table", id: result.data.id, parentId: salonId });
+    }
+  }
+
+  return (
+    <PanelFrame
+      kicker="Nivel 05 / Mesa"
+      title={id ? "Detalle de mesa" : "Nueva mesa"}
+      subtitle={`Salón: ${salonQuery.data?.data.name ?? "cargando…"}`}
+    >
+      <StateView
+        isLoading={
+          salonQuery.isLoading ||
+          (Boolean(id) && (tableQuery.isLoading || !isHydrated))
+        }
+        error={(salonQuery.error ?? tableQuery.error) as Error | null}
+        onRetry={() =>
+          void Promise.all([salonQuery.refetch(), tableQuery.refetch()])
+        }
+      >
+        <form className="org-form" onSubmit={(event) => void save(event)}>
+          <label>
+            Número
+            <input
+              required
+              maxLength={10}
+              value={number}
+              onChange={(event) => setNumber(event.target.value)}
+            />
+          </label>
+          <label>
+            Nombre visible
+            <input
+              maxLength={50}
+              placeholder="Ej. Ventana"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+            />
+          </label>
+          <label>
+            Cubiertos
+            <input
+              required
+              type="number"
+              min={1}
+              max={20}
+              value={capacity}
+              onChange={(event) => setCapacity(Number(event.target.value))}
+            />
+            <small>Capacidad máxima de comensales de esta mesa.</small>
+          </label>
+          <PanelMutationFeedback mutation={mutation} />
+          <button type="submit" disabled={mutation.isSaving}>
+            {mutation.isSaving
+              ? "Guardando…"
+              : id
+                ? "Guardar mesa"
+                : "Crear mesa"}
+          </button>
+        </form>
+      </StateView>
+    </PanelFrame>
+  );
+}
+
+function PlazaDetailPanel({
+  id,
+  salonId,
+  onSelect,
+  onNotify,
+}: {
+  id: string | null;
+  salonId: string;
+  onSelect: (node: OrganizationNode) => void;
+  onNotify: (message: string) => void;
+}) {
+  const queryClient = useQueryClient();
+  const plazaQuery = useTenantQuery<{ data: OrganizationPlaza }>(
+    `organization-plaza-${id ?? "new"}`,
+    `/v1/plazas/${id ?? "new"}`,
+    { enabled: Boolean(id) },
+  );
+  const salonQuery = useTenantQuery<{ data: OrganizationSalon }>(
+    `organization-parent-salon-${salonId}`,
+    `/v1/salons/${salonId}`,
+  );
+  const branchId = salonQuery.data?.data.branchId;
+  const periodsQuery = useTenantQuery<{ data: OrganizationServicePeriod[] }>(
+    `organization-periods-${branchId ?? "pending"}`,
+    `/v1/branches/${branchId ?? "pending"}/service-periods`,
+    { enabled: Boolean(branchId) },
+  );
+  const tablesQuery = useTenantQuery<{ data: OrganizationTable[] }>(
+    `organization-tables-${salonId}`,
+    `/v1/tables?salonId=${encodeURIComponent(salonId)}`,
+  );
+  const employmentsQuery = useTenantQuery<{ data: BranchEmployment[] }>(
+    `branch-employments-${branchId ?? "pending"}`,
+    `/v1/branches/${branchId ?? "pending"}/employments`,
+    { enabled: Boolean(branchId) },
+  );
+  const usersQuery = useTenantQuery<{ data: OrganizationUser[] }>(
+    "organization-users",
+    "/v1/users",
+    { enabled: Boolean(branchId) },
+  );
+  const editablePeriods = (periodsQuery.data?.data ?? []).filter(
+    (period) => period.status === "PLANNED" || period.status === "OPEN",
+  );
+  const tables = tablesQuery.data?.data ?? [];
+  const employments = branchId
+    ? employmentsForBranch(employmentsQuery.data?.data ?? [], branchId).filter(
+        (employment) => employment.status === "ACTIVE",
+      )
+    : [];
+  const [name, setName] = useState("");
+  const [servicePeriodId, setServicePeriodId] = useState("");
+  const [waiterEmploymentId, setWaiterEmploymentId] = useState("");
+  const [tableIds, setTableIds] = useState<string[]>([]);
+  const [isHydrated, setIsHydrated] = useState(!id);
+  const mutation = usePanelMutation();
+  const periodMutation = usePanelMutation();
+  const [newPeriodName, setNewPeriodName] = useState("Servicio principal");
+  const [newPeriodDate, setNewPeriodDate] = useState(() =>
+    new Date().toISOString().slice(0, 10),
+  );
+  const [newPeriodType, setNewPeriodType] = useState<
+    "BREAKFAST" | "LUNCH" | "DINNER" | "OTHER"
+  >("OTHER");
+
+  useEffect(() => {
+    const plaza = plazaQuery.data?.data;
+    if (!plaza) return;
+    setName(plaza.name);
+    setServicePeriodId(plaza.servicePeriodId);
+    setWaiterEmploymentId(plaza.waiterEmploymentId ?? "");
+    setTableIds(plaza.tableIds);
+    setIsHydrated(true);
+  }, [plazaQuery.data]);
+
+  useEffect(() => {
+    if (!id && !servicePeriodId && editablePeriods[0]) {
+      setServicePeriodId(editablePeriods[0].id);
+    }
+  }, [editablePeriods, id, servicePeriodId]);
+
+  function toggleTable(tableId: string) {
+    setTableIds((current) =>
+      current.includes(tableId)
+        ? current.filter((item) => item !== tableId)
+        : [...current, tableId],
+    );
+  }
+
+  async function createPeriod() {
+    if (!branchId) return;
+    const result = await periodMutation.run<{
+      data: OrganizationServicePeriod;
+    }>(`/v1/branches/${branchId}/service-periods`, "POST", {
+      businessDate: newPeriodDate,
+      name: newPeriodName,
+      type: newPeriodType,
+    });
+    if (!result) return;
+    setServicePeriodId(result.data.id);
+    await periodsQuery.refetch();
+  }
+
+  async function save(event: FormEvent) {
+    event.preventDefault();
+    const result = await mutation.run<{ data: OrganizationPlaza }>(
+      id ? `/v1/plazas/${id}` : "/v1/plazas",
+      id ? "PATCH" : "POST",
+      {
+        ...(id ? {} : { salonId, servicePeriodId }),
+        name,
+        waiterEmploymentId: waiterEmploymentId || null,
+        tableIds,
+      },
+    );
+    if (!result) return;
+    await queryClient.invalidateQueries({
+      queryKey: [`organization-plazas-${salonId}`],
+    });
+    if (!id) {
+      onNotify("Plaza creada y asignada a la jornada.");
+      onSelect({ type: "plaza", id: result.data.id, parentId: salonId });
+    }
+  }
+
+  const loadError =
+    plazaQuery.error ??
+    salonQuery.error ??
+    periodsQuery.error ??
+    tablesQuery.error ??
+    employmentsQuery.error ??
+    usersQuery.error;
+
+  return (
+    <PanelFrame
+      kicker="Nivel 04 / Plaza"
+      title={id ? "Detalle de plaza" : "Nueva plaza"}
+      subtitle={`Agrupación operativa de mesas en ${salonQuery.data?.data.name ?? "el salón"}`}
+    >
+      <StateView
+        isLoading={
+          salonQuery.isLoading ||
+          periodsQuery.isLoading ||
+          tablesQuery.isLoading ||
+          employmentsQuery.isLoading ||
+          usersQuery.isLoading ||
+          (Boolean(id) && (plazaQuery.isLoading || !isHydrated))
+        }
+        error={loadError as Error | null}
+        onRetry={() =>
+          void Promise.all([
+            plazaQuery.refetch(),
+            salonQuery.refetch(),
+            periodsQuery.refetch(),
+            tablesQuery.refetch(),
+            employmentsQuery.refetch(),
+            usersQuery.refetch(),
+          ])
+        }
+      >
+        <form className="org-form" onSubmit={(event) => void save(event)}>
+          <label>
+            Nombre de la plaza
+            <input
+              required
+              minLength={2}
+              maxLength={80}
+              placeholder="Ej. Terraza norte"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+            />
+          </label>
+          <label>
+            Jornada de servicio
+            <select
+              required
+              disabled={Boolean(id)}
+              value={servicePeriodId}
+              onChange={(event) => setServicePeriodId(event.target.value)}
+            >
+              <option value="" disabled>
+                Elegir jornada
+              </option>
+              {editablePeriods.map((period) => (
+                <option key={period.id} value={period.id}>
+                  {period.name} · {period.businessDate} · {period.status}
+                </option>
+              ))}
+            </select>
+            {editablePeriods.length === 0 ? (
+              <small role="status">
+                Creá la primera jornada acá para poder organizar sus plazas.
+              </small>
+            ) : null}
+          </label>
+          {editablePeriods.length === 0 ? (
+            <fieldset className="org-inline-period">
+              <legend>Primera jornada de servicio</legend>
+              <label>
+                Nombre
+                <input
+                  required
+                  value={newPeriodName}
+                  onChange={(event) => setNewPeriodName(event.target.value)}
+                />
+              </label>
+              <label>
+                Fecha operativa
+                <input
+                  required
+                  type="date"
+                  value={newPeriodDate}
+                  onChange={(event) => setNewPeriodDate(event.target.value)}
+                />
+              </label>
+              <label>
+                Tipo
+                <select
+                  value={newPeriodType}
+                  onChange={(event) =>
+                    setNewPeriodType(event.target.value as typeof newPeriodType)
+                  }
+                >
+                  <option value="BREAKFAST">Desayuno</option>
+                  <option value="LUNCH">Almuerzo</option>
+                  <option value="DINNER">Cena</option>
+                  <option value="OTHER">Otro servicio</option>
+                </select>
+              </label>
+              <PanelMutationFeedback mutation={periodMutation} />
+              <button
+                type="button"
+                disabled={
+                  periodMutation.isSaving ||
+                  !newPeriodName.trim() ||
+                  !newPeriodDate
+                }
+                onClick={() => void createPeriod()}
+              >
+                {periodMutation.isSaving ? "Creando…" : "Crear jornada"}
+              </button>
+            </fieldset>
+          ) : null}
+          <label>
+            Mozo asignado
+            <select
+              value={waiterEmploymentId}
+              onChange={(event) => setWaiterEmploymentId(event.target.value)}
+            >
+              <option value="">Sin asignar todavía</option>
+              {employments.map((employment) => {
+                const user = userForEmployment(
+                  usersQuery.data?.data ?? [],
+                  employment,
+                );
+                return (
+                  <option key={employment.id} value={employment.id}>
+                    {user?.name ?? employment.personRef} ·{" "}
+                    {employment.employeeCode}
+                  </option>
+                );
+              })}
+            </select>
+          </label>
+          <fieldset className="org-table-picker">
+            <legend>Mesas de esta plaza</legend>
+            <p>
+              Los cubiertos se calculan desde la capacidad de las mesas
+              elegidas.
+            </p>
+            {tables.map((table) => (
+              <label key={table.id}>
+                <input
+                  type="checkbox"
+                  checked={tableIds.includes(table.id)}
+                  onChange={() => toggleTable(table.id)}
+                />
+                <span>{table.name || `Mesa ${table.number}`}</span>
+                <small>{table.capacity} cubiertos</small>
+              </label>
+            ))}
+            {tables.length === 0 ? (
+              <p className="org-panel-note">
+                Creá al menos una mesa en el salón antes de armar una plaza.
+              </p>
+            ) : null}
+          </fieldset>
+          <div className="org-plaza-summary" aria-live="polite">
+            <strong>{tableIds.length} mesa(s)</strong>
+            <span>
+              {tables
+                .filter((table) => tableIds.includes(table.id))
+                .reduce((total, table) => total + table.capacity, 0)}{" "}
+              cubiertos potenciales
+            </span>
+          </div>
+          <PanelMutationFeedback mutation={mutation} />
+          <button
+            type="submit"
+            disabled={
+              mutation.isSaving || !servicePeriodId || tableIds.length === 0
+            }
+          >
+            {mutation.isSaving
+              ? "Guardando…"
+              : id
+                ? "Guardar plaza"
+                : "Crear plaza"}
+          </button>
         </form>
       </StateView>
     </PanelFrame>
@@ -849,9 +1303,7 @@ function EmployeeDetailPanel({
             method: "PATCH",
             body: {
               roleIds: [roleId],
-              ...(membershipStatus !== "INVITED"
-                ? { membershipStatus }
-                : {}),
+              ...(membershipStatus !== "INVITED" ? { membershipStatus } : {}),
             },
           }),
         );
@@ -880,7 +1332,9 @@ function EmployeeDetailPanel({
   return (
     <PanelFrame
       kicker="Nivel 04 / Persona"
-      title={linkedUser?.name ?? employment?.personRef ?? "Detalle de integrante"}
+      title={
+        linkedUser?.name ?? employment?.personRef ?? "Detalle de integrante"
+      }
       subtitle={`Equipo de ${branchQuery.data?.data.name ?? "la sucursal"}`}
     >
       <StateView
@@ -906,7 +1360,10 @@ function EmployeeDetailPanel({
           ])
         }
       >
-        <form className="org-form org-form--employee" onSubmit={(event) => void save(event)}>
+        <form
+          className="org-form org-form--employee"
+          onSubmit={(event) => void save(event)}
+        >
           <fieldset>
             <legend>Acceso al tenant</legend>
             {linkedUser ? (
@@ -957,8 +1414,8 @@ function EmployeeDetailPanel({
               </>
             ) : (
               <p className="org-panel-note">
-                Esta relación laboral no tiene un usuario vinculable. Podés editar
-                sus datos laborales, pero no su acceso.
+                Esta relación laboral no tiene un usuario vinculable. Podés
+                editar sus datos laborales, pero no su acceso.
               </p>
             )}
           </fieldset>
@@ -1014,7 +1471,10 @@ function EmployeeDetailPanel({
               {message}
             </p>
           ) : null}
-          <button type="submit" disabled={isSaving || (Boolean(linkedUser) && !roleId)}>
+          <button
+            type="submit"
+            disabled={isSaving || (Boolean(linkedUser) && !roleId)}
+          >
             {isSaving ? "Guardando…" : "Guardar persona"}
           </button>
         </form>

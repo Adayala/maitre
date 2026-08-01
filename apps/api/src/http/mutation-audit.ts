@@ -22,6 +22,7 @@ const coveredDomainSegments = new Set([
   "checks",
   "payments",
   "service-periods",
+  "plazas",
   "orders",
   "kitchen",
   "stations",
@@ -77,6 +78,8 @@ function policy(
 }
 
 export const SENSITIVE_MUTATION_POLICIES: readonly RegisteredPolicy[] = [
+  policy("POST", "/v1/plazas", "PLAZA_CREATED", "PLAZA", "CREATE"),
+  policy("PATCH", "/v1/plazas/:id", "PLAZA_UPDATED", "PLAZA"),
   policy(
     "POST",
     "/v1/branches/:branchId/service-periods",

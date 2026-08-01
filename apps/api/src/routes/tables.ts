@@ -7,12 +7,21 @@ import {
   DuplicateTableNumberError,
   InvalidTableCapacityError,
   TableCapacityExceedsSalonError,
+  assertValidTableCapacity,
   computeTableStatus,
   type Table,
 } from "@maitre/organization";
 import type { Container } from "../composition/container.js";
-import { requireTenantContext, requirePermission } from "../http/request-context.js";
-import { sendProblem, notFound, conflict, badRequest } from "../http/problem-details.js";
+import {
+  requireTenantContext,
+  requirePermission,
+} from "../http/request-context.js";
+import {
+  sendProblem,
+  notFound,
+  conflict,
+  badRequest,
+} from "../http/problem-details.js";
 import { parsePagination, paginate } from "../http/pagination.js";
 import { omitUndefined } from "../http/omit-undefined.js";
 import { projectTableStatus } from "../floor/table-status-projection.js";
@@ -56,7 +65,8 @@ export async function registerTableRoutes(
       const body = createTableBodySchema.parse(req.body);
 
       const salon = await container.salons.findById(ctx.tenantId, body.salonId);
-      if (!salon) return sendProblem(reply, correlationId, badRequest("Unknown salonId"));
+      if (!salon)
+        return sendProblem(reply, correlationId, badRequest("Unknown salonId"));
 
       const table = await createTable(
         { salons: container.salons, tables: container.tables },
@@ -76,7 +86,10 @@ export async function registerTableRoutes(
       if (err instanceof DuplicateTableNumberError) {
         return sendProblem(reply, correlationId, conflict(err.message));
       }
-      if (err instanceof TableCapacityExceedsSalonError || err instanceof InvalidTableCapacityError) {
+      if (
+        err instanceof TableCapacityExceedsSalonError ||
+        err instanceof InvalidTableCapacityError
+      ) {
         return sendProblem(reply, correlationId, badRequest(err.message));
       }
       if (err instanceof z.ZodError) {
@@ -93,8 +106,13 @@ export async function registerTableRoutes(
       requirePermission(ctx, "table:read");
       const query = req.query as Record<string, string | undefined>;
       const salonId = query["salonId"];
-      const tables = salonId ? await container.tables.listBySalon(ctx.tenantId, salonId) : [];
-      const result = paginate(tables.map(withDerivedStatus), parsePagination(req));
+      const tables = salonId
+        ? await container.tables.listBySalon(ctx.tenantId, salonId)
+        : [];
+      const result = paginate(
+        tables.map(withDerivedStatus),
+        parsePagination(req),
+      );
       return result;
     } catch (err) {
       return sendProblem(reply, correlationId, err);
@@ -106,7 +124,10 @@ export async function registerTableRoutes(
     try {
       const ctx = await requireTenantContext(container, req);
       requirePermission(ctx, "table:read");
-      const table = await container.tables.findById(ctx.tenantId, req.params.id);
+      const table = await container.tables.findById(
+        ctx.tenantId,
+        req.params.id,
+      );
       if (!table) return sendProblem(reply, correlationId, notFound("Table"));
       return { data: withDerivedStatus(table) };
     } catch (err) {
@@ -114,42 +135,92 @@ export async function registerTableRoutes(
     }
   });
 
-  app.patch<{ Params: { id: string } }>("/v1/tables/:id", async (req, reply) => {
-    const correlationId = randomUUID();
-    try {
-      const ctx = await requireTenantContext(container, req);
-      requirePermission(ctx, "table:write");
-      const table = await container.tables.findById(ctx.tenantId, req.params.id);
-      if (!table) return sendProblem(reply, correlationId, notFound("Table"));
+  app.patch<{ Params: { id: string } }>(
+    "/v1/tables/:id",
+    async (req, reply) => {
+      const correlationId = randomUUID();
+      try {
+        const ctx = await requireTenantContext(container, req);
+        requirePermission(ctx, "table:write");
+        const table = await container.tables.findById(
+          ctx.tenantId,
+          req.params.id,
+        );
+        if (!table) return sendProblem(reply, correlationId, notFound("Table"));
 
-      const body = omitUndefined(patchTableBodySchema.parse(req.body));
-      const updated: Table = { ...table, ...body, updatedAt: new Date() };
-      await container.tables.save(updated);
-      return { data: withDerivedStatus(updated) };
-    } catch (err) {
-      if (err instanceof z.ZodError) {
-        return sendProblem(reply, correlationId, badRequest(err.message));
+        const body = omitUndefined(patchTableBodySchema.parse(req.body));
+        const salon = await container.salons.findById(
+          ctx.tenantId,
+          table.salonId,
+        );
+        if (!salon)
+          return sendProblem(
+            reply,
+            correlationId,
+            badRequest("Unknown salonId"),
+          );
+        const capacity = body.capacity ?? table.capacity;
+        const number = body.number ?? table.number;
+        assertValidTableCapacity(capacity, salon.capacity);
+        const duplicate = await container.tables.findByNumber(
+          ctx.tenantId,
+          table.salonId,
+          number,
+        );
+        if (duplicate && duplicate.id !== table.id) {
+          return sendProblem(
+            reply,
+            correlationId,
+            conflict(
+              new DuplicateTableNumberError(number, table.salonId).message,
+            ),
+          );
+        }
+        const updated: Table = {
+          ...table,
+          ...body,
+          capacity,
+          number,
+          updatedAt: new Date(),
+          updatedBy: ctx.userId,
+        };
+        await container.tables.save(updated);
+        return { data: withDerivedStatus(updated) };
+      } catch (err) {
+        if (
+          err instanceof z.ZodError ||
+          err instanceof TableCapacityExceedsSalonError ||
+          err instanceof InvalidTableCapacityError
+        ) {
+          return sendProblem(reply, correlationId, badRequest(err.message));
+        }
+        return sendProblem(reply, correlationId, err);
       }
-      return sendProblem(reply, correlationId, err);
-    }
-  });
+    },
+  );
 
   // SPEC-012 — GET /tables/:id/status is open to all authenticated users
   // (no permission check beyond tenant membership).
-  app.get<{ Params: { id: string } }>("/v1/tables/:id/status", async (req, reply) => {
-    const correlationId = randomUUID();
-    try {
-      const ctx = await requireTenantContext(container, req);
-      const table = await container.tables.findById(ctx.tenantId, req.params.id);
-      if (!table) return sendProblem(reply, correlationId, notFound("Table"));
-      const projection = await projectTableStatus(
-        container,
-        ctx.tenantId,
-        table,
-      );
-      return { data: projection };
-    } catch (err) {
-      return sendProblem(reply, correlationId, err);
-    }
-  });
+  app.get<{ Params: { id: string } }>(
+    "/v1/tables/:id/status",
+    async (req, reply) => {
+      const correlationId = randomUUID();
+      try {
+        const ctx = await requireTenantContext(container, req);
+        const table = await container.tables.findById(
+          ctx.tenantId,
+          req.params.id,
+        );
+        if (!table) return sendProblem(reply, correlationId, notFound("Table"));
+        const projection = await projectTableStatus(
+          container,
+          ctx.tenantId,
+          table,
+        );
+        return { data: projection };
+      } catch (err) {
+        return sendProblem(reply, correlationId, err);
+      }
+    },
+  );
 }

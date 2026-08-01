@@ -2,6 +2,8 @@ export type OrganizationNode =
   | { type: "brand"; id: string | null }
   | { type: "branch"; id: string | null; parentId: string }
   | { type: "salon"; id: string | null; parentId: string }
+  | { type: "plaza"; id: string | null; parentId: string }
+  | { type: "table"; id: string | null; parentId: string }
   | { type: "branch-employees"; id: string }
   | { type: "employee"; id: string; parentId: string };
 
@@ -27,6 +29,33 @@ export interface OrganizationSalon {
   name: string;
   capacity: number;
   status: "ACTIVE" | "INACTIVE";
+}
+
+export interface OrganizationTable {
+  id: string;
+  branchId: string;
+  salonId: string;
+  number: string;
+  name?: string;
+  capacity: number;
+}
+
+export interface OrganizationPlaza {
+  id: string;
+  branchId: string;
+  salonId: string;
+  servicePeriodId: string;
+  name: string;
+  waiterEmploymentId?: string | null;
+  tableIds: string[];
+}
+
+export interface OrganizationServicePeriod {
+  id: string;
+  branchId: string;
+  businessDate: string;
+  name: string;
+  status: "PLANNED" | "OPEN" | "CLOSING" | "CLOSED" | "CANCELLED";
 }
 
 export interface BranchEmployment {
@@ -91,8 +120,7 @@ export function userForEmployment(
   return (
     users.find(
       (user) =>
-        user.id === employment.personRef ||
-        user.email === employment.personRef,
+        user.id === employment.personRef || user.email === employment.personRef,
     ) ?? null
   );
 }
@@ -131,7 +159,12 @@ export function organizationNodeFromSearch(search: string) {
   const id = params.get("id") || null;
 
   if (type === "brand") return { type, id } satisfies OrganizationNode;
-  if (type === "branch" || type === "salon") {
+  if (
+    type === "branch" ||
+    type === "salon" ||
+    type === "plaza" ||
+    type === "table"
+  ) {
     const parentId = params.get("parentId");
     if (!parentId) return null;
     return { type, id, parentId } satisfies OrganizationNode;
@@ -155,6 +188,8 @@ export function organizationPanelTitle(node: OrganizationNode | null) {
     brand: { detail: "marca", create: "Nueva marca" },
     branch: { detail: "sucursal", create: "Nueva sucursal" },
     salon: { detail: "salón", create: "Nuevo salón" },
+    plaza: { detail: "plaza", create: "Nueva plaza" },
+    table: { detail: "mesa", create: "Nueva mesa" },
   } as const;
   return node.id
     ? `Detalle de ${labels[node.type].detail}`
