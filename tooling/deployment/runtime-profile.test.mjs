@@ -110,5 +110,17 @@ test("Vercel production workflows validate Maitre's logical demo environment", (
     assert.match(contents, /--expect demo/);
     assert.doesNotMatch(contents, /--expect production/);
     assert.match(contents, /check-deployment-health\.mjs/);
+    assert.match(
+      contents,
+      /MAITRE_API_HEALTH_URL: https:\/\/maitre-api\.vercel\.app/,
+    );
+    assert.match(
+      contents,
+      /check-deployment-health\.mjs "\$MAITRE_API_HEALTH_URL"/,
+    );
+    assert.doesNotMatch(
+      contents,
+      /check-deployment-health\.mjs "\$deployment_url"/,
+    );
   }
 });

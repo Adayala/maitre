@@ -30,13 +30,15 @@ export const PLATFORM_PRESENTATION: BrandPresentationDocument = {
   },
   typography: {
     heading: {
-      family: "Inter",
-      fallback: "ui-sans-serif, system-ui, sans-serif",
+      family: "system-ui",
+      fallback:
+        '-apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", sans-serif',
       weights: [600, 700],
     },
     body: {
-      family: "Inter",
-      fallback: "ui-sans-serif, system-ui, sans-serif",
+      family: "system-ui",
+      fallback:
+        '-apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", sans-serif',
       weights: [400, 500, 600],
     },
   },

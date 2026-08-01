@@ -28,6 +28,7 @@ jobs:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: team_cvlEbUCNF87Ldam2yzMhKBkc
       VERCEL_PROJECT_ID: ${{ matrix.project_id }}
+      MAITRE_API_HEALTH_URL: https://maitre-api.vercel.app
     steps:
       - uses: actions/checkout@v7
 
@@ -56,5 +57,5 @@ jobs:
           fi
           echo "Deployment ready at $deployment_url"
           if [[ "${{ matrix.name }}" == "api" ]]; then
-            node tooling/deployment/check-deployment-health.mjs "$deployment_url"
+            node tooling/deployment/check-deployment-health.mjs "$MAITRE_API_HEALTH_URL"
           fi

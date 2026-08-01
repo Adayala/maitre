@@ -355,6 +355,136 @@ const DEMO_CATEGORY_ID = "00000000-0000-0000-0000-00000000000a";
 const DEMO_PRODUCT_ID = "00000000-0000-0000-0000-00000000000b";
 const DEMO_ACCESS_TOKEN = "demo-token";
 
+function buildDemoPresentationDocument(
+  tenantId: string,
+): BrandPresentation["document"] {
+  const assetUrl = (assetId: string) =>
+    `/public/tenants/${tenantId}/brands/${DEMO_BRAND_ID}/assets/${assetId}`;
+  return {
+    schemaVersion: 1,
+    identity: {
+      displayName: "Casa Maitre",
+      shortName: "Casa Maitre",
+      tagline: "Cocina porteña, servicio contemporáneo",
+    },
+    assets: {
+      logo: {
+        assetId: "00000000-0000-0000-0000-000000000021",
+        kind: "LOGO",
+        url: assetUrl("00000000-0000-0000-0000-000000000021"),
+        mimeType: "image/svg+xml",
+        checksum: "demo-logo-v1",
+        width: 640,
+        height: 180,
+      },
+      logoDark: {
+        assetId: "00000000-0000-0000-0000-000000000022",
+        kind: "LOGO_DARK",
+        url: assetUrl("00000000-0000-0000-0000-000000000022"),
+        mimeType: "image/svg+xml",
+        checksum: "demo-logo-dark-v1",
+        width: 640,
+        height: 180,
+      },
+      favicon: {
+        assetId: "00000000-0000-0000-0000-000000000023",
+        kind: "FAVICON",
+        url: assetUrl("00000000-0000-0000-0000-000000000023"),
+        mimeType: "image/svg+xml",
+        checksum: "demo-favicon-v1",
+        width: 128,
+        height: 128,
+      },
+      hero: {
+        assetId: "00000000-0000-0000-0000-000000000024",
+        kind: "HERO",
+        url: assetUrl("00000000-0000-0000-0000-000000000024"),
+        mimeType: "image/png",
+        checksum: "demo-hero-v1",
+        width: 1664,
+        height: 936,
+      },
+    },
+    colors: {
+      primary: "#FF5C35",
+      secondary: "#172033",
+      accent: "#14B8A6",
+      canvas: "#F6F8FC",
+      surface: "#FFFFFF",
+      text: "#172033",
+      mutedText: "#667085",
+      border: "#E1E7EF",
+    },
+    typography: {
+      heading: {
+        family: "system-ui",
+        fallback:
+          '-apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", sans-serif',
+        weights: [600, 700],
+      },
+      body: {
+        family: "system-ui",
+        fallback:
+          '-apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", sans-serif',
+        weights: [400, 500, 600],
+      },
+      numeric: {
+        family: "system-ui",
+        fallback: '"SFMono-Regular", Consolas, monospace',
+        weights: [600, 700],
+      },
+      scale: "compact",
+    },
+    shape: { radius: "large", elevation: "subtle" },
+    templates: {
+      PUBLIC_HOME: { templateId: "image-led", variant: "fresh" },
+      MENU: { templateId: "visual", variant: "contemporary" },
+      RESERVATION: { templateId: "guided" },
+      WAITER: { templateId: "comfortable" },
+      HOST: { templateId: "floor-first" },
+      KITCHEN: { templateId: "high-contrast" },
+      CASHIER: { templateId: "compact" },
+      DASH: { templateId: "contemporary" },
+    },
+    content: { locale: "es-AR" },
+  };
+}
+
+export function isLegacyDemoPresentation(
+  presentation: BrandPresentation,
+): boolean {
+  return (
+    presentation.id === DEMO_PRESENTATION_ID &&
+    presentation.revision === 1 &&
+    presentation.document.colors.primary === "#A63D2F" &&
+    presentation.document.typography.heading?.family === "Georgia"
+  );
+}
+
+export async function ensureDemoBrandPresentation(
+  repository: BrandPresentationRepositoryPort,
+  tenantId: string,
+  brandId: string,
+  now: Date,
+): Promise<void> {
+  const published = await repository.findPublished(tenantId, brandId);
+  if (published && !isLegacyDemoPresentation(published)) return;
+  await repository.save({
+    ...(published ?? {
+      id: DEMO_PRESENTATION_ID,
+      tenantId,
+      brandId,
+      revision: 1,
+      status: "PUBLISHED" as const,
+      createdAt: now,
+      createdBy: DEMO_USER_ID,
+      publishedAt: now,
+      publishedBy: DEMO_USER_ID,
+    }),
+    document: buildDemoPresentationDocument(tenantId),
+  });
+}
+
 const catalogItem = (
   code: string,
   name: string,
@@ -1219,106 +1349,12 @@ async function ensureSeed(
     });
   }
 
-  if (!(await repos.brandPresentations.findPublished(tenant.id, brand.id))) {
-    const presentation: BrandPresentation = {
-      id: DEMO_PRESENTATION_ID,
-      tenantId: tenant.id,
-      brandId: brand.id,
-      revision: 1,
-      status: "PUBLISHED",
-      document: {
-        schemaVersion: 1,
-        identity: {
-          displayName: "Casa Maitre",
-          shortName: "Casa Maitre",
-          tagline: "Cocina porteña, servicio contemporáneo",
-        },
-        assets: {
-          logo: {
-            assetId: demoAssets[0]!.id,
-            kind: "LOGO",
-            url: `/public/tenants/${tenant.id}/brands/${brand.id}/assets/${demoAssets[0]!.id}`,
-            mimeType: "image/svg+xml",
-            checksum: "demo-logo-v1",
-            width: 640,
-            height: 180,
-          },
-          logoDark: {
-            assetId: demoAssets[1]!.id,
-            kind: "LOGO_DARK",
-            url: `/public/tenants/${tenant.id}/brands/${brand.id}/assets/${demoAssets[1]!.id}`,
-            mimeType: "image/svg+xml",
-            checksum: "demo-logo-dark-v1",
-            width: 640,
-            height: 180,
-          },
-          favicon: {
-            assetId: demoAssets[2]!.id,
-            kind: "FAVICON",
-            url: `/public/tenants/${tenant.id}/brands/${brand.id}/assets/${demoAssets[2]!.id}`,
-            mimeType: "image/svg+xml",
-            checksum: "demo-favicon-v1",
-            width: 128,
-            height: 128,
-          },
-          hero: {
-            assetId: demoAssets[3]!.id,
-            kind: "HERO",
-            url: `/public/tenants/${tenant.id}/brands/${brand.id}/assets/${demoAssets[3]!.id}`,
-            mimeType: "image/png",
-            checksum: "demo-hero-v1",
-            width: 1664,
-            height: 936,
-          },
-        },
-        colors: {
-          primary: "#A63D2F",
-          secondary: "#24352E",
-          accent: "#D49A4A",
-          canvas: "#F7F1E7",
-          surface: "#FFFDF8",
-          text: "#211D19",
-          mutedText: "#655E56",
-          border: "#D9CDBD",
-        },
-        typography: {
-          heading: {
-            family: "Georgia",
-            fallback: "Georgia, serif",
-            weights: [400, 700],
-          },
-          body: {
-            family: "Inter",
-            fallback: "system-ui, sans-serif",
-            weights: [400, 600, 700],
-          },
-          numeric: {
-            family: "Inter",
-            fallback: "ui-monospace, monospace",
-            weights: [600, 700],
-          },
-          scale: "comfortable",
-        },
-        shape: { radius: "medium", elevation: "subtle" },
-        templates: {
-          PUBLIC_HOME: { templateId: "image-led", variant: "warm" },
-          MENU: { templateId: "visual", variant: "editorial" },
-          RESERVATION: { templateId: "guided" },
-          WAITER: { templateId: "comfortable" },
-          HOST: { templateId: "floor-first" },
-          KITCHEN: { templateId: "high-contrast" },
-          CASHIER: { templateId: "compact" },
-          DASH: { templateId: "standard" },
-        },
-        content: { locale: "es-AR" },
-      },
-      createdAt: now,
-      createdBy: DEMO_USER_ID,
-      publishedAt: now,
-      publishedBy: DEMO_USER_ID,
-    };
-    await repos.brandPresentations.save(presentation);
-  }
+  await ensureDemoBrandPresentation(
+    repos.brandPresentations,
+    tenant.id,
+    brand.id,
+    now,
+  );
 
   let branch = await repos.branches.findById(tenant.id, DEMO_BRANCH_ID);
   if (!branch) {

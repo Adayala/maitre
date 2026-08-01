@@ -296,6 +296,32 @@ test("arma Salón → Plaza → Mesas, edita cubiertos y aplica la marca elegida
   const calls = await mockOrganizationApi(page, { tenants: [tenantA] });
   await page.goto("/organizacion");
 
+  await expect(page.getByLabel("Apariencia activa")).toContainText(
+    "Maitre base",
+  );
+  const platformHeading = await page
+    .getByRole("heading", { name: "Organización", exact: true })
+    .evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        family: style.fontFamily,
+        size: Number.parseFloat(style.fontSize),
+        weight: Number.parseInt(style.fontWeight, 10),
+      };
+    });
+  expect(platformHeading.family).not.toMatch(/Georgia|Times New Roman/i);
+  expect(platformHeading.size).toBeLessThanOrEqual(58);
+  expect(platformHeading.weight).toBeGreaterThanOrEqual(600);
+  await expect
+    .poll(() =>
+      page
+        .locator(".org-explorer__workspace")
+        .evaluate((element) =>
+          Number.parseFloat(getComputedStyle(element).borderRadius),
+        ),
+    )
+    .toBeGreaterThanOrEqual(18);
+
   await expect
     .poll(() =>
       page.evaluate(() =>
@@ -317,6 +343,16 @@ test("arma Salón → Plaza → Mesas, edita cubiertos y aplica la marca elegida
       ),
     )
     .toBe("#7C3AED");
+  await expect(page.getByLabel("Apariencia activa")).toContainText(
+    "Casa Norte",
+  );
+  await expect
+    .poll(() =>
+      page
+        .getByRole("heading", { name: "Organización", exact: true })
+        .evaluate((element) => getComputedStyle(element).fontFamily),
+    )
+    .toMatch(/Trebuchet MS/i);
   await expect
     .poll(() =>
       page.evaluate(
@@ -326,6 +362,29 @@ test("arma Salón → Plaza → Mesas, edita cubiertos y aplica la marca elegida
       ),
     )
     .toBe(brand.id);
+
+  await page.getByRole("button", { name: "Usar tema base" }).click();
+  await expect(page.getByLabel("Apariencia activa")).toContainText(
+    "Maitre base",
+  );
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        getComputedStyle(document.documentElement)
+          .getPropertyValue("--brand-primary")
+          .trim(),
+      ),
+    )
+    .toBe("#5B5CE2");
+  await expect
+    .poll(() =>
+      page.evaluate(
+        (tenantId) =>
+          localStorage.getItem(`maitre.selectedBrandId.${tenantId}`),
+        tenantA.id,
+      ),
+    )
+    .toBeNull();
 
   await page
     .getByRole("button", { name: "Expandir salones de Centro" })
@@ -627,7 +686,18 @@ async function mockOrganizationApi(
             identity: { displayName: "Casa Norte" },
             assets: {},
             colors: { primary: "#7C3AED" },
-            typography: {},
+            typography: {
+              heading: {
+                family: "Trebuchet MS",
+                fallback: "Arial, sans-serif",
+                weights: [600, 700],
+              },
+              body: {
+                family: "Trebuchet MS",
+                fallback: "Arial, sans-serif",
+                weights: [400, 600],
+              },
+            },
             shape: {},
             templates: {},
             content: {},
