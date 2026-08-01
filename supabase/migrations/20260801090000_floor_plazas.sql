@@ -1,10 +1,10 @@
 -- Operational plazas: groups of physical tables for one service period,
 -- optionally assigned to an active waiter employment.
-create unique index if not floor_service_periods_tenant_id_id_idx
+create unique index if not exists floor_service_periods_tenant_id_id_idx
   on public.floor_service_periods (tenant_id, id);
-create unique index if not organization_tables_tenant_id_id_idx
+create unique index if not exists organization_tables_tenant_id_id_idx
   on public.organization_tables (tenant_id, id);
-create unique index if not workforce_employments_tenant_id_id_idx
+create unique index if not exists workforce_employments_tenant_id_id_idx
   on public.workforce_employments (tenant_id, id);
 
 create table public.floor_plazas (
