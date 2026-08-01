@@ -37,6 +37,26 @@ export interface BranchEmployment {
   relationshipType: string;
 }
 
+export type EmploymentRelationshipType =
+  "EMPLOYEE" | "CONTRACTOR" | "TEMPORARY";
+
+export function buildBranchEmploymentPayload(input: {
+  branchId: string;
+  employeeCode: string;
+  personRef: string;
+  relationshipType: EmploymentRelationshipType;
+  validFrom: string;
+}) {
+  return {
+    personRef: input.personRef,
+    employeeCode: input.employeeCode.trim(),
+    relationshipType: input.relationshipType,
+    eligibleBranchIds: [input.branchId],
+    status: "ACTIVE" as const,
+    validFrom: input.validFrom,
+  };
+}
+
 export function branchesForBrand(
   branches: OrganizationBranch[],
   brandId: string,

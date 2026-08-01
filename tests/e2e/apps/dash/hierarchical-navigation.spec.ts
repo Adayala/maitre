@@ -129,7 +129,36 @@ test("recorre Marca → Sucursal → Salones y Empleados con carga lazy y panele
     page.getByRole("heading", { name: "Empleados de la sucursal" }),
   ).toBeVisible();
   await expect(page.getByText("Ada Operadora")).toBeVisible();
-  await expect(page.getByText("Administración")).toBeVisible();
+  await expect(
+    page
+      .getByRole("list", { name: "Empleados asignados" })
+      .getByText("Administración"),
+  ).toBeVisible();
+
+  await page.getByLabel("Nombre").fill("Bruno Encargado");
+  await page.getByLabel("Email").fill("bruno@example.test");
+  await page.getByLabel("Código de empleado").fill("EMP-02");
+  const [invitationResponse, employmentResponse] = await Promise.all([
+    page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        new URL(response.url()).pathname === "/v1/users",
+    ),
+    page.waitForResponse(
+      (response) =>
+        response.request().method() === "POST" &&
+        new URL(response.url()).pathname === "/v1/employments",
+    ),
+    page.getByRole("button", { name: "Invitar y asignar" }).click(),
+  ]);
+  expect(invitationResponse.status()).toBe(201);
+  expect(employmentResponse.status()).toBe(201);
+  await expect(page.getByText("Bruno Encargado")).toBeVisible();
+  await expect(page.getByRole("status")).toContainText(
+    "Empleado invitado y asignado correctamente",
+  );
+  expect(calls.invitedUsers).toBe(1);
+  expect(calls.createdEmployments).toBe(1);
 
   await page.getByRole("button", { name: "Crear salón en Centro" }).click();
   await expect(
@@ -182,6 +211,35 @@ test("cubre loading, retry, estado vacío, validación y error de mutación", as
   );
 });
 
+test("reintenta una asignación fallida sin duplicar la invitación", async ({
+  page,
+}) => {
+  await installSession(page, tenantA.id);
+  const calls = await mockOrganizationApi(page, {
+    tenants: [tenantA],
+    failFirstEmployment: true,
+  });
+  await page.goto("/organizacion");
+  await page.getByRole("button", { name: "Expandir Casa Norte" }).click();
+  await page.getByRole("button", { name: "Expandir Centro" }).click();
+  await page.getByRole("button", { name: /Empleados/ }).click();
+
+  await page.getByLabel("Nombre").fill("Cora Temporal");
+  await page.getByLabel("Email").fill("cora@example.test");
+  await page.getByLabel("Código de empleado").fill("TEMP-03");
+  await page.getByLabel("Relación").selectOption("TEMPORARY");
+  await page.getByRole("button", { name: "Invitar y asignar" }).click();
+  await expect(page.getByRole("alert")).toContainText(
+    "La invitación fue creada, pero no se pudo asignar la sucursal",
+  );
+
+  await page.getByRole("button", { name: "Reintentar asignación" }).click();
+  await expect(page.getByText("Cora Temporal")).toBeVisible();
+  expect(calls.invitedUsers).toBe(1);
+  expect(calls.employmentAttempts).toBe(2);
+  expect(calls.createdEmployments).toBe(1);
+});
+
 test("mantiene el explorer usable y accesible en viewport mobile", async ({
   page,
 }) => {
@@ -222,10 +280,28 @@ async function mockOrganizationApi(
     brands?: (typeof brand)[];
     delayBrands?: boolean;
     shouldFailBrands?: () => boolean;
+    failFirstEmployment?: boolean;
   },
 ) {
-  const calls = { salons: 0, employments: 0, createdSalons: 0 };
+  const calls = {
+    salons: 0,
+    employments: 0,
+    createdSalons: 0,
+    invitedUsers: 0,
+    employmentAttempts: 0,
+    createdEmployments: 0,
+  };
   const salons = [salon];
+  const employmentRecords = [employment];
+  const users = [
+    {
+      id: employment.personRef,
+      email: "ada@example.test",
+      name: "Ada Operadora",
+      status: "ACTIVE",
+      roleIds: ["role_admin"],
+    },
+  ];
   await page.route("**/v1/**", async (route) => {
     const request = route.request();
     const url = new URL(request.url());
@@ -273,20 +349,46 @@ async function mockOrganizationApi(
     }
     if (path === `/v1/branches/${branch.id}/employments`) {
       calls.employments += 1;
-      return json(route, { data: [employment] });
+      return json(route, { data: employmentRecords });
     }
-    if (path === "/v1/users")
-      return json(route, {
-        data: [
-          {
-            id: employment.personRef,
-            email: "ada@example.test",
-            name: "Ada Operadora",
-            status: "ACTIVE",
-            roleIds: ["role_admin"],
-          },
-        ],
-      });
+    if (path === "/v1/users" && method === "GET")
+      return json(route, { data: users });
+    if (path === "/v1/users" && method === "POST") {
+      calls.invitedUsers += 1;
+      const body = request.postDataJSON() as {
+        email: string;
+        name: string;
+        roleIds: string[];
+      };
+      const created = {
+        id: `60000000-0000-0000-0000-${String(calls.invitedUsers + 100).padStart(12, "0")}`,
+        email: body.email,
+        name: body.name,
+        status: "INVITED",
+        roleIds: body.roleIds,
+      };
+      users.push(created);
+      return json(route, { data: created }, 201);
+    }
+    if (path === "/v1/employments" && method === "POST") {
+      calls.employmentAttempts += 1;
+      if (options.failFirstEmployment && calls.employmentAttempts === 1) {
+        return json(
+          route,
+          { title: "No se pudo asignar la sucursal", type: "about:blank" },
+          500,
+        );
+      }
+      const body = request.postDataJSON() as Omit<typeof employment, "id">;
+      expect(body.eligibleBranchIds).toEqual([branch.id]);
+      const created = {
+        ...body,
+        id: `50000000-0000-0000-0000-${String(calls.employmentAttempts + 1).padStart(12, "0")}`,
+      };
+      employmentRecords.push(created);
+      calls.createdEmployments += 1;
+      return json(route, { data: created }, 201);
+    }
     if (path === "/v1/roles")
       return json(route, {
         data: [{ id: "role_admin", name: "Administración" }],

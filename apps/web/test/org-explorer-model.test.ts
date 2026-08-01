@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  buildBranchEmploymentPayload,
   branchesForBrand,
   employmentsForBranch,
   isOrganizationNodeSelected,
@@ -59,6 +60,26 @@ test("employmentsForBranch keeps assignments eligible for the requested branch",
     employments[1],
   ]);
   assert.deepEqual(employmentsForBranch(employments, "missing"), []);
+});
+
+test("buildBranchEmploymentPayload scopes a trimmed active employment to its branch", () => {
+  assert.deepEqual(
+    buildBranchEmploymentPayload({
+      branchId: "branch-a",
+      employeeCode: "  EMP-42  ",
+      personRef: "user-42",
+      relationshipType: "TEMPORARY",
+      validFrom: "2026-08-01T12:00:00.000Z",
+    }),
+    {
+      personRef: "user-42",
+      employeeCode: "EMP-42",
+      relationshipType: "TEMPORARY",
+      eligibleBranchIds: ["branch-a"],
+      status: "ACTIVE",
+      validFrom: "2026-08-01T12:00:00.000Z",
+    },
+  );
 });
 
 test("organizationNodeKey is stable for empty, existing and create nodes", () => {

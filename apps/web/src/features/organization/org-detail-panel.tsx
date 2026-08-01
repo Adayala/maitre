@@ -6,9 +6,11 @@ import { useTenantContext } from "../../app/tenant-context.js";
 import { apiRequest } from "../../lib/api-client.js";
 import { useTenantQuery } from "../../lib/use-tenant-query.js";
 import {
+  buildBranchEmploymentPayload,
   employmentsForBranch,
   organizationPanelTitle,
   type BranchEmployment,
+  type EmploymentRelationshipType,
   type OrganizationBrand,
   type OrganizationBranch,
   type OrganizationNode,
@@ -447,6 +449,8 @@ interface RoleListItem {
 }
 
 function BranchEmployeesPanel({ branchId }: { branchId: string }) {
+  const { accessToken } = useAuth();
+  const { selectedTenantId } = useTenantContext();
   const branchQuery = useTenantQuery<{ data: OrganizationBranch }>(
     `organization-parent-branch-${branchId}`,
     `/v1/branches/${branchId}`,
@@ -468,6 +472,76 @@ function BranchEmployeesPanel({ branchId }: { branchId: string }) {
     branchId,
   );
   const users = usersQuery.data?.data ?? [];
+  const roles = rolesQuery.data?.data ?? [];
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [employeeCode, setEmployeeCode] = useState("");
+  const [roleId, setRoleId] = useState("role_employee");
+  const [relationshipType, setRelationshipType] =
+    useState<EmploymentRelationshipType>("EMPLOYEE");
+  const [pendingUser, setPendingUser] = useState<UserListItem | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [mutationError, setMutationError] = useState<string | null>(null);
+  const [mutationMessage, setMutationMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (roles.length > 0 && !roles.some((role) => role.id === roleId)) {
+      setRoleId(roles[0]!.id);
+    }
+  }, [roleId, roles]);
+
+  async function inviteAndAssign(event: FormEvent) {
+    event.preventDefault();
+    if (!accessToken || !selectedTenantId) return;
+    setIsSaving(true);
+    setMutationError(null);
+    setMutationMessage(null);
+    let invitedUser = pendingUser;
+    try {
+      if (!invitedUser) {
+        const invitation = await apiRequest<{ data: UserListItem }>(
+          "/v1/users",
+          {
+            accessToken,
+            tenantId: selectedTenantId,
+            method: "POST",
+            body: { name, email, roleIds: [roleId] },
+          },
+        );
+        invitedUser = invitation.data;
+        setPendingUser(invitedUser);
+      }
+      await apiRequest("/v1/employments", {
+        accessToken,
+        tenantId: selectedTenantId,
+        method: "POST",
+        body: buildBranchEmploymentPayload({
+          branchId,
+          employeeCode,
+          personRef: invitedUser.id,
+          relationshipType,
+          validFrom: new Date().toISOString(),
+        }),
+      });
+      setPendingUser(null);
+      setName("");
+      setEmail("");
+      setEmployeeCode("");
+      setRelationshipType("EMPLOYEE");
+      setMutationMessage("Empleado invitado y asignado correctamente.");
+      await Promise.all([usersQuery.refetch(), employmentsQuery.refetch()]);
+    } catch (caught) {
+      setMutationError(
+        pendingUser || invitedUser
+          ? "La invitación fue creada, pero no se pudo asignar la sucursal. Reintentá la asignación."
+          : caught instanceof Error
+            ? caught.message
+            : "No se pudo invitar al empleado",
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }
 
   return (
     <PanelFrame
@@ -497,62 +571,162 @@ function BranchEmployeesPanel({ branchId }: { branchId: string }) {
           ])
         }
       >
-        {employments.length > 0 ? (
-          <div
-            className="org-employee-list"
-            role="list"
-            aria-label="Empleados asignados"
+        <div className="org-employee-management">
+          <section
+            className="org-employee-onboarding"
+            aria-labelledby="employee-onboarding-heading"
           >
-            {employments.map((employment) => {
-              const user = users.find(
-                (item) =>
-                  item.id === employment.personRef ||
-                  item.email === employment.personRef,
-              );
-              const roleNames =
-                user?.roleIds.map(
-                  (roleId) =>
-                    rolesQuery.data?.data.find((role) => role.id === roleId)
-                      ?.name ?? roleId,
-                ) ?? [];
-              return (
-                <article
-                  key={employment.id}
-                  role="listitem"
-                  className="org-employee-card"
-                >
-                  <div>
-                    <span>{employment.employeeCode}</span>
-                    <strong>{user?.name ?? employment.personRef}</strong>
-                    <small>{user?.email ?? employment.relationshipType}</small>
-                  </div>
-                  <dl>
-                    <div>
-                      <dt>Estado</dt>
-                      <dd>{employment.status}</dd>
-                    </div>
-                    <div>
-                      <dt>Perfiles</dt>
-                      <dd>
-                        {roleNames.length
-                          ? roleNames.join(", ")
-                          : "Sin perfil vinculado"}
-                      </dd>
-                    </div>
-                  </dl>
-                </article>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="org-panel-empty">
-            <span aria-hidden="true">○</span>
-            <h3>No hay empleados asignados</h3>
+            <p className="org-kicker">Alta vinculada</p>
+            <h3 id="employee-onboarding-heading">Invitar y asignar empleado</h3>
             <p>
-              Las asignaciones de workforce para esta sucursal aparecerán acá.
+              El acceso y la relación laboral quedan asociados a esta sucursal.
             </p>
-          </div>
-        )}
+            <form
+              className="org-form"
+              onSubmit={(event) => void inviteAndAssign(event)}
+            >
+              <label>
+                Nombre
+                <input
+                  required
+                  minLength={2}
+                  value={name}
+                  disabled={Boolean(pendingUser)}
+                  onChange={(event) => setName(event.target.value)}
+                />
+              </label>
+              <label>
+                Email
+                <input
+                  required
+                  type="email"
+                  value={email}
+                  disabled={Boolean(pendingUser)}
+                  onChange={(event) => setEmail(event.target.value)}
+                />
+              </label>
+              <label>
+                Código de empleado
+                <input
+                  required
+                  minLength={2}
+                  value={employeeCode}
+                  onChange={(event) => setEmployeeCode(event.target.value)}
+                />
+              </label>
+              <label>
+                Perfil inicial
+                <select
+                  required
+                  value={roleId}
+                  disabled={Boolean(pendingUser)}
+                  onChange={(event) => setRoleId(event.target.value)}
+                >
+                  {roles.map((role) => (
+                    <option key={role.id} value={role.id}>
+                      {role.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Relación
+                <select
+                  value={relationshipType}
+                  onChange={(event) =>
+                    setRelationshipType(
+                      event.target.value as EmploymentRelationshipType,
+                    )
+                  }
+                >
+                  <option value="EMPLOYEE">Empleado</option>
+                  <option value="CONTRACTOR">Contratista</option>
+                  <option value="TEMPORARY">Temporal</option>
+                </select>
+              </label>
+              {mutationError ? (
+                <p className="login-error" role="alert">
+                  {mutationError}
+                </p>
+              ) : null}
+              {mutationMessage ? (
+                <p className="org-form__success" role="status">
+                  {mutationMessage}
+                </p>
+              ) : null}
+              <button type="submit" disabled={isSaving || roles.length === 0}>
+                {isSaving
+                  ? "Guardando…"
+                  : pendingUser
+                    ? "Reintentar asignación"
+                    : "Invitar y asignar"}
+              </button>
+            </form>
+          </section>
+
+          <section aria-labelledby="assigned-employees-heading">
+            <h3 id="assigned-employees-heading">Equipo asignado</h3>
+            {employments.length > 0 ? (
+              <div
+                className="org-employee-list"
+                role="list"
+                aria-label="Empleados asignados"
+              >
+                {employments.map((employment) => {
+                  const user = users.find(
+                    (item) =>
+                      item.id === employment.personRef ||
+                      item.email === employment.personRef,
+                  );
+                  const roleNames =
+                    user?.roleIds.map(
+                      (userRoleId) =>
+                        roles.find((role) => role.id === userRoleId)?.name ??
+                        userRoleId,
+                    ) ?? [];
+                  return (
+                    <article
+                      key={employment.id}
+                      role="listitem"
+                      className="org-employee-card"
+                    >
+                      <div>
+                        <span>{employment.employeeCode}</span>
+                        <strong>{user?.name ?? employment.personRef}</strong>
+                        <small>
+                          {user?.email ?? employment.relationshipType}
+                        </small>
+                      </div>
+                      <dl>
+                        <div>
+                          <dt>Estado</dt>
+                          <dd>{employment.status}</dd>
+                        </div>
+                        <div>
+                          <dt>Perfiles</dt>
+                          <dd>
+                            {roleNames.length
+                              ? roleNames.join(", ")
+                              : "Sin perfil vinculado"}
+                          </dd>
+                        </div>
+                      </dl>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="org-panel-empty">
+                <span aria-hidden="true">○</span>
+                <h3>No hay empleados asignados</h3>
+                <p>
+                  Las asignaciones de workforce para esta sucursal aparecerán
+                  acá.
+                </p>
+              </div>
+            )}
+          </section>
+        </div>
       </StateView>
     </PanelFrame>
   );

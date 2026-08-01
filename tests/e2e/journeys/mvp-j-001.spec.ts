@@ -110,6 +110,7 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
   let operationsBaseline!: Record<DashOperationLabel, number>;
 
   await test.step("Admin completes setup through Dash without provider tools", async () => {
+    await apps.dash.goto(new URL("/overview", apps.dash.url()).toString());
     await expect(
       apps.dash.getByRole("heading", {
         name: "Resumen del tenant",
@@ -118,11 +119,12 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
     ).toBeVisible();
     operationsBaseline = await readDashOperations(apps.dash);
 
-    await apps.dash.goto(new URL("/brands", apps.dash.url()).toString());
+    await apps.dash.goto(new URL("/organizacion", apps.dash.url()).toString());
     await expect(
-      apps.dash.getByRole("heading", { name: "Marcas", exact: true }),
+      apps.dash.getByRole("heading", { name: "Organización", exact: true }),
     ).toBeVisible();
     const brandName = `Marca ${testInfo.project.name} ${Date.now()}`;
+    await apps.dash.getByRole("button", { name: "Crear marca" }).click();
     await apps.dash.getByLabel("Nombre").first().fill(brandName);
     await apps.dash
       .getByLabel("Descripción")
@@ -133,34 +135,46 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
           response.request().method() === "POST" &&
           new URL(response.url()).pathname === "/v1/brands",
       ),
-      apps.dash.getByRole("button", { name: "Crear marca" }).click(),
+      apps.dash.getByRole("button", { name: "Crear marca" }).last().click(),
     ]);
     expect(brandResponse.status()).toBe(201);
-    await expect(
-      apps.dash.getByRole("heading", { name: brandName, exact: true }),
-    ).toBeVisible();
+    await expect(apps.dash.getByLabel("Nombre").first()).toHaveValue(brandName);
 
-    await apps.dash.goto(new URL("/users", apps.dash.url()).toString());
+    await apps.dash
+      .getByRole("button", { name: "Expandir Maitre Demo Brand" })
+      .click();
+    await apps.dash
+      .getByRole("button", { name: "Expandir Sucursal Principal" })
+      .click();
+    await apps.dash.getByRole("button", { name: /Empleados/ }).click();
     await expect(
       apps.dash.getByRole("heading", {
-        name: "Usuarios y perfiles",
+        name: "Empleados de la sucursal",
         exact: true,
       }),
     ).toBeVisible();
     const invitedName = `Invitado ${testInfo.project.name}`;
+    const employeeCode = `MVP-${Date.now()}`;
     await apps.dash.getByLabel("Nombre").first().fill(invitedName);
     await apps.dash.getByLabel("Email").fill(`mvp-${Date.now()}@example.test`);
-    const [inviteResponse] = await Promise.all([
+    await apps.dash.getByLabel("Código de empleado").fill(employeeCode);
+    const [inviteResponse, employmentResponse] = await Promise.all([
       apps.dash.waitForResponse(
         (response) =>
           response.request().method() === "POST" &&
           new URL(response.url()).pathname === "/v1/users",
       ),
-      apps.dash.getByRole("button", { name: "Crear invitación" }).click(),
+      apps.dash.waitForResponse(
+        (response) =>
+          response.request().method() === "POST" &&
+          new URL(response.url()).pathname === "/v1/employments",
+      ),
+      apps.dash.getByRole("button", { name: "Invitar y asignar" }).click(),
     ]);
     expect(inviteResponse.status()).toBe(201);
+    expect(employmentResponse.status()).toBe(201);
     await expect(
-      apps.dash.getByRole("heading", { name: invitedName, exact: true }),
+      apps.dash.getByText(invitedName, { exact: true }),
     ).toBeVisible();
 
     await apps.dash.goto(new URL("/setup", apps.dash.url()).toString());
@@ -178,6 +192,7 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
       invitedName,
       brandStatus: brandResponse.status(),
       invitationStatus: inviteResponse.status(),
+      employmentStatus: employmentResponse.status(),
       operationsBaseline,
     };
   });
@@ -497,7 +512,7 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
   });
 
   await test.step("Dash reflects the closed service and its audit trail", async () => {
-    await apps.dash.goto(new URL("/", apps.dash.url()).toString());
+    await apps.dash.goto(new URL("/overview", apps.dash.url()).toString());
     await expect(
       apps.dash.getByRole("heading", {
         name: "Resumen del tenant",
