@@ -1,11 +1,8 @@
-import {
-  Navigate,
-  NavLink,
-  Outlet,
-  useLocation,
-} from "react-router-dom";
+import { Navigate, NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "./auth-context.js";
 import { useTenantContext } from "./tenant-context.js";
+import { useBrandSelection } from "./brand-selection-context.js";
+import { useBrandPresentation } from "@maitre/brand-presentation";
 
 const NAV_GROUPS = [
   {
@@ -33,6 +30,8 @@ const NAV_GROUPS = [
 export function DashboardLayout() {
   const { accessToken, email, signOut } = useAuth();
   const { me, selectedTenantId, clearTenant, isLoading } = useTenantContext();
+  const { selectedBrandId, clearBrand } = useBrandSelection();
+  const presentation = useBrandPresentation();
   const location = useLocation();
   const activeTenant = me?.tenants.find(
     (tenant) => tenant.id === selectedTenantId,
@@ -57,6 +56,27 @@ export function DashboardLayout() {
             {activeTenant?.name ?? "Tenant"}
           </span>
           <NavLink to="/select-tenant">Cambiar tenant</NavLink>
+        </div>
+        <div
+          className="dash-theme-context"
+          role="group"
+          aria-label="Apariencia activa"
+        >
+          <span>
+            <small>Apariencia</small>
+            <strong>
+              {selectedBrandId
+                ? (presentation.identity.shortName ??
+                  presentation.identity.displayName ??
+                  "Marca seleccionada")
+                : "Maitre base"}
+            </strong>
+          </span>
+          {selectedBrandId ? (
+            <button type="button" onClick={clearBrand}>
+              Usar tema base
+            </button>
+          ) : null}
         </div>
         <span className="dash-user">{email ?? me?.user.displayName ?? ""}</span>
         <button

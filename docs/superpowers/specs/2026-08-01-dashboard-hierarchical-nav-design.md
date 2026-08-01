@@ -111,6 +111,9 @@ que la jerarquía no quede comprimida dentro del rail global:
 - Sin una marca elegida el Dash usa el tema moderno de plataforma: sans
   contemporánea, canvas frío claro, superficies blancas, bordes suaves, radios
   medianos, profundidad contenida y un único acento índigo.
+- La base visual evita la escala editorial anterior: los títulos operativos no
+  superan 58 px en desktop, el rail es una superficie clara y la jerarquía se
+  expresa con peso, espacio y tintes en vez de bloques negros o reglas gruesas.
 - El theme de una marca no se aplica por ser la primera marca devuelta por la API.
   Se aplica únicamente cuando el usuario elige explícitamente esa marca o un nodo
   descendiente suyo y queda persistido por tenant.
@@ -118,6 +121,8 @@ que la jerarquía no quede comprimida dentro del rail global:
   y elevación; los tokens ausentes heredan el tema moderno de plataforma.
 - Cambiar tenant descarta cualquier marca seleccionada de otro tenant. No hay
   fugas visuales ni de datos entre tenants.
+- El header identifica si la apariencia activa es la base Maitre o una marca y,
+  cuando hay una marca elegida, permite restaurar explícitamente el tema base.
 
 ## Fuera de alcance (esta iteración)
 
@@ -148,6 +153,9 @@ que la jerarquía no quede comprimida dentro del rail global:
   sección del dashboard.
 - El proyecto productivo canónico del Dash es `maitre-dash.vercel.app`; el
   pipeline no debe desplegar la aplicación en un proyecto alternativo.
+- El health check post-deploy del API usa el alias público canónico
+  `maitre-api.vercel.app`; las URLs inmutables protegidas por Vercel SSO no son
+  una señal válida de salud pública.
 - `/` es un redirect de compatibilidad a `/organizacion`; Overview queda en
   `/overview` y Setup en `/setup`.
 - Las rutas legacy `/brands`, `/branches`, `/users` y `/profiles` redirigen a
@@ -192,3 +200,5 @@ que la jerarquía no quede comprimida dentro del rail global:
 10. Sin marca elegida se renderiza el tema moderno de plataforma. Elegir Marca A
     aplica sólo su presentación publicada; cambiar a Marca B o de tenant reemplaza
     los tokens sin conservar valores de la marca anterior.
+11. El usuario ve en el header qué apariencia está activa y puede volver al tema
+    base; el Dash base no usa serif ni títulos editoriales sobredimensionados.

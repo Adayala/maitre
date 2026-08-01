@@ -6,7 +6,7 @@ test("platform presentation is a modern neutral default", () => {
   assert.equal(PLATFORM_PRESENTATION.colors.canvas, "#F5F7FB");
   assert.equal(PLATFORM_PRESENTATION.colors.primary, "#5B5CE2");
   assert.equal(PLATFORM_PRESENTATION.shape.radius, "large");
-  assert.equal(PLATFORM_PRESENTATION.typography.heading?.family, "Inter");
+  assert.equal(PLATFORM_PRESENTATION.typography.heading?.family, "system-ui");
 });
 
 test("a partial white-label document inherits every missing platform token", () => {
@@ -24,7 +24,7 @@ test("a partial white-label document inherits every missing platform token", () 
   assert.equal(effective.colors.primary, "#7C3AED");
   assert.equal(effective.colors.canvas, "#F5F7FB");
   assert.equal(effective.colors.text, "#101828");
-  assert.equal(effective.typography.body?.family, "Inter");
+  assert.equal(effective.typography.body?.family, "system-ui");
   assert.equal(effective.shape.radius, "small");
   assert.equal(effective.shape.elevation, "subtle");
   assert.equal(effective.content.locale, "es-AR");
