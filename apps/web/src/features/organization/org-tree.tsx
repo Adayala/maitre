@@ -3,6 +3,9 @@ import { useTenantQuery } from "../../lib/use-tenant-query.js";
 import {
   branchesForBrand,
   isOrganizationNodeSelected,
+  plazasForServicePeriod,
+  servicePeriodStatusLabel,
+  servicePeriodTypeLabel,
   userForEmployment,
   type BranchEmployment,
   type OrganizationBrand,
@@ -37,7 +40,7 @@ export function OrgTree({
     >
       <div className="org-tree__toolbar">
         <div>
-          <span>Árbol editable</span>
+          <span>Mapa del tenant</span>
           <strong>{brands.length} marca(s)</strong>
         </div>
         <button
@@ -129,12 +132,18 @@ function BranchTreeNode({
   selectedNode: OrganizationNode | null;
   onSelect: (node: OrganizationNode, brandId?: string) => void;
 }) {
-  const [salonsExpanded, setSalonsExpanded] = useState(false);
+  const [structureExpanded, setStructureExpanded] = useState(false);
+  const [operationsExpanded, setOperationsExpanded] = useState(false);
   const [employeesExpanded, setEmployeesExpanded] = useState(false);
   const salonsQuery = useTenantQuery<{ data: OrganizationSalon[] }>(
     `salons-${branch.id}`,
     `/v1/salons?branchId=${encodeURIComponent(branch.id)}`,
-    { enabled: salonsExpanded },
+    { enabled: structureExpanded || operationsExpanded },
+  );
+  const periodsQuery = useTenantQuery<{ data: OrganizationServicePeriod[] }>(
+    `organization-periods-${branch.id}`,
+    `/v1/branches/${encodeURIComponent(branch.id)}/service-periods`,
+    { enabled: operationsExpanded },
   );
   const employmentsQuery = useTenantQuery<{ data: BranchEmployment[] }>(
     `branch-employments-${branch.id}`,
@@ -147,6 +156,7 @@ function BranchTreeNode({
     { enabled: employeesExpanded },
   );
   const salons = salonsQuery.data?.data ?? [];
+  const periods = periodsQuery.data?.data ?? [];
   const employees = employmentsQuery.data?.data ?? [];
   const users = usersQuery.data?.data ?? [];
   const node = {
@@ -160,7 +170,7 @@ function BranchTreeNode({
   } as const;
 
   return (
-    <li>
+    <li className="org-tree__branch">
       <div className="org-tree__row org-tree__row--branch">
         <span className="org-tree__connector" aria-hidden="true">
           ├
@@ -179,24 +189,28 @@ function BranchTreeNode({
         </button>
       </div>
       <ul className="org-tree__resources">
-        <li>
+        <li className="org-tree__domain-group">
           <div className="org-tree__resource-row">
             <button
               type="button"
               className="org-tree__toggle"
-              aria-expanded={salonsExpanded}
-              aria-label={`${salonsExpanded ? "Contraer" : "Expandir"} salones de ${branch.name}`}
-              onClick={() => setSalonsExpanded((value) => !value)}
+              aria-expanded={structureExpanded}
+              aria-label={`${structureExpanded ? "Contraer" : "Expandir"} estructura física de ${branch.name}`}
+              onClick={() => setStructureExpanded((value) => !value)}
             >
-              {salonsExpanded ? "−" : "+"}
+              {structureExpanded ? "−" : "+"}
             </button>
             <button
               type="button"
-              className="org-tree__group-button"
-              onClick={() => setSalonsExpanded(true)}
+              className="org-tree__group-button org-tree__group-button--domain"
+              onClick={() => setStructureExpanded(true)}
             >
-              <span>Salones</span>
-              <small>{salonsQuery.isLoading ? "…" : salons.length}</small>
+              <span>Estructura física</span>
+              <small>
+                {salonsQuery.isLoading
+                  ? "Cargando…"
+                  : `${salons.length} salones`}
+              </small>
             </button>
             <button
               type="button"
@@ -213,33 +227,116 @@ function BranchTreeNode({
               +
             </button>
           </div>
-          {salonsExpanded && salonsQuery.error ? (
+          {structureExpanded && salonsQuery.error ? (
             <TreeLoadError
-              label="salones"
+              label="la estructura física"
               onRetry={() => void salonsQuery.refetch()}
             />
           ) : null}
-          {salonsExpanded ? (
-            <ul>
+          {structureExpanded && !salonsQuery.error ? (
+            <ul className="org-tree__domain-children">
+              <li className="org-tree__section-label">
+                <span>Salones y mesas</span>
+                <small>{salons.length}</small>
+              </li>
               {salons.map((salon) => (
                 <SalonTreeNode
                   key={salon.id}
                   salon={salon}
-                  branch={branch}
                   brandId={brandId}
                   selectedNode={selectedNode}
                   onSelect={onSelect}
                 />
               ))}
-              {!salonsQuery.isLoading &&
-              !salonsQuery.error &&
-              salons.length === 0 ? (
-                <li className="org-tree__empty">Sin salones</li>
+              {!salonsQuery.isLoading && salons.length === 0 ? (
+                <li className="org-tree__empty org-tree__empty--actionable">
+                  Sin salones. Creá uno para comenzar a ubicar mesas.
+                </li>
               ) : null}
             </ul>
           ) : null}
         </li>
-        <li>
+
+        <li className="org-tree__domain-group">
+          <div className="org-tree__resource-row">
+            <button
+              type="button"
+              className="org-tree__toggle"
+              aria-expanded={operationsExpanded}
+              aria-label={`${operationsExpanded ? "Contraer" : "Expandir"} operación de servicio de ${branch.name}`}
+              onClick={() => setOperationsExpanded((value) => !value)}
+            >
+              {operationsExpanded ? "−" : "+"}
+            </button>
+            <button
+              type="button"
+              className="org-tree__group-button org-tree__group-button--domain"
+              onClick={() => setOperationsExpanded(true)}
+            >
+              <span>Operación de servicio</span>
+              <small>
+                {periodsQuery.isLoading
+                  ? "Cargando…"
+                  : `${periods.length} jornadas · Plazas`}
+              </small>
+            </button>
+            <button
+              type="button"
+              className="org-tree__add"
+              aria-label={`Crear jornada en ${branch.name}`}
+              title="Crear jornada"
+              onClick={() =>
+                onSelect(
+                  {
+                    type: "service-period",
+                    id: null,
+                    parentId: branch.id,
+                  },
+                  brandId,
+                )
+              }
+            >
+              +
+            </button>
+          </div>
+          {operationsExpanded && (periodsQuery.error || salonsQuery.error) ? (
+            <TreeLoadError
+              label="la operación de servicio"
+              onRetry={() =>
+                void Promise.all([
+                  periodsQuery.refetch(),
+                  salonsQuery.refetch(),
+                ])
+              }
+            />
+          ) : null}
+          {operationsExpanded && !periodsQuery.error && !salonsQuery.error ? (
+            <ul className="org-tree__domain-children">
+              <li className="org-tree__section-label">
+                <span>Jornadas y plazas</span>
+                <small>{periods.length}</small>
+              </li>
+              {periods.map((period) => (
+                <ServicePeriodTreeNode
+                  key={period.id}
+                  period={period}
+                  branch={branch}
+                  salons={salons}
+                  brandId={brandId}
+                  selectedNode={selectedNode}
+                  onSelect={onSelect}
+                />
+              ))}
+              {!periodsQuery.isLoading && periods.length === 0 ? (
+                <li className="org-tree__empty org-tree__empty--actionable">
+                  Sin jornadas. Creá una para organizar sus plazas.
+                </li>
+              ) : null}
+            </ul>
+          ) : null}
+        </li>
+
+        <li className="org-tree__domain-group">
           <div className="org-tree__resource-row">
             <button
               type="button"
@@ -254,14 +351,16 @@ function BranchTreeNode({
               type="button"
               className={
                 isOrganizationNodeSelected(selectedNode, employeeGroupNode)
-                  ? "org-tree__group-button is-selected"
-                  : "org-tree__group-button"
+                  ? "org-tree__group-button org-tree__group-button--domain is-selected"
+                  : "org-tree__group-button org-tree__group-button--domain"
               }
               onClick={() => onSelect(employeeGroupNode, brandId)}
             >
-              <span>Equipo / mozos</span>
+              <span>Equipo</span>
               <small>
-                {employmentsQuery.isLoading ? "…" : employees.length}
+                {employmentsQuery.isLoading
+                  ? "Cargando…"
+                  : `${employees.length} personas · Mozos`}
               </small>
             </button>
             <button
@@ -286,7 +385,7 @@ function BranchTreeNode({
             />
           ) : null}
           {employeesExpanded ? (
-            <ul>
+            <ul className="org-tree__domain-children">
               {employees.map((employment) => {
                 const user = userForEmployment(users, employment);
                 const employeeNode = {
@@ -305,7 +404,7 @@ function BranchTreeNode({
                       }
                       onClick={() => onSelect(employeeNode, brandId)}
                     >
-                      <span aria-hidden="true">└</span>
+                      <span aria-hidden="true">↳</span>
                       <strong>{user?.name ?? employment.personRef}</strong>
                       <small>
                         {employment.employeeCode} ·{" "}
@@ -330,13 +429,11 @@ function BranchTreeNode({
 
 function SalonTreeNode({
   salon,
-  branch,
   brandId,
   selectedNode,
   onSelect,
 }: {
   salon: OrganizationSalon;
-  branch: OrganizationBranch;
   brandId: string;
   selectedNode: OrganizationNode | null;
   onSelect: (node: OrganizationNode, brandId?: string) => void;
@@ -347,29 +444,12 @@ function SalonTreeNode({
     `/v1/tables?salonId=${encodeURIComponent(salon.id)}`,
     { enabled: expanded },
   );
-  const plazasQuery = useTenantQuery<{ data: OrganizationPlaza[] }>(
-    `organization-plazas-${salon.id}`,
-    `/v1/plazas?salonId=${encodeURIComponent(salon.id)}`,
-    { enabled: expanded },
-  );
-  const periodsQuery = useTenantQuery<{ data: OrganizationServicePeriod[] }>(
-    `organization-periods-${branch.id}`,
-    `/v1/branches/${encodeURIComponent(branch.id)}/service-periods`,
-    { enabled: expanded },
-  );
   const tables = tablesQuery.data?.data ?? [];
-  const plazas = plazasQuery.data?.data ?? [];
-  const periods = periodsQuery.data?.data ?? [];
   const salonNode = {
     type: "salon",
     id: salon.id,
-    parentId: branch.id,
+    parentId: salon.branchId,
   } as const;
-  const assignedTableIds = new Set(plazas.flatMap((plaza) => plaza.tableIds));
-  const unassignedTables = tables.filter(
-    (table) => !assignedTableIds.has(table.id),
-  );
-  const hasError = tablesQuery.error || plazasQuery.error || periodsQuery.error;
 
   return (
     <li className="org-tree__salon">
@@ -378,7 +458,7 @@ function SalonTreeNode({
           type="button"
           className="org-tree__toggle"
           aria-expanded={expanded}
-          aria-label={`${expanded ? "Contraer" : "Expandir"} ${salon.name}`}
+          aria-label={`${expanded ? "Contraer" : "Expandir"} mesas de ${salon.name}`}
           onClick={() => setExpanded((value) => !value)}
         >
           {expanded ? "−" : "+"}
@@ -393,7 +473,7 @@ function SalonTreeNode({
           onClick={() => onSelect(salonNode, brandId)}
         >
           <span>{salon.name}</span>
-          <small>{salon.capacity} cubiertos máximos</small>
+          <small>{salon.capacity} cubiertos máx.</small>
         </button>
         <button
           type="button"
@@ -407,110 +487,158 @@ function SalonTreeNode({
           +
         </button>
       </div>
-      {expanded && hasError ? (
+      {expanded && tablesQuery.error ? (
         <TreeLoadError
-          label={`la operación de ${salon.name}`}
-          onRetry={() =>
-            void Promise.all([
-              tablesQuery.refetch(),
-              plazasQuery.refetch(),
-              periodsQuery.refetch(),
-            ])
-          }
+          label={`las mesas de ${salon.name}`}
+          onRetry={() => void tablesQuery.refetch()}
         />
       ) : null}
-      {expanded && !hasError ? (
-        <ul className="org-tree__plazas">
-          <li className="org-tree__subgroup">
-            <div>
-              <span>Plazas por jornada</span>
-              <small>{plazasQuery.isLoading ? "…" : plazas.length}</small>
-              <button
-                type="button"
-                aria-label={`Crear plaza en ${salon.name}`}
-                onClick={() =>
-                  onSelect(
-                    { type: "plaza", id: null, parentId: salon.id },
-                    brandId,
-                  )
-                }
-              >
-                +
-              </button>
-            </div>
+      {expanded && !tablesQuery.error ? (
+        <ul className="org-tree__nested-list">
+          <li className="org-tree__section-label">
+            <span>Mesas</span>
+            <small>{tablesQuery.isLoading ? "…" : tables.length}</small>
+          </li>
+          {tables.map((table) => (
+            <TableTreeLeaf
+              key={table.id}
+              table={table}
+              brandId={brandId}
+              selectedNode={selectedNode}
+              onSelect={onSelect}
+            />
+          ))}
+          {!tablesQuery.isLoading && tables.length === 0 ? (
+            <li className="org-tree__empty">Sin mesas en este salón</li>
+          ) : null}
+        </ul>
+      ) : null}
+    </li>
+  );
+}
+
+function ServicePeriodTreeNode({
+  period,
+  branch,
+  salons,
+  brandId,
+  selectedNode,
+  onSelect,
+}: {
+  period: OrganizationServicePeriod;
+  branch: OrganizationBranch;
+  salons: OrganizationSalon[];
+  brandId: string;
+  selectedNode: OrganizationNode | null;
+  onSelect: (node: OrganizationNode, brandId?: string) => void;
+}) {
+  const plazasQuery = useTenantQuery<{ data: OrganizationPlaza[] }>(
+    `organization-plazas-period-${period.id}`,
+    `/v1/plazas?servicePeriodId=${encodeURIComponent(period.id)}`,
+  );
+  const plazas = plazasForServicePeriod(
+    plazasQuery.data?.data ?? [],
+    period.id,
+  );
+  const periodNode = {
+    type: "service-period",
+    id: period.id,
+    parentId: branch.id,
+  } as const;
+
+  return (
+    <li className="org-tree__period">
+      <div className="org-tree__period-row">
+        <span
+          className={`org-tree__status-dot org-tree__status-dot--${period.status.toLowerCase()}`}
+          aria-hidden="true"
+        />
+        <button
+          type="button"
+          className={
+            isOrganizationNodeSelected(selectedNode, periodNode)
+              ? "org-tree__node org-tree__node--period is-selected"
+              : "org-tree__node org-tree__node--period"
+          }
+          onClick={() => onSelect(periodNode, brandId)}
+        >
+          <span>
+            {servicePeriodTypeLabel(period.type)} · {period.businessDate}
+          </span>
+          <strong>{period.name}</strong>
+          <small>
+            {servicePeriodStatusLabel(period.status)} · {plazas.length} plazas
+          </small>
+        </button>
+        <button
+          type="button"
+          className="org-tree__add"
+          aria-label={`Crear plaza en ${period.name}`}
+          title="Crear plaza"
+          disabled={period.status !== "PLANNED" && period.status !== "OPEN"}
+          onClick={() =>
+            onSelect(
+              {
+                type: "plaza",
+                id: null,
+                parentId: period.id,
+                branchId: branch.id,
+                salonId: null,
+              },
+              brandId,
+            )
+          }
+        >
+          +
+        </button>
+      </div>
+      {plazasQuery.error ? (
+        <TreeLoadError
+          label={`las plazas de ${period.name}`}
+          onRetry={() => void plazasQuery.refetch()}
+        />
+      ) : (
+        <ul className="org-tree__nested-list org-tree__nested-list--plazas">
+          <li className="org-tree__section-label">
+            <span>Plazas</span>
+            <small>{plazasQuery.isLoading ? "…" : plazas.length}</small>
           </li>
           {plazas.map((plaza) => {
             const plazaNode = {
               type: "plaza",
               id: plaza.id,
-              parentId: salon.id,
+              parentId: period.id,
+              branchId: branch.id,
+              salonId: plaza.salonId,
             } as const;
-            const period = periods.find(
-              (item) => item.id === plaza.servicePeriodId,
-            );
+            const salon = salons.find((item) => item.id === plaza.salonId);
             return (
-              <li key={plaza.id} className="org-tree__plaza">
+              <li key={plaza.id}>
                 <button
                   type="button"
                   className={
                     isOrganizationNodeSelected(selectedNode, plazaNode)
-                      ? "org-tree__leaf is-selected"
-                      : "org-tree__leaf"
+                      ? "org-tree__leaf org-tree__leaf--plaza is-selected"
+                      : "org-tree__leaf org-tree__leaf--plaza"
                   }
                   onClick={() => onSelect(plazaNode, brandId)}
                 >
                   <span aria-hidden="true">⌁</span>
                   <strong>{plaza.name}</strong>
                   <small>
-                    {period
-                      ? `${period.name} · ${period.businessDate}`
-                      : "Jornada"}
+                    {salon?.name ?? "Salón"} · {plaza.tableIds.length} mesas
                   </small>
                 </button>
-                <ul>
-                  {plaza.tableIds.map((tableId) => {
-                    const table = tables.find((item) => item.id === tableId);
-                    if (!table) return null;
-                    return (
-                      <TableTreeLeaf
-                        key={table.id}
-                        table={table}
-                        brandId={brandId}
-                        selectedNode={selectedNode}
-                        onSelect={onSelect}
-                      />
-                    );
-                  })}
-                </ul>
               </li>
             );
           })}
           {!plazasQuery.isLoading && plazas.length === 0 ? (
-            <li className="org-tree__empty">
-              Sin plazas para las jornadas cargadas
-            </li>
-          ) : null}
-          {unassignedTables.length > 0 ? (
-            <li className="org-tree__subgroup">
-              <div>
-                <span>Mesas sin plaza</span>
-                <small>{unassignedTables.length}</small>
-              </div>
-              <ul>
-                {unassignedTables.map((table) => (
-                  <TableTreeLeaf
-                    key={table.id}
-                    table={table}
-                    brandId={brandId}
-                    selectedNode={selectedNode}
-                    onSelect={onSelect}
-                  />
-                ))}
-              </ul>
+            <li className="org-tree__empty org-tree__empty--actionable">
+              Sin plazas. Usá “+” para agrupar mesas y asignar un mozo.
             </li>
           ) : null}
         </ul>
-      ) : null}
+      )}
     </li>
   );
 }
@@ -542,7 +670,7 @@ function TableTreeLeaf({
         }
         onClick={() => onSelect(node, brandId)}
       >
-        <span aria-hidden="true">└</span>
+        <span aria-hidden="true">↳</span>
         <strong>{table.name || `Mesa ${table.number}`}</strong>
         <small>{table.capacity} cubiertos</small>
       </button>
@@ -558,11 +686,11 @@ function TreeLoadError({
   onRetry: () => void;
 }) {
   return (
-    <p role="alert" className="org-tree__load-error">
-      No se pudieron cargar {label}.{" "}
+    <div className="org-tree__load-error" role="alert">
+      No se pudo cargar {label}.{" "}
       <button type="button" onClick={onRetry}>
         Reintentar
       </button>
-    </p>
+    </div>
   );
 }

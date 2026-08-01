@@ -144,6 +144,22 @@ que la jerarquía no quede comprimida dentro del rail global:
 
 ## Contratos y decisiones cerradas durante la implementación
 
+- El árbol separa dos dimensiones que no deben confundirse: `Estructura física
+→ Salones → Mesas` y `Operación de servicio → Jornadas → Plazas`. Una Plaza
+  se muestra bajo su Jornada y sólo referencia mesas de un único Salón; las mesas
+  nunca pasan a ser hijas físicas de la Plaza.
+- Jornada de servicio es un nodo navegable. Desde su panel se crea la ejecución
+  concreta y se gestiona su ciclo `PLANNED → OPEN → CLOSING → CLOSED` o su
+  cancelación. El alta de Plaza nace dentro de una Jornada editable y luego exige
+  elegir Salón, al menos una Mesa y opcionalmente un mozo/responsable.
+- Los tres grupos de una Sucursal son visibles aun cerrados: “Estructura física”,
+  “Operación de servicio” y “Equipo”. Al expandir Operación se muestran a la vez
+  cada Jornada y su grupo “Plazas”, incluido el estado vacío accionable; Plaza no
+  queda escondida detrás de la expansión previa de un Salón.
+- `PlantillaServicio` continúa fuera de esta iteración: figura en el modelo
+  conceptual pero sus specs de entidad y API siguen pendientes en
+  `docs/sdd/INDEX.md`. La UI no presenta un CRUD ficticio sin contrato persistente.
+
 - El rail global conserva un único acceso a Organización y los grupos “Control
   operativo” y “Gobierno”. El árbol editable vive dentro de `/organizacion`, en
   una columna amplia junto al panel de detalle; así no compite con la navegación
@@ -183,8 +199,9 @@ que la jerarquía no quede comprimida dentro del rail global:
 2. Una sesión sin selección explícita y con un único tenant también muestra su
    card; una selección persistida válida entra directamente y una obsoleta vuelve
    al selector.
-3. El árbol muestra Tenant → Marca → Sucursal → Salones / Equipo; salones y
-   relaciones laborales no se solicitan hasta expandir su grupo correspondiente.
+3. El árbol muestra Tenant → Marca → Sucursal y separa Estructura física,
+   Operación de servicio y Equipo; los recursos se solicitan al expandir el grupo
+   correspondiente.
 4. Seleccionar marca, sucursal, salón, equipo o persona abre el panel correcto;
    sin selección se muestra el estado vacío indicado por la spec.
 5. Los botones `+` permiten crear marca, sucursal dentro de su marca, salón
@@ -195,10 +212,13 @@ que la jerarquía no quede comprimida dentro del rail global:
    de al menos 44 px y no se introducen violaciones WCAG A/AA serias o críticas.
 8. Marca, sucursal, salón y persona/mozo pueden editarse desde el mismo árbol;
    la persona conserva edición de perfil, acceso y relación laboral.
-9. Un salón muestra plazas por jornada; una plaza puede editar nombre, jornada,
-   mozo y mesas, y cada mesa muestra/edita su capacidad en cubiertos.
-10. Sin marca elegida se renderiza el tema moderno de plataforma. Elegir Marca A
+9. Un salón muestra sus mesas físicas. Una Jornada muestra sus Plazas; una Plaza
+   puede editar nombre, mozo y mesas mientras la Jornada sea editable, y cada
+   mesa muestra/edita su capacidad en cubiertos.
+10. La Jornada puede crearse desde Operación, muestra tipo, fecha y estado, y
+    permite las transiciones válidas de apertura, cierre o cancelación.
+11. Sin marca elegida se renderiza el tema moderno de plataforma. Elegir Marca A
     aplica sólo su presentación publicada; cambiar a Marca B o de tenant reemplaza
     los tokens sin conservar valores de la marca anterior.
-11. El usuario ve en el header qué apariencia está activa y puede volver al tema
+12. El usuario ve en el header qué apariencia está activa y puede volver al tema
     base; el Dash base no usa serif ni títulos editoriales sobredimensionados.

@@ -10,10 +10,14 @@ import {
   organizationNodeHref,
   organizationNodeKey,
   organizationPanelTitle,
+  plazasForServicePeriod,
+  servicePeriodStatusLabel,
+  servicePeriodTypeLabel,
   userForEmployment,
   type BranchEmployment,
   type OrganizationBranch,
   type OrganizationNode,
+  type OrganizationPlaza,
 } from "../src/features/organization/org-explorer-model.js";
 
 const branches: OrganizationBranch[] = [
@@ -54,9 +58,53 @@ const employments: BranchEmployment[] = [
   },
 ];
 
+const plazas: OrganizationPlaza[] = [
+  {
+    id: "plaza-a",
+    branchId: "branch-a",
+    salonId: "salon-a",
+    servicePeriodId: "period-a",
+    name: "Terraza",
+    waiterEmploymentId: "employment-a",
+    tableIds: ["table-a"],
+  },
+  {
+    id: "plaza-b",
+    branchId: "branch-a",
+    salonId: "salon-a",
+    servicePeriodId: "period-b",
+    name: "Interior",
+    tableIds: ["table-b"],
+  },
+];
+
 test("branchesForBrand keeps only branches joined to the requested brand", () => {
   assert.deepEqual(branchesForBrand(branches, "brand-a"), [branches[0]]);
   assert.deepEqual(branchesForBrand(branches, "missing"), []);
+});
+
+test("plazasForServicePeriod keeps the operational grouping scoped to one jornada", () => {
+  assert.deepEqual(plazasForServicePeriod(plazas, "period-a"), [plazas[0]]);
+  assert.deepEqual(plazasForServicePeriod(plazas, "missing"), []);
+});
+
+test("service period labels translate every domain type and lifecycle state", () => {
+  assert.deepEqual(
+    ["BREAKFAST", "LUNCH", "DINNER", "OTHER"].map((type) =>
+      servicePeriodTypeLabel(
+        type as "BREAKFAST" | "LUNCH" | "DINNER" | "OTHER",
+      ),
+    ),
+    ["Desayuno", "Almuerzo", "Cena", "Otro servicio"],
+  );
+  assert.deepEqual(
+    ["PLANNED", "OPEN", "CLOSING", "CLOSED", "CANCELLED"].map((status) =>
+      servicePeriodStatusLabel(
+        status as "PLANNED" | "OPEN" | "CLOSING" | "CLOSED" | "CANCELLED",
+      ),
+    ),
+    ["Planificada", "Abierta", "En cierre", "Cerrada", "Cancelada"],
+  );
 });
 
 test("employmentsForBranch keeps assignments eligible for the requested branch", () => {
@@ -138,6 +186,26 @@ test("organizationNodeKey is stable for empty, existing and create nodes", () =>
     organizationNodeKey({ type: "branch", id: null, parentId: "brand-a" }),
     "branch:new:brand-a",
   );
+  assert.equal(
+    organizationNodeKey({
+      type: "plaza",
+      id: "plaza-a",
+      parentId: "period-a",
+      branchId: "branch-a",
+      salonId: "salon-a",
+    }),
+    "plaza:plaza-a:period-a:branch-a:salon-a",
+  );
+  assert.equal(
+    organizationNodeKey({
+      type: "plaza",
+      id: null,
+      parentId: "period-a",
+      branchId: "branch-a",
+      salonId: null,
+    }),
+    "plaza:new:period-a:branch-a:any-salon",
+  );
 });
 
 test("isOrganizationNodeSelected compares the complete navigation identity", () => {
@@ -167,7 +235,21 @@ test("organization nodes round-trip through durable sidebar URLs", () => {
     { type: "brand", id: null },
     { type: "branch", id: "branch-a", parentId: "brand-a" },
     { type: "salon", id: null, parentId: "branch-a" },
-    { type: "plaza", id: "plaza-a", parentId: "salon-a" },
+    { type: "service-period", id: "period-a", parentId: "branch-a" },
+    {
+      type: "plaza",
+      id: "plaza-a",
+      parentId: "period-a",
+      branchId: "branch-a",
+      salonId: "salon-a",
+    },
+    {
+      type: "plaza",
+      id: null,
+      parentId: "period-a",
+      branchId: "branch-a",
+      salonId: null,
+    },
     { type: "table", id: "table-a", parentId: "salon-a" },
     { type: "branch-employees", id: "branch-a" },
     { type: "employee", id: "employment-a", parentId: "branch-a" },
@@ -191,7 +273,15 @@ test("organizationNodeFromSearch rejects incomplete or unknown selections", () =
   assert.equal(organizationNodeFromSearch("?node=unknown&id=value"), null);
   assert.equal(organizationNodeFromSearch("?node=branch&id=branch-a"), null);
   assert.equal(organizationNodeFromSearch("?node=salon&id=salon-a"), null);
+  assert.equal(
+    organizationNodeFromSearch("?node=service-period&id=period-a"),
+    null,
+  );
   assert.equal(organizationNodeFromSearch("?node=plaza&id=plaza-a"), null);
+  assert.equal(
+    organizationNodeFromSearch("?node=plaza&id=plaza-a&parentId=period-a"),
+    null,
+  );
   assert.equal(organizationNodeFromSearch("?node=table&id=table-a"), null);
   assert.equal(
     organizationNodeFromSearch("?node=employee&id=employment-a"),
@@ -248,14 +338,38 @@ test("organizationPanelTitle describes every detail and creation mode", () => {
   );
   assert.equal(
     organizationPanelTitle({
+      type: "service-period",
+      id: "period-a",
+      parentId: "branch-a",
+    }),
+    "Detalle de jornada de servicio",
+  );
+  assert.equal(
+    organizationPanelTitle({
+      type: "service-period",
+      id: null,
+      parentId: "branch-a",
+    }),
+    "Nueva jornada",
+  );
+  assert.equal(
+    organizationPanelTitle({
       type: "plaza",
       id: "plaza-a",
-      parentId: "salon-a",
+      parentId: "period-a",
+      branchId: "branch-a",
+      salonId: "salon-a",
     }),
     "Detalle de plaza",
   );
   assert.equal(
-    organizationPanelTitle({ type: "plaza", id: null, parentId: "salon-a" }),
+    organizationPanelTitle({
+      type: "plaza",
+      id: null,
+      parentId: "period-a",
+      branchId: "branch-a",
+      salonId: null,
+    }),
     "Nueva plaza",
   );
   assert.equal(

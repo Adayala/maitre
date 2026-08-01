@@ -40,7 +40,10 @@ const servicePeriod = {
   branchId: branch.id,
   businessDate: "2026-08-01",
   name: "Cena",
-  status: "OPEN",
+  type: "DINNER" as const,
+  actualOpen: "2026-08-01T20:00:00.000Z",
+  actualClose: null,
+  status: "OPEN" as const,
 };
 const table = {
   id: "80000000-0000-0000-0000-000000000001",
@@ -122,7 +125,7 @@ test("obliga a elegir entre múltiples tenants y persiste la selección explíci
     .toBe(tenantA.id);
 });
 
-test("recorre Marca → Sucursal → Salones y Equipo con carga lazy y paneles de alta", async ({
+test("recorre estructura física, operación y equipo con carga lazy y paneles de alta", async ({
   page,
 }) => {
   await installSession(page, tenantA.id);
@@ -153,7 +156,7 @@ test("recorre Marca → Sucursal → Salones y Equipo con carga lazy y paneles d
   ).toBeVisible();
 
   await page
-    .getByRole("button", { name: "Expandir salones de Centro" })
+    .getByRole("button", { name: "Expandir estructura física de Centro" })
     .click();
   await expect.poll(() => calls.salons).toBe(1);
   await expect.poll(() => calls.employments).toBe(0);
@@ -165,7 +168,10 @@ test("recorre Marca → Sucursal → Salones y Equipo con carga lazy y paneles d
       .filter({ hasText: "Salón principal" }),
   ).toBeVisible();
 
-  await page.getByRole("button", { name: /Equipo \/ mozos/ }).click();
+  await page
+    .locator(".org-tree__group-button")
+    .filter({ hasText: "Equipo" })
+    .click();
   await expect(
     page.getByRole("heading", { name: "Empleados de la sucursal" }),
   ).toBeVisible();
@@ -256,7 +262,9 @@ test("edita marca, sucursal, salón y mozo desde el mismo árbol", async ({
   await expect(tree.getByText("Centro Norte", { exact: true })).toBeVisible();
 
   await tree
-    .getByRole("button", { name: "Expandir salones de Centro Norte" })
+    .getByRole("button", {
+      name: "Expandir estructura física de Centro Norte",
+    })
     .click();
   await tree
     .locator(".org-tree__group-button")
@@ -289,7 +297,7 @@ test("edita marca, sucursal, salón y mozo desde el mismo árbol", async ({
   expect(calls.updatedUsers).toBe(1);
 });
 
-test("arma Salón → Plaza → Mesas, edita cubiertos y aplica la marca elegida", async ({
+test("separa Salón → Mesas de Jornada → Plaza y aplica la marca elegida", async ({
   page,
 }) => {
   await installSession(page, tenantA.id);
@@ -387,11 +395,12 @@ test("arma Salón → Plaza → Mesas, edita cubiertos y aplica la marca elegida
     .toBeNull();
 
   await page
-    .getByRole("button", { name: "Expandir salones de Centro" })
+    .getByRole("button", { name: "Expandir estructura física de Centro" })
     .click();
-  await page.getByRole("button", { name: "Expandir Salón principal" }).click();
-  await expect(page.getByText("Plazas por jornada")).toBeVisible();
-  await expect(page.getByText("Mesas sin plaza")).toBeVisible();
+  await page
+    .getByRole("button", { name: "Expandir mesas de Salón principal" })
+    .click();
+  await expect(page.getByText("Mesas", { exact: true })).toBeVisible();
   await expect(
     page.getByRole("button", { name: /Ventana.*4 cubiertos/ }),
   ).toBeVisible();
@@ -408,13 +417,18 @@ test("arma Salón → Plaza → Mesas, edita cubiertos y aplica la marca elegida
   expect(calls.createdTables).toBe(1);
 
   await page
-    .getByRole("button", { name: "Crear plaza en Salón principal" })
+    .getByRole("button", { name: "Expandir operación de servicio de Centro" })
     .click();
+  await expect(page.getByText("Jornadas y plazas")).toBeVisible();
+  await expect(page.getByText("Plazas", { exact: true })).toBeVisible();
+  await expect(page.getByText(/Sin plazas.*agrupar mesas/)).toBeVisible();
+  await page.getByRole("button", { name: "Crear plaza en Cena" }).click();
   await expect(
     page.getByRole("heading", { name: "Nueva plaza" }),
   ).toBeVisible();
+  await expect(page.getByLabel("Salón físico")).toHaveValue(salon.id);
   await page.getByLabel("Nombre de la plaza").fill("Terraza norte");
-  await page.getByLabel("Mozo asignado").selectOption(employment.id);
+  await page.getByLabel("Mozo o responsable").selectOption(employment.id);
   await page.getByLabel(/Ventana/).check();
   await page.getByLabel(/Patio/).check();
   await expect(page.getByText("10 cubiertos potenciales")).toBeVisible();
@@ -456,7 +470,9 @@ test("cubre loading, retry, estado vacío, validación y error de mutación", as
   const name = page.getByLabel("Nombre");
   await page.getByRole("button", { name: "Crear marca" }).last().click();
   await expect
-    .poll(() => name.evaluate((input) => input.validity.valid))
+    .poll(() =>
+      name.evaluate((input) => (input as HTMLInputElement).validity.valid),
+    )
     .toBe(false);
   await name.fill("Marca fallida");
   await page.getByLabel("Descripción").fill("Error determinista");
@@ -476,18 +492,17 @@ test("muestra validación y conflicto al guardar una plaza", async ({
   });
   await page.goto("/organizacion");
   await page
-    .getByRole("button", { name: "Expandir salones de Centro" })
+    .getByRole("button", { name: "Expandir operación de servicio de Centro" })
     .click();
-  await page.getByRole("button", { name: "Expandir Salón principal" }).click();
-  await page
-    .getByRole("button", { name: "Crear plaza en Salón principal" })
-    .click();
+  await page.getByRole("button", { name: "Crear plaza en Cena" }).click();
   const plazaName = page.getByLabel("Nombre de la plaza");
   await plazaName.fill("x");
   await page.getByLabel(/Ventana/).check();
   await page.getByRole("button", { name: "Crear plaza", exact: true }).click();
   await expect
-    .poll(() => plazaName.evaluate((input) => input.validity.valid))
+    .poll(() =>
+      plazaName.evaluate((input) => (input as HTMLInputElement).validity.valid),
+    )
     .toBe(false);
   await plazaName.fill("Terraza norte");
   await page.getByRole("button", { name: "Crear plaza", exact: true }).click();
@@ -496,7 +511,7 @@ test("muestra validación y conflicto al guardar una plaza", async ({
   );
 });
 
-test("crea la primera jornada sin salir del alta de plaza", async ({
+test("hace visible el vacío operativo y crea la primera jornada antes de sus plazas", async ({
   page,
 }) => {
   await installSession(page, tenantA.id);
@@ -506,20 +521,96 @@ test("crea la primera jornada sin salir del alta de plaza", async ({
   });
   await page.goto("/organizacion");
   await page
-    .getByRole("button", { name: "Expandir salones de Centro" })
+    .getByRole("button", { name: "Expandir operación de servicio de Centro" })
     .click();
-  await page.getByRole("button", { name: "Expandir Salón principal" }).click();
+  await expect(
+    page.getByText("Sin jornadas. Creá una para organizar sus plazas."),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Crear jornada en Centro" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Nueva jornada" }),
+  ).toBeVisible();
+  await page.getByLabel("Nombre de la jornada").fill("Almuerzo sábado");
+  await page.getByLabel("Tipo de servicio").selectOption("LUNCH");
   await page
-    .getByRole("button", { name: "Crear plaza en Salón principal" })
+    .getByRole("button", { name: "Crear jornada", exact: true })
     .click();
-  await expect(page.getByText("Creá la primera jornada acá")).toBeVisible();
-  await page.getByLabel("Nombre", { exact: true }).fill("Almuerzo sábado");
-  await page.getByLabel("Tipo").selectOption("LUNCH");
-  await page.getByRole("button", { name: "Crear jornada" }).click();
-  await expect(page.getByLabel("Jornada de servicio")).toHaveValue(
-    servicePeriod.id,
+  await expect(
+    page.getByRole("heading", { name: "Detalle de jornada" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Jornada creada. Ya podés organizar sus plazas."),
+  ).toBeVisible();
+  await expect(
+    page
+      .locator(".org-tree__node--period")
+      .filter({ hasText: "Almuerzo sábado" }),
+  ).toBeVisible();
+  await expect(page.getByText("0 plazas", { exact: false })).toBeVisible();
+  await expect(page).toHaveURL(
+    new RegExp(`node=service-period&id=${servicePeriod.id}`),
   );
   expect(calls.createdPeriods).toBe(1);
+});
+
+test("gestiona el ciclo visible de una jornada abierta hasta su cierre", async ({
+  page,
+}) => {
+  await installSession(page, tenantA.id);
+  const calls = await mockOrganizationApi(page, { tenants: [tenantA] });
+  await page.goto("/organizacion");
+  await page
+    .getByRole("button", { name: "Expandir operación de servicio de Centro" })
+    .click();
+  await page
+    .locator(".org-tree__node--period")
+    .filter({ hasText: "Cena" })
+    .click();
+
+  await expect(
+    page.getByRole("heading", { name: "Detalle de jornada" }),
+  ).toBeVisible();
+  await expect(page.locator(".org-status")).toHaveText("Abierta");
+  await page.getByRole("button", { name: "Iniciar cierre" }).click();
+  await expect(page.locator(".org-status")).toHaveText("En cierre");
+  await expect(
+    page.getByText("La jornada entró en proceso de cierre."),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Cerrar jornada" }).click();
+  await expect(page.locator(".org-status")).toHaveText("Cerrada");
+  await expect(
+    page.getByText("Esta jornada ya no admite cambios operativos."),
+  ).toBeVisible();
+  expect(calls.periodTransitions).toBe(2);
+});
+
+test("permite cancelar una jornada planificada y bloquea nuevas plazas", async ({
+  page,
+}) => {
+  await installSession(page, tenantA.id);
+  const calls = await mockOrganizationApi(page, {
+    tenants: [tenantA],
+    initialPeriodStatus: "PLANNED",
+  });
+  await page.goto("/organizacion");
+  await page
+    .getByRole("button", { name: "Expandir operación de servicio de Centro" })
+    .click();
+  await page
+    .locator(".org-tree__node--period")
+    .filter({ hasText: "Cena" })
+    .click();
+
+  await expect(page.locator(".org-status")).toHaveText("Planificada");
+  await expect(
+    page.getByRole("button", { name: "Abrir jornada" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Cancelar jornada" }).click();
+  await expect(page.locator(".org-status")).toHaveText("Cancelada");
+  await expect(
+    page.getByRole("button", { name: "Crear plaza en Cena" }),
+  ).toBeDisabled();
+  expect(calls.periodTransitions).toBe(1);
 });
 
 test("reintenta una asignación fallida sin duplicar la invitación", async ({
@@ -531,7 +622,10 @@ test("reintenta una asignación fallida sin duplicar la invitación", async ({
     failFirstEmployment: true,
   });
   await page.goto("/organizacion");
-  await page.getByRole("button", { name: /Equipo \/ mozos/ }).click();
+  await page
+    .locator(".org-tree__group-button")
+    .filter({ hasText: "Equipo" })
+    .click();
 
   await page.getByLabel("Nombre").fill("Cora Temporal");
   await page.getByLabel("Email").fill("cora@example.test");
@@ -596,6 +690,8 @@ async function mockOrganizationApi(
     failFirstEmployment?: boolean;
     failPlazaCreate?: boolean;
     noServicePeriods?: boolean;
+    initialPeriodStatus?:
+      "PLANNED" | "OPEN" | "CLOSING" | "CLOSED" | "CANCELLED";
   },
 ) {
   const calls = {
@@ -615,6 +711,7 @@ async function mockOrganizationApi(
     createdPlazas: 0,
     updatedPlazas: 0,
     createdPeriods: 0,
+    periodTransitions: 0,
   };
   const brandRecords = (options.brands ?? [brand]).map((item) => ({ ...item }));
   const branchRecord = { ...branch };
@@ -630,7 +727,23 @@ async function mockOrganizationApi(
     waiterEmploymentId: string | null;
     tableIds: string[];
   }> = [];
-  const periodRecords = options.noServicePeriods ? [] : [{ ...servicePeriod }];
+  const periodRecords: Array<{
+    id: string;
+    branchId: string;
+    businessDate: string;
+    name: string;
+    type: "BREAKFAST" | "LUNCH" | "DINNER" | "OTHER";
+    actualOpen: string | null;
+    actualClose: string | null;
+    status: "PLANNED" | "OPEN" | "CLOSING" | "CLOSED" | "CANCELLED";
+  }> = options.noServicePeriods
+    ? []
+    : [
+        {
+          ...servicePeriod,
+          status: options.initialPeriodStatus ?? servicePeriod.status,
+        },
+      ];
   const users = [
     {
       id: employment.personRef,
@@ -788,11 +901,44 @@ async function mockOrganizationApi(
       const body = request.postDataJSON() as {
         businessDate: string;
         name: string;
-        type: string;
+        type: "BREAKFAST" | "LUNCH" | "DINNER" | "OTHER";
       };
-      const created = { ...servicePeriod, ...body };
+      const created = {
+        ...servicePeriod,
+        ...body,
+        actualOpen: null,
+        status: "PLANNED" as const,
+      };
       periodRecords.push(created);
       return json(route, { data: created }, 201);
+    }
+    if (path.startsWith("/v1/service-periods/") && method === "GET") {
+      const record = periodRecords.find(
+        (item) => path === `/v1/service-periods/${item.id}`,
+      );
+      return record
+        ? json(route, { data: record })
+        : json(route, { title: "Jornada inexistente" }, 404);
+    }
+    if (
+      path.startsWith(`/v1/service-periods/${servicePeriod.id}/`) &&
+      method === "POST"
+    ) {
+      const record = periodRecords.find((item) => item.id === servicePeriod.id);
+      if (!record) return json(route, { title: "Jornada inexistente" }, 404);
+      calls.periodTransitions += 1;
+      const action = path.split("/").at(-1);
+      if (action === "open") {
+        record.status = "OPEN";
+        record.actualOpen = "2026-08-01T20:00:00.000Z";
+      }
+      if (action === "begin-close") record.status = "CLOSING";
+      if (action === "close") {
+        record.status = "CLOSED";
+        record.actualClose = "2026-08-02T00:00:00.000Z";
+      }
+      if (action === "cancel-planned") record.status = "CANCELLED";
+      return json(route, { data: record });
     }
     if (path === "/v1/plazas" && method === "GET")
       return json(route, { data: plazaRecords });
