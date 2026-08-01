@@ -5,16 +5,20 @@ import { useAuth } from "../../app/auth-context.js";
 import { useTenantContext } from "../../app/tenant-context.js";
 import { apiRequest } from "../../lib/api-client.js";
 import { useTenantQuery } from "../../lib/use-tenant-query.js";
+import { BrandPresentationEditor } from "../brands/brands-page.js";
 import {
   buildBranchEmploymentPayload,
+  editableMembershipStatus,
   employmentsForBranch,
   organizationPanelTitle,
+  userForEmployment,
   type BranchEmployment,
   type EmploymentRelationshipType,
   type OrganizationBrand,
   type OrganizationBranch,
   type OrganizationNode,
   type OrganizationSalon,
+  type OrganizationUser,
 } from "./org-explorer-model.js";
 
 interface OrgDetailPanelProps {
@@ -71,7 +75,18 @@ export function OrgDetailPanel({
         />
       ) : null}
       {node.type === "branch-employees" ? (
-        <BranchEmployeesPanel key={node.id} branchId={node.id} />
+        <BranchEmployeesPanel
+          key={node.id}
+          branchId={node.id}
+          onSelect={onSelect}
+        />
+      ) : null}
+      {node.type === "employee" ? (
+        <EmployeeDetailPanel
+          key={node.id}
+          id={node.id}
+          branchId={node.parentId}
+        />
       ) : null}
     </section>
   );
@@ -95,6 +110,7 @@ function BrandDetailPanel({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<"ACTIVE" | "INACTIVE">("ACTIVE");
+  const [isHydrated, setIsHydrated] = useState(!id);
   const mutation = usePanelMutation();
 
   useEffect(() => {
@@ -102,6 +118,7 @@ function BrandDetailPanel({
     setName(brandQuery.data.data.name);
     setDescription(brandQuery.data.data.description ?? "");
     setStatus(normalizeActiveStatus(brandQuery.data.data.status));
+    setIsHydrated(true);
   }, [brandQuery.data]);
 
   async function save(event: FormEvent) {
@@ -136,7 +153,7 @@ function BrandDetailPanel({
       }
     >
       <StateView
-        isLoading={Boolean(id) && brandQuery.isLoading}
+        isLoading={Boolean(id) && (brandQuery.isLoading || !isHydrated)}
         error={id ? (brandQuery.error as Error | null) : null}
         onRetry={() => void brandQuery.refetch()}
       >
@@ -180,6 +197,9 @@ function BrandDetailPanel({
                 : "Crear marca"}
           </button>
         </form>
+        {id && brandQuery.data?.data ? (
+          <BrandPresentationEditor brand={brandQuery.data.data} />
+        ) : null}
       </StateView>
     </PanelFrame>
   );
@@ -210,6 +230,7 @@ function BranchDetailPanel({
   const [code, setCode] = useState("");
   const [timezone, setTimezone] = useState("America/Argentina/Buenos_Aires");
   const [status, setStatus] = useState<"ACTIVE" | "INACTIVE">("ACTIVE");
+  const [isHydrated, setIsHydrated] = useState(!id);
   const mutation = usePanelMutation();
 
   useEffect(() => {
@@ -218,6 +239,7 @@ function BranchDetailPanel({
     setCode(branchQuery.data.data.code);
     setTimezone(branchQuery.data.data.timezone);
     setStatus(normalizeActiveStatus(branchQuery.data.data.status));
+    setIsHydrated(true);
   }, [branchQuery.data]);
 
   async function save(event: FormEvent) {
@@ -245,7 +267,8 @@ function BranchDetailPanel({
     >
       <StateView
         isLoading={
-          (Boolean(id) && branchQuery.isLoading) || brandQuery.isLoading
+          (Boolean(id) && (branchQuery.isLoading || !isHydrated)) ||
+          brandQuery.isLoading
         }
         error={(branchQuery.error ?? brandQuery.error) as Error | null}
         onRetry={() =>
@@ -331,6 +354,7 @@ function SalonDetailPanel({
   const [name, setName] = useState("");
   const [capacity, setCapacity] = useState(40);
   const [status, setStatus] = useState<"ACTIVE" | "INACTIVE">("ACTIVE");
+  const [isHydrated, setIsHydrated] = useState(!id);
   const mutation = usePanelMutation();
 
   useEffect(() => {
@@ -338,6 +362,7 @@ function SalonDetailPanel({
     setName(salonQuery.data.data.name);
     setCapacity(salonQuery.data.data.capacity);
     setStatus(salonQuery.data.data.status);
+    setIsHydrated(true);
   }, [salonQuery.data]);
 
   async function save(event: FormEvent) {
@@ -370,7 +395,8 @@ function SalonDetailPanel({
     >
       <StateView
         isLoading={
-          (Boolean(id) && salonQuery.isLoading) || branchQuery.isLoading
+          (Boolean(id) && (salonQuery.isLoading || !isHydrated)) ||
+          branchQuery.isLoading
         }
         error={(salonQuery.error ?? branchQuery.error) as Error | null}
         onRetry={() =>
@@ -436,19 +462,18 @@ function SalonDetailPanel({
   );
 }
 
-interface UserListItem {
-  id: string;
-  email: string | null;
-  name: string;
-  status: string;
-  roleIds: string[];
-}
 interface RoleListItem {
   id: string;
   name: string;
 }
 
-function BranchEmployeesPanel({ branchId }: { branchId: string }) {
+function BranchEmployeesPanel({
+  branchId,
+  onSelect,
+}: {
+  branchId: string;
+  onSelect: (node: OrganizationNode) => void;
+}) {
   const { accessToken } = useAuth();
   const { selectedTenantId } = useTenantContext();
   const branchQuery = useTenantQuery<{ data: OrganizationBranch }>(
@@ -459,7 +484,7 @@ function BranchEmployeesPanel({ branchId }: { branchId: string }) {
     `branch-employments-${branchId}`,
     `/v1/branches/${branchId}/employments`,
   );
-  const usersQuery = useTenantQuery<{ data: UserListItem[] }>(
+  const usersQuery = useTenantQuery<{ data: OrganizationUser[] }>(
     "organization-users",
     "/v1/users",
   );
@@ -479,7 +504,7 @@ function BranchEmployeesPanel({ branchId }: { branchId: string }) {
   const [roleId, setRoleId] = useState("role_employee");
   const [relationshipType, setRelationshipType] =
     useState<EmploymentRelationshipType>("EMPLOYEE");
-  const [pendingUser, setPendingUser] = useState<UserListItem | null>(null);
+  const [pendingUser, setPendingUser] = useState<OrganizationUser | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [mutationError, setMutationError] = useState<string | null>(null);
   const [mutationMessage, setMutationMessage] = useState<string | null>(null);
@@ -499,7 +524,7 @@ function BranchEmployeesPanel({ branchId }: { branchId: string }) {
     let invitedUser = pendingUser;
     try {
       if (!invitedUser) {
-        const invitation = await apiRequest<{ data: UserListItem }>(
+        const invitation = await apiRequest<{ data: OrganizationUser }>(
           "/v1/users",
           {
             accessToken,
@@ -673,11 +698,7 @@ function BranchEmployeesPanel({ branchId }: { branchId: string }) {
                 aria-label="Empleados asignados"
               >
                 {employments.map((employment) => {
-                  const user = users.find(
-                    (item) =>
-                      item.id === employment.personRef ||
-                      item.email === employment.personRef,
-                  );
+                  const user = userForEmployment(users, employment);
                   const roleNames =
                     user?.roleIds.map(
                       (userRoleId) =>
@@ -711,6 +732,19 @@ function BranchEmployeesPanel({ branchId }: { branchId: string }) {
                           </dd>
                         </div>
                       </dl>
+                      <button
+                        type="button"
+                        className="button-secondary"
+                        onClick={() =>
+                          onSelect({
+                            type: "employee",
+                            id: employment.id,
+                            parentId: branchId,
+                          })
+                        }
+                      >
+                        Editar persona
+                      </button>
                     </article>
                   );
                 })}
@@ -727,6 +761,263 @@ function BranchEmployeesPanel({ branchId }: { branchId: string }) {
             )}
           </section>
         </div>
+      </StateView>
+    </PanelFrame>
+  );
+}
+
+function EmployeeDetailPanel({
+  id,
+  branchId,
+}: {
+  id: string;
+  branchId: string;
+}) {
+  const queryClient = useQueryClient();
+  const { accessToken } = useAuth();
+  const { selectedTenantId } = useTenantContext();
+  const employmentQuery = useTenantQuery<{ data: BranchEmployment }>(
+    `organization-employment-${id}`,
+    `/v1/employments/${id}`,
+  );
+  const branchQuery = useTenantQuery<{ data: OrganizationBranch }>(
+    `organization-parent-branch-${branchId}`,
+    `/v1/branches/${branchId}`,
+  );
+  const usersQuery = useTenantQuery<{ data: OrganizationUser[] }>(
+    "organization-users",
+    "/v1/users",
+  );
+  const rolesQuery = useTenantQuery<{ data: RoleListItem[] }>(
+    "organization-roles",
+    "/v1/roles",
+  );
+  const employment = employmentQuery.data?.data;
+  const linkedUser = employment
+    ? userForEmployment(usersQuery.data?.data ?? [], employment)
+    : null;
+  const [employeeCode, setEmployeeCode] = useState("");
+  const [relationshipType, setRelationshipType] =
+    useState<EmploymentRelationshipType>("EMPLOYEE");
+  const [employmentStatus, setEmploymentStatus] =
+    useState<BranchEmployment["status"]>("ACTIVE");
+  const [roleId, setRoleId] = useState("");
+  const [membershipStatus, setMembershipStatus] = useState<
+    "INVITED" | "ACTIVE" | "SUSPENDED" | "REVOKED"
+  >("INVITED");
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    if (!employment || usersQuery.isLoading) return;
+    setEmployeeCode(employment.employeeCode);
+    setRelationshipType(employment.relationshipType);
+    setEmploymentStatus(employment.status);
+    if (linkedUser) {
+      setRoleId(linkedUser.roleIds[0] ?? "");
+      setMembershipStatus(editableMembershipStatus(linkedUser.status));
+    }
+    setIsHydrated(true);
+  }, [employment, linkedUser, usersQuery.isLoading]);
+
+  async function save(event: FormEvent) {
+    event.preventDefault();
+    if (!accessToken || !selectedTenantId) return;
+    setIsSaving(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const updates: Promise<unknown>[] = [
+        apiRequest(`/v1/employments/${id}`, {
+          accessToken,
+          tenantId: selectedTenantId,
+          method: "PATCH",
+          body: {
+            employeeCode,
+            relationshipType,
+            status: employmentStatus,
+          },
+        }),
+      ];
+      if (linkedUser) {
+        updates.push(
+          apiRequest(`/v1/users/${linkedUser.id}`, {
+            accessToken,
+            tenantId: selectedTenantId,
+            method: "PATCH",
+            body: {
+              roleIds: [roleId],
+              ...(membershipStatus !== "INVITED"
+                ? { membershipStatus }
+                : {}),
+            },
+          }),
+        );
+      }
+      await Promise.all(updates);
+      await Promise.all([
+        employmentQuery.refetch(),
+        usersQuery.refetch(),
+        rolesQuery.refetch(),
+        queryClient.invalidateQueries({
+          queryKey: [`branch-employments-${branchId}`, selectedTenantId],
+        }),
+      ]);
+      setMessage("Persona y relación laboral actualizadas correctamente.");
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "No se pudo actualizar la persona",
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <PanelFrame
+      kicker="Nivel 04 / Persona"
+      title={linkedUser?.name ?? employment?.personRef ?? "Detalle de integrante"}
+      subtitle={`Equipo de ${branchQuery.data?.data.name ?? "la sucursal"}`}
+    >
+      <StateView
+        isLoading={
+          employmentQuery.isLoading ||
+          branchQuery.isLoading ||
+          usersQuery.isLoading ||
+          rolesQuery.isLoading ||
+          !isHydrated
+        }
+        error={
+          (employmentQuery.error ??
+            branchQuery.error ??
+            usersQuery.error ??
+            rolesQuery.error) as Error | null
+        }
+        onRetry={() =>
+          void Promise.all([
+            employmentQuery.refetch(),
+            branchQuery.refetch(),
+            usersQuery.refetch(),
+            rolesQuery.refetch(),
+          ])
+        }
+      >
+        <form className="org-form org-form--employee" onSubmit={(event) => void save(event)}>
+          <fieldset>
+            <legend>Acceso al tenant</legend>
+            {linkedUser ? (
+              <>
+                <label>
+                  Nombre
+                  <input readOnly value={linkedUser.name} />
+                </label>
+                <label>
+                  Email
+                  <input readOnly value={linkedUser.email ?? "Sin email"} />
+                </label>
+                <label>
+                  Perfil operativo
+                  <select
+                    required
+                    value={roleId}
+                    onChange={(event) => setRoleId(event.target.value)}
+                  >
+                    <option value="" disabled>
+                      Elegir perfil
+                    </option>
+                    {(rolesQuery.data?.data ?? []).map((role) => (
+                      <option key={role.id} value={role.id}>
+                        {role.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Estado de acceso
+                  <select
+                    value={membershipStatus}
+                    onChange={(event) =>
+                      setMembershipStatus(
+                        event.target.value as typeof membershipStatus,
+                      )
+                    }
+                  >
+                    {membershipStatus === "INVITED" ? (
+                      <option value="INVITED">Invitación pendiente</option>
+                    ) : null}
+                    <option value="ACTIVE">Activo</option>
+                    <option value="SUSPENDED">Suspendido</option>
+                    <option value="REVOKED">Revocado</option>
+                  </select>
+                </label>
+              </>
+            ) : (
+              <p className="org-panel-note">
+                Esta relación laboral no tiene un usuario vinculable. Podés editar
+                sus datos laborales, pero no su acceso.
+              </p>
+            )}
+          </fieldset>
+          <fieldset>
+            <legend>Relación laboral</legend>
+            <label>
+              Código de empleado
+              <input
+                required
+                minLength={2}
+                value={employeeCode}
+                onChange={(event) => setEmployeeCode(event.target.value)}
+              />
+            </label>
+            <label>
+              Tipo de relación
+              <select
+                value={relationshipType}
+                onChange={(event) =>
+                  setRelationshipType(
+                    event.target.value as EmploymentRelationshipType,
+                  )
+                }
+              >
+                <option value="EMPLOYEE">Empleado</option>
+                <option value="CONTRACTOR">Contratista</option>
+                <option value="TEMPORARY">Temporal</option>
+              </select>
+            </label>
+            <label>
+              Estado laboral
+              <select
+                value={employmentStatus}
+                onChange={(event) =>
+                  setEmploymentStatus(
+                    event.target.value as BranchEmployment["status"],
+                  )
+                }
+              >
+                <option value="ACTIVE">Activo</option>
+                <option value="INACTIVE">Inactivo</option>
+                <option value="TERMINATED">Finalizado</option>
+              </select>
+            </label>
+          </fieldset>
+          {error ? (
+            <p role="alert" className="login-error">
+              {error}
+            </p>
+          ) : null}
+          {message ? (
+            <p role="status" className="org-form__success">
+              {message}
+            </p>
+          ) : null}
+          <button type="submit" disabled={isSaving || (Boolean(linkedUser) && !roleId)}>
+            {isSaving ? "Guardando…" : "Guardar persona"}
+          </button>
+        </form>
       </StateView>
     </PanelFrame>
   );

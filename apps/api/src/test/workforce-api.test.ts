@@ -203,6 +203,84 @@ async function buildWorkforceTestApp() {
   return { container: extended, app };
 }
 
+test("PATCH /v1/employments/:id edits labor data and validates failures", async () => {
+  const { container, app } = await buildWorkforceTestApp();
+  const { tenantId, branchId } = await getContext(container);
+  const headers = ownerHeaders(container, tenantId);
+
+  const first = await app.inject({
+    method: "POST",
+    url: "/v1/employments",
+    headers,
+    payload: {
+      personRef: "user-editable",
+      employeeCode: "MOZO-01",
+      relationshipType: "EMPLOYEE",
+      eligibleBranchIds: [branchId],
+      validFrom: "2026-08-01T00:00:00Z",
+    },
+  });
+  const second = await app.inject({
+    method: "POST",
+    url: "/v1/employments",
+    headers,
+    payload: {
+      personRef: "user-duplicate",
+      employeeCode: "MOZO-02",
+      relationshipType: "EMPLOYEE",
+      eligibleBranchIds: [branchId],
+      validFrom: "2026-08-01T00:00:00Z",
+    },
+  });
+  assert.equal(first.statusCode, 201);
+  assert.equal(second.statusCode, 201);
+
+  const update = await app.inject({
+    method: "PATCH",
+    url: `/v1/employments/${first.json().data.id}`,
+    headers,
+    payload: {
+      employeeCode: "MOZO-03",
+      relationshipType: "CONTRACTOR",
+      eligibleBranchIds: [branchId],
+      status: "INACTIVE",
+      validFrom: "2026-08-02T00:00:00Z",
+      validUntil: null,
+    },
+  });
+  assert.equal(update.statusCode, 200);
+  assert.equal(update.json().data.employeeCode, "MOZO-03");
+  assert.equal(update.json().data.relationshipType, "CONTRACTOR");
+  assert.equal(update.json().data.status, "INACTIVE");
+  assert.equal(update.json().data.validUntil, null);
+
+  const duplicate = await app.inject({
+    method: "PATCH",
+    url: `/v1/employments/${first.json().data.id}`,
+    headers,
+    payload: { employeeCode: "MOZO-02" },
+  });
+  assert.equal(duplicate.statusCode, 409);
+
+  const missing = await app.inject({
+    method: "PATCH",
+    url: `/v1/employments/${randomUUID()}`,
+    headers,
+    payload: { status: "INACTIVE" },
+  });
+  assert.equal(missing.statusCode, 404);
+
+  const empty = await app.inject({
+    method: "PATCH",
+    url: `/v1/employments/${first.json().data.id}`,
+    headers,
+    payload: {},
+  });
+  assert.equal(empty.statusCode, 400);
+
+  await app.close();
+});
+
 test("Workforce lifecycle: employment, shift, assignment, clocking, adjustment", async () => {
   const { container, app } = await buildWorkforceTestApp();
   const { tenantId, branchId } = await getContext(container);
@@ -7169,6 +7247,36 @@ test("Workforce supervisor writes deny resources outside membership branch scope
       },
     })
   ).json().data;
+
+  const inScopeEmployment = (
+    await app.inject({
+      method: "POST",
+      url: "/v1/employments",
+      headers,
+      payload: {
+        personRef: "person-write-in-scope",
+        employeeCode: "EMP-WRITE-IN",
+        relationshipType: "EMPLOYEE",
+        eligibleBranchIds: [branchId],
+        validFrom: "2026-01-01T00:00:00Z",
+      },
+    })
+  ).json().data;
+  const updateInScope = await app.inject({
+    method: "PATCH",
+    url: `/v1/employments/${inScopeEmployment.id}`,
+    headers: scopedHeaders,
+    payload: { status: "INACTIVE" },
+  });
+  assert.equal(updateInScope.statusCode, 200);
+
+  const updateForeignDenied = await app.inject({
+    method: "PATCH",
+    url: `/v1/employments/${foreignEmployment.id}`,
+    headers: scopedHeaders,
+    payload: { status: "INACTIVE" },
+  });
+  assert.equal(updateForeignDenied.statusCode, 404);
 
   const foreignShift = (
     await app.inject({

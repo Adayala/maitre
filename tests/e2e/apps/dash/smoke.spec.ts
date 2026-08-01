@@ -42,7 +42,7 @@ test("@ui-contract actualiza el perfil fiscal y declara un punto de venta ARCA",
     { tenant: tenantId },
   );
 
-  await page.route("http://127.0.0.1:3101/**", async (route) => {
+  await page.route("**/v1/**", async (route) => {
     const request = route.request();
     const url = new URL(request.url());
     const path = url.pathname;

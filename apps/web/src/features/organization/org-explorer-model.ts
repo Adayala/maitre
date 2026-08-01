@@ -2,7 +2,8 @@ export type OrganizationNode =
   | { type: "brand"; id: string | null }
   | { type: "branch"; id: string | null; parentId: string }
   | { type: "salon"; id: string | null; parentId: string }
-  | { type: "branch-employees"; id: string };
+  | { type: "branch-employees"; id: string }
+  | { type: "employee"; id: string; parentId: string };
 
 export interface OrganizationBrand {
   id: string;
@@ -33,8 +34,18 @@ export interface BranchEmployment {
   personRef: string;
   employeeCode: string;
   eligibleBranchIds: string[];
+  status: "ACTIVE" | "INACTIVE" | "TERMINATED";
+  relationshipType: EmploymentRelationshipType;
+  validFrom?: string;
+  validUntil?: string | null;
+}
+
+export interface OrganizationUser {
+  id: string;
+  email: string | null;
+  name: string;
   status: string;
-  relationshipType: string;
+  roleIds: string[];
 }
 
 export type EmploymentRelationshipType =
@@ -73,6 +84,28 @@ export function employmentsForBranch(
   );
 }
 
+export function userForEmployment(
+  users: OrganizationUser[],
+  employment: BranchEmployment,
+) {
+  return (
+    users.find(
+      (user) =>
+        user.id === employment.personRef ||
+        user.email === employment.personRef,
+    ) ?? null
+  );
+}
+
+export function editableMembershipStatus(status: string) {
+  const normalized = status.trim().toUpperCase();
+  return normalized === "ACTIVE" ||
+    normalized === "SUSPENDED" ||
+    normalized === "REVOKED"
+    ? normalized
+    : "INVITED";
+}
+
 export function organizationNodeKey(node: OrganizationNode | null) {
   if (!node) return "empty";
   return `${node.type}:${node.id ?? "new"}:${"parentId" in node ? node.parentId : "root"}`;
@@ -103,6 +136,11 @@ export function organizationNodeFromSearch(search: string) {
     if (!parentId) return null;
     return { type, id, parentId } satisfies OrganizationNode;
   }
+  if (type === "employee") {
+    const parentId = params.get("parentId");
+    if (!id || !parentId) return null;
+    return { type, id, parentId } satisfies OrganizationNode;
+  }
   if (type === "branch-employees" && id) {
     return { type, id } satisfies OrganizationNode;
   }
@@ -111,7 +149,8 @@ export function organizationNodeFromSearch(search: string) {
 
 export function organizationPanelTitle(node: OrganizationNode | null) {
   if (!node) return "Detalle pendiente";
-  if (node.type === "branch-employees") return "Empleados de la sucursal";
+  if (node.type === "branch-employees") return "Equipo de la sucursal";
+  if (node.type === "employee") return "Detalle de integrante";
   const labels = {
     brand: { detail: "marca", create: "Nueva marca" },
     branch: { detail: "sucursal", create: "Nueva sucursal" },

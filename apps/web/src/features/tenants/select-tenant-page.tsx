@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../../app/auth-context.js";
 import { useTenantContext } from "../../app/tenant-context.js";
@@ -9,12 +8,6 @@ export function SelectTenantPage() {
   const { me, selectedTenantId, selectTenant, isLoading, error } =
     useTenantContext();
   const tenants = me?.tenants ?? [];
-
-  useEffect(() => {
-    const onlyTenant = tenants.length === 1 ? tenants[0] : undefined;
-    if (onlyTenant && selectedTenantId !== onlyTenant.id)
-      selectTenant(onlyTenant.id);
-  }, [selectedTenantId, selectTenant, tenants]);
 
   if (!accessToken) return <Navigate to="/login" replace />;
   if (isLoading)
@@ -40,8 +33,6 @@ export function SelectTenantPage() {
       </main>
     );
   }
-  if (tenants.length === 1) return <Navigate to="/" replace />;
-
   return (
     <main id="main-content" className="tenant-select">
       <section
@@ -49,8 +40,8 @@ export function SelectTenantPage() {
         aria-labelledby="tenant-select-heading"
       >
         <header className="tenant-select__header">
-          <p className="tenant-select__kicker">Paso 01 / Contexto operativo</p>
-          <h1 id="tenant-select-heading">¿Qué organización vas a gestionar?</h1>
+          <p className="tenant-select__kicker">Paso 01 / Tenant de trabajo</p>
+          <h1 id="tenant-select-heading">Elegí dónde vas a trabajar</h1>
           <p>
             Tu elección define el perímetro de datos y permisos de esta sesión.
           </p>
@@ -72,7 +63,7 @@ export function SelectTenantPage() {
                   }
                   onClick={() => {
                     selectTenant(tenant.id);
-                    navigate("/");
+                    navigate("/organizacion");
                   }}
                 >
                   <span>{String(index + 1).padStart(2, "0")}</span>

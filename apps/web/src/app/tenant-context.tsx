@@ -1,7 +1,14 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../lib/api-client.js";
 import { useAuth } from "./auth-context.js";
+import { resolveSelectedTenantId } from "./tenant-context-model.js";
 
 interface MeContextBranch {
   id: string;
@@ -26,6 +33,7 @@ interface TenantContextState {
   error?: Error;
   selectedTenantId: string | null;
   selectTenant: (tenantId: string) => void;
+  clearTenant: () => void;
 }
 
 const TenantContext = createContext<TenantContextState | null>(null);
@@ -47,15 +55,32 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     setSelectedTenantId(tenantId);
   }
 
+  function clearTenant() {
+    localStorage.removeItem("maitre.selectedTenantId");
+    setSelectedTenantId(null);
+  }
+
+  const resolvedTenantId = resolveSelectedTenantId(
+    selectedTenantId,
+    data?.tenants,
+  );
+
+  useEffect(() => {
+    if (data && selectedTenantId && !resolvedTenantId) {
+      localStorage.removeItem("maitre.selectedTenantId");
+      setSelectedTenantId(null);
+    }
+  }, [data, resolvedTenantId, selectedTenantId]);
+
   return (
     <TenantContext.Provider
       value={{
         ...(data ? { me: data } : {}),
         isLoading,
         ...(error ? { error: error as Error } : {}),
-        selectedTenantId:
-          selectedTenantId ?? (data?.tenants.length === 1 ? data.tenants[0]!.id : null),
+        selectedTenantId: resolvedTenantId,
         selectTenant,
+        clearTenant,
       }}
     >
       {children}
