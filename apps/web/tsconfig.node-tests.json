@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "dist",
+    "types": ["node"]
+  },
+  "include": [
+    "src/features/organization/org-explorer-model.ts",
+    "test/org-explorer-model.test.ts"
+  ]
+}

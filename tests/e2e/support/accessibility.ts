@@ -2,6 +2,11 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, test } from "@playwright/test";
 
 export async function expectNoSeriousAccessibilityViolations(page: Page) {
+  // Axe must inspect the settled palette, not colors blended by entry animations.
+  await page.addStyleTag({
+    content:
+      "*,*::before,*::after{animation:none!important;transition:none!important}",
+  });
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();

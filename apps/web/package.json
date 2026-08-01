@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "prebuild": "npm run build --workspace @maitre/contracts",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build && tsc -p tsconfig.node-tests.json",
     "preview": "vite preview"
   },
   "dependencies": {

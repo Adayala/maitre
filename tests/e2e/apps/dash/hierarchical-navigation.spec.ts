@@ -1,0 +1,330 @@
+import { expect, test, type Page, type Route } from "@playwright/test";
+import { expectNoSeriousAccessibilityViolations } from "../../support/accessibility";
+
+const tenantA = {
+  id: "10000000-0000-0000-0000-000000000001",
+  name: "Grupo Horizonte",
+  branches: [
+    { id: "30000000-0000-0000-0000-000000000001", code: "CTR", name: "Centro" },
+  ],
+};
+const tenantB = {
+  id: "10000000-0000-0000-0000-000000000002",
+  name: "Grupo Delta",
+  branches: [],
+};
+const brand = {
+  id: "20000000-0000-0000-0000-000000000001",
+  name: "Casa Norte",
+  slug: "casa-norte",
+  status: "ACTIVE",
+  description: "Cocina urbana",
+};
+const branch = {
+  id: tenantA.branches[0]!.id,
+  brandId: brand.id,
+  name: "Centro",
+  code: "CTR",
+  status: "ACTIVE",
+  timezone: "America/Argentina/Buenos_Aires",
+};
+const salon = {
+  id: "40000000-0000-0000-0000-000000000001",
+  branchId: branch.id,
+  name: "Salón principal",
+  capacity: 48,
+  status: "ACTIVE",
+};
+const employment = {
+  id: "50000000-0000-0000-0000-000000000001",
+  personRef: "60000000-0000-0000-0000-000000000001",
+  employeeCode: "EMP-01",
+  eligibleBranchIds: [branch.id],
+  status: "ACTIVE",
+  relationshipType: "EMPLOYEE",
+};
+
+test("preserva la auto-selección cuando el usuario tiene un único tenant", async ({
+  page,
+}) => {
+  await installSession(page);
+  await mockOrganizationApi(page, { tenants: [tenantA] });
+  await page.goto("/select-tenant");
+
+  await expect(page).toHaveURL(/\/organizacion$/);
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Organización" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Grupo Horizonte", { exact: true }).first(),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "¿Qué organización vas a gestionar?" }),
+  ).toHaveCount(0);
+  await expect(
+    page
+      .getByRole("navigation", { name: "Navegación principal" })
+      .getByText("Marcas"),
+  ).toHaveCount(0);
+  await expectNoSeriousAccessibilityViolations(page);
+});
+
+test("obliga a elegir entre múltiples tenants y persiste la selección explícita", async ({
+  page,
+}) => {
+  await installSession(page);
+  await mockOrganizationApi(page, { tenants: [tenantA, tenantB] });
+
+  await page.goto("/");
+  await expect(page).toHaveURL(/\/select-tenant$/);
+  await expect(
+    page.getByRole("heading", { name: "¿Qué organización vas a gestionar?" }),
+  ).toBeVisible();
+  await expect(page.getByRole("listitem")).toHaveCount(2);
+  await page.getByRole("button", { name: /Grupo Horizonte/ }).click();
+
+  await expect(page).toHaveURL(/\/organizacion$/);
+  await expect(
+    page.getByText("Grupo Horizonte", { exact: true }).first(),
+  ).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(() => localStorage.getItem("maitre.selectedTenantId")),
+    )
+    .toBe(tenantA.id);
+});
+
+test("recorre Marca → Sucursal → Salones y Empleados con carga lazy y paneles de alta", async ({
+  page,
+}) => {
+  await installSession(page, tenantA.id);
+  const calls = await mockOrganizationApi(page, { tenants: [tenantA] });
+
+  await page.goto("/organizacion");
+  await expect(
+    page.getByRole("heading", { name: "Elegí un nodo del árbol" }),
+  ).toBeVisible();
+  await expect.poll(() => calls.salons).toBe(0);
+  await expect.poll(() => calls.employments).toBe(0);
+
+  await page.getByRole("button", { name: "Expandir Casa Norte" }).click();
+  await page
+    .getByRole("button", { name: "Centro", exact: false })
+    .filter({ hasText: "Sucursal" })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Detalle de sucursal" }),
+  ).toBeVisible();
+  await expect(page.getByLabel("Código")).toHaveValue("CTR");
+
+  await page.getByRole("button", { name: "Expandir Centro" }).click();
+  await expect.poll(() => calls.salons).toBe(1);
+  await expect.poll(() => calls.employments).toBe(1);
+  await expect(
+    page.getByRole("button", { name: /Salón principal/ }),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: /Empleados/ }).click();
+  await expect(
+    page.getByRole("heading", { name: "Empleados de la sucursal" }),
+  ).toBeVisible();
+  await expect(page.getByText("Ada Operadora")).toBeVisible();
+  await expect(page.getByText("Administración")).toBeVisible();
+
+  await page.getByRole("button", { name: "Crear salón en Centro" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Nuevo salón" }),
+  ).toBeVisible();
+  await page.getByLabel("Nombre").fill("Patio");
+  await page.getByLabel("Capacidad").fill("24");
+  await page.getByRole("button", { name: "Crear salón" }).last().click();
+  await expect(page.getByRole("status")).toContainText(
+    "Salón creado correctamente",
+  );
+  await expect(
+    page.getByRole("heading", { name: "Detalle de salón" }),
+  ).toBeVisible();
+  await expect.poll(() => calls.createdSalons).toBe(1);
+});
+
+test("cubre loading, retry, estado vacío, validación y error de mutación", async ({
+  page,
+}) => {
+  await installSession(page, tenantA.id);
+  let failBrands = true;
+  await mockOrganizationApi(page, {
+    tenants: [tenantA],
+    brands: [],
+    delayBrands: true,
+    shouldFailBrands: () => failBrands,
+  });
+
+  await page.goto("/organizacion");
+  await expect(page.getByRole("status")).toContainText(/Cargando/);
+  await expect(page.getByRole("alert")).toContainText(
+    "No se pudo cargar marcas",
+  );
+  failBrands = false;
+  await page.getByRole("button", { name: "Reintentar" }).click();
+  await expect(
+    page.getByText("No hay marcas. Usá “+” para crear la primera."),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Crear marca" }).click();
+  const name = page.getByLabel("Nombre");
+  await page.getByRole("button", { name: "Crear marca" }).last().click();
+  await expect(name).toBeFocused();
+  await name.fill("Marca fallida");
+  await page.getByLabel("Descripción").fill("Error determinista");
+  await page.getByRole("button", { name: "Crear marca" }).last().click();
+  await expect(page.getByRole("alert")).toContainText(
+    "No se pudo crear la marca",
+  );
+});
+
+test("mantiene el explorer usable y accesible en viewport mobile", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await installSession(page, tenantA.id);
+  await mockOrganizationApi(page, { tenants: [tenantA] });
+  await page.goto("/organizacion");
+
+  const tree = page.getByRole("complementary", {
+    name: "Jerarquía de la organización",
+  });
+  const detail = page.getByRole("heading", { name: "Elegí un nodo del árbol" });
+  await expect(tree).toBeVisible();
+  await expect(detail).toBeVisible();
+  const treeBox = await tree.boundingBox();
+  const detailBox = await detail.boundingBox();
+  expect(treeBox).not.toBeNull();
+  expect(detailBox).not.toBeNull();
+  expect(detailBox!.y).toBeGreaterThan(treeBox!.y);
+  await expectNoSeriousAccessibilityViolations(page);
+});
+
+async function installSession(page: Page, selectedTenantId?: string) {
+  await page.addInitScript(
+    ({ tenantId }) => {
+      sessionStorage.setItem("maitre.fixtureAccessToken", "e2e-token");
+      if (tenantId) localStorage.setItem("maitre.selectedTenantId", tenantId);
+      else localStorage.removeItem("maitre.selectedTenantId");
+    },
+    { tenantId: selectedTenantId },
+  );
+}
+
+async function mockOrganizationApi(
+  page: Page,
+  options: {
+    tenants: (typeof tenantA)[];
+    brands?: (typeof brand)[];
+    delayBrands?: boolean;
+    shouldFailBrands?: () => boolean;
+  },
+) {
+  const calls = { salons: 0, employments: 0, createdSalons: 0 };
+  const salons = [salon];
+  await page.route("**/v1/**", async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const path = url.pathname;
+    const method = request.method();
+    if (path === "/v1/me/context")
+      return json(route, {
+        user: {
+          id: "user-owner",
+          displayName: "Owner E2E",
+          email: "owner@example.test",
+        },
+        tenants: options.tenants,
+      });
+    if (path === "/v1/brands" && method === "GET") {
+      if (options.delayBrands)
+        await new Promise((resolve) => setTimeout(resolve, 250));
+      if (options.shouldFailBrands?.())
+        return json(
+          route,
+          { title: "No se pudo cargar marcas", type: "about:blank" },
+          500,
+        );
+      return json(route, { data: options.brands ?? [brand] });
+    }
+    if (path === "/v1/branches" && method === "GET")
+      return json(route, {
+        data: options.brands?.length === 0 ? [] : [branch],
+      });
+    if (path === `/v1/brands/${brand.id}` && method === "GET")
+      return json(route, { data: brand });
+    if (path === `/v1/branches/${branch.id}` && method === "GET")
+      return json(route, { data: branch });
+    if (path === "/v1/salons" && method === "GET") {
+      calls.salons += 1;
+      return json(route, { data: salons });
+    }
+    if (path.startsWith("/v1/salons/") && method === "GET") {
+      const requestedSalon = salons.find(
+        (item) => path === `/v1/salons/${item.id}`,
+      );
+      return requestedSalon
+        ? json(route, { data: requestedSalon })
+        : json(route, { title: "Salón inexistente", type: "about:blank" }, 404);
+    }
+    if (path === `/v1/branches/${branch.id}/employments`) {
+      calls.employments += 1;
+      return json(route, { data: [employment] });
+    }
+    if (path === "/v1/users")
+      return json(route, {
+        data: [
+          {
+            id: employment.personRef,
+            email: "ada@example.test",
+            name: "Ada Operadora",
+            status: "ACTIVE",
+            roleIds: ["role_admin"],
+          },
+        ],
+      });
+    if (path === "/v1/roles")
+      return json(route, {
+        data: [{ id: "role_admin", name: "Administración" }],
+      });
+    if (path === "/v1/salons" && method === "POST") {
+      calls.createdSalons += 1;
+      const body = request.postDataJSON() as {
+        name: string;
+        capacity: number;
+        branchId: string;
+      };
+      const created = {
+        ...salon,
+        id: "40000000-0000-0000-0000-000000000099",
+        ...body,
+      };
+      salons.push(created);
+      return json(route, { data: created }, 201);
+    }
+    if (path === "/v1/brands" && method === "POST")
+      return json(
+        route,
+        { title: "No se pudo crear la marca", type: "about:blank" },
+        500,
+      );
+    return json(
+      route,
+      { title: `Mock faltante: ${method} ${path}`, type: "about:blank" },
+      404,
+    );
+  });
+  return calls;
+}
+
+async function json(route: Route, body: unknown, status = 200) {
+  await route.fulfill({
+    status,
+    contentType: "application/json",
+    body: JSON.stringify(body),
+  });
+}
