@@ -191,6 +191,10 @@ button,.public-cta { border-radius:2px; font-weight:800; }
 .org-form>button,.org-form__actions button{min-height:48px;justify-self:start;padding-inline:20px;}
 .org-form__actions{display:flex;gap:10px;}
 .org-form__success{padding:10px;border-left:4px solid var(--success);background:#e6f5ef;color:#075944;}
+.org-employee-management{display:grid;gap:30px;}
+.org-employee-onboarding{padding:20px;border:1.5px solid var(--org-ink);border-left:8px solid var(--org-blue);background:#f6f2e9;box-shadow:6px 6px 0 rgba(21,24,31,0.08);}
+.org-employee-onboarding h3,.org-employee-management>section>h3{margin:0.3em 0 0.7em;font:500 clamp(1.35rem,2.5vw,2rem)/1 Georgia,"Times New Roman",serif;letter-spacing:-0.035em;}
+.org-employee-onboarding>p:not(.org-kicker){max-width:58ch;margin-bottom:18px;color:var(--muted);}
 .org-employee-list{display:grid;gap:10px;}
 .org-employee-card{display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,0.7fr);gap:18px;padding:16px;border:1.5px solid var(--org-ink);background:#fff;}
 .org-employee-card>div{display:grid;gap:4px;}

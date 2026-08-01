@@ -114,6 +114,12 @@ branchId=`) y "Empleados" (fetch de usuarios/asignaciones filtrado por esa
   nombres visibles. No se infiere una asignación desde una membership global.
 - Cambiar tenant vuelve a ser una acción explícita desde el header y abre
   `/select-tenant`; no existe un selector inline en el dashboard.
+- El alta desde “Empleados” crea primero la invitación (`/v1/users`) y luego la
+  relación laboral scopeada a la sucursal (`/v1/employments`). Si falla el
+  segundo paso, el reintento conserva el usuario creado y no duplica la
+  invitación.
+- El journey de release usa `/overview` para el resumen operativo y
+  `/organizacion` para las altas jerárquicas; no depende de las rutas legacy.
 
 ## Criterios de aceptación verificables
 
