@@ -644,14 +644,13 @@ async function openGuestReservations(page: Page) {
 }
 
 function guestReservationCard(page: Page, reservation: Reservation) {
-  if (!reservation.notes) {
-    throw new Error(
-      `Reservation ${reservation.id} is missing the unique journey note`,
-    );
-  }
+  const displayedStartAt = new Date(reservation.startAt).toLocaleString(
+    "es-AR",
+    { timeZone: APP_TIME_ZONE },
+  );
 
   return page.locator(".customer-reservation-card", {
-    hasText: reservation.notes,
+    hasText: displayedStartAt,
   });
 }
 
