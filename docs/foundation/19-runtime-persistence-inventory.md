@@ -4,22 +4,22 @@
 
 Dejar explícito qué partes de Maitre ya corren sobre Supabase en el runtime operativo principal, cuáles tienen evidencia live reciente y dónde siguen existiendo brechas reales.
 
-## Estado relevado el 29 de julio de 2026
+## Estado actualizado el 2 de agosto de 2026
 
-| Área | Adapter Supabase | Wiring en `apps/api` | Evidencia reciente | Gap principal |
-| --- | --- | --- | --- | --- |
-| Identity / memberships | Sí | Sí | `/v1/me/context` validado | Falta más recorrido funcional por app |
-| Organization | Sí | Sí | datos demo presentes | Falta smoke funcional por superficies admin |
-| Floor | Sí | Sí | tablas, visits, checks presentes | Falta recorrido táctil end-to-end |
-| Reservations | Sí | Sí | reservas presentes | Falta validación live de flujos customer/host |
-| Ordering | Sí | Sí | órdenes presentes | Falta recorrido waiter/cashier completo |
-| Kitchen | Sí | Sí | commands presentes | Falta validación live de tablero KDS |
-| Cash | Sí | Sí | sessions y movements presentes | Falta flujo live de cierre / conciliación |
-| Fiscal | Sí | Sí | migraciones, asociación fiscal, WSAA y `FEDummy` real en homologación | matriz de comprobantes y rollout productivo pendientes |
-| Workforce | Sí | Sí | repos Supabase presentes | Falta seed útil y prueba live |
-| Catalog | Sí | Sí | wiring completo | Falta evidencia live por UI pública |
-| Subscription | Sí | Sí | wiring completo | Falta prueba funcional de owner/backoffice |
-| Audit | Sí | Sí | wiring completo | Falta explotación visible / consultas live |
+| Área                   | Adapter Supabase | Wiring en `apps/api` | Evidencia reciente                                                    | Gap principal                                                  |
+| ---------------------- | ---------------- | -------------------- | --------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Identity / memberships | Sí               | Sí                   | roles fixture y límites representativos validados                     | Falta login productivo y matriz RBAC completa por app          |
+| Organization           | Sí               | Sí                   | MVP-J-003 crea tenant, marca, sucursal, salón, mesa, jornada y plaza  | Falta alta integral exclusivamente por UI                      |
+| Floor                  | Sí               | Sí                   | MVP-J-001/J005 cubren visita, pedido, entrega, cuenta y cierre        | Faltan walk-in, transferencias, split/merge y offline          |
+| Reservations           | Sí               | Sí                   | MVP-J-004 cubre Guest→Host→Floor con confirmación/no-show/cancelación | Falta llegada, seating, seña y recordatorios                   |
+| Ordering               | Sí               | Sí                   | MVP-J-001/J005 cubren pedido, agotado, reemplazo y entrega            | Faltan dos rondas, bebida/postre y QR híbrido                  |
+| Kitchen                | Sí               | Sí                   | lifecycle, pausa/reanudación, handoff y cancelación autorizada live   | Faltan multi-estación, concurrencia y recuperación             |
+| Cash                   | Sí               | Sí                   | pago exacto, fallido, parcial, remanente y settlement live            | Faltan apertura/cierre, conciliación, refund, propina y fiscal |
+| Fiscal                 | Sí               | Sí                   | migraciones, asociación fiscal, WSAA y `FEDummy` real en homologación | matriz de comprobantes y rollout productivo pendientes         |
+| Workforce              | Sí               | Sí                   | MVP-J-003 crea roles, employments y asignación de plaza               | Falta login real, turnos, fichaje y políticas laborales        |
+| Catalog                | Sí               | Sí                   | productos reales usados en journeys                                   | Falta publicación/consumo completo desde Guest y QR            |
+| Subscription           | Sí               | Sí                   | tenant nuevo recibe STARTER y capacidades del journey                 | Falta lifecycle owner/backoffice y expansión/reducción         |
+| Audit                  | Sí               | Sí                   | MVP-J-001 valida evidencia correlacionada visible                     | Falta explotación amplia, exportación y alertas                |
 
 ### Detalle fiscal vigente
 
@@ -53,6 +53,9 @@ Dejar explícito qué partes de Maitre ya corren sobre Supabase en el runtime op
 2. Cerrar recorridos UI que todavía no prueban todos los casos contra datos reales.
 3. Confirmar rollout/migrations de cada subdominio en el proyecto Supabase conectado.
 4. Hacer visible el estado de outbox, auditoría y jobs operativos desde superficies administrativas.
+
+La matriz detallada, la evidencia reciente y el backlog por prioridad viven en
+[20-e2e-flow-coverage.md](20-e2e-flow-coverage.md).
 
 ## Cómo usar este inventario
 

@@ -54,11 +54,16 @@ export async function registerAvailabilityRoutes(app: FastifyInstance, container
         }
       }
 
-      const activeOccupancyTableIds = new Set<string>();
-      for (const table of tables) {
-        const active = await container.occupancies.findActiveByTable(ctx.tenantId, table.id);
-        if (active) activeOccupancyTableIds.add(table.id);
-      }
+      const activeOccupancies = await Promise.all(
+        tables.map((table) =>
+          container.occupancies.findActiveByTable(ctx.tenantId, table.id),
+        ),
+      );
+      const activeOccupancyTableIds = new Set(
+        activeOccupancies
+          .filter((occupancy) => occupancy !== null)
+          .map((occupancy) => occupancy.tableId),
+      );
 
       const result = calculateAvailability({
         partySize: query.partySize,

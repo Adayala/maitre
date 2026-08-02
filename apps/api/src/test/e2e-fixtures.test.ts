@@ -49,6 +49,18 @@ test("E2E fixtures register scoped operational and auditor principals", async ()
     branchId,
     isolatedEnvironment,
   );
+  const persistedWaiter = await container.users.findByExternalIdentity(
+    "fixture",
+    "e2e-run-20260730-a-waiter",
+  );
+  await container.users.save({ ...persistedWaiter!, email: null });
+  await registerE2EFixtures(
+    container,
+    sessions,
+    tenantId,
+    branchId,
+    isolatedEnvironment,
+  );
 
   for (const [token, roleId] of [
     ["waiter-token", "role_waiter"],
@@ -67,5 +79,9 @@ test("E2E fixtures register scoped operational and auditor principals", async ()
     );
     assert.deepEqual(membership?.roleIds, [roleId]);
     assert.deepEqual(membership?.branchIds, [branchId]);
+    assert.equal(
+      user?.email,
+      `e2e-run-20260730-a-${principal.subject.split("-").at(-1)}@example.test`,
+    );
   }
 });

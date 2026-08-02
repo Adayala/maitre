@@ -344,6 +344,10 @@ body {
   background: color-mix(in srgb, var(--primary) 12%, var(--surface-2));
 }
 
+.customer-branch-card--active span {
+  color: var(--text);
+}
+
 .customer-branch-card--article {
   gap: 0.75rem;
 }
@@ -414,7 +418,7 @@ body {
 }
 
 .customer-reservation-card--history {
-  opacity: 0.92;
+  opacity: 1;
 }
 
 .customer-reservation-card__main {
@@ -965,6 +969,11 @@ body {
   color: var(--muted);
 }
 
+.customer-mode-card--active .customer-mode-card__eyebrow,
+.customer-mode-card--active p {
+  color: var(--text);
+}
+
 .customer-mode-card__actions {
   display: flex;
   flex-wrap: wrap;
@@ -1184,7 +1193,7 @@ p {
 }
 .btn--primary {
   background: var(--primary);
-  color: #fff;
+  color: #161a1d;
 }
 .btn--primary:hover:not(:disabled) {
   filter: brightness(1.08);

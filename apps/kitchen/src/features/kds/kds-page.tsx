@@ -84,7 +84,6 @@ const ACTION_PENDING_LABEL: Record<CommandAction, string> = {
   resume: "Retomando comanda…",
   "mark-ready": "Marcando comanda lista…",
   "complete-handoff": "Confirmando handoff…",
-  cancel: "Cancelando comanda…",
 };
 
 const ACTION_SUCCESS_LABEL: Record<CommandAction, string> = {
@@ -95,7 +94,6 @@ const ACTION_SUCCESS_LABEL: Record<CommandAction, string> = {
   resume: "Preparación retomada",
   "mark-ready": "Comanda marcada lista",
   "complete-handoff": "Handoff confirmado",
-  cancel: "Comanda cancelada",
 };
 
 function readSoundPreference(): boolean {
@@ -120,7 +118,10 @@ function formatRecentAge(elapsedMs: number): string {
 
 function playTone(pulses: number, mode: "arrival" | "late") {
   if (typeof window === "undefined") return;
-  const audioApi = window.AudioContext ?? (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  const audioApi =
+    window.AudioContext ??
+    (window as Window & { webkitAudioContext?: typeof AudioContext })
+      .webkitAudioContext;
   if (!audioApi) return;
 
   const context = new audioApi();
@@ -138,8 +139,14 @@ function playTone(pulses: number, mode: "arrival" | "late") {
       pulseAt,
     );
     gain.gain.setValueAtTime(0.0001, pulseAt);
-    gain.gain.exponentialRampToValueAtTime(mode === "arrival" ? 0.09 : 0.07, pulseAt + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, pulseAt + (mode === "arrival" ? 0.18 : 0.22));
+    gain.gain.exponentialRampToValueAtTime(
+      mode === "arrival" ? 0.09 : 0.07,
+      pulseAt + 0.02,
+    );
+    gain.gain.exponentialRampToValueAtTime(
+      0.0001,
+      pulseAt + (mode === "arrival" ? 0.18 : 0.22),
+    );
 
     oscillator.connect(gain);
     gain.connect(context.destination);
@@ -148,9 +155,12 @@ function playTone(pulses: number, mode: "arrival" | "late") {
   }
 
   const stopAt = startAt + pulseCount * 0.24 + 0.3;
-  window.setTimeout(() => {
-    void context.close().catch(() => undefined);
-  }, Math.ceil((stopAt - context.currentTime) * 1000));
+  window.setTimeout(
+    () => {
+      void context.close().catch(() => undefined);
+    },
+    Math.ceil((stopAt - context.currentTime) * 1000),
+  );
 }
 
 async function toggleFullscreen(next: boolean) {
@@ -178,14 +188,24 @@ export function KdsPage() {
   const [activeFilter, setActiveFilter] = useState<FilterKey>("ALL");
   const [quickView, setQuickView] = useState<QuickView>("NONE");
   const [newArrivalAt, setNewArrivalAt] = useState<Record<string, number>>({});
-  const [arrivalNotice, setArrivalNotice] = useState<ArrivalNotice | null>(null);
+  const [arrivalNotice, setArrivalNotice] = useState<ArrivalNotice | null>(
+    null,
+  );
   const [lateNotice, setLateNotice] = useState<LateNotice | null>(null);
-  const [soundEnabled, setSoundEnabled] = useState<boolean>(() => readSoundPreference());
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(() =>
+    readSoundPreference(),
+  );
   const [focusMode, setFocusMode] = useState(false);
   const [rushMode, setRushMode] = useState<boolean>(() => readRushPreference());
-  const [deniedActions, setDeniedActions] = useState<Partial<Record<CommandAction, true>>>({});
-  const [pendingActions, setPendingActions] = useState<Partial<Record<string, CommandAction>>>({});
-  const [actionSuccess, setActionSuccess] = useState<ActionSuccess | null>(null);
+  const [deniedActions, setDeniedActions] = useState<
+    Partial<Record<CommandAction, true>>
+  >({});
+  const [pendingActions, setPendingActions] = useState<
+    Partial<Record<string, CommandAction>>
+  >({});
+  const [actionSuccess, setActionSuccess] = useState<ActionSuccess | null>(
+    null,
+  );
   const prevRef = useRef<Map<string, Command>>(new Map());
   const initializedRef = useRef(false);
   const lateIdsRef = useRef<Set<string>>(new Set());
@@ -236,7 +256,11 @@ export function KdsPage() {
     const appeared: Record<string, number> = {};
     for (const [id, prev] of prevRef.current) {
       if (!current.has(id)) {
-        disappeared.push({ id, name: prev.payload.displayName, at: observedAt });
+        disappeared.push({
+          id,
+          name: prev.payload.displayName,
+          at: observedAt,
+        });
       }
     }
     if (initializedRef.current) {
@@ -284,12 +308,15 @@ export function KdsPage() {
   useEffect(() => {
     if (!arrivalNotice) return;
     if (now - arrivalNotice.at < NEW_BADGE_MS) return;
-    setArrivalNotice((current) => (current?.at === arrivalNotice.at ? null : current));
+    setArrivalNotice((current) =>
+      current?.at === arrivalNotice.at ? null : current,
+    );
   }, [arrivalNotice, now]);
 
   useEffect(() => {
     const lateCommands = commands.filter(
-      (command) => urgencyFor(now - new Date(command.receivedAt).getTime()) === "late",
+      (command) =>
+        urgencyFor(now - new Date(command.receivedAt).getTime()) === "late",
     );
     const lateIds = new Set(lateCommands.map((command) => command.id));
     if (initializedRef.current) {
@@ -309,17 +336,23 @@ export function KdsPage() {
   useEffect(() => {
     if (!lateNotice) return;
     if (now - lateNotice.at < NEW_BADGE_MS) return;
-    setLateNotice((current) => (current?.at === lateNotice.at ? null : current));
+    setLateNotice((current) =>
+      current?.at === lateNotice.at ? null : current,
+    );
   }, [lateNotice, now]);
 
   useEffect(() => {
-    setRecent((current) => current.filter((item) => now - item.at < RECENT_DONE_MS));
+    setRecent((current) =>
+      current.filter((item) => now - item.at < RECENT_DONE_MS),
+    );
   }, [now]);
 
   useEffect(() => {
     if (!actionSuccess) return;
     if (now - actionSuccess.at < ACTION_SUCCESS_MS) return;
-    setActionSuccess((current) => (current?.at === actionSuccess.at ? null : current));
+    setActionSuccess((current) =>
+      current?.at === actionSuccess.at ? null : current,
+    );
   }, [actionSuccess, now]);
 
   useEffect(() => {
@@ -334,10 +367,12 @@ export function KdsPage() {
 
   useEffect(() => {
     if (typeof document === "undefined") return;
-    const syncFullscreen = () => setFocusMode(Boolean(document.fullscreenElement));
+    const syncFullscreen = () =>
+      setFocusMode(Boolean(document.fullscreenElement));
     syncFullscreen();
     document.addEventListener("fullscreenchange", syncFullscreen);
-    return () => document.removeEventListener("fullscreenchange", syncFullscreen);
+    return () =>
+      document.removeEventListener("fullscreenchange", syncFullscreen);
   }, []);
 
   useEffect(() => {
@@ -371,7 +406,8 @@ export function KdsPage() {
 
   function runAction(commandId: string, act: CommandAction, reason?: string) {
     const commandName =
-      commands.find((command) => command.id === commandId)?.payload.displayName ?? "la comanda";
+      commands.find((command) => command.id === commandId)?.payload
+        .displayName ?? "la comanda";
     setActionError(null);
     setActionSuccess(null);
     setPendingActions((current) => ({ ...current, [commandId]: act }));
@@ -387,7 +423,9 @@ export function KdsPage() {
         onError: (err) => {
           if (err instanceof ApiError && err.status === 403) {
             setDeniedActions((current) => ({ ...current, [act]: true }));
-            setActionError("No tenés permiso para esta acción. La ocultamos para no volver a interrumpir el flujo.");
+            setActionError(
+              "No tenés permiso para esta acción. La ocultamos para no volver a interrumpir el flujo.",
+            );
             return;
           }
           setActionError(err.message);
@@ -407,15 +445,18 @@ export function KdsPage() {
   const filteredByQuickView =
     quickView === "LATE"
       ? commands.filter(
-          (command) => urgencyFor(now - new Date(command.receivedAt).getTime()) === "late",
+          (command) =>
+            urgencyFor(now - new Date(command.receivedAt).getTime()) === "late",
         )
       : quickView === "READY"
         ? commands.filter((command) => command.status === "READY")
         : quickView === "MINE"
           ? commands.filter((command) => command.ownerActorRef === me?.user.id)
           : quickView === "NEW"
-            ? commands.filter((command) => newArrivalAt[command.id] !== undefined)
-        : commands;
+            ? commands.filter(
+                (command) => newArrivalAt[command.id] !== undefined,
+              )
+            : commands;
   const visibleCommands =
     quickView === "NONE"
       ? activeFilter === "ALL"
@@ -423,22 +464,43 @@ export function KdsPage() {
         : commands.filter((command) => command.status === activeFilter)
       : activeFilter === "ALL"
         ? filteredByQuickView
-        : filteredByQuickView.filter((command) => command.status === activeFilter);
+        : filteredByQuickView.filter(
+            (command) => command.status === activeFilter,
+          );
   const groupedCommands =
     activeFilter === "ALL" && quickView !== "READY"
       ? STATUS_SECTIONS.map((section) => ({
           ...section,
-          commands: visibleCommands.filter((command) => command.status === section.key),
+          commands: visibleCommands.filter(
+            (command) => command.status === section.key,
+          ),
         })).filter((section) => section.commands.length > 0)
       : [];
-  const receivedCount = commands.filter((command) => command.status === "RECEIVED").length;
-  const claimedCount = commands.filter((command) => command.status === "CLAIMED").length;
-  const inProgressCount = commands.filter((command) => command.status === "IN_PROGRESS").length;
-  const onHoldCount = commands.filter((command) => command.status === "ON_HOLD").length;
-  const lateCount = commands.filter((command) => urgencyFor(now - new Date(command.receivedAt).getTime()) === "late").length;
-  const readyCount = commands.filter((command) => command.status === "READY").length;
-  const mineCount = commands.filter((command) => command.ownerActorRef === me?.user.id).length;
-  const newCount = commands.filter((command) => newArrivalAt[command.id] !== undefined).length;
+  const receivedCount = commands.filter(
+    (command) => command.status === "RECEIVED",
+  ).length;
+  const claimedCount = commands.filter(
+    (command) => command.status === "CLAIMED",
+  ).length;
+  const inProgressCount = commands.filter(
+    (command) => command.status === "IN_PROGRESS",
+  ).length;
+  const onHoldCount = commands.filter(
+    (command) => command.status === "ON_HOLD",
+  ).length;
+  const lateCount = commands.filter(
+    (command) =>
+      urgencyFor(now - new Date(command.receivedAt).getTime()) === "late",
+  ).length;
+  const readyCount = commands.filter(
+    (command) => command.status === "READY",
+  ).length;
+  const mineCount = commands.filter(
+    (command) => command.ownerActorRef === me?.user.id,
+  ).length;
+  const newCount = commands.filter(
+    (command) => newArrivalAt[command.id] !== undefined,
+  ).length;
   const operationalFocus = getOperationalFocus({
     lateCount,
     readyCount,
@@ -456,15 +518,23 @@ export function KdsPage() {
   const queueChecklist = [
     { label: "Atrasadas controladas", done: lateCount === 0 },
     { label: "Listas despachadas", done: readyCount === 0 },
-    { label: "Ingresos nuevos absorbidos", done: receivedCount === 0 || claimedCount + inProgressCount > 0 },
+    {
+      label: "Ingresos nuevos absorbidos",
+      done: receivedCount === 0 || claimedCount + inProgressCount > 0,
+    },
     { label: "Pausas revisadas", done: onHoldCount === 0 },
   ];
-  const queuePendingLabels = queueChecklist.filter((step) => !step.done).map((step) => step.label);
+  const queuePendingLabels = queueChecklist
+    .filter((step) => !step.done)
+    .map((step) => step.label);
   const queueNeedsAttention = queuePendingLabels.length > 0;
   const productionStageCards = [
     {
       label: "Tomar",
-      title: receivedCount > 0 ? `${receivedCount} nueva${receivedCount === 1 ? "" : "s"} por absorber` : "Ingresos bajo control",
+      title:
+        receivedCount > 0
+          ? `${receivedCount} nueva${receivedCount === 1 ? "" : "s"} por absorber`
+          : "Ingresos bajo control",
       detail:
         receivedCount > 0
           ? "Conviene repartir o tomar las comandas recién llegadas para que no envejezcan en la cola."
@@ -478,15 +548,26 @@ export function KdsPage() {
     },
     {
       label: "Cocinar",
-      title: inProgressCount > 0 || claimedCount > 0 ? `${claimedCount + inProgressCount} en ejecución` : "Sin producción activa",
+      title:
+        inProgressCount > 0 || claimedCount > 0
+          ? `${claimedCount + inProgressCount} en ejecución`
+          : "Sin producción activa",
       detail:
         lateCount > 0
           ? "Hay atraso: conviene priorizar las comandas que ya están fuera de tiempo."
           : claimedCount + inProgressCount > 0
             ? "La producción está en marcha; seguí ritmo y evitá pausas innecesarias."
             : "No hay comandas tomadas o en preparación en este instante.",
-      tone: lateCount > 0 ? "warning" : claimedCount + inProgressCount > 0 ? "info" : "success",
-      active: quickView === "LATE" || activeFilter === "CLAIMED" || activeFilter === "IN_PROGRESS",
+      tone:
+        lateCount > 0
+          ? "warning"
+          : claimedCount + inProgressCount > 0
+            ? "info"
+            : "success",
+      active:
+        quickView === "LATE" ||
+        activeFilter === "CLAIMED" ||
+        activeFilter === "IN_PROGRESS",
       onClick: () => {
         if (lateCount > 0) {
           setQuickView("LATE");
@@ -494,12 +575,21 @@ export function KdsPage() {
           return;
         }
         setQuickView("NONE");
-        setActiveFilter(inProgressCount > 0 ? "IN_PROGRESS" : claimedCount > 0 ? "CLAIMED" : "ALL");
+        setActiveFilter(
+          inProgressCount > 0
+            ? "IN_PROGRESS"
+            : claimedCount > 0
+              ? "CLAIMED"
+              : "ALL",
+        );
       },
     },
     {
       label: "Despachar",
-      title: readyCount > 0 ? `${readyCount} lista${readyCount === 1 ? "" : "s"} para handoff` : "Nada lista para salir",
+      title:
+        readyCount > 0
+          ? `${readyCount} lista${readyCount === 1 ? "" : "s"} para handoff`
+          : "Nada lista para salir",
       detail:
         readyCount > 0
           ? "La siguiente ganancia operativa está en confirmar salida y liberar lugar mental en estación."
@@ -521,12 +611,13 @@ export function KdsPage() {
           ? "Mis comandas"
           : quickView === "NEW"
             ? "Entraron recién"
-          : null;
-  const filterLabel = FILTERS.find((filter) => filter.key === activeFilter)?.label ?? "Todas";
+            : null;
+  const filterLabel =
+    FILTERS.find((filter) => filter.key === activeFilter)?.label ?? "Todas";
   const activeViewLabel =
     quickViewLabel && activeFilter !== "ALL"
       ? `${quickViewLabel} · ${filterLabel}`
-      : quickViewLabel ?? (activeFilter !== "ALL" ? filterLabel : null);
+      : (quickViewLabel ?? (activeFilter !== "ALL" ? filterLabel : null));
   const emptyTitle =
     commands.length === 0
       ? "Todo al día"
@@ -558,17 +649,17 @@ export function KdsPage() {
             ? "Podés tomar una comanda nueva o volver a la vista completa para revisar toda la cola."
             : quickView === "NEW"
               ? "No hubo ingresos nuevos en los últimos segundos. Volvé a la vista completa para seguir el flujo general."
-            : activeFilter === "RECEIVED"
-              ? "No hay ingresos pendientes de tomar en este momento."
-              : activeFilter === "CLAIMED"
-                ? "Nadie dejó comandas tomadas sin empezar."
-                : activeFilter === "IN_PROGRESS"
-                  ? "Ahora mismo no hay producción activa en esta vista."
-                  : activeFilter === "ON_HOLD"
-                    ? "No quedaron comandas pausadas para retomar."
-                    : activeFilter === "READY"
-                      ? "Todavía no hay preparación terminada para entregar."
-                      : "Probá con otro estado o salí del atajo operativo para seguir monitoreando la cola.";
+              : activeFilter === "RECEIVED"
+                ? "No hay ingresos pendientes de tomar en este momento."
+                : activeFilter === "CLAIMED"
+                  ? "Nadie dejó comandas tomadas sin empezar."
+                  : activeFilter === "IN_PROGRESS"
+                    ? "Ahora mismo no hay producción activa en esta vista."
+                    : activeFilter === "ON_HOLD"
+                      ? "No quedaron comandas pausadas para retomar."
+                      : activeFilter === "READY"
+                        ? "Todavía no hay preparación terminada para entregar."
+                        : "Probá con otro estado o salí del atajo operativo para seguir monitoreando la cola.";
   const emptyIcon =
     commands.length === 0
       ? "✅"
@@ -580,17 +671,17 @@ export function KdsPage() {
             ? "🧑‍🍳"
             : quickView === "NEW"
               ? "✨"
-            : activeFilter === "RECEIVED"
-              ? "📭"
-              : activeFilter === "CLAIMED"
-                ? "🤝"
-                : activeFilter === "IN_PROGRESS"
-                  ? "🔥"
-                  : activeFilter === "ON_HOLD"
-                    ? "⏸️"
-                    : activeFilter === "READY"
-                      ? "🍽️"
-                      : "✅";
+              : activeFilter === "RECEIVED"
+                ? "📭"
+                : activeFilter === "CLAIMED"
+                  ? "🤝"
+                  : activeFilter === "IN_PROGRESS"
+                    ? "🔥"
+                    : activeFilter === "ON_HOLD"
+                      ? "⏸️"
+                      : activeFilter === "READY"
+                        ? "🍽️"
+                        : "✅";
   const emptyActionLabel =
     quickView !== "NONE"
       ? "Ver cola completa"
@@ -606,7 +697,9 @@ export function KdsPage() {
   const constrainedView = quickView !== "NONE" || activeFilter !== "ALL";
 
   return (
-    <div className={`kds ${focusMode ? "kds--focus" : ""} ${rushMode ? "kds--rush" : ""}`}>
+    <div
+      className={`kds ${focusMode ? "kds--focus" : ""} ${rushMode ? "kds--rush" : ""}`}
+    >
       <header className="kds-header">
         <div className="kds-station">
           <span className="kds-station-icon" aria-hidden="true">
@@ -619,7 +712,10 @@ export function KdsPage() {
         </div>
 
         <div className="kds-header-right">
-          <span className={`kds-live ${isFetching ? "kds-live--on" : ""}`} title="Actualización automática">
+          <span
+            className={`kds-live ${isFetching ? "kds-live--on" : ""}`}
+            title="Actualización automática"
+          >
             <span className="kds-live-dot" aria-hidden="true" />
             En vivo
           </span>
@@ -628,7 +724,11 @@ export function KdsPage() {
             className={`sound-toggle ${soundEnabled ? "sound-toggle--on" : ""}`}
             onClick={() => setSoundEnabled((current) => !current)}
             aria-pressed={soundEnabled}
-            title={soundEnabled ? "Silenciar alertas sonoras" : "Activar alertas sonoras"}
+            title={
+              soundEnabled
+                ? "Silenciar alertas sonoras"
+                : "Activar alertas sonoras"
+            }
           >
             <span aria-hidden="true">{soundEnabled ? "🔊" : "🔇"}</span>
             <span>{soundEnabled ? "Sonido on" : "Sonido off"}</span>
@@ -648,7 +748,11 @@ export function KdsPage() {
             className={`rush-toggle ${rushMode ? "rush-toggle--on" : ""}`}
             onClick={() => setRushMode((current) => !current)}
             aria-pressed={rushMode}
-            title={rushMode ? "Volver a vista normal" : "Activar vista compacta para hora pico"}
+            title={
+              rushMode
+                ? "Volver a vista normal"
+                : "Activar vista compacta para hora pico"
+            }
           >
             <span aria-hidden="true">{rushMode ? "▤" : "☷"}</span>
             <span>{rushMode ? "Rush on" : "Rush off"}</span>
@@ -670,10 +774,25 @@ export function KdsPage() {
             {menuOpen && (
               <div id="kds-settings-menu" className="kds-menu" role="menu">
                 <div className="kds-menu-user">{me?.user.displayName}</div>
-                <button ref={firstMenuItemRef} type="button" className="kds-menu-item" onClick={() => { setMenuOpen(false); clearStation(); }}>
+                <button
+                  ref={firstMenuItemRef}
+                  type="button"
+                  className="kds-menu-item"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    clearStation();
+                  }}
+                >
                   Cambiar estación
                 </button>
-                <button type="button" className="kds-menu-item" onClick={() => { setMenuOpen(false); void refetch(); }}>
+                <button
+                  type="button"
+                  className="kds-menu-item"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    void refetch();
+                  }}
+                >
                   Actualizar ahora
                 </button>
                 <button
@@ -696,7 +815,14 @@ export function KdsPage() {
                 >
                   {rushMode ? "Desactivar vista rush" : "Activar vista rush"}
                 </button>
-                <button type="button" className="kds-menu-item kds-menu-item--danger" onClick={() => { setMenuOpen(false); void signOut(); }}>
+                <button
+                  type="button"
+                  className="kds-menu-item kds-menu-item--danger"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    void signOut();
+                  }}
+                >
                   Cerrar sesión
                 </button>
               </div>
@@ -708,7 +834,11 @@ export function KdsPage() {
       {actionError && (
         <div className="kds-action-error" role="alert">
           {actionError}
-          <button type="button" className="btn btn--ghost btn--sm" onClick={() => setActionError(null)}>
+          <button
+            type="button"
+            className="btn btn--ghost btn--sm"
+            onClick={() => setActionError(null)}
+          >
             Cerrar
           </button>
         </div>
@@ -717,7 +847,11 @@ export function KdsPage() {
       {actionSuccess && (
         <div className="kds-action-success" role="status" aria-live="polite">
           {actionSuccess.message}
-          <button type="button" className="btn btn--ghost btn--sm" onClick={() => setActionSuccess(null)}>
+          <button
+            type="button"
+            className="btn btn--ghost btn--sm"
+            onClick={() => setActionSuccess(null)}
+          >
             Ocultar
           </button>
         </div>
@@ -727,11 +861,13 @@ export function KdsPage() {
         <div className="kds-arrival-banner" role="status" aria-live="polite">
           <div className="kds-arrival-copy">
             <strong>
-              Entró {arrivalNotice.count} comanda{arrivalNotice.count === 1 ? "" : "s"} nueva
+              Entró {arrivalNotice.count} comanda
+              {arrivalNotice.count === 1 ? "" : "s"} nueva
               {arrivalNotice.count === 1 ? "" : "s"}
             </strong>
             <span>
-              Revisá la cola de {selectedStation?.displayName?.toLowerCase() ?? "esta estación"}.
+              Revisá la cola de{" "}
+              {selectedStation?.displayName?.toLowerCase() ?? "esta estación"}.
             </span>
           </div>
           <div className="kds-banner-actions">
@@ -763,7 +899,9 @@ export function KdsPage() {
               {lateNotice.count} comanda{lateNotice.count === 1 ? "" : "s"} pasó
               {lateNotice.count === 1 ? "" : "ron"} a atrasada
             </strong>
-            <span>Chequeá rápido las tarjetas en rojo o usá el atajo “Atrasadas”.</span>
+            <span>
+              Chequeá rápido las tarjetas en rojo o usá el atajo “Atrasadas”.
+            </span>
           </div>
           <div className="kds-banner-actions">
             <button
@@ -791,23 +929,38 @@ export function KdsPage() {
         {focusMode && (
           <section className="focus-banner" aria-label="Modo foco activo">
             <strong>Modo foco activo</strong>
-            <span>Vista limpia para servicio continuo. Tocá “Salir foco” para volver al modo normal.</span>
+            <span>
+              Vista limpia para servicio continuo. Tocá “Salir foco” para volver
+              al modo normal.
+            </span>
           </section>
         )}
         {rushMode && (
           <section className="rush-banner" aria-label="Vista rush activa">
             <strong>Vista rush activa</strong>
-            <span>Cards compactas para meter más comandas en pantalla durante hora pico.</span>
+            <span>
+              Cards compactas para meter más comandas en pantalla durante hora
+              pico.
+            </span>
           </section>
         )}
         {operationalFocus && (
-          <section className={`rush-priority rush-priority--${operationalFocus.tone}`} aria-label="Prioridad actual">
+          <section
+            className={`rush-priority rush-priority--${operationalFocus.tone}`}
+            aria-label="Prioridad actual"
+          >
             <div className="rush-priority__copy">
-              <span className="rush-priority__eyebrow">{operationalFocus.eyebrow}</span>
+              <span className="rush-priority__eyebrow">
+                {operationalFocus.eyebrow}
+              </span>
               <strong>{operationalFocus.title}</strong>
               <span>{operationalFocus.message}</span>
             </div>
-            <button type="button" className="btn btn--ghost btn--sm" onClick={operationalFocus.onAction}>
+            <button
+              type="button"
+              className="btn btn--ghost btn--sm"
+              onClick={operationalFocus.onAction}
+            >
               {operationalFocus.actionLabel}
             </button>
           </section>
@@ -828,7 +981,11 @@ export function KdsPage() {
           <button
             type="button"
             className={`critical-pill critical-pill--ready ${quickView === "READY" ? "critical-pill--active" : ""}`}
-            onClick={() => setQuickView((current) => (current === "READY" ? "NONE" : "READY"))}
+            onClick={() =>
+              setQuickView((current) =>
+                current === "READY" ? "NONE" : "READY",
+              )
+            }
             aria-pressed={quickView === "READY"}
           >
             <span className="critical-pill__label">Listas</span>
@@ -837,7 +994,9 @@ export function KdsPage() {
           <button
             type="button"
             className={`critical-pill critical-pill--late ${quickView === "LATE" ? "critical-pill--active" : ""}`}
-            onClick={() => setQuickView((current) => (current === "LATE" ? "NONE" : "LATE"))}
+            onClick={() =>
+              setQuickView((current) => (current === "LATE" ? "NONE" : "LATE"))
+            }
             aria-pressed={quickView === "LATE"}
           >
             <span className="critical-pill__label">Atrasadas</span>
@@ -846,7 +1005,9 @@ export function KdsPage() {
           <button
             type="button"
             className={`critical-pill critical-pill--new ${quickView === "NEW" ? "critical-pill--active" : ""}`}
-            onClick={() => setQuickView((current) => (current === "NEW" ? "NONE" : "NEW"))}
+            onClick={() =>
+              setQuickView((current) => (current === "NEW" ? "NONE" : "NEW"))
+            }
             aria-pressed={quickView === "NEW"}
           >
             <span className="critical-pill__label">Entraron recién</span>
@@ -897,7 +1058,8 @@ export function KdsPage() {
             const count =
               filter.key === "ALL"
                 ? commands.length
-                : commands.filter((command) => command.status === filter.key).length;
+                : commands.filter((command) => command.status === filter.key)
+                    .length;
             return (
               <button
                 key={filter.key}
@@ -920,7 +1082,9 @@ export function KdsPage() {
           <button
             type="button"
             className={`quickview-chip ${quickView === "LATE" ? "quickview-chip--active" : ""}`}
-            onClick={() => setQuickView((current) => (current === "LATE" ? "NONE" : "LATE"))}
+            onClick={() =>
+              setQuickView((current) => (current === "LATE" ? "NONE" : "LATE"))
+            }
             aria-pressed={quickView === "LATE"}
           >
             <span>Atrasadas</span>
@@ -929,7 +1093,11 @@ export function KdsPage() {
           <button
             type="button"
             className={`quickview-chip ${quickView === "READY" ? "quickview-chip--active" : ""}`}
-            onClick={() => setQuickView((current) => (current === "READY" ? "NONE" : "READY"))}
+            onClick={() =>
+              setQuickView((current) =>
+                current === "READY" ? "NONE" : "READY",
+              )
+            }
             aria-pressed={quickView === "READY"}
           >
             <span>Listas</span>
@@ -938,7 +1106,9 @@ export function KdsPage() {
           <button
             type="button"
             className={`quickview-chip ${quickView === "MINE" ? "quickview-chip--active" : ""}`}
-            onClick={() => setQuickView((current) => (current === "MINE" ? "NONE" : "MINE"))}
+            onClick={() =>
+              setQuickView((current) => (current === "MINE" ? "NONE" : "MINE"))
+            }
             aria-pressed={quickView === "MINE"}
           >
             <span>Mías</span>
@@ -947,7 +1117,9 @@ export function KdsPage() {
           <button
             type="button"
             className={`quickview-chip ${quickView === "NEW" ? "quickview-chip--active" : ""}`}
-            onClick={() => setQuickView((current) => (current === "NEW" ? "NONE" : "NEW"))}
+            onClick={() =>
+              setQuickView((current) => (current === "NEW" ? "NONE" : "NEW"))
+            }
             aria-pressed={quickView === "NEW"}
           >
             <span>Recién</span>
@@ -969,7 +1141,8 @@ export function KdsPage() {
             <span className="kds-view-hint__label">Viendo</span>
             <strong>{activeViewLabel}</strong>
             <span>
-              {visibleCommands.length} comanda{visibleCommands.length === 1 ? "" : "s"}
+              {visibleCommands.length} comanda
+              {visibleCommands.length === 1 ? "" : "s"}
             </span>
           </section>
         )}
@@ -978,13 +1151,18 @@ export function KdsPage() {
           <article className="kds-guidance-card">
             <div className="kds-guidance-card__head">
               <div>
-                <span className="kds-guidance-card__eyebrow">Chequeo operativo</span>
+                <span className="kds-guidance-card__eyebrow">
+                  Chequeo operativo
+                </span>
                 <strong>Estado de la cola</strong>
               </div>
             </div>
             <div className="kds-checklist">
               {queueChecklist.map((step) => (
-                <div key={step.label} className={`kds-check ${step.done ? "kds-check--done" : ""}`}>
+                <div
+                  key={step.label}
+                  className={`kds-check ${step.done ? "kds-check--done" : ""}`}
+                >
                   <strong>{step.done ? "✓" : "•"}</strong>
                   <span>{step.label}</span>
                 </div>
@@ -1000,16 +1178,25 @@ export function KdsPage() {
           <article className="kds-guidance-card">
             <div className="kds-guidance-card__head">
               <div>
-                <span className="kds-guidance-card__eyebrow">Próximo frente</span>
-                <strong>{operationalFocus?.title ?? "Cola estabilizada"}</strong>
+                <span className="kds-guidance-card__eyebrow">
+                  Próximo frente
+                </span>
+                <strong>
+                  {operationalFocus?.title ?? "Cola estabilizada"}
+                </strong>
               </div>
             </div>
             <p className="kds-guidance-note">
-              {operationalFocus?.message ?? "No hay un bloqueo dominante ahora mismo; mantené monitoreo general de la estación."}
+              {operationalFocus?.message ??
+                "No hay un bloqueo dominante ahora mismo; mantené monitoreo general de la estación."}
             </p>
             <div className="kds-guidance-actions">
               {operationalFocus ? (
-                <button type="button" className="btn btn--ghost btn--sm" onClick={operationalFocus.onAction}>
+                <button
+                  type="button"
+                  className="btn btn--ghost btn--sm"
+                  onClick={operationalFocus.onAction}
+                >
                   {operationalFocus.actionLabel}
                 </button>
               ) : null}
@@ -1031,7 +1218,9 @@ export function KdsPage() {
           <article className="kds-guidance-card">
             <div className="kds-guidance-card__head">
               <div>
-                <span className="kds-guidance-card__eyebrow">Lectura por etapa</span>
+                <span className="kds-guidance-card__eyebrow">
+                  Lectura por etapa
+                </span>
                 <strong>Tomar, cocinar y despachar</strong>
               </div>
             </div>
@@ -1067,15 +1256,21 @@ export function KdsPage() {
           {activeFilter === "ALL" && quickView !== "READY" ? (
             <div className="queue-groups">
               {groupedCommands.map((section) => (
-                <section key={section.key} className={`queue-group queue-group--${section.key.toLowerCase()}`}>
+                <section
+                  key={section.key}
+                  className={`queue-group queue-group--${section.key.toLowerCase()}`}
+                >
                   <header className="queue-group-head">
                     <div className="queue-group-copy">
                       <h2>{section.label}</h2>
                       <p>
-                        {section.commands.length} comanda{section.commands.length === 1 ? "" : "s"}
+                        {section.commands.length} comanda
+                        {section.commands.length === 1 ? "" : "s"}
                       </p>
                     </div>
-                    <span className="queue-group-count">{section.commands.length}</span>
+                    <span className="queue-group-count">
+                      {section.commands.length}
+                    </span>
                   </header>
                   <div className="card-grid">
                     {section.commands.map((command) => (
@@ -1130,11 +1325,17 @@ export function KdsPage() {
             {recent.map((r) => (
               <li key={`${r.id}-${r.at}`} className="recent-item">
                 <span className="recent-item__name">✓ {r.name}</span>
-                <span className="recent-item__age">{formatRecentAge(now - r.at)}</span>
+                <span className="recent-item__age">
+                  {formatRecentAge(now - r.at)}
+                </span>
               </li>
             ))}
           </ul>
-          <button type="button" className="recent-clear" onClick={() => setRecent([])}>
+          <button
+            type="button"
+            className="recent-clear"
+            onClick={() => setRecent([])}
+          >
             Limpiar
           </button>
         </footer>
@@ -1175,9 +1376,12 @@ function getOperationalFocus({
       tone: "late",
       eyebrow: "Prioridad actual",
       title: `${lateCount} atrasada${lateCount === 1 ? "" : "s"}`,
-      message: "Priorizá las tarjetas en rojo antes de seguir tomando carga nueva.",
-      actionLabel: quickView === "LATE" ? "Ver cola completa" : "Ir a atrasadas",
-      onAction: () => setQuickView((current) => (current === "LATE" ? "NONE" : "LATE")),
+      message:
+        "Priorizá las tarjetas en rojo antes de seguir tomando carga nueva.",
+      actionLabel:
+        quickView === "LATE" ? "Ver cola completa" : "Ir a atrasadas",
+      onAction: () =>
+        setQuickView((current) => (current === "LATE" ? "NONE" : "LATE")),
     };
   }
 
@@ -1186,9 +1390,11 @@ function getOperationalFocus({
       tone: "ready",
       eyebrow: "Próximo destrabe",
       title: `${readyCount} lista${readyCount === 1 ? "" : "s"} para salir`,
-      message: "Destrabar handoff libera espacio y evita que se acumule producción terminada.",
+      message:
+        "Destrabar handoff libera espacio y evita que se acumule producción terminada.",
       actionLabel: quickView === "READY" ? "Ver cola completa" : "Ir a listas",
-      onAction: () => setQuickView((current) => (current === "READY" ? "NONE" : "READY")),
+      onAction: () =>
+        setQuickView((current) => (current === "READY" ? "NONE" : "READY")),
     };
   }
 
@@ -1197,11 +1403,14 @@ function getOperationalFocus({
       tone: "new",
       eyebrow: "Próximo frente",
       title: `${claimedCount} tomada${claimedCount === 1 ? "" : "s"} sin empezar`,
-      message: "Conviene empujar las comandas ya tomadas hacia preparación activa para sostener el flujo.",
+      message:
+        "Conviene empujar las comandas ya tomadas hacia preparación activa para sostener el flujo.",
       actionLabel: activeFilter === "CLAIMED" ? "Ver todas" : "Ir a tomadas",
       onAction: () => {
         setQuickView("NONE");
-        setActiveFilter((current) => (current === "CLAIMED" ? "ALL" : "CLAIMED"));
+        setActiveFilter((current) =>
+          current === "CLAIMED" ? "ALL" : "CLAIMED",
+        );
       },
     };
   }
@@ -1211,11 +1420,14 @@ function getOperationalFocus({
       tone: "new",
       eyebrow: "Ingreso reciente",
       title: `${receivedCount} nueva${receivedCount === 1 ? "" : "s"} pendiente${receivedCount === 1 ? "" : "s"} de toma`,
-      message: "Revisá rápido lo nuevo para repartir carga antes de que empiece a atrasarse.",
+      message:
+        "Revisá rápido lo nuevo para repartir carga antes de que empiece a atrasarse.",
       actionLabel: activeFilter === "RECEIVED" ? "Ver todas" : "Ir a nuevas",
       onAction: () => {
         setQuickView("NONE");
-        setActiveFilter((current) => (current === "RECEIVED" ? "ALL" : "RECEIVED"));
+        setActiveFilter((current) =>
+          current === "RECEIVED" ? "ALL" : "RECEIVED",
+        );
       },
     };
   }
@@ -1225,11 +1437,14 @@ function getOperationalFocus({
       tone: "new",
       eyebrow: "Seguimiento",
       title: `${onHoldCount} pausada${onHoldCount === 1 ? "" : "s"} para retomar`,
-      message: "Chequeá si ya se resolvió el bloqueo para no dejar comandas dormidas más tiempo del necesario.",
+      message:
+        "Chequeá si ya se resolvió el bloqueo para no dejar comandas dormidas más tiempo del necesario.",
       actionLabel: activeFilter === "ON_HOLD" ? "Ver todas" : "Ir a pausadas",
       onAction: () => {
         setQuickView("NONE");
-        setActiveFilter((current) => (current === "ON_HOLD" ? "ALL" : "ON_HOLD"));
+        setActiveFilter((current) =>
+          current === "ON_HOLD" ? "ALL" : "ON_HOLD",
+        );
       },
     };
   }
@@ -1239,9 +1454,11 @@ function getOperationalFocus({
       tone: "ready",
       eyebrow: "Seguimiento personal",
       title: `${mineCount} comanda${mineCount === 1 ? "" : "s"} tuya${mineCount === 1 ? "" : "s"} en seguimiento`,
-      message: "Podés entrar por tu vista propia para concentrarte en lo que ya tomaste.",
+      message:
+        "Podés entrar por tu vista propia para concentrarte en lo que ya tomaste.",
       actionLabel: quickView === "MINE" ? "Ver cola completa" : "Ir a mías",
-      onAction: () => setQuickView((current) => (current === "MINE" ? "NONE" : "MINE")),
+      onAction: () =>
+        setQuickView((current) => (current === "MINE" ? "NONE" : "MINE")),
     };
   }
 

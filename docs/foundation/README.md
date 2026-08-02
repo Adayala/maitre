@@ -8,7 +8,7 @@ Este directorio contiene las **especificaciones ejecutables** de la plataforma M
 
 ## Qué es Spec-Driven Development
 
-**Spec-Driven Development (SDD)** es escribir especificaciones formales y verificables *antes* de implementación. Las specs son:
+**Spec-Driven Development (SDD)** es escribir especificaciones formales y verificables _antes_ de implementación. Las specs son:
 
 - **Ejecutables:** Pueden verificarse sin código.
 - **Vivas:** Se actualizan con la plataforma.
@@ -37,50 +37,51 @@ No es TDD (test-driven). **No escribimos tests primero; escribimos especificacio
 
 ### Capa 1: Producto y estrategia
 
-| Doc | Propósito | Lector |
-| --- | --- | --- |
-| [00-vision.md](00-vision.md) | Problema, visión, propuesta de valor | Todos |
-| [01-product-principles.md](01-product-principles.md) | 12 principios que guían decisiones | Product, Engineering |
-| [02-market-and-business.md](02-market-and-business.md) | Cliente, segmento, modelo de ingresos | Product, Sales |
+| Doc                                                    | Propósito                             | Lector               |
+| ------------------------------------------------------ | ------------------------------------- | -------------------- |
+| [00-vision.md](00-vision.md)                           | Problema, visión, propuesta de valor  | Todos                |
+| [01-product-principles.md](01-product-principles.md)   | 12 principios que guían decisiones    | Product, Engineering |
+| [02-market-and-business.md](02-market-and-business.md) | Cliente, segmento, modelo de ingresos | Product, Sales       |
 
 ### Capa 2: Modelo de negocio y servicios
 
-| Doc | Propósito | Lector |
-| --- | --- | --- |
-| [03-service-catalog.md](03-service-catalog.md) | Catálogo de 20+ servicios y dependencias | Product, Sales |
+| Doc                                                        | Propósito                                   | Lector                        |
+| ---------------------------------------------------------- | ------------------------------------------- | ----------------------------- |
+| [03-service-catalog.md](03-service-catalog.md)             | Catálogo de 20+ servicios y dependencias    | Product, Sales                |
 | [04-tenancy-subscriptions.md](04-tenancy-subscriptions.md) | Cómo se contrata, factura y controla acceso | Product, Billing, Engineering |
-| [05-domain-glossary.md](05-domain-glossary.md) | 47 términos del dominio (lenguaje ubicuo) | Todos |
+| [05-domain-glossary.md](05-domain-glossary.md)             | 47 términos del dominio (lenguaje ubicuo)   | Todos                         |
 
 ### Capa 3: Diseño de dominio
 
-| Doc | Propósito | Lector |
-| --- | --- | --- |
-| [06-domain-model.md](06-domain-model.md) | Entidades, contextos, estados, invariantes | Engineering, Product |
-| [07-core-journeys.md](07-core-journeys.md) | 10 recorridos principales de usuarios | Product, UX, Engineering |
-| [08-feedback-reputation.md](08-feedback-reputation.md) | Modelo de feedback y reputación | Engineering |
-| [09-ai-digital-twin.md](09-ai-digital-twin.md) | Capacidades de IA y predicción | AI/ML, Engineering |
+| Doc                                                    | Propósito                                  | Lector                   |
+| ------------------------------------------------------ | ------------------------------------------ | ------------------------ |
+| [06-domain-model.md](06-domain-model.md)               | Entidades, contextos, estados, invariantes | Engineering, Product     |
+| [07-core-journeys.md](07-core-journeys.md)             | 10 recorridos principales de usuarios      | Product, UX, Engineering |
+| [08-feedback-reputation.md](08-feedback-reputation.md) | Modelo de feedback y reputación            | Engineering              |
+| [09-ai-digital-twin.md](09-ai-digital-twin.md)         | Capacidades de IA y predicción             | AI/ML, Engineering       |
 
 ### Capa 4: Arquitectura y principios
 
-| Doc | Propósito | Lector |
-| --- | --- | --- |
+| Doc                                                            | Propósito                                | Lector                    |
+| -------------------------------------------------------------- | ---------------------------------------- | ------------------------- |
 | [10-architecture-principles.md](10-architecture-principles.md) | Planos lógicos, desacoplamiento, eventos | Architecture, Engineering |
-| [11-mvp-roadmap.md](11-mvp-roadmap.md) | 6 fases con apps asociadas | Product, Engineering |
-| [12-site-messaging.md](12-site-messaging.md) | Posicionamiento y copy para landing | Marketing, Product |
+| [11-mvp-roadmap.md](11-mvp-roadmap.md)                         | 6 fases con apps asociadas               | Product, Engineering      |
+| [12-site-messaging.md](12-site-messaging.md)                   | Posicionamiento y copy para landing      | Marketing, Product        |
 
 ### Capa 5: Decisiones y referencias
 
-| Doc | Propósito | Lector |
-| --- | --- | --- |
-| [13-decisions-and-open-questions.md](13-decisions-and-open-questions.md) | Qué se decidió, qué aún es abierto | Todos |
-| [14-references.md](14-references.md) | Links a normativa, APIs, benchmarks | Engineering, Compliance |
+| Doc                                                                      | Propósito                           | Lector                  |
+| ------------------------------------------------------------------------ | ----------------------------------- | ----------------------- |
+| [13-decisions-and-open-questions.md](13-decisions-and-open-questions.md) | Qué se decidió, qué aún es abierto  | Todos                   |
+| [14-references.md](14-references.md)                                     | Links a normativa, APIs, benchmarks | Engineering, Compliance |
 
 ### Capa 5 bis: Vistas transversales
 
-| Doc | Propósito | Lector |
-| --- | --- | --- |
-| [18-architecture-components-design-views.md](18-architecture-components-design-views.md) | Relevamiento visual consolidado de arquitectura, componentes y diseño | Product, UX, Architecture, Engineering |
-| [19-runtime-persistence-inventory.md](19-runtime-persistence-inventory.md) | Inventario operativo de runtime, persistencia Supabase y gaps reales por dominio | Architecture, Engineering, Product |
+| Doc                                                                                      | Propósito                                                                        | Lector                                 |
+| ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | -------------------------------------- |
+| [18-architecture-components-design-views.md](18-architecture-components-design-views.md) | Relevamiento visual consolidado de arquitectura, componentes y diseño            | Product, UX, Architecture, Engineering |
+| [19-runtime-persistence-inventory.md](19-runtime-persistence-inventory.md)               | Inventario operativo de runtime, persistencia Supabase y gaps reales por dominio | Architecture, Engineering, Product     |
+| [20-e2e-flow-coverage.md](20-e2e-flow-coverage.md)                                       | Cobertura E2E real por journey, app, rol y pendientes priorizados                | Product, QA, UX, Engineering           |
 
 La implementación inicial usa **React.js**, **Node.js** y **Vercel**, manteniendo el núcleo portable. Consulta [el perfil técnico vigente](../sdd/TECH_STACK.md).
 
@@ -88,11 +89,11 @@ La implementación inicial usa **React.js**, **Node.js** y **Vercel**, mantenien
 
 **Estos 3 documentos son el corazón del SDD:**
 
-| Doc | Propósito | Lector | Estado |
-| --- | --- | --- | --- |
-| [15-applications-and-devices.md](../sdd/_guides/15-applications-and-devices.md) | 6 apps, dispositivos, mobile-first, capacidades offline | Product, UX, Engineering | ✅ MVP ready |
-| [16-api-specifications.md](../sdd/_guides/16-api-specifications.md) | Contratos HTTP de cada API: método, path, request/response | Backend Engineering, Frontend | ✅ MVP ready |
-| [17-event-specifications.md](../sdd/_guides/17-event-specifications.md) | Eventos que publican/consumen los dominios: estructura, payload, consumidores | Backend Engineering, Integration | ✅ MVP ready |
+| Doc                                                                             | Propósito                                                                     | Lector                           | Estado       |
+| ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | -------------------------------- | ------------ |
+| [15-applications-and-devices.md](../sdd/_guides/15-applications-and-devices.md) | 6 apps, dispositivos, mobile-first, capacidades offline                       | Product, UX, Engineering         | ✅ MVP ready |
+| [16-api-specifications.md](../sdd/_guides/16-api-specifications.md)             | Contratos HTTP de cada API: método, path, request/response                    | Backend Engineering, Frontend    | ✅ MVP ready |
+| [17-event-specifications.md](../sdd/_guides/17-event-specifications.md)         | Eventos que publican/consumen los dominios: estructura, payload, consumidores | Backend Engineering, Integration | ✅ MVP ready |
 
 ---
 
@@ -113,6 +114,7 @@ La implementación inicial usa **React.js**, **Node.js** y **Vercel**, mantenien
 4. Lee [17-event-specifications.md](../sdd/_guides/17-event-specifications.md) — eventos que publicas/consumes.
 5. Lee [10-architecture-principles.md](10-architecture-principles.md) — patrones globales.
 6. Usa [18-architecture-components-design-views.md](18-architecture-components-design-views.md) para conectar las specs con la estructura real del repo.
+7. Consulta [20-e2e-flow-coverage.md](20-e2e-flow-coverage.md) para distinguir evidencia real, contratos UI y gaps.
 
 ### Si eres **Product/UX**
 
@@ -131,6 +133,7 @@ Lee todos. En orden:
 3. 11 (MVP phases)
 4. 15–17 (especificaciones ejecutables)
 5. 18 (vistas visuales consolidadas)
+6. 19–20 (runtime real y cobertura E2E)
 
 ---
 
@@ -200,12 +203,13 @@ Kitchen (tablet)
 ### [Operación o evento específico]
 
 [Propósito en 1-2 líneas]
-
 ```
-Request:  [estructura JSON esperada]
+
+Request: [estructura JSON esperada]
 Response: [estructura JSON que devuelves]
-Status:   [códigos HTTP posibles]
+Status: [códigos HTTP posibles]
 [Reglas/notas importantes]
+
 ```
 
 [Ejemplo concreto]
@@ -243,6 +247,7 @@ Entitlements: [qué derecho se requiere]
 **Que falta:**
 
 1. **Gherkin scenarios** — Traducir [07-core-journeys.md](07-core-journeys.md) a BDD.
+
    ```
    Scenario: Mozo toma pedido desde tablet
      Given una visita está abierta en la mesa T1
@@ -252,6 +257,7 @@ Entitlements: [qué derecho se requiere]
    ```
 
 2. **RBAC specification** — Matriz de quién puede hacer qué.
+
    ```
    Waiter:   POST /orders, PATCH /visits, GET /menus
    Cashier:  POST /payments, PATCH /bills, GET /reports (limited)
@@ -259,6 +265,7 @@ Entitlements: [qué derecho se requiere]
    ```
 
 3. **State machine diagrams** — Visualizar transiciones formales.
+
    ```
    Order: DRAFT → SUBMITTED → ACCEPTED → IN_PREP → READY → DELIVERED
                           ↓ (rechazado)

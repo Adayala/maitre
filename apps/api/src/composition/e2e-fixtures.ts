@@ -44,17 +44,20 @@ export async function registerE2EFixtures(
   const sessionNow = new Date();
   for (const principal of PRINCIPALS) {
     const subject = `e2e-${runId}-${principal.role}`;
+    const email = `${subject}@example.test`;
     const userId = deterministicUuid(`${subject}:user`);
     const membershipId = deterministicUuid(`${subject}:membership`);
     const existing = await repositories.users.findById(userId);
-    if (!existing) {
+    if (!existing || existing.email !== email) {
       await repositories.users.save({
+        ...existing,
         id: userId,
         identityProvider: "fixture",
         externalIdentityId: subject,
         displayName: `E2E ${principal.role}`,
+        email,
         status: "ACTIVE",
-        createdAt: now,
+        createdAt: existing?.createdAt ?? now,
         updatedAt: now,
       });
     }
