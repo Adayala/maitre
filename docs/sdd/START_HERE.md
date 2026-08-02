@@ -8,7 +8,7 @@ Bienvenido a las especificaciones ejecutables de Maitre.
 
 ## Qué es SDD
 
-**Spec-Driven Development** es escribir especificaciones formales *antes* de implementación. Las specs son:
+**Spec-Driven Development** es escribir especificaciones formales _antes_ de implementación. Las specs son:
 
 - **Ejecutables:** Se pueden verificar sin código
 - **Vivas:** Se actualizan con el proyecto
@@ -29,6 +29,7 @@ Bienvenido a las especificaciones ejecutables de Maitre.
 │   └── 17-event-specifications.md        Eventos del sistema
 │
 ├── INDEX.md                    Índice maestro de todas las specs
+├── IMPLEMENTATION_HISTORY.md   Índice de cambios implementados migrados a su SPEC dueña
 │
 └── spec-NNN-[type]-[name]/     Directorio numerado de cada spec individual
     ├── README.md              Propósito, metadata, links relacionados
@@ -38,6 +39,7 @@ Bienvenido a las especificaciones ejecutables de Maitre.
     ├── examples.md            Ejemplos JSON concretos
     ├── api-*.md               Detalles de cada endpoint (si es API)
     ├── events-*.md            Detalles de cada evento
+    ├── implementation-history/ Historial de cambios concretos (opcional, no normativo)
     └── [otros].md             Según el tipo de spec
 ```
 
@@ -48,31 +50,33 @@ Bienvenido a las especificaciones ejecutables de Maitre.
 1. Lee [`_guides/README.md`](_guides/README.md)
 2. Mira [`_guides/SPEC_STRUCTURE.md`](_guides/SPEC_STRUCTURE.md)
 3. Revisa [`TECH_STACK.md`](TECH_STACK.md) para la implementación vigente con React.js, Node.js y Vercel
-4. Consulta el [cierre operativo de gaps del MVP](../operations/mvp-gap-closure-2026-07-30.md)
+4. Consulta [`IMPLEMENTATION_HISTORY.md`](IMPLEMENTATION_HISTORY.md) para decisiones de cambios ya
+   materializados sin confundirlas con contratos normativos.
+5. Consulta el [cierre operativo de gaps del MVP](../operations/mvp-gap-closure-2026-07-30.md)
    para distinguir qué partes de SPEC-215/216/222/224 están implementadas y cuáles siguen
    diferidas a Pilot
-5. Aplica [`SPEC-207`](spec-207-transversal-engineering-quality/) para calidad y gates SDD
-6. Aplica [`SPEC-208`](spec-208-transversal-zero-cost-mvp/) para operar el MVP dentro de free tiers
-7. Usa [`SPEC-209`](spec-209-transversal-monorepo-architecture/) para crear el monorepo y respetar sus límites
-8. Aplica [`SPEC-210`](spec-210-transversal-data-identity-platform/) para PostgreSQL, identidad y almacenamiento con Supabase
-9. Aplica [`SPEC-211`](spec-211-transversal-implementation-toolchain/) para el toolchain React.js/Node.js y sus verificaciones
-10. Aplica [`SPEC-212`](spec-212-transversal-design-system-accessibility/) para UI consistente, responsive y accesible
-11. Implementa [`SPEC-213`](spec-213-transversal-mvp-walking-skeleton/) como primer corte vertical desplegable
-12. Aplica [`SPEC-214`](spec-214-transversal-environments-configuration-secrets/) para ambientes, configuración y secretos
-13. Usa [`SPEC-215`](spec-215-transversal-http-api-standards/) como contrato común de todas las APIs HTTP
-14. Aplica [`SPEC-216`](spec-216-transversal-observability-reliability/) para observabilidad, SLOs y recuperación
-15. Usa [`SPEC-217`](spec-217-transversal-events-async-processing/) para eventos, outbox y procesamiento asíncrono
-16. Aplica [`SPEC-218`](spec-218-transversal-offline-sync/) para operación offline y sincronización
-17. Verifica [`SPEC-219`](spec-219-transversal-security-privacy/) para seguridad, privacidad y aislamiento multi-tenant
-18. Aplica [`SPEC-220`](spec-220-transversal-data-lifecycle-disaster-recovery/) para ciclo de vida, backups y disaster recovery
-19. Usa [`SPEC-221`](spec-221-transversal-ci-cd-release-management/) para CI/CD, promoción y releases recuperables
-20. Ejecuta [`SPEC-222`](spec-222-transversal-mvp-scope-delivery-plan/) para mantener alcance y secuencia del MVP
-21. Aplica [`SPEC-223`](spec-223-transversal-realtime-state-distribution/) para actualización live de Floor y Kitchen
-22. Usa [`SPEC-224`](spec-224-transversal-testing-test-data/) para estrategia de tests y datos sintéticos
-23. Aplica [`SPEC-225`](spec-225-transversal-spec-adr-governance/) para lifecycle, aprobación y ADRs
-24. Revisa [`I0_READINESS_REVIEW.md`](I0_READINESS_REVIEW.md) antes de iniciar scaffolding
-25. Resuelve [`I0_FUNCTIONAL_CONTRACT_REVIEW.md`](I0_FUNCTIONAL_CONTRACT_REVIEW.md) para alinear Tenant, User, Membership y Auth
-26. Ejecuta [`SPEC-226`](spec-226-transversal-i0-platform-validation-spikes/) para decidir Supabase y toolchain con evidencia
+6. Aplica [`SPEC-207`](spec-207-transversal-engineering-quality/) para calidad y gates SDD
+7. Aplica [`SPEC-208`](spec-208-transversal-zero-cost-mvp/) para operar el MVP dentro de free tiers
+8. Usa [`SPEC-209`](spec-209-transversal-monorepo-architecture/) para crear el monorepo y respetar sus límites
+9. Aplica [`SPEC-210`](spec-210-transversal-data-identity-platform/) para PostgreSQL, identidad y almacenamiento con Supabase
+10. Aplica [`SPEC-211`](spec-211-transversal-implementation-toolchain/) para el toolchain React.js/Node.js y sus verificaciones
+11. Aplica [`SPEC-212`](spec-212-transversal-design-system-accessibility/) para UI consistente, responsive y accesible
+12. Implementa [`SPEC-213`](spec-213-transversal-mvp-walking-skeleton/) como primer corte vertical desplegable
+13. Aplica [`SPEC-214`](spec-214-transversal-environments-configuration-secrets/) para ambientes, configuración y secretos
+14. Usa [`SPEC-215`](spec-215-transversal-http-api-standards/) como contrato común de todas las APIs HTTP
+15. Aplica [`SPEC-216`](spec-216-transversal-observability-reliability/) para observabilidad, SLOs y recuperación
+16. Usa [`SPEC-217`](spec-217-transversal-events-async-processing/) para eventos, outbox y procesamiento asíncrono
+17. Aplica [`SPEC-218`](spec-218-transversal-offline-sync/) para operación offline y sincronización
+18. Verifica [`SPEC-219`](spec-219-transversal-security-privacy/) para seguridad, privacidad y aislamiento multi-tenant
+19. Aplica [`SPEC-220`](spec-220-transversal-data-lifecycle-disaster-recovery/) para ciclo de vida, backups y disaster recovery
+20. Usa [`SPEC-221`](spec-221-transversal-ci-cd-release-management/) para CI/CD, promoción y releases recuperables
+21. Ejecuta [`SPEC-222`](spec-222-transversal-mvp-scope-delivery-plan/) para mantener alcance y secuencia del MVP
+22. Aplica [`SPEC-223`](spec-223-transversal-realtime-state-distribution/) para actualización live de Floor y Kitchen
+23. Usa [`SPEC-224`](spec-224-transversal-testing-test-data/) para estrategia de tests y datos sintéticos
+24. Aplica [`SPEC-225`](spec-225-transversal-spec-adr-governance/) para lifecycle, aprobación y ADRs
+25. Revisa [`I0_READINESS_REVIEW.md`](I0_READINESS_REVIEW.md) antes de iniciar scaffolding
+26. Resuelve [`I0_FUNCTIONAL_CONTRACT_REVIEW.md`](I0_FUNCTIONAL_CONTRACT_REVIEW.md) para alinear Tenant, User, Membership y Auth
+27. Ejecuta [`SPEC-226`](spec-226-transversal-i0-platform-validation-spikes/) para decidir Supabase y toolchain con evidencia
 
 ### Para ver un ejemplo completo
 
@@ -114,18 +118,19 @@ Cada spec es **autocontendida** — todo lo que necesitas sobre una entidad/API/
 
 ## Quick reference
 
-| Necesito… | Voy a… |
-| --- | --- |
-| Entender cómo funcionan las specs | Leer `_guides/README.md` |
-| Ver estructura de una spec | Leer `_guides/SPEC_STRUCTURE.md` |
-| Saber qué specs escribir primero | Leer `_guides/01-priority-todo.md` |
-| Entender Tenant | Abrir `spec-001-entity-tenant/` |
-| Listar todas las specs | Abrir `INDEX.md` |
-| Escribir una spec nueva | Aplicar el paquete mínimo y registro de SPEC-225 |
-| Entender cómo se crean apps | Leer `_guides/15-applications-and-devices.md` |
-| Ver APIs que usa cada app | Leer `_guides/16-api-specifications.md` |
-| Entender cómo se comunican dominios | Leer `_guides/17-event-specifications.md` |
-| Ver qué está realmente implementado y operativo | Leer `../operations/README.md` |
+| Necesito…                                         | Voy a…                                           |
+| ------------------------------------------------- | ------------------------------------------------ |
+| Entender cómo funcionan las specs                 | Leer `_guides/README.md`                         |
+| Ver estructura de una spec                        | Leer `_guides/SPEC_STRUCTURE.md`                 |
+| Saber qué specs escribir primero                  | Leer `_guides/01-priority-todo.md`               |
+| Entender Tenant                                   | Abrir `spec-001-entity-tenant/`                  |
+| Listar todas las specs                            | Abrir `INDEX.md`                                 |
+| Escribir una spec nueva                           | Aplicar el paquete mínimo y registro de SPEC-225 |
+| Entender cómo se crean apps                       | Leer `_guides/15-applications-and-devices.md`    |
+| Ver APIs que usa cada app                         | Leer `_guides/16-api-specifications.md`          |
+| Entender cómo se comunican dominios               | Leer `_guides/17-event-specifications.md`        |
+| Ver qué está realmente implementado y operativo   | Leer `../operations/README.md`                   |
+| Consultar decisiones de implementación históricas | Leer `IMPLEMENTATION_HISTORY.md`                 |
 
 ---
 
@@ -140,7 +145,7 @@ vista histórica útil pero no la fuente autoritativa de metadata.
 
 ## Filosofía
 
-> Escribimos qué hace el sistema *antes* de cómo lo hace.
+> Escribimos qué hace el sistema _antes_ de cómo lo hace.
 
 Las specs son **contratos**, no código. Un backend dev implementa contra la spec. Un frontend dev llama a las APIs según la spec. Un tester verifica contra la spec.
 

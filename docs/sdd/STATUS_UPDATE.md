@@ -14,17 +14,21 @@ Este estado no afirma que todo el catálogo SDD esté implementado ni cambia por
 lifecycle de una SPEC. Cada README sigue siendo autoritativo para metadata, aprobación, blockers y
 readiness.
 
+El estado operativo posterior de Playwright, los journeys reales y sus pendientes se mantiene en
+[Cobertura E2E de flujos entre aplicaciones](../foundation/20-e2e-flow-coverage.md); este update
+conserva sólo la fotografía del cierre del 30 de julio de 2026.
+
 ## Capacidades integradas
 
-| Área | Estado del corte MVP Demo | Evidencia principal |
-| --- | --- | --- |
-| Contrato HTTP | `IMPLEMENTED` | OpenAPI versionado, lint, drift/breaking gate, Problem Details y CORS allowlist exacta. |
-| Auditoría sensible | `IMPLEMENTED_HTTP_BOUNDARY` | Policy obligatoria para mutaciones Floor, Ordering, Kitchen y Cash, redacción y evidencia correlacionada. |
-| Observabilidad | `OPERATIONAL_LOCAL` / `OPERATIONAL_CI` | RED HTTP, trazas, señales de recorrido/audit/outbox, export test y artefacto sanitizado. |
-| Recorrido MVP | `OPERATIONAL_CI` | MVP-J-001: setup → mesa → pedido → cocina → cuenta → pago → cierre → Dash/audit. |
-| Runtime compartido | `IMPLEMENTED` | Supabase/auth explícitos, prohibición fail-closed de memory/fixture y CORS inseguro. |
-| Persistencia durable | `OPERATIONAL_CI` | Supabase efímero, migraciones desde cero, restart de API y relectura PostgreSQL. |
-| Delivery | `IMPLEMENTED_I0` | Quality/E2E antes de deploy, preflight de ambiente y probes post-deploy. |
+| Área                 | Estado del corte MVP Demo              | Evidencia principal                                                                                       |
+| -------------------- | -------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Contrato HTTP        | `IMPLEMENTED`                          | OpenAPI versionado, lint, drift/breaking gate, Problem Details y CORS allowlist exacta.                   |
+| Auditoría sensible   | `IMPLEMENTED_HTTP_BOUNDARY`            | Policy obligatoria para mutaciones Floor, Ordering, Kitchen y Cash, redacción y evidencia correlacionada. |
+| Observabilidad       | `OPERATIONAL_LOCAL` / `OPERATIONAL_CI` | RED HTTP, trazas, señales de recorrido/audit/outbox, export test y artefacto sanitizado.                  |
+| Recorrido MVP        | `OPERATIONAL_CI`                       | MVP-J-001: setup → mesa → pedido → cocina → cuenta → pago → cierre → Dash/audit.                          |
+| Runtime compartido   | `IMPLEMENTED`                          | Supabase/auth explícitos, prohibición fail-closed de memory/fixture y CORS inseguro.                      |
+| Persistencia durable | `OPERATIONAL_CI`                       | Supabase efímero, migraciones desde cero, restart de API y relectura PostgreSQL.                          |
+| Delivery             | `IMPLEMENTED_I0`                       | Quality/E2E antes de deploy, preflight de ambiente y probes post-deploy.                                  |
 
 ## Validación reproducible
 

@@ -212,7 +212,7 @@ jobs:
           npm ci
           npx playwright install --with-deps chromium
 
-      - name: Build API, Dash, Floor, Host, Kitchen and Cash
+      - name: Build API, Dash, Floor, Host, Kitchen, Cash and Guest
         run: |
           npm run build --workspace apps/api
           npm run build --workspace apps/web
@@ -220,6 +220,7 @@ jobs:
           npm run build --workspace apps/host
           npm run build --workspace apps/kitchen
           npm run build --workspace apps/cashier
+          npm run build --workspace apps/customer
 
       - name: Recreate ephemeral database from migrations
         shell: bash

@@ -12,16 +12,16 @@ convierte en operativas las capacidades diferidas al **MVP Pilot**.
 
 ## Matriz de cierre
 
-| Gap original | Estado | Implementación y evidencia |
-| --- | --- | --- |
-| OpenAPI ausente y sin detección de breaking changes | `IMPLEMENTED` | Artefacto versionado en [`apps/api/openapi/openapi.json`](../../apps/api/openapi/openapi.json), generación determinista, policy lint y comparación contra merge base mediante `openapi:check` y `openapi:breaking`. |
-| Problem Details/content type incompleto | `IMPLEMENTED` | Boundary central en [`problem-details.ts`](../../apps/api/src/http/problem-details.ts), respuestas `application/problem+json`, URI `type`, `code`, `instance`, status y correlation ID verificables. |
-| CORS con reflexión abierta | `IMPLEMENTED` | Allowlist exacta por `CORS_ALLOWED_ORIGINS`; shared runtime falla cerrado ante wildcard, credenciales, path, valor vacío u origen inválido. |
-| Auditoría parcial en Floor, Ordering, Kitchen y Cash | `IMPLEMENTED_HTTP_BOUNDARY` | Registro obligatorio en [`mutation-audit.ts`](../../apps/api/src/http/mutation-audit.ts), startup fail-fast ante rutas sensibles sin policy, redacción central, filtros operativos y evidencia representativa en MVP-J-001. |
-| Métricas/trazas/backlog de outbox ausentes | `OPERATIONAL_LOCAL` / `OPERATIONAL_CI` | `TelemetryPort`, adapter OpenTelemetry OTLP, RED HTTP, auth/context/DB, recorrido, auditoría y backlog/edad/retries/failures del outbox; evidencia sanitizada obligatoria en CI. |
-| E2E limitado a smoke de navegación | `OPERATIONAL_CI` | [`mvp-j-001.spec.ts`](../../tests/e2e/journeys/mvp-j-001.spec.ts) recorre setup → mesa → pedido → cocina → cuenta → pago → cierre → Dash/audit y aislamiento Tenant B. |
-| Persistencia compartida podía caer a memoria | `IMPLEMENTED` | `APP_ENV` compartido exige Supabase para persistencia y auth; perfiles `memory`/`fixture` quedan restringidos a local/test/E2E. |
-| Deployment podía quedar “Ready” sin API utilizable | `IMPLEMENTED` | Preflight del perfil descargado y probes post-deploy a `/health/live` y `/health/ready` sobre la URL inmutable. |
+| Gap original                                         | Estado                                 | Implementación y evidencia                                                                                                                                                                                                  |
+| ---------------------------------------------------- | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| OpenAPI ausente y sin detección de breaking changes  | `IMPLEMENTED`                          | Artefacto versionado en [`apps/api/openapi/openapi.json`](../../apps/api/openapi/openapi.json), generación determinista, policy lint y comparación contra merge base mediante `openapi:check` y `openapi:breaking`.         |
+| Problem Details/content type incompleto              | `IMPLEMENTED`                          | Boundary central en [`problem-details.ts`](../../apps/api/src/http/problem-details.ts), respuestas `application/problem+json`, URI `type`, `code`, `instance`, status y correlation ID verificables.                        |
+| CORS con reflexión abierta                           | `IMPLEMENTED`                          | Allowlist exacta por `CORS_ALLOWED_ORIGINS`; shared runtime falla cerrado ante wildcard, credenciales, path, valor vacío u origen inválido.                                                                                 |
+| Auditoría parcial en Floor, Ordering, Kitchen y Cash | `IMPLEMENTED_HTTP_BOUNDARY`            | Registro obligatorio en [`mutation-audit.ts`](../../apps/api/src/http/mutation-audit.ts), startup fail-fast ante rutas sensibles sin policy, redacción central, filtros operativos y evidencia representativa en MVP-J-001. |
+| Métricas/trazas/backlog de outbox ausentes           | `OPERATIONAL_LOCAL` / `OPERATIONAL_CI` | `TelemetryPort`, adapter OpenTelemetry OTLP, RED HTTP, auth/context/DB, recorrido, auditoría y backlog/edad/retries/failures del outbox; evidencia sanitizada obligatoria en CI.                                            |
+| E2E limitado a smoke de navegación                   | `OPERATIONAL_CI`                       | [`mvp-j-001.spec.ts`](../../tests/e2e/journeys/mvp-j-001.spec.ts) recorre setup → mesa → pedido → cocina → cuenta → pago → cierre → Dash/audit y aislamiento Tenant B.                                                      |
+| Persistencia compartida podía caer a memoria         | `IMPLEMENTED`                          | `APP_ENV` compartido exige Supabase para persistencia y auth; perfiles `memory`/`fixture` quedan restringidos a local/test/E2E.                                                                                             |
+| Deployment podía quedar “Ready” sin API utilizable   | `IMPLEMENTED`                          | Preflight del perfil descargado y probes post-deploy a `/health/live` y `/health/ready` sobre la URL inmutable.                                                                                                             |
 
 ## Contrato HTTP — SPEC-215
 
@@ -122,23 +122,10 @@ es válido; GitHub Actions despliega selectivamente desde `main` sólo después 
 
 ## Journey autoritativo — SPEC-222/SPEC-224
 
-MVP-J-001 usa builds reales de Dash, Floor, Kitchen, Cash y API. El escenario:
-
-1. crea marca e invitación de usuario desde Dash;
-2. abre una mesa y envía un pedido real desde Floor;
-3. procesa la comanda completa desde Kitchen;
-4. entrega el pedido y solicita la cuenta;
-5. registra y captura un pago manual exacto desde Cash;
-6. liquida la cuenta, cierra la visita y libera la mesa;
-7. verifica denegación de lectura y escritura desde Tenant B;
-8. verifica auditoría correlacionada;
-9. confirma que las métricas de Dash vuelven al baseline operativo previo;
-10. reinicia la API y vuelve a leer visita, orden, comanda, cuenta, pago, movimiento, mesa y
-    auditoría desde PostgreSQL.
-
-El perfil release crea Supabase efímero, aplica migraciones desde cero, usa credenciales y datos
-sintéticos namespaced por run, publica evidencia sanitizada y verifica cleanup. `FAILED`,
-`INFRA_ERROR`, cleanup incompleto o ausencia de evidencia bloquean el deploy.
+Este cierre incorporó MVP-J-001 y su gate durable. La descripción vigente del recorrido, junto con
+los journeys posteriores, perfiles de datos, comandos, evidencia y pendientes, se mantiene en
+[Cobertura E2E de flujos entre aplicaciones](../foundation/20-e2e-flow-coverage.md). Este documento
+de operaciones conserva únicamente el registro histórico del cierre de julio de 2026.
 
 ## Gates consolidados
 
@@ -157,15 +144,15 @@ El quality/release pipeline cubre:
 
 ## Pull requests que materializaron el cierre
 
-| PR | Alcance |
-| --- | --- |
-| [#58](https://github.com/Adayala/maitre/pull/58) y [#64](https://github.com/Adayala/maitre/pull/64) | Auditoría uniforme y enforcement de mutaciones sensibles. |
-| [#59](https://github.com/Adayala/maitre/pull/59) y [#65](https://github.com/Adayala/maitre/pull/65) | Telemetría portable y señales operativas del MVP/outbox. |
-| [#60](https://github.com/Adayala/maitre/pull/60) y [#66](https://github.com/Adayala/maitre/pull/66) | Gobernanza OpenAPI, Problem Details, CORS y contratos específicos. |
+| PR                                                                                                                                                                                                      | Alcance                                                                 |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| [#58](https://github.com/Adayala/maitre/pull/58) y [#64](https://github.com/Adayala/maitre/pull/64)                                                                                                     | Auditoría uniforme y enforcement de mutaciones sensibles.               |
+| [#59](https://github.com/Adayala/maitre/pull/59) y [#65](https://github.com/Adayala/maitre/pull/65)                                                                                                     | Telemetría portable y señales operativas del MVP/outbox.                |
+| [#60](https://github.com/Adayala/maitre/pull/60) y [#66](https://github.com/Adayala/maitre/pull/66)                                                                                                     | Gobernanza OpenAPI, Problem Details, CORS y contratos específicos.      |
 | [#61](https://github.com/Adayala/maitre/pull/61), [#63](https://github.com/Adayala/maitre/pull/63), [#68](https://github.com/Adayala/maitre/pull/68) y [#72](https://github.com/Adayala/maitre/pull/72) | Harness, recorrido completo, persistencia/restart y baseline operativo. |
-| [#62](https://github.com/Adayala/maitre/pull/62) | Superficie real de cobros pendientes requerida por el journey. |
-| [#67](https://github.com/Adayala/maitre/pull/67) y [#70](https://github.com/Adayala/maitre/pull/70) | Runtime durable y validación efectiva del deployment. |
-| [#69](https://github.com/Adayala/maitre/pull/69) y [#71](https://github.com/Adayala/maitre/pull/71) | Integración post-merge y cierre consolidado de gaps. |
+| [#62](https://github.com/Adayala/maitre/pull/62)                                                                                                                                                        | Superficie real de cobros pendientes requerida por el journey.          |
+| [#67](https://github.com/Adayala/maitre/pull/67) y [#70](https://github.com/Adayala/maitre/pull/70)                                                                                                     | Runtime durable y validación efectiva del deployment.                   |
+| [#69](https://github.com/Adayala/maitre/pull/69) y [#71](https://github.com/Adayala/maitre/pull/71)                                                                                                     | Integración post-merge y cierre consolidado de gaps.                    |
 
 ## Trabajo deliberadamente pendiente
 

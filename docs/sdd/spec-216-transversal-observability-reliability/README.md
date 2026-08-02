@@ -2,20 +2,20 @@
 
 Contrato para detectar, entender y recuperar fallos de Maitre con telemetría portable y operación sostenible en free tier.
 
-| Campo | Valor |
-| --- | --- |
-| **ID** | SPEC-216 |
-| **Tipo** | Transversal |
-| **Subtype** | Reliability Engineering |
-| **Dominio** | Platform / Operations |
-| **Estado** | DRAFT |
-| **Readiness** | BLOCKED |
-| **Review target** | READY_FOR_I0_REVIEW |
-| **Prioridad** | P0 |
-| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
-| **Blockers** | Asignar owner y reviewer |
-| **Fase** | Antes del ambiente demo estable |
-| **Depende de** | SPEC-207–215 |
+| Campo                | Valor                           |
+| -------------------- | ------------------------------- |
+| **ID**               | SPEC-216                        |
+| **Tipo**             | Transversal                     |
+| **Subtype**          | Reliability Engineering         |
+| **Dominio**          | Platform / Operations           |
+| **Estado**           | DRAFT                           |
+| **Readiness**        | BLOCKED                         |
+| **Review target**    | READY_FOR_I0_REVIEW             |
+| **Prioridad**        | P0                              |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED         |
+| **Blockers**         | Asignar owner y reviewer        |
+| **Fase**             | Antes del ambiente demo estable |
+| **Depende de**       | SPEC-207–215                    |
 
 ## Decisiones centrales
 
@@ -37,6 +37,7 @@ Contrato para detectar, entender y recuperar fallos de Maitre con telemetría po
 - [Verificación](verification.md)
 - [Decisiones](notes.md)
 - [Contrato de telemetría I0](i0-telemetry-contract.md)
+- [Historial: observabilidad operativa del MVP](implementation-history/implement-mvp-operational-observability/proposal.md)
 
 I0 implementa correlación, logs seguros, health y evidencia local/CI. SLOs, dashboards y alertas permanecen `NOT_OPERATIONAL` hasta seleccionar un backend/canal y asignar owner.
 

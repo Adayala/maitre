@@ -31,7 +31,7 @@ semantics is breaking.
 
 A breaking `/v1` change is not suppressed inline. It requires:
 
-1. an approved OpenSpec proposal explaining affected clients and migration;
+1. an approved SDD change record explaining affected clients and migration;
 2. a major API version or an approved compatibility window;
 3. usage evidence and a dated deprecation notice;
 4. owner and rollback plan.
