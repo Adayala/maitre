@@ -13,6 +13,9 @@ proyección generada cuando se implemente `npm run sdd:validate`.
 Estado reciente: [SDD Status Update](STATUS_UPDATE.md) y
 [cierre técnico del MVP Demo](../operations/mvp-gap-closure-2026-07-30.md).
 
+Los diseños y decisiones de cortes ya materializados se conservan en el
+[historial de implementación SDD](IMPLEMENTATION_HISTORY.md), dentro de cada SPEC dueña.
+
 **Convención vigente:** Cada spec usa `spec-NNN-[type]-[name]/` y contiene múltiples documentos.
 
 ```

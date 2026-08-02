@@ -38,6 +38,7 @@ Contrato transversal para obtener evidencia confiable con tests rápidos, manten
 - [Verificación](verification.md)
 - [Decisiones](notes.md)
 - [Harness y cobertura E2E vigentes](../../foundation/20-e2e-flow-coverage.md)
+- [Historial: journey MVP E2E autoritativo](implementation-history/add-authoritative-mvp-e2e-journey/proposal.md)
 
 La ejecución CI y sus comandos pertenecen a la [matriz de SPEC-207](../spec-207-transversal-engineering-quality/quality-gates.md); esta spec define qué evidencia producen los tests.
 

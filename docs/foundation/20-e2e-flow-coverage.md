@@ -17,17 +17,17 @@ especificaciones de dominio, API, eventos ni la cobertura granular exigida a cad
 Esta es la **única documentación operativa vigente** del harness y de la cobertura E2E. La
 separación de responsabilidades es:
 
-| Ubicación                                             | Responsabilidad                                                       |
-| ----------------------------------------------------- | --------------------------------------------------------------------- |
-| `docs/foundation/20-e2e-flow-coverage.md`             | topología, comandos, perfiles, evidencia, cobertura y backlog         |
-| `tests/e2e/apps/<app>/`                               | specs Playwright propias de cada aplicación                           |
-| `tests/e2e/journeys/`                                 | recorridos reales entre aplicaciones y prueba de durabilidad          |
-| `tests/e2e/support/`                                  | utilidades compartidas de assertions y accesibilidad                  |
-| `tooling/e2e/`                                        | política fail-closed y manifiesto reproducible del run                |
-| `playwright.config.mjs`                               | proyectos, dispositivos, servidores, puertos y reportes ejecutables   |
-| `.github/workflows/e2e.yml`                           | gate CI, infraestructura release y publicación de evidencia           |
-| `docs/sdd/spec-224-transversal-testing-test-data/`    | contrato normativo general de testing y datos, sin duplicar esta guía |
-| `openspec/changes/add-authoritative-mvp-e2e-journey/` | registro histórico de la decisión que originó MVP-J-001               |
+| Ubicación                                                                 | Responsabilidad                                                       |
+| ------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `docs/foundation/20-e2e-flow-coverage.md`                                 | topología, comandos, perfiles, evidencia, cobertura y backlog         |
+| `tests/e2e/apps/<app>/`                                                   | specs Playwright propias de cada aplicación                           |
+| `tests/e2e/journeys/`                                                     | recorridos reales entre aplicaciones y prueba de durabilidad          |
+| `tests/e2e/support/`                                                      | utilidades compartidas de assertions y accesibilidad                  |
+| `tooling/e2e/`                                                            | política fail-closed y manifiesto reproducible del run                |
+| `playwright.config.mjs`                                                   | proyectos, dispositivos, servidores, puertos y reportes ejecutables   |
+| `.github/workflows/e2e.yml`                                               | gate CI, infraestructura release y publicación de evidencia           |
+| `docs/sdd/spec-224-transversal-testing-test-data/`                        | contrato normativo general de testing y datos, sin duplicar esta guía |
+| `docs/sdd/spec-224-transversal-testing-test-data/implementation-history/` | registro histórico de la decisión que originó MVP-J-001               |
 
 Por lo tanto, `tests/e2e/` **no está obsoleto**: es el directorio activo de tests. Se retiraron su
 README duplicado y el antiguo diseño de harness de SPEC-224 porque mezclaban planes históricos,

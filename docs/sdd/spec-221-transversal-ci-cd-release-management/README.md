@@ -60,6 +60,7 @@ habilitar producción comercial.
 - [Verificación](verification.md)
 - [Decisiones](notes.md)
 - [Contrato de delivery I0](i0-delivery-contract.md)
+- [Historial: perfil de runtime durable](implementation-history/enforce-durable-runtime-profile/proposal.md)
 
 I0 usa validación por PR y deployment selectivo desde `main` al target Vercel configurado. No
 existe destino de producción comercial ni deployment remoto `development` separado. Los previews

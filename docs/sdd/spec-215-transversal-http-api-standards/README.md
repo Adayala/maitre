@@ -2,20 +2,20 @@
 
 Contrato transversal para APIs HTTP consistentes, seguras, observables y evolutivas.
 
-| Campo | Valor |
-| --- | --- |
-| **ID** | SPEC-215 |
-| **Tipo** | Transversal |
-| **Subtype** | API Architecture |
-| **Dominio** | Platform / Contracts |
-| **Estado** | DRAFT |
-| **Readiness** | BLOCKED |
-| **Review target** | PROPOSED_FOR_REVIEW |
-| **Prioridad** | P0 |
-| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED |
-| **Blockers** | Asignar owner y reviewer |
-| **Fase** | Antes del primer endpoint funcional |
-| **Depende de** | SPEC-016, SPEC-023, SPEC-207, SPEC-209, SPEC-211, SPEC-213 |
+| Campo                | Valor                                                      |
+| -------------------- | ---------------------------------------------------------- |
+| **ID**               | SPEC-215                                                   |
+| **Tipo**             | Transversal                                                |
+| **Subtype**          | API Architecture                                           |
+| **Dominio**          | Platform / Contracts                                       |
+| **Estado**           | DRAFT                                                      |
+| **Readiness**        | BLOCKED                                                    |
+| **Review target**    | PROPOSED_FOR_REVIEW                                        |
+| **Prioridad**        | P0                                                         |
+| **Owner / Reviewer** | UNASSIGNED / UNASSIGNED                                    |
+| **Blockers**         | Asignar owner y reviewer                                   |
+| **Fase**             | Antes del primer endpoint funcional                        |
+| **Depende de**       | SPEC-016, SPEC-023, SPEC-207, SPEC-209, SPEC-211, SPEC-213 |
 
 ## Decisiones centrales
 
@@ -47,3 +47,4 @@ general de idempotencia siguen siendo criterios más amplios que este cierre. Co
 - [Tareas](tasks.md)
 - [Verificación](verification.md)
 - [Decisiones y fuentes](notes.md)
+- [Historial: gobernanza del contrato HTTP/OpenAPI](implementation-history/complete-http-contract-governance/proposal.md)
