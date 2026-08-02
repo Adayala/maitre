@@ -1,5 +1,8 @@
 {
   "files": [],
+  "compilerOptions": {
+    "tsBuildInfoFile": ".artifacts/typescript/root.tsbuildinfo"
+  },
   "references": [
     { "path": "packages/arca-client" },
     { "path": "packages/contracts" },

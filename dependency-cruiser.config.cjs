@@ -34,7 +34,7 @@ module.exports = {
   ],
   options: {
     doNotFollow: { path: "node_modules" },
-    exclude: "(^|/)(dist|node_modules|test-results|playwright-report)/",
+    exclude: "(^|/)(dist|node_modules|\\.artifacts)/",
     tsConfig: { fileName: "tsconfig.json" },
     enhancedResolveOptions: {
       exportsFields: ["exports"],

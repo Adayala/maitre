@@ -8,7 +8,9 @@ const quarantined = new Set(["apps/api/dist/test/organization-api.test.js"]);
 const discovered = roots.flatMap((root) => collectTests(root));
 const testFiles = discovered.filter((file) => !quarantined.has(file));
 const coverage = process.argv.includes("--coverage");
-const coverageReportPath = "coverage/node-test-coverage.txt";
+const artifactRoot = process.env["ARTIFACTS_DIR"] ?? ".artifacts";
+const coverageDirectory = join(artifactRoot, "coverage");
+const coverageReportPath = join(coverageDirectory, "node-test-coverage.txt");
 
 if (testFiles.length === 0) {
   console.error("No compiled test files were found. Run the build first.");
@@ -30,7 +32,7 @@ const args = [
     : []),
   ...testFiles,
 ];
-if (coverage) mkdirSync("coverage", { recursive: true });
+if (coverage) mkdirSync(coverageDirectory, { recursive: true });
 const result = spawnSync(process.execPath, args, { stdio: "inherit" });
 if (result.error) throw result.error;
 if (result.status !== 0) process.exit(result.status ?? 1);

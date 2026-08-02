@@ -2,11 +2,12 @@
 node_modules/
 dist/
 *.tsbuildinfo
-playwright-report/
-test-results/
-coverage/
+.artifacts/
 .playwright/
 .env
 .env.*
 !.env.example
 .secrets/
+.claude/settings.local.json
+.claude/worktrees/
+.superpowers/

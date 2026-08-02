@@ -1,7 +1,16 @@
-import { readFileSync, readdirSync } from "node:fs";
-import { join } from "node:path";
+import { readFileSync } from "node:fs";
+import { collectFiles } from "../shared/collect-files.mjs";
 
-const files = collectFiles(".");
+const ignoredDirectories = new Set([
+  ".artifacts",
+  ".git",
+  ".secrets",
+  ".superpowers",
+  "dist",
+  "node_modules",
+  "worktrees",
+]);
+const files = collectFiles(".", { ignoredDirectories });
 const patterns = [
   ["private key", /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/],
   ["GitHub token", /\bgh[opsu]_[A-Za-z0-9_]{30,}\b/],
@@ -34,19 +43,3 @@ if (findings.length) {
 console.log(
   `Scanned ${files.length} source files for high-confidence secret patterns.`,
 );
-
-function collectFiles(directory) {
-  const ignored = new Set([
-    ".git",
-    "node_modules",
-    "dist",
-    "coverage",
-    "playwright-report",
-    "test-results",
-  ]);
-  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
-    if (ignored.has(entry.name)) return [];
-    const path = join(directory, entry.name);
-    return entry.isDirectory() ? collectFiles(path) : [path];
-  });
-}

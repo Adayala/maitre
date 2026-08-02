@@ -82,6 +82,7 @@ No es TDD (test-driven). **No escribimos tests primero; escribimos especificacio
 | [18-architecture-components-design-views.md](18-architecture-components-design-views.md) | Relevamiento visual consolidado de arquitectura, componentes y diseño            | Product, UX, Architecture, Engineering |
 | [19-runtime-persistence-inventory.md](19-runtime-persistence-inventory.md)               | Inventario operativo de runtime, persistencia Supabase y gaps reales por dominio | Architecture, Engineering, Product     |
 | [20-e2e-flow-coverage.md](20-e2e-flow-coverage.md)                                       | Cobertura E2E real por journey, app, rol y pendientes priorizados                | Product, QA, UX, Engineering           |
+| [21-repository-root-layout.md](21-repository-root-layout.md)                             | Organización del root, outputs generados y paths exclusivamente locales          | Architecture, Engineering              |
 
 La implementación inicial usa **React.js**, **Node.js** y **Vercel**, manteniendo el núcleo portable. Consulta [el perfil técnico vigente](../sdd/TECH_STACK.md).
 

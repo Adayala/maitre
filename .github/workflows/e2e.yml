@@ -69,6 +69,7 @@ jobs:
           npm run lint
           npm run typecheck
           npm run deps:check
+          npm run repository:files:test
           npm run deploy:affected:test
           npm run runtime:profile:test
           npm run runtime:grants:test
@@ -83,7 +84,9 @@ jobs:
       - name: OpenTelemetry export integration
         run: npm run test:telemetry:export
       - name: Generate sanitized observability evidence
-        run: npm run observability:evidence > observability-evidence.json
+        run: |
+          mkdir -p .artifacts/quality
+          npm run observability:evidence > .artifacts/quality/observability-evidence.json
       - name: Security controls
         run: |
           npm run secrets:scan
@@ -91,15 +94,18 @@ jobs:
       - name: Frontend bundle budgets
         run: npm run performance:budget
       - name: Generate software bill of materials
-        run: npm sbom --sbom-format cyclonedx > maitre-sbom.json
+        run: |
+          mkdir -p .artifacts/quality
+          npm sbom --sbom-format cyclonedx > .artifacts/quality/maitre-sbom.json
       - uses: actions/upload-artifact@v7
         with:
           name: quality-evidence-${{ github.run_attempt }}
           path: |
-            maitre-sbom.json
-            observability-evidence.json
-            coverage/
+            .artifacts/quality/maitre-sbom.json
+            .artifacts/quality/observability-evidence.json
+            .artifacts/coverage/
           if-no-files-found: ignore
+          include-hidden-files: true
           retention-days: 14
 
   playwright:
@@ -148,9 +154,10 @@ jobs:
         with:
           name: playwright-${{ matrix.app }}-${{ github.run_attempt }}
           path: |
-            playwright-report/
-            test-results/
+            .artifacts/playwright/report/
+            .artifacts/playwright/results/
           if-no-files-found: ignore
+          include-hidden-files: true
           retention-days: 7
 
   release-journey:
@@ -258,7 +265,7 @@ jobs:
             exit 1
           fi
           mkdir -p "$E2E_EVIDENCE_DIR/initial-process"
-          cp -R test-results playwright-report "$E2E_EVIDENCE_DIR/initial-process/"
+          cp -R .artifacts/playwright/results .artifacts/playwright/report "$E2E_EVIDENCE_DIR/initial-process/"
           echo "PRODUCT_FAILURE: durable state has not survived an API restart" > "$E2E_EVIDENCE_DIR/classification.txt"
 
       - name: Restart API and prove persisted state
@@ -269,7 +276,7 @@ jobs:
             exit 1
           fi
           mkdir -p "$E2E_EVIDENCE_DIR/restarted-process"
-          cp -R test-results playwright-report "$E2E_EVIDENCE_DIR/restarted-process/"
+          cp -R .artifacts/playwright/results .artifacts/playwright/report "$E2E_EVIDENCE_DIR/restarted-process/"
           echo "PASS: MVP-J-001 completed and survived an API restart" > "$E2E_EVIDENCE_DIR/classification.txt"
 
       - name: Destroy ephemeral database and verify cleanup
