@@ -19,6 +19,7 @@ export interface OrganizationBrand {
   name: string;
   slug: string;
   status: string;
+  description?: string;
 }
 
 export interface OrganizationBranch {

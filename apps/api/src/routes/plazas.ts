@@ -24,7 +24,7 @@ const createBodySchema = z.object({
   salonId: z.string().uuid(),
   servicePeriodId: z.string().uuid(),
   name: z.string().min(2).max(80),
-  mode: z.enum(["FIXED", "VARIABLE"]).default("VARIABLE"),
+  mode: z.enum(["FIXED", "VARIABLE"]).optional(),
   waiterEmploymentId: z.string().uuid().nullable().optional(),
   tableIds: z.array(z.string().uuid()).min(1),
 });

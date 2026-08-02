@@ -1,10 +1,4 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from "react";
+import { createContext, useContext, useState, type ReactNode } from "react";
 import { useTenantContext } from "./tenant-context.js";
 import { brandSelectionStorageKey } from "./brand-selection-model.js";
 
@@ -18,27 +12,31 @@ const BrandSelectionContext = createContext<BrandSelectionState | null>(null);
 
 export function BrandSelectionProvider({ children }: { children: ReactNode }) {
   const { selectedTenantId } = useTenantContext();
-  const [selectedBrandId, setSelectedBrandId] = useState<string | null>(null);
-
-  useEffect(() => {
-    setSelectedBrandId(
-      selectedTenantId
-        ? localStorage.getItem(brandSelectionStorageKey(selectedTenantId))
-        : null,
-    );
-  }, [selectedTenantId]);
+  const [selection, setSelection] = useState<{
+    tenantId: string;
+    brandId: string | null;
+  } | null>(null);
+  const selectedBrandId = selectedTenantId
+    ? selection?.tenantId === selectedTenantId
+      ? selection.brandId
+      : localStorage.getItem(brandSelectionStorageKey(selectedTenantId))
+    : null;
 
   function selectBrand(brandId: string) {
     if (!selectedTenantId) return;
     localStorage.setItem(brandSelectionStorageKey(selectedTenantId), brandId);
-    setSelectedBrandId(brandId);
+    setSelection({ tenantId: selectedTenantId, brandId });
   }
 
   function clearBrand() {
     if (selectedTenantId) {
       localStorage.removeItem(brandSelectionStorageKey(selectedTenantId));
     }
-    setSelectedBrandId(null);
+    if (selectedTenantId) {
+      setSelection({ tenantId: selectedTenantId, brandId: null });
+    } else {
+      setSelection(null);
+    }
   }
 
   return (

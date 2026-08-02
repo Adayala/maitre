@@ -1026,6 +1026,10 @@ export interface RuntimeProfile {
 
 const LOCAL_RUNTIME_ENVIRONMENTS = new Set(["local", "test", "e2e"]);
 
+export function shouldSeedDemoAtStartup(profile: RuntimeProfile): boolean {
+  return LOCAL_RUNTIME_ENVIRONMENTS.has(profile.environment);
+}
+
 function hasSupabasePersistenceConfig(
   env: NodeJS.ProcessEnv = process.env,
 ): boolean {
@@ -2161,11 +2165,7 @@ function buildSessionVerifier(
     const url = process.env["SUPABASE_URL"];
     if (!url)
       throw new Error("SUPABASE_URL must be set for AUTH_DRIVER=supabase");
-    return new SupabaseSessionVerificationPort(url, {
-      ...(process.env["SUPABASE_PUBLISHABLE_KEY"]
-        ? { apiKey: process.env["SUPABASE_PUBLISHABLE_KEY"] }
-        : {}),
-    });
+    return new SupabaseSessionVerificationPort(url);
   }
   return new FixtureSessionVerificationPort();
 }
@@ -2173,7 +2173,7 @@ function buildSessionVerifier(
 export async function buildContainer(): Promise<Container> {
   const profile = resolveRuntimeProfile();
   const repos = buildRepositories(profile);
-  await ensureSeed(repos, profile);
+  if (shouldSeedDemoAtStartup(profile)) await ensureSeed(repos, profile);
 
   const sessions = buildSessionVerifier(profile);
   if (sessions instanceof FixtureSessionVerificationPort) {

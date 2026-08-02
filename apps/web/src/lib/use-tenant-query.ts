@@ -3,6 +3,8 @@ import { apiRequest } from "./api-client.js";
 import { useAuth } from "../app/auth-context.js";
 import { useTenantContext } from "../app/tenant-context.js";
 
+export const TENANT_QUERY_STALE_TIME_MS = 60_000;
+
 export function useTenantQuery<T>(
   key: string,
   path: string,
@@ -14,8 +16,12 @@ export function useTenantQuery<T>(
   return useQuery<T>({
     queryKey: [key, selectedTenantId],
     queryFn: () =>
-      apiRequest<T>(path, { accessToken: accessToken!, tenantId: selectedTenantId! }),
+      apiRequest<T>(path, {
+        accessToken: accessToken!,
+        tenantId: selectedTenantId!,
+      }),
     enabled: Boolean(accessToken && selectedTenantId),
+    staleTime: TENANT_QUERY_STALE_TIME_MS,
     ...options,
   });
 }

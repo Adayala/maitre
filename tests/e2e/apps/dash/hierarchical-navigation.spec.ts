@@ -212,6 +212,53 @@ test("obliga a elegir entre múltiples tenants y persiste la selección explíci
     .toBe(tenantA.id);
 });
 
+test("cambia de tenant sin trasladar la marca guardada del tenant anterior", async ({
+  page,
+}) => {
+  await installSession(page, tenantA.id);
+  await page.addInitScript(
+    ({ firstTenantId, secondTenantId, brandId }) => {
+      localStorage.setItem(`maitre.selectedBrandId.${firstTenantId}`, brandId);
+      localStorage.removeItem(`maitre.selectedBrandId.${secondTenantId}`);
+    },
+    {
+      firstTenantId: tenantA.id,
+      secondTenantId: tenantB.id,
+      brandId: brand.id,
+    },
+  );
+  const calls = await mockOrganizationApi(page, {
+    tenants: [tenantA, tenantB],
+  });
+
+  await page.goto("/organizacion");
+  await expect(page.getByLabel("Apariencia activa")).toContainText(
+    "Casa Norte",
+  );
+  await expect
+    .poll(() => calls.effectivePresentationTenantIds.includes(tenantA.id))
+    .toBe(true);
+
+  await page.getByRole("link", { name: "Cambiar tenant" }).click();
+  await page.getByRole("button", { name: /Grupo Delta/ }).click();
+
+  await expect(page).toHaveURL(/\/organizacion$/);
+  await expect(page.getByLabel("Apariencia activa")).toContainText(
+    "Maitre base",
+  );
+  await page.waitForLoadState("networkidle");
+  expect(calls.effectivePresentationTenantIds).not.toContain(tenantB.id);
+  await expect
+    .poll(() =>
+      page.evaluate(
+        (tenantId) =>
+          localStorage.getItem(`maitre.selectedBrandId.${tenantId}`),
+        tenantB.id,
+      ),
+    )
+    .toBeNull();
+});
+
 test("recorre estructura física, operación y equipo con carga lazy y paneles de alta", async ({
   page,
 }) => {
@@ -441,6 +488,9 @@ test("separa Salón → Mesas de Jornada → Plaza y aplica la marca elegida", a
   await expect(page.getByLabel("Apariencia activa")).toContainText(
     "Casa Norte",
   );
+  await expect.poll(() => calls.brandDetails).toBe(0);
+  await expect.poll(() => calls.brandPresentations).toBe(1);
+  await expect.poll(() => calls.effectivePresentations).toBe(1);
   await expect
     .poll(() =>
       page
@@ -798,6 +848,10 @@ async function mockOrganizationApi(
     updatedSalons: 0,
     updatedEmployments: 0,
     updatedUsers: 0,
+    brandDetails: 0,
+    brandPresentations: 0,
+    effectivePresentations: 0,
+    effectivePresentationTenantIds: [] as string[],
     createdTables: 0,
     updatedTables: 0,
     createdPlazas: 0,
@@ -875,16 +929,24 @@ async function mockOrganizationApi(
       return json(route, {
         data: brandRecords.length === 0 ? [] : [branchRecord],
       });
-    if (path === `/v1/brands/${brand.id}` && method === "GET")
+    if (path === `/v1/brands/${brand.id}` && method === "GET") {
+      calls.brandDetails += 1;
       return json(route, { data: brandRecords[0] });
-    if (path === `/v1/brands/${brand.id}/presentation` && method === "GET")
+    }
+    if (path === `/v1/brands/${brand.id}/presentation` && method === "GET") {
+      calls.brandPresentations += 1;
       return json(route, {
         data: { draft: null, published: null, history: [] },
       });
+    }
     if (
       path === `/v1/brands/${brand.id}/presentation/effective` &&
       method === "GET"
-    )
+    ) {
+      calls.effectivePresentations += 1;
+      calls.effectivePresentationTenantIds.push(
+        request.headers()["x-tenant-id"] ?? "",
+      );
       return json(route, {
         data: {
           document: {
@@ -910,6 +972,7 @@ async function mockOrganizationApi(
           },
         },
       });
+    }
     if (path === `/v1/brands/${brand.id}` && method === "PATCH") {
       calls.updatedBrands += 1;
       Object.assign(brandRecords[0]!, request.postDataJSON());

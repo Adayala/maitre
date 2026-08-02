@@ -103,6 +103,8 @@ export function OrgExplorer() {
           />
           <OrgDetailPanel
             node={selectedNode}
+            brands={brands}
+            branches={branches}
             onSelect={(node) => selectNode(node)}
             onNotify={setAnnouncement}
           />

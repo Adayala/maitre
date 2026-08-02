@@ -43993,7 +43993,6 @@
                   }
                 },
                 "required": [
-                  "mode",
                   "name",
                   "salonId",
                   "servicePeriodId",

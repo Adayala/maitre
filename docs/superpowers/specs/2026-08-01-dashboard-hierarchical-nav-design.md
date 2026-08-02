@@ -144,14 +144,43 @@ que la jerarquía no quede comprimida dentro del rail global:
 
 ## Riesgos / notas de implementación
 
-- El árbol arma la jerarquía uniendo 2-3 requests en el cliente (`brands` +
-  `branches` + lazy `salons`/`employees` por sucursal expandida). No hay un
-  endpoint `/v1/org-tree` — se acepta el costo de varios requests pequeños en vez
-  de tocar backend.
+- El árbol arma la jerarquía uniendo `brands` + `branches` y cargas lazy por
+  sucursal, pero la lista ya obtenida es también la fuente inicial de los
+  paneles de Marca y Sucursal. Abrir un nodo no repite su GET de detalle mientras
+  ese snapshot siga fresco.
 - Extraer los `*DetailPanel` de las páginas actuales es un refactor mecánico
   (mover el JSX + hooks de fetch/mutation existentes a un componente con props
   en vez de con `useState` de selección propio) — no se reescribe lógica de
   negocio ni validaciones.
+
+## Contrato de performance del contexto y los paneles
+
+- Ningún entorno compartido (`preview`, `production` u otro durable) ejecuta el
+  seed demo durante el arranque del proceso. El seed queda reservado a
+  `local`, `test` y `e2e`; cualquier materialización compartida se realiza como
+  operación explícita fuera del request path.
+- El access token se valida localmente contra el JWKS firmado de Supabase. La
+  publishable key del cliente no habilita una consulta remota a `/auth/v1/user`
+  por cada request del API.
+- La resolución de contexto reutiliza el usuario ya validado y consulta Tenant
+  y Membership concurrentemente. `/v1/me/context` materializa los tenants en
+  paralelo, sin un N+1 secuencial por membresía.
+- Elegir un tenant solicita marcas y sucursales concurrentemente. Elegir una
+  marca inicia a la vez su tema efectivo y el documento editable; el editor no
+  espera un GET redundante de la Marca que ya llegó en `/v1/brands`.
+- `/v1/brands/:brandId/presentation` lee el historial una sola vez y deriva de
+  ese resultado el draft y la publicación vigentes.
+- Las queries de lectura scopeadas por tenant tienen una ventana fresca breve
+  para evitar refetches al remontar paneles, pero sus mutaciones continúan
+  invalidando explícitamente las claves afectadas.
+- El runtime serverless del API se despliega junto a la región de datos. Para el
+  proyecto Supabase Maitre en `us-west-2`, la región Vercel es `pdx1`.
+- La optimización no incorpora recursos pagos ni cambia el plan contratado:
+  conserva una única región compatible con Hobby, escala a cero y reduce
+  invocaciones, tiempo de función y operaciones contra Supabase.
+- Objetivo verificable en runtime caliente: la apertura de Marca no contiene
+  requests seriales dependientes entre detalle, tema y editor; el tiempo visible
+  queda acotado por la request más lenta y no por la suma de ellas.
 
 ## Contratos y decisiones cerradas durante la implementación
 
@@ -245,3 +274,10 @@ que la jerarquía no quede comprimida dentro del rail global:
 15. Títulos, navegación y cuerpo mantienen una escala descendente verificable;
     seleccionar una marca reemplaza heading y body sin reintroducir serif ni
     desordenar tamaños o pesos.
+16. Un cold start productivo no escribe ni verifica fixtures demo y `/health/live`
+    no depende de Supabase.
+17. Abrir una marca ya visible en el árbol no ejecuta nuevamente
+    `GET /v1/brands/:id`; tema efectivo y presentación editable comienzan sin un
+    waterfall de detalle previo.
+18. Cambiar entre tenants nunca solicita el tema de una marca perteneciente al
+    tenant anterior, y las claves de caché continúan incluyendo `tenantId`.

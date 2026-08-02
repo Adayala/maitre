@@ -29,12 +29,16 @@ import {
 
 interface OrgDetailPanelProps {
   node: OrganizationNode | null;
+  brands: OrganizationBrand[];
+  branches: OrganizationBranch[];
   onSelect: (node: OrganizationNode) => void;
   onNotify: (message: string) => void;
 }
 
 export function OrgDetailPanel({
   node,
+  brands,
+  branches,
   onSelect,
   onNotify,
 }: OrgDetailPanelProps) {
@@ -58,6 +62,7 @@ export function OrgDetailPanel({
         <BrandDetailPanel
           key={node.id ?? "new"}
           id={node.id}
+          initialBrand={brands.find((brand) => brand.id === node.id)}
           onSelect={onSelect}
           onNotify={onNotify}
         />
@@ -67,6 +72,8 @@ export function OrgDetailPanel({
           key={node.id ?? `new-${node.parentId}`}
           id={node.id}
           brandId={node.parentId}
+          initialBranch={branches.find((branch) => branch.id === node.id)}
+          initialBrand={brands.find((brand) => brand.id === node.parentId)}
           onSelect={onSelect}
           onNotify={onNotify}
         />
@@ -129,10 +136,12 @@ export function OrgDetailPanel({
 
 function BrandDetailPanel({
   id,
+  initialBrand,
   onSelect,
   onNotify,
 }: {
   id: string | null;
+  initialBrand?: OrganizationBrand;
   onSelect: (node: OrganizationNode) => void;
   onNotify: (message: string) => void;
 }) {
@@ -141,6 +150,7 @@ function BrandDetailPanel({
     data: OrganizationBrand & { description?: string };
   }>(`organization-brand-${id ?? "new"}`, `/v1/brands/${id ?? "new"}`, {
     enabled: Boolean(id),
+    ...(initialBrand ? { initialData: { data: initialBrand } } : {}),
   });
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -243,11 +253,15 @@ function BrandDetailPanel({
 function BranchDetailPanel({
   id,
   brandId,
+  initialBranch,
+  initialBrand,
   onSelect,
   onNotify,
 }: {
   id: string | null;
   brandId: string;
+  initialBranch?: OrganizationBranch;
+  initialBrand?: OrganizationBrand;
   onSelect: (node: OrganizationNode) => void;
   onNotify: (message: string) => void;
 }) {
@@ -255,11 +269,15 @@ function BranchDetailPanel({
   const branchQuery = useTenantQuery<{ data: OrganizationBranch }>(
     `organization-branch-${id ?? "new"}`,
     `/v1/branches/${id ?? "new"}`,
-    { enabled: Boolean(id) },
+    {
+      enabled: Boolean(id),
+      ...(initialBranch ? { initialData: { data: initialBranch } } : {}),
+    },
   );
   const brandQuery = useTenantQuery<{ data: OrganizationBrand }>(
     `organization-parent-brand-${brandId}`,
     `/v1/brands/${brandId}`,
+    initialBrand ? { initialData: { data: initialBrand } } : undefined,
   );
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
