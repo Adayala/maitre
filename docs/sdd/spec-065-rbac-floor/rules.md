@@ -5,6 +5,7 @@
 - Tenant y Branch del recurso se validan contra el contexto; headers/body no amplían alcance.
 - Read collection filtra por alcance antes de paginar; detail cross-scope responde `404`.
 - WAITER sólo accede a assignment vigente y no puede autoasignarse para ampliar autoridad.
+- Plaza y `waiterEmploymentId` son organización operativa, no grants de autoridad.
 - Límites monetarios se evalúan en la currency/policy aprobada; fraccionar operaciones no
   elude el límite acumulado.
 - Step-up y approval expiran, son action/resource-bound y no pueden reutilizarse.

@@ -9,8 +9,10 @@
     "src/features/organization/org-explorer-model.ts",
     "src/app/tenant-context-model.ts",
     "src/app/brand-selection-model.ts",
+    "src/app/dashboard-sidebar-model.ts",
     "test/org-explorer-model.test.ts",
     "test/tenant-context-model.test.ts",
-    "test/brand-selection-model.test.ts"
+    "test/brand-selection-model.test.ts",
+    "test/dashboard-sidebar-model.test.ts"
   ]
 }

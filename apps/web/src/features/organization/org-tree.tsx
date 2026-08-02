@@ -4,6 +4,7 @@ import {
   branchesForBrand,
   isOrganizationNodeSelected,
   plazasForServicePeriod,
+  plazaModeLabel,
   servicePeriodStatusLabel,
   servicePeriodTypeLabel,
   userForEmployment,
@@ -626,6 +627,7 @@ function ServicePeriodTreeNode({
                   <span aria-hidden="true">⌁</span>
                   <strong>{plaza.name}</strong>
                   <small>
+                    {plazaModeLabel(plaza.mode ?? "VARIABLE")} ·{" "}
                     {salon?.name ?? "Salón"} · {plaza.tableIds.length} mesas
                   </small>
                 </button>

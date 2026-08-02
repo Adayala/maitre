@@ -24,12 +24,7 @@ export interface Table {
 
 // ---- Floor: TableStatus projection — SPEC-051/057 ---------------------
 export type TableStatusValue =
-  | "BLOCKED"
-  | "OCCUPIED"
-  | "PAYING"
-  | "CLEANING"
-  | "RESERVED"
-  | "AVAILABLE";
+  "BLOCKED" | "OCCUPIED" | "PAYING" | "CLEANING" | "RESERVED" | "AVAILABLE";
 
 export interface TableStatusProjection {
   tableId: string;
@@ -37,6 +32,29 @@ export interface TableStatusProjection {
   relatedVisitId?: string;
   relatedReservationId?: string;
   asOf: string;
+}
+
+export interface ActiveServicePeriod {
+  id: string;
+  name: string;
+  businessDate: string;
+  status: "OPEN" | "CLOSING";
+}
+
+export interface OperationalPlaza {
+  id: string;
+  name: string;
+  mode: "FIXED" | "VARIABLE";
+  salonId: string;
+  tableIds: string[];
+  waiterEmploymentId?: string | null;
+  waiterEmployeeCode?: string | null;
+  isMine: boolean;
+}
+
+export interface ActivePlazasPayload {
+  servicePeriod: ActiveServicePeriod | null;
+  plazas: OperationalPlaza[];
 }
 
 // ---- Floor: Visit — SPEC-049 ------------------------------------------
@@ -101,7 +119,8 @@ export type OrderStatus =
   | "DELIVERED"
   | "CANCELLED";
 
-export type OrderItemStatus = "QUEUED" | "IN_PREP" | "READY" | "DELIVERED" | "CANCELLED";
+export type OrderItemStatus =
+  "QUEUED" | "IN_PREP" | "READY" | "DELIVERED" | "CANCELLED";
 
 export interface OrderModifier {
   id: string;

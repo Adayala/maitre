@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { buildApp } from "../app.js";
 import { buildContainer, type Container } from "../composition/container.js";
 import type { FixtureSessionVerificationPort } from "@maitre/adapter-persistence-memory";
+import type { Employment } from "@maitre/workforce";
 
 // SPEC-055/056/058/059/065 §5 — Fastify inject() coverage for the Floor API.
 
@@ -32,6 +33,34 @@ function ownerHeaders(container: Container, tenantId: string) {
     authorization: `Bearer ${container.demoAccessToken}`,
     "x-tenant-id": tenantId,
   };
+}
+
+function attachEmploymentRepository(container: Container) {
+  const byId = new Map<string, Employment>();
+  container.employments = {
+    async findById(tenantId, id) {
+      const employment = byId.get(id);
+      return employment?.tenantId === tenantId ? employment : null;
+    },
+    async findByEmployeeCode(tenantId, employeeCode) {
+      return (
+        [...byId.values()].find(
+          (employment) =>
+            employment.tenantId === tenantId &&
+            employment.employeeCode === employeeCode,
+        ) ?? null
+      );
+    },
+    async listByTenant(tenantId) {
+      return [...byId.values()].filter(
+        (employment) => employment.tenantId === tenantId,
+      );
+    },
+    async save(employment) {
+      byId.set(employment.id, employment);
+    },
+  };
+  return container.employments;
 }
 
 async function openCashSession(
@@ -142,6 +171,7 @@ serialTest(
       tableIds: string[];
     };
     assert.equal(plaza.name, "Terraza");
+    assert.equal(create.json().data.mode, "VARIABLE");
     assert.deepEqual(plaza.tableIds, [tables[0]!.id, tables[1]!.id]);
 
     const bySalon = await app.inject({
@@ -169,10 +199,24 @@ serialTest(
       method: "PATCH",
       url: `/v1/plazas/${plaza.id}`,
       headers,
-      payload: { name: "Patio", tableIds: [tables[0]!.id] },
+      payload: {
+        name: "Patio",
+        mode: "FIXED",
+        waiterEmploymentId: null,
+        tableIds: [tables[0]!.id],
+      },
     });
     assert.equal(patch.statusCode, 200);
     assert.equal(patch.json().data.name, "Patio");
+    assert.equal(patch.json().data.mode, "FIXED");
+    const patchNameOnly = await app.inject({
+      method: "PATCH",
+      url: `/v1/plazas/${plaza.id}`,
+      headers,
+      payload: { name: "Patio norte" },
+    });
+    assert.equal(patchNameOnly.statusCode, 200);
+    assert.deepEqual(patchNameOnly.json().data.tableIds, [tables[0]!.id]);
 
     const conflictResponse = await app.inject({
       method: "POST",
@@ -194,6 +238,488 @@ serialTest(
       headers: ownerHeaders(container, foreign.tenantId),
     });
     assert.equal(hidden.statusCode, 403);
+    await app.close();
+  },
+);
+
+serialTest(
+  "Plazas organize multiple groups per waiter and carry only fixed compositions forward",
+  async () => {
+    const container = await buildContainer();
+    const { tenantId, branchId } = await getContext(container);
+    const headers = ownerHeaders(container, tenantId);
+    const salons = await container.salons.listByBranch(tenantId, branchId);
+    const salon = salons[0]!;
+    const tables = await container.tables.listBySalon(tenantId, salon.id);
+    const now = new Date("2026-08-02T10:00:00Z");
+    const employmentId = randomUUID();
+    const employments = attachEmploymentRepository(container);
+    await employments.save({
+      id: employmentId,
+      tenantId,
+      personRef: "demo-owner",
+      employeeCode: "MZ-7",
+      relationshipType: "EMPLOYEE",
+      eligibleBranchIds: [branchId],
+      status: "ACTIVE",
+      validFrom: now,
+      createdAt: now,
+      updatedAt: now,
+    });
+    const app = await buildApp(container);
+    for (const name of ["Almuerzo anterior", "Cena anterior"]) {
+      assert.equal(
+        (
+          await app.inject({
+            method: "POST",
+            url: `/v1/branches/${branchId}/service-periods`,
+            headers,
+            payload: {
+              businessDate: "2026-08-01",
+              name,
+              type: "DINNER",
+            },
+          })
+        ).statusCode,
+        201,
+      );
+    }
+    const periodResponse = await app.inject({
+      method: "POST",
+      url: `/v1/branches/${branchId}/service-periods`,
+      headers,
+      payload: { businessDate: "2026-08-02", name: "Cena", type: "DINNER" },
+    });
+    const periodId = periodResponse.json().data.id as string;
+    const fixed = await app.inject({
+      method: "POST",
+      url: "/v1/plazas",
+      headers,
+      payload: {
+        salonId: salon.id,
+        servicePeriodId: periodId,
+        name: "Terraza fija",
+        mode: "FIXED",
+        waiterEmploymentId: employmentId,
+        tableIds: [tables[0]!.id],
+      },
+    });
+    const variable = await app.inject({
+      method: "POST",
+      url: "/v1/plazas",
+      headers,
+      payload: {
+        salonId: salon.id,
+        servicePeriodId: periodId,
+        name: "Apoyo variable",
+        mode: "VARIABLE",
+        waiterEmploymentId: employmentId,
+        tableIds: [tables[1]!.id],
+      },
+    });
+    assert.equal(fixed.statusCode, 201);
+    assert.equal(variable.statusCode, 201);
+    assert.equal(
+      (
+        await app.inject({
+          method: "POST",
+          url: `/v1/service-periods/${periodId}/open`,
+          headers,
+        })
+      ).statusCode,
+      200,
+    );
+    const active = await app.inject({
+      method: "GET",
+      url: `/v1/branches/${branchId}/active-plazas`,
+      headers,
+    });
+    assert.equal(active.statusCode, 200);
+    assert.equal(active.json().data.servicePeriod.id, periodId);
+    assert.deepEqual(
+      active
+        .json()
+        .data.plazas.map(
+          (plaza: { isMine: boolean; waiterEmployeeCode: string }) => [
+            plaza.isMine,
+            plaza.waiterEmployeeCode,
+          ],
+        ),
+      [
+        [true, "MZ-7"],
+        [true, "MZ-7"],
+      ],
+    );
+
+    const nextPeriod = await app.inject({
+      method: "POST",
+      url: `/v1/branches/${branchId}/service-periods`,
+      headers,
+      payload: {
+        businessDate: "2026-08-03",
+        name: "Cena siguiente",
+        type: "DINNER",
+      },
+    });
+    assert.equal(nextPeriod.statusCode, 201);
+    const copies = await container.plazas.listByServicePeriod(
+      tenantId,
+      nextPeriod.json().data.id,
+    );
+    assert.equal(copies.length, 1);
+    assert.equal(copies[0]?.mode, "FIXED");
+    assert.equal(copies[0]?.sourcePlazaId, fixed.json().data.id);
+    assert.equal(copies[0]?.waiterEmploymentId, null);
+    assert.deepEqual(copies[0]?.tableIds, [tables[0]!.id]);
+    assert.equal(
+      (
+        await app.inject({
+          method: "POST",
+          url: `/v1/service-periods/${periodId}/begin-close`,
+          headers,
+        })
+      ).statusCode,
+      200,
+    );
+    assert.equal(
+      (
+        await app.inject({
+          method: "POST",
+          url: `/v1/service-periods/${periodId}/close`,
+          headers,
+        })
+      ).statusCode,
+      200,
+    );
+    assert.equal(
+      (
+        await app.inject({
+          method: "POST",
+          url: `/v1/service-periods/${nextPeriod.json().data.id}/open`,
+          headers,
+        })
+      ).statusCode,
+      200,
+    );
+    const nextActive = await app.inject({
+      method: "GET",
+      url: `/v1/branches/${branchId}/active-plazas`,
+      headers,
+    });
+    assert.equal(nextActive.statusCode, 200);
+    assert.equal(nextActive.json().data.plazas[0].waiterEmployeeCode, null);
+    assert.equal(nextActive.json().data.plazas[0].isMine, false);
+    await app.close();
+  },
+);
+
+serialTest(
+  "Active plazas returns a harmless empty organization without an open period",
+  async () => {
+    const container = await buildContainer();
+    const { tenantId, branchId } = await getContext(container);
+    const headers = ownerHeaders(container, tenantId);
+    const app = await buildApp(container);
+    const response = await app.inject({
+      method: "GET",
+      url: `/v1/branches/${branchId}/active-plazas`,
+      headers,
+    });
+    assert.equal(response.statusCode, 200);
+    assert.deepEqual(response.json().data, { servicePeriod: null, plazas: [] });
+
+    const [salon] = await container.salons.listByBranch(tenantId, branchId);
+    const [table, secondTable] = await container.tables.listBySalon(
+      tenantId,
+      salon!.id,
+    );
+    const period = await app.inject({
+      method: "POST",
+      url: `/v1/branches/${branchId}/service-periods`,
+      headers,
+      payload: { businessDate: "2026-08-04", name: "Cena", type: "DINNER" },
+    });
+    const periodId = period.json().data.id as string;
+    assert.equal(
+      (
+        await app.inject({
+          method: "POST",
+          url: "/v1/plazas",
+          headers,
+          payload: {
+            salonId: salon!.id,
+            servicePeriodId: periodId,
+            name: "Sin asignar",
+            tableIds: [table!.id],
+          },
+        })
+      ).statusCode,
+      201,
+    );
+    const now = new Date("2026-08-04T20:00:00Z");
+    await container.plazas.save({
+      id: randomUUID(),
+      tenantId,
+      branchId,
+      salonId: salon!.id,
+      servicePeriodId: periodId,
+      name: "Responsable no disponible",
+      mode: "VARIABLE",
+      waiterEmploymentId: randomUUID(),
+      tableIds: [secondTable!.id],
+      createdAt: now,
+      updatedAt: now,
+    });
+    assert.equal(
+      (
+        await app.inject({
+          method: "POST",
+          url: `/v1/service-periods/${periodId}/open`,
+          headers,
+        })
+      ).statusCode,
+      200,
+    );
+    const activeWithoutEmploymentRepository = await app.inject({
+      method: "GET",
+      url: `/v1/branches/${branchId}/active-plazas`,
+      headers,
+    });
+    assert.equal(activeWithoutEmploymentRepository.statusCode, 200);
+    assert.equal(
+      activeWithoutEmploymentRepository
+        .json()
+        .data.plazas.every(
+          (plaza: { waiterEmployeeCode: string | null }) =>
+            plaza.waiterEmployeeCode === null,
+        ),
+      true,
+    );
+    assert.equal(
+      activeWithoutEmploymentRepository
+        .json()
+        .data.plazas.every((plaza: { isMine: boolean }) => !plaza.isMine),
+      true,
+    );
+    await app.close();
+  },
+);
+
+serialTest(
+  "Fixed plaza carry-forward rejects stale compositions before creating a period",
+  async () => {
+    const container = await buildContainer();
+    const { tenantId, branchId } = await getContext(container);
+    const headers = ownerHeaders(container, tenantId);
+    const [salon] = await container.salons.listByBranch(tenantId, branchId);
+    const [table] = await container.tables.listBySalon(tenantId, salon!.id);
+    const app = await buildApp(container);
+    const period = await app.inject({
+      method: "POST",
+      url: `/v1/branches/${branchId}/service-periods`,
+      headers,
+      payload: { businessDate: "2026-08-04", name: "Cena", type: "DINNER" },
+    });
+    const plaza = await app.inject({
+      method: "POST",
+      url: "/v1/plazas",
+      headers,
+      payload: {
+        salonId: salon!.id,
+        servicePeriodId: period.json().data.id,
+        name: "Salón fijo",
+        mode: "FIXED",
+        tableIds: [table!.id],
+      },
+    });
+    assert.equal(plaza.statusCode, 201);
+    await container.salons.save({
+      ...salon!,
+      status: "INACTIVE",
+      updatedAt: new Date("2026-08-04T20:00:00Z"),
+    });
+
+    const rejected = await app.inject({
+      method: "POST",
+      url: `/v1/branches/${branchId}/service-periods`,
+      headers,
+      payload: {
+        businessDate: "2026-08-05",
+        name: "Cena siguiente",
+        type: "DINNER",
+      },
+    });
+    assert.equal(rejected.statusCode, 400);
+    assert.equal(
+      (await container.servicePeriods.listByBranch(tenantId, branchId)).length,
+      1,
+    );
+    await app.close();
+  },
+);
+
+serialTest(
+  "Plaza reads keep scope boundaries and normalize unexpected storage failures",
+  async () => {
+    const container = await buildContainer();
+    const { tenantId, branchId } = await getContext(container);
+    const headers = ownerHeaders(container, tenantId);
+    const app = await buildApp(container);
+    container.plazas.listBySalon = async () => {
+      throw new Error("plaza list storage failure");
+    };
+    assert.equal(
+      (
+        await app.inject({
+          method: "GET",
+          url: `/v1/plazas?salonId=${randomUUID()}`,
+          headers,
+        })
+      ).statusCode,
+      500,
+    );
+    container.servicePeriods.findActiveByBranch = async () => {
+      throw new Error("active period storage failure");
+    };
+    assert.equal(
+      (
+        await app.inject({
+          method: "GET",
+          url: `/v1/branches/${branchId}/active-plazas`,
+          headers,
+        })
+      ).statusCode,
+      500,
+    );
+    container.plazas.findById = async () => {
+      throw new Error("plaza detail storage failure");
+    };
+    assert.equal(
+      (
+        await app.inject({
+          method: "PATCH",
+          url: `/v1/plazas/${randomUUID()}`,
+          headers,
+          payload: { name: "Plaza actualizada" },
+        })
+      ).statusCode,
+      500,
+    );
+
+    const now = new Date("2026-08-05T12:00:00Z");
+    const scopedUser = {
+      id: randomUUID(),
+      identityProvider: "fixture",
+      externalIdentityId: "plaza-scoped-waiter",
+      displayName: "Scoped Waiter",
+      status: "ACTIVE" as const,
+      createdAt: now,
+      updatedAt: now,
+    };
+    await container.users.save(scopedUser);
+    await container.memberships.save({
+      id: randomUUID(),
+      tenantId,
+      userId: scopedUser.id,
+      status: "ACTIVE",
+      branchScopeType: "SELECTED_BRANCHES",
+      roleIds: ["role_waiter"],
+      branchIds: [randomUUID()],
+      activatedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    });
+    const token = "plaza-scoped-waiter-token";
+    sessionsOf(container).registerToken(token, {
+      provider: "fixture",
+      subject: scopedUser.externalIdentityId,
+      issuedAt: now,
+      expiresAt: new Date(now.getTime() + 60 * 60 * 1000),
+    });
+    const outsideScope = await app.inject({
+      method: "GET",
+      url: `/v1/branches/${branchId}/active-plazas`,
+      headers: {
+        authorization: `Bearer ${token}`,
+        "x-tenant-id": tenantId,
+      },
+    });
+    assert.equal(outsideScope.statusCode, 404);
+    await app.close();
+  },
+);
+
+serialTest(
+  "Service period routes normalize unexpected repository failures",
+  async () => {
+    const container = await buildContainer();
+    const { tenantId, branchId } = await getContext(container);
+    const headers = ownerHeaders(container, tenantId);
+    const app = await buildApp(container);
+    container.servicePeriods.listByBranch = async () => {
+      throw new Error("period list storage failure");
+    };
+    assert.equal(
+      (
+        await app.inject({
+          method: "POST",
+          url: `/v1/branches/${branchId}/service-periods`,
+          headers,
+          payload: {
+            businessDate: "2026-08-06",
+            name: "Cena",
+            type: "DINNER",
+          },
+        })
+      ).statusCode,
+      500,
+    );
+    assert.equal(
+      (
+        await app.inject({
+          method: "GET",
+          url: `/v1/branches/${branchId}/service-periods`,
+          headers,
+        })
+      ).statusCode,
+      500,
+    );
+    container.servicePeriods.findById = async () => {
+      throw new Error("period detail storage failure");
+    };
+    const periodId = randomUUID();
+    for (const request of [
+      { method: "GET", url: `/v1/service-periods/${periodId}` },
+      { method: "POST", url: `/v1/service-periods/${periodId}/open` },
+      {
+        method: "POST",
+        url: `/v1/service-periods/${periodId}/begin-close`,
+      },
+      {
+        method: "POST",
+        url: `/v1/service-periods/${periodId}/close`,
+        payload: {},
+      },
+      {
+        method: "POST",
+        url: `/v1/service-periods/${periodId}/force-close`,
+        payload: { reason: "Test" },
+      },
+      {
+        method: "POST",
+        url: `/v1/service-periods/${periodId}/cancel-planned`,
+      },
+    ] as const) {
+      assert.equal(
+        (
+          await app.inject({
+            ...request,
+            headers,
+          })
+        ).statusCode,
+        500,
+      );
+    }
     await app.close();
   },
 );

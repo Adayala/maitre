@@ -19,6 +19,8 @@ test("@ui-contract crea una reserva desde recepción y la incorpora a la agenda"
   const reservationId = "00000000-0000-0000-0000-000000000201";
   const guestId = "00000000-0000-0000-0000-000000000301";
   let createdReservation: Record<string, unknown> | null = null;
+  let plazaReadFails = false;
+  let plazaHasNoActivePeriod = false;
 
   await page.addInitScript(
     ({ tenant, branch }) => {
@@ -169,6 +171,40 @@ test("@ui-contract crea una reserva desde recepción y la incorpora a la agenda"
         },
       });
     }
+    if (path === `/v1/branches/${branchId}/active-plazas`) {
+      if (plazaReadFails) {
+        return route.fulfill({
+          status: 503,
+          json: { title: "Plazas unavailable", status: 503 },
+        });
+      }
+      if (plazaHasNoActivePeriod) {
+        return route.fulfill({
+          json: { data: { servicePeriod: null, plazas: [] } },
+        });
+      }
+      return route.fulfill({
+        json: {
+          data: {
+            servicePeriod: {
+              id: "period-e2e",
+              name: "Cena",
+              businessDate: "2026-08-02",
+              status: "OPEN",
+            },
+            plazas: [
+              {
+                id: "plaza-e2e",
+                name: "Terraza",
+                mode: "FIXED",
+                tableIds: ["table-e2e"],
+                waiterEmployeeCode: "MZ-7",
+              },
+            ],
+          },
+        },
+      });
+    }
     return route.fulfill({
       status: 404,
       json: { title: "Fixture route not found", status: 404 },
@@ -178,6 +214,27 @@ test("@ui-contract crea una reserva desde recepción y la incorpora a la agenda"
   await page.goto("/");
   await expect(
     page.getByRole("heading", { name: "Nueva reserva" }),
+  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Cena" })).toBeVisible();
+  await expect(page.getByText("Terraza", { exact: true })).toBeVisible();
+  await expect(page.getByText("Responsable MZ-7")).toBeVisible();
+  plazaReadFails = true;
+  await page.getByRole("button", { name: "Actualizar" }).click();
+  await expect(
+    page.getByText(
+      "No pudimos cargar la organización. El seating sigue disponible.",
+    ),
+  ).toBeVisible();
+  plazaReadFails = false;
+  await page.getByRole("button", { name: "Reintentar" }).click();
+  await expect(page.getByText("Responsable MZ-7")).toBeVisible();
+  plazaHasNoActivePeriod = true;
+  await page.getByRole("button", { name: "Actualizar" }).click();
+  await expect(page.getByText("Sin jornada activa")).toBeVisible();
+  await expect(
+    page.getByText(
+      "La jornada todavía no tiene plazas. Podés seguir organizando el salón por mesas.",
+    ),
   ).toBeVisible();
   await page.getByPlaceholder("Nombre y apellido").fill("Ada Lovelace");
   await page.getByPlaceholder("opcional").first().fill("ada@example.com");
@@ -197,4 +254,5 @@ test("@ui-contract crea una reserva desde recepción y la incorpora a la agenda"
       notes: "Mesa tranquila",
     });
   await expect(page.getByText("Ada Lovelace").first()).toBeVisible();
+  await expectNoSeriousAccessibilityViolations(page);
 });

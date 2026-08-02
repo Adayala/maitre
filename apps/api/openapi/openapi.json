@@ -1105,6 +1105,322 @@
         "x-maitre-spec": "SPEC-215"
       }
     },
+    "/v1/branches/{branchId}/active-plazas": {
+      "get": {
+        "operationId": "getBranchesByBranchIdActivePlazas",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-branch-id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-correlation-id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "traceparent",
+            "required": false,
+            "schema": {
+              "pattern": "^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "branchId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "2XX": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "data": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "plazas": {
+                              "items": {
+                                "not": {}
+                              },
+                              "type": "array"
+                            },
+                            "servicePeriod": {
+                              "type": "null"
+                            }
+                          },
+                          "required": [
+                            "plazas",
+                            "servicePeriod"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "data": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "plazas": {
+                              "items": {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "branchId": {
+                                    "type": "string"
+                                  },
+                                  "createdAt": {
+                                    "format": "date-time",
+                                    "type": "string"
+                                  },
+                                  "id": {
+                                    "type": "string"
+                                  },
+                                  "isMine": {
+                                    "type": "boolean"
+                                  },
+                                  "mode": {
+                                    "enum": [
+                                      "FIXED",
+                                      "VARIABLE"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "salonId": {
+                                    "type": "string"
+                                  },
+                                  "servicePeriodId": {
+                                    "type": "string"
+                                  },
+                                  "sourcePlazaId": {
+                                    "anyOf": [
+                                      {
+                                        "type": "null"
+                                      },
+                                      {
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "tableIds": {
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "type": "array"
+                                  },
+                                  "tenantId": {
+                                    "type": "string"
+                                  },
+                                  "updatedAt": {
+                                    "format": "date-time",
+                                    "type": "string"
+                                  },
+                                  "waiterEmployeeCode": {
+                                    "anyOf": [
+                                      {
+                                        "type": "null"
+                                      },
+                                      {
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "waiterEmploymentId": {
+                                    "anyOf": [
+                                      {
+                                        "type": "null"
+                                      },
+                                      {
+                                        "type": "string"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "branchId",
+                                  "createdAt",
+                                  "id",
+                                  "isMine",
+                                  "mode",
+                                  "name",
+                                  "salonId",
+                                  "servicePeriodId",
+                                  "tableIds",
+                                  "tenantId",
+                                  "updatedAt",
+                                  "waiterEmployeeCode"
+                                ],
+                                "type": "object"
+                              },
+                              "type": "array"
+                            },
+                            "servicePeriod": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "actualClose": {
+                                  "anyOf": [
+                                    {
+                                      "type": "null"
+                                    },
+                                    {
+                                      "format": "date-time",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "actualOpen": {
+                                  "anyOf": [
+                                    {
+                                      "type": "null"
+                                    },
+                                    {
+                                      "format": "date-time",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "branchId": {
+                                  "type": "string"
+                                },
+                                "businessDate": {
+                                  "type": "string"
+                                },
+                                "createdAt": {
+                                  "format": "date-time",
+                                  "type": "string"
+                                },
+                                "id": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                },
+                                "plannedClose": {
+                                  "format": "date-time",
+                                  "type": "string"
+                                },
+                                "plannedOpen": {
+                                  "format": "date-time",
+                                  "type": "string"
+                                },
+                                "revision": {
+                                  "type": "number"
+                                },
+                                "status": {
+                                  "enum": [
+                                    "CANCELLED",
+                                    "OPEN",
+                                    "CLOSING",
+                                    "CLOSED",
+                                    "PLANNED"
+                                  ],
+                                  "type": "string"
+                                },
+                                "tenantId": {
+                                  "type": "string"
+                                },
+                                "type": {
+                                  "enum": [
+                                    "OTHER",
+                                    "BREAKFAST",
+                                    "LUNCH",
+                                    "DINNER"
+                                  ],
+                                  "type": "string"
+                                },
+                                "updatedAt": {
+                                  "format": "date-time",
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "branchId",
+                                "businessDate",
+                                "createdAt",
+                                "id",
+                                "name",
+                                "revision",
+                                "status",
+                                "tenantId",
+                                "type",
+                                "updatedAt"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "plazas",
+                            "servicePeriod"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "Successful response"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "RFC 9457 problem response"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "branches"
+        ],
+        "x-maitre-owner": "branches",
+        "x-maitre-spec": "SPEC-215"
+      }
+    },
     "/v1/branches/{branchId}/availability": {
       "get": {
         "operationId": "getBranchesByBranchIdAvailability",
@@ -43502,6 +43818,13 @@
                           "id": {
                             "type": "string"
                           },
+                          "mode": {
+                            "enum": [
+                              "FIXED",
+                              "VARIABLE"
+                            ],
+                            "type": "string"
+                          },
                           "name": {
                             "type": "string"
                           },
@@ -43510,6 +43833,16 @@
                           },
                           "servicePeriodId": {
                             "type": "string"
+                          },
+                          "sourcePlazaId": {
+                            "anyOf": [
+                              {
+                                "type": "null"
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ]
                           },
                           "tableIds": {
                             "items": {
@@ -43539,6 +43872,7 @@
                           "branchId",
                           "createdAt",
                           "id",
+                          "mode",
                           "name",
                           "salonId",
                           "servicePeriodId",
@@ -43625,6 +43959,13 @@
               "schema": {
                 "additionalProperties": false,
                 "properties": {
+                  "mode": {
+                    "enum": [
+                      "FIXED",
+                      "VARIABLE"
+                    ],
+                    "type": "string"
+                  },
                   "name": {
                     "type": "string"
                   },
@@ -43652,6 +43993,7 @@
                   }
                 },
                 "required": [
+                  "mode",
                   "name",
                   "salonId",
                   "servicePeriodId",
@@ -43683,6 +44025,13 @@
                         "id": {
                           "type": "string"
                         },
+                        "mode": {
+                          "enum": [
+                            "FIXED",
+                            "VARIABLE"
+                          ],
+                          "type": "string"
+                        },
                         "name": {
                           "type": "string"
                         },
@@ -43691,6 +44040,16 @@
                         },
                         "servicePeriodId": {
                           "type": "string"
+                        },
+                        "sourcePlazaId": {
+                          "anyOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "string"
+                            }
+                          ]
                         },
                         "tableIds": {
                           "items": {
@@ -43720,6 +44079,7 @@
                         "branchId",
                         "createdAt",
                         "id",
+                        "mode",
                         "name",
                         "salonId",
                         "servicePeriodId",
@@ -43828,6 +44188,13 @@
                         "id": {
                           "type": "string"
                         },
+                        "mode": {
+                          "enum": [
+                            "FIXED",
+                            "VARIABLE"
+                          ],
+                          "type": "string"
+                        },
                         "name": {
                           "type": "string"
                         },
@@ -43836,6 +44203,16 @@
                         },
                         "servicePeriodId": {
                           "type": "string"
+                        },
+                        "sourcePlazaId": {
+                          "anyOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "string"
+                            }
+                          ]
                         },
                         "tableIds": {
                           "items": {
@@ -43865,6 +44242,7 @@
                         "branchId",
                         "createdAt",
                         "id",
+                        "mode",
                         "name",
                         "salonId",
                         "servicePeriodId",
@@ -43957,6 +44335,13 @@
               "schema": {
                 "additionalProperties": false,
                 "properties": {
+                  "mode": {
+                    "enum": [
+                      "FIXED",
+                      "VARIABLE"
+                    ],
+                    "type": "string"
+                  },
                   "name": {
                     "type": "string"
                   },
@@ -44003,6 +44388,13 @@
                         "id": {
                           "type": "string"
                         },
+                        "mode": {
+                          "enum": [
+                            "FIXED",
+                            "VARIABLE"
+                          ],
+                          "type": "string"
+                        },
                         "name": {
                           "type": "string"
                         },
@@ -44011,6 +44403,16 @@
                         },
                         "servicePeriodId": {
                           "type": "string"
+                        },
+                        "sourcePlazaId": {
+                          "anyOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "string"
+                            }
+                          ]
                         },
                         "tableIds": {
                           "items": {
@@ -44040,6 +44442,7 @@
                         "branchId",
                         "createdAt",
                         "id",
+                        "mode",
                         "name",
                         "salonId",
                         "servicePeriodId",

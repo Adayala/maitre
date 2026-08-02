@@ -54,7 +54,9 @@ Los perfiles nominales sólo son plantillas versionadas para assignments:
 - COOK: no recibe permisos de esta lista por defecto; su lectura operativa pertenece al
   contrato Kitchen mínimo correspondiente.
 
-Los alcances combinan tenant, conjunto de Branches y, para WAITER, assignment de Visit/Table. Un
+Los alcances combinan tenant, conjunto de Branches y, para WAITER, assignments de
+Visit/Table expresamente autorizantes. La asignación organizativa de una Plaza no
+es uno de esos assignments y nunca amplía ni reduce permisos. Un
 alcance más amplio nunca se infiere del role label. `authorizationRevision` obsoleta,
 Membership suspendida, permiso desconocido o política/assignment no disponible producen
 deny.

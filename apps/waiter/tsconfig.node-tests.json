@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "dist",
+    "types": ["node"]
+  },
+  "include": [
+    "src/features/floor/floor-organization.ts",
+    "src/lib/waiter-types.ts",
+    "test/floor-organization.test.ts"
+  ]
+}

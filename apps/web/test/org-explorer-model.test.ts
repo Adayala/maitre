@@ -10,6 +10,7 @@ import {
   organizationNodeHref,
   organizationNodeKey,
   organizationPanelTitle,
+  plazaModeLabel,
   plazasForServicePeriod,
   servicePeriodStatusLabel,
   servicePeriodTypeLabel,
@@ -65,6 +66,7 @@ const plazas: OrganizationPlaza[] = [
     salonId: "salon-a",
     servicePeriodId: "period-a",
     name: "Terraza",
+    mode: "FIXED",
     waiterEmploymentId: "employment-a",
     tableIds: ["table-a"],
   },
@@ -74,9 +76,15 @@ const plazas: OrganizationPlaza[] = [
     salonId: "salon-a",
     servicePeriodId: "period-b",
     name: "Interior",
+    mode: "VARIABLE",
     tableIds: ["table-b"],
   },
 ];
+
+test("labels fixed and variable plaza organization modes", () => {
+  assert.equal(plazaModeLabel("FIXED"), "Fija");
+  assert.equal(plazaModeLabel("VARIABLE"), "Variable");
+});
 
 test("branchesForBrand keeps only branches joined to the requested brand", () => {
   assert.deepEqual(branchesForBrand(branches, "brand-a"), [branches[0]]);

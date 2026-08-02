@@ -143,6 +143,7 @@ test("creates and updates a period plaza with waiter and physical tables", async
     salonId: SALON,
     servicePeriodId: PERIOD,
     name: "Terraza",
+    mode: "VARIABLE",
     waiterEmploymentId: "employment-a",
     tableIds: ["table-a", "table-b"],
     createdAt: NOW,
@@ -154,6 +155,7 @@ test("creates and updates a period plaza with waiter and physical tables", async
     waiterEmploymentId: null,
   });
   assert.equal(updated.name, "Patio");
+  assert.equal(updated.mode, "VARIABLE");
   assert.equal(updated.waiterEmploymentId, null);
   assert.deepEqual(await dependencies.plazas.listBySalon(TENANT, SALON), [
     updated,
@@ -163,6 +165,24 @@ test("creates and updates a period plaza with waiter and physical tables", async
     [updated],
   );
   assert.equal(await dependencies.plazas.findById("other", updated.id), null);
+});
+
+test("fixed plazas keep their source snapshot and can change future carry-forward mode", async () => {
+  const dependencies = await deps();
+  const created = await createPlaza(dependencies, {
+    ...input,
+    mode: "FIXED",
+    sourcePlazaId: "source-a",
+  });
+  assert.equal(created.mode, "FIXED");
+  assert.equal(created.sourcePlazaId, "source-a");
+  const updated = await updatePlaza(dependencies, created, {
+    name: created.name,
+    tableIds: created.tableIds,
+    mode: "VARIABLE",
+  });
+  assert.equal(updated.mode, "VARIABLE");
+  assert.equal(updated.sourcePlazaId, "source-a");
 });
 
 test("create supports generated identity, clock and an omitted waiter", async () => {

@@ -100,6 +100,93 @@ test("exige elegir el tenant antes de habilitar la edición, incluso si hay uno"
   await expectNoSeriousAccessibilityViolations(page);
 });
 
+test("contrae el panel global, conserva todos los destinos y persiste la preferencia", async ({
+  page,
+}) => {
+  await installSession(page, tenantA.id);
+  await mockOrganizationApi(page, { tenants: [tenantA] });
+  await page.goto("/organizacion");
+
+  const shell = page.locator(".dash-shell");
+  const navigation = page.getByRole("navigation", {
+    name: "Navegación principal",
+  });
+  const collapse = navigation.getByRole("button", {
+    name: "Contraer panel",
+  });
+  await expect(collapse).toHaveAttribute("aria-expanded", "true");
+  await expect
+    .poll(() =>
+      navigation.evaluate((element) => element.getBoundingClientRect().width),
+    )
+    .toBeGreaterThan(250);
+
+  const typography = await page
+    .getByRole("heading", { name: "Organización", exact: true })
+    .evaluate((heading) => {
+      const headingStyle = getComputedStyle(heading);
+      const navigationLabel = document.querySelector(".dash-nav__item-label");
+      const navigationStyle = navigationLabel
+        ? getComputedStyle(navigationLabel)
+        : null;
+      return {
+        headingSize: Number.parseFloat(headingStyle.fontSize),
+        headingWeight: Number.parseInt(headingStyle.fontWeight, 10),
+        navigationSize: navigationStyle
+          ? Number.parseFloat(navigationStyle.fontSize)
+          : 0,
+      };
+    });
+  expect(typography.headingSize).toBeGreaterThan(typography.navigationSize * 2);
+  expect(typography.headingSize).toBeLessThanOrEqual(52);
+  expect(typography.headingWeight).toBeGreaterThanOrEqual(700);
+
+  await collapse.click();
+  await expect(shell).toHaveClass(/dash-shell--nav-collapsed/);
+  const expand = navigation.getByRole("button", { name: "Expandir panel" });
+  await expect(expand).toHaveAttribute("aria-expanded", "false");
+  await expect
+    .poll(() =>
+      navigation.evaluate((element) => element.getBoundingClientRect().width),
+    )
+    .toBeLessThanOrEqual(90);
+  await expect(
+    navigation.getByRole("link", { name: "Organización" }),
+  ).toBeVisible();
+  await expect(
+    navigation.getByRole("link", { name: "Overview" }),
+  ).toBeVisible();
+  await expect(
+    navigation.getByRole("link", { name: "Configuración" }),
+  ).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        localStorage.getItem("maitre.dashboardSidebar.preference"),
+      ),
+    )
+    .toBe("collapsed");
+
+  await page.reload();
+  await expect(
+    page
+      .getByRole("navigation", { name: "Navegación principal" })
+      .getByRole("button", { name: "Expandir panel" }),
+  ).toBeVisible();
+  await page
+    .getByRole("navigation", { name: "Navegación principal" })
+    .getByRole("button", { name: "Expandir panel" })
+    .click();
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        localStorage.getItem("maitre.dashboardSidebar.preference"),
+      ),
+    )
+    .toBe("expanded");
+  await expectNoSeriousAccessibilityViolations(page);
+});
+
 test("obliga a elegir entre múltiples tenants y persiste la selección explícita", async ({
   page,
 }) => {
@@ -428,6 +515,8 @@ test("separa Salón → Mesas de Jornada → Plaza y aplica la marca elegida", a
   ).toBeVisible();
   await expect(page.getByLabel("Salón físico")).toHaveValue(salon.id);
   await page.getByLabel("Nombre de la plaza").fill("Terraza norte");
+  await expect(page.getByLabel("Variable")).toBeChecked();
+  await page.getByLabel("Fija").check();
   await page.getByLabel("Mozo o responsable").selectOption(employment.id);
   await page.getByLabel(/Ventana/).check();
   await page.getByLabel(/Patio/).check();
@@ -440,6 +529,9 @@ test("separa Salón → Mesas de Jornada → Plaza y aplica la marca elegida", a
     page.getByRole("heading", { name: "Detalle de plaza" }),
   ).toBeVisible();
   expect(calls.createdPlazas).toBe(1);
+  await expect(
+    page.getByText(/Fija · Salón principal · 2 mesas/),
+  ).toBeVisible();
   await expectNoSeriousAccessibilityViolations(page);
 });
 
@@ -724,6 +816,7 @@ async function mockOrganizationApi(
     salonId: string;
     servicePeriodId: string;
     name: string;
+    mode: "FIXED" | "VARIABLE";
     waiterEmploymentId: string | null;
     tableIds: string[];
   }> = [];

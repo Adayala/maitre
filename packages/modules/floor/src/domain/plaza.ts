@@ -1,5 +1,7 @@
 // A Plaza is an operational grouping of tables for one service period.
 // It is not a physical table and it does not own an independent cover count.
+export type PlazaMode = "FIXED" | "VARIABLE";
+
 export interface Plaza {
   id: string;
   tenantId: string;
@@ -7,6 +9,8 @@ export interface Plaza {
   salonId: string;
   servicePeriodId: string;
   name: string;
+  mode: PlazaMode;
+  sourcePlazaId?: string | null;
   waiterEmploymentId?: string | null;
   tableIds: string[];
   createdAt: Date;

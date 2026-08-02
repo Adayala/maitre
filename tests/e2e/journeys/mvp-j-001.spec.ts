@@ -86,6 +86,31 @@ interface TableStatus {
     "BLOCKED" | "OCCUPIED" | "PAYING" | "CLEANING" | "RESERVED" | "AVAILABLE";
 }
 
+interface ServicePeriod {
+  id: string;
+  name: string;
+  status: "PLANNED" | "OPEN" | "CLOSING" | "CLOSED" | "CANCELLED";
+}
+
+interface Salon {
+  id: string;
+}
+
+interface FloorTableRecord {
+  id: string;
+}
+
+interface Employment {
+  id: string;
+}
+
+interface Plaza {
+  id: string;
+  name: string;
+  mode: "FIXED" | "VARIABLE";
+  isMine?: boolean;
+}
+
 interface AuditLog {
   actionCode?: string;
   outcome?: string;
@@ -96,6 +121,7 @@ interface AuditLog {
 test("@release-journey MVP-J-001 completes table to close through the real product", async ({
   api,
   apps,
+  manifest,
 }, testInfo) => {
   test.setTimeout(120_000);
 
@@ -108,6 +134,7 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
   let payment!: Payment;
   let tableId!: string;
   let operationsBaseline!: Record<DashOperationLabel, number>;
+  let organizationPeriod!: ServicePeriod;
 
   await test.step("Admin completes setup through Dash without provider tools", async () => {
     await apps.dash.goto(new URL("/overview", apps.dash.url()).toString());
@@ -174,6 +201,86 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
       apps.dash.getByText(invitedName, { exact: true }),
     ).toBeVisible();
 
+    const salons = await api.get<ApiData<Salon[]>>(
+      "auditor",
+      `/v1/salons?branchId=${BRANCH_ID}`,
+    );
+    assertEvidence(salons);
+    const salon = salons.body.data[0]!;
+    const tables = await api.get<ApiData<FloorTableRecord[]>>(
+      "auditor",
+      `/v1/tables?salonId=${salon.id}`,
+    );
+    assertEvidence(tables);
+    expect(tables.body.data.length).toBeGreaterThanOrEqual(2);
+    const periods = await api.get<ApiData<ServicePeriod[]>>(
+      "auditor",
+      `/v1/branches/${BRANCH_ID}/service-periods`,
+    );
+    assertEvidence(periods);
+    let activePeriod = periods.body.data.find(
+      (period) => period.status === "OPEN" || period.status === "CLOSING",
+    );
+    if (!activePeriod) {
+      const createdPeriod = await api.mutate<ApiData<ServicePeriod>>(
+        "auditor",
+        "POST",
+        `/v1/branches/${BRANCH_ID}/service-periods`,
+        {
+          businessDate: manifest.businessClock.slice(0, 10),
+          name: "Servicio E2E",
+          type: "DINNER",
+        },
+      );
+      assertEvidence(createdPeriod);
+      expect(createdPeriod.status).toBe(201);
+      const openedPeriod = await api.mutate<ApiData<ServicePeriod>>(
+        "auditor",
+        "POST",
+        `/v1/service-periods/${createdPeriod.body.data.id}/open`,
+        {},
+      );
+      assertEvidence(openedPeriod);
+      activePeriod = openedPeriod.body.data;
+    }
+    const waiterEmployment = await api.mutate<ApiData<Employment>>(
+      "auditor",
+      "POST",
+      "/v1/employments",
+      {
+        personRef: `e2e-${manifest.runId}-waiter`,
+        employeeCode: `PLZ-${manifest.runId.slice(-8)}`,
+        relationshipType: "EMPLOYEE",
+        eligibleBranchIds: [BRANCH_ID],
+        status: "ACTIVE",
+        validFrom: manifest.businessClock,
+      },
+    );
+    assertEvidence(waiterEmployment);
+    expect(waiterEmployment.status).toBe(201);
+    const plazaNames = ["Plaza norte", "Plaza apoyo"] as const;
+    const modes = ["FIXED", "VARIABLE"] as const;
+    const plazas: Plaza[] = [];
+    for (const [index, name] of plazaNames.entries()) {
+      const createdPlaza = await api.mutate<ApiData<Plaza>>(
+        "auditor",
+        "POST",
+        "/v1/plazas",
+        {
+          salonId: salon.id,
+          servicePeriodId: activePeriod.id,
+          name,
+          mode: modes[index],
+          waiterEmploymentId: waiterEmployment.body.data.id,
+          tableIds: [tables.body.data[index]!.id],
+        },
+      );
+      assertEvidence(createdPlaza);
+      expect(createdPlaza.status).toBe(201);
+      plazas.push(createdPlaza.body.data);
+    }
+    organizationPeriod = activePeriod;
+
     await apps.dash.goto(new URL("/setup", apps.dash.url()).toString());
     await expect(
       apps.dash.getByRole("heading", {
@@ -190,6 +297,8 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
       brandStatus: brandResponse.status(),
       invitationStatus: inviteResponse.status(),
       employmentStatus: employmentResponse.status(),
+      activePeriod,
+      plazas,
       operationsBaseline,
     };
   });
@@ -204,6 +313,23 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
     expect(readiness.body.status).toBe("ready");
     await expect(
       apps.floor.getByRole("heading", { name: "Salón", exact: true }),
+    ).toBeVisible();
+    await apps.floor.reload();
+    await expect(
+      apps.floor.getByRole("heading", { name: "Mi plaza · Plaza norte" }),
+    ).toBeVisible();
+    await expect(
+      apps.floor.getByRole("heading", { name: "Mi plaza · Plaza apoyo" }),
+    ).toBeVisible();
+    await apps.host.reload();
+    await expect(
+      apps.host.getByRole("heading", { name: organizationPeriod.name }),
+    ).toBeVisible();
+    await expect(
+      apps.host.getByText("Plaza norte", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      apps.host.getByText("Plaza apoyo", { exact: true }),
     ).toBeVisible();
     await expect(
       apps.kitchen.getByRole("heading", { name: "Cocina Principal" }),

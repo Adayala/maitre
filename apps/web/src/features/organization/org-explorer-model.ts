@@ -53,8 +53,14 @@ export interface OrganizationPlaza {
   salonId: string;
   servicePeriodId: string;
   name: string;
+  mode: "FIXED" | "VARIABLE";
+  sourcePlazaId?: string | null;
   waiterEmploymentId?: string | null;
   tableIds: string[];
+}
+
+export function plazaModeLabel(mode: OrganizationPlaza["mode"]) {
+  return mode === "FIXED" ? "Fija" : "Variable";
 }
 
 export interface OrganizationServicePeriod {

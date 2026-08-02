@@ -10,6 +10,7 @@ const plaza: Plaza = {
   salonId: "salon-a",
   servicePeriodId: "period-a",
   name: "Terraza",
+  mode: "FIXED",
   waiterEmploymentId: null,
   tableIds: ["table-a"],
   createdAt: new Date("2026-08-01T12:00:00Z"),

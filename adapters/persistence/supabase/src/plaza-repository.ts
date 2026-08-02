@@ -8,6 +8,8 @@ interface PlazaRow {
   salon_id: string;
   service_period_id: string;
   name: string;
+  mode: Plaza["mode"];
+  source_plaza_id: string | null;
   waiter_employment_id: string | null;
   created_at: string;
   updated_at: string;
@@ -63,6 +65,8 @@ export class SupabasePlazaRepository implements PlazaRepositoryPort {
       salon_id: plaza.salonId,
       service_period_id: plaza.servicePeriodId,
       name: plaza.name,
+      mode: plaza.mode,
+      source_plaza_id: plaza.sourcePlazaId ?? null,
       waiter_employment_id: plaza.waiterEmploymentId ?? null,
       created_at: plaza.createdAt.toISOString(),
       updated_at: plaza.updatedAt.toISOString(),
@@ -119,6 +123,8 @@ export class SupabasePlazaRepository implements PlazaRepositoryPort {
       salonId: row.salon_id,
       servicePeriodId: row.service_period_id,
       name: row.name,
+      mode: row.mode,
+      sourcePlazaId: row.source_plaza_id,
       waiterEmploymentId: row.waiter_employment_id,
       tableIds: links
         .filter((link) => link.plaza_id === row.id)

@@ -3,7 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useApi } from "../../app/use-api.js";
 import { ApiError } from "../../lib/api-client.js";
 import type { ApiData, Visit } from "../../lib/waiter-types.js";
-import type { FloorTable } from "./floor-page.js";
+import type { FloorTable } from "./floor-organization.js";
 
 // Bottom sheet to seat a new party on an AVAILABLE table. Guest count stepper
 // plus optional combining of extra free tables for a larger group. The confirm
@@ -41,16 +41,23 @@ export function SeatSheet({
   });
 
   function toggleExtra(id: string) {
-    setExtraTableIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
+    setExtraTableIds((ids) =>
+      ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id],
+    );
   }
 
   const tableCount = 1 + extraTableIds.length;
   const seatChecklist = [
     { label: "Mesa principal definida", done: Boolean(primaryTable.id) },
     { label: "Cantidad de comensales cargada", done: guestCount > 0 },
-    { label: "Capacidad extendida revisada", done: extraTableIds.length === 0 || tableCount > 1 },
+    {
+      label: "Capacidad extendida revisada",
+      done: extraTableIds.length === 0 || tableCount > 1,
+    },
   ];
-  const seatPending = seatChecklist.filter((step) => !step.done).map((step) => step.label);
+  const seatPending = seatChecklist
+    .filter((step) => !step.done)
+    .map((step) => step.label);
   const errorMsg =
     mutation.error instanceof ApiError
       ? mutation.error.problem.title
@@ -59,23 +66,34 @@ export function SeatSheet({
         : null;
 
   return (
-    <div className="sheet-root" role="dialog" aria-modal="true" aria-label="Sentar comensales">
+    <div
+      className="sheet-root"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Sentar comensales"
+    >
       <div className="sheet-backdrop" onClick={onClose} />
       <div className="sheet">
         <div className="sheet-grip" aria-hidden="true" />
         <h2 className="sheet-title">
           Sentar en mesa {primaryTable.number}
-          {tableCount > 1 && <span className="sheet-title-badge">{tableCount} mesas</span>}
+          {tableCount > 1 && (
+            <span className="sheet-title-badge">{tableCount} mesas</span>
+          )}
         </h2>
         <p className="sheet-sub">
-          Revisá comensales y combinación de mesas antes de abrir la visita en el salón.
+          Revisá comensales y combinación de mesas antes de abrir la visita en
+          el salón.
         </p>
 
         <div className="sheet-guidance">
           <strong>Chequeo rápido antes de sentar</strong>
           <div className="sheet-checklist">
             {seatChecklist.map((step) => (
-              <div key={step.label} className={`sheet-check ${step.done ? "sheet-check--done" : ""}`}>
+              <div
+                key={step.label}
+                className={`sheet-check ${step.done ? "sheet-check--done" : ""}`}
+              >
                 <strong>{step.done ? "✓" : "•"}</strong>
                 <span>{step.label}</span>
               </div>
@@ -130,7 +148,8 @@ export function SeatSheet({
               ))}
             </div>
             <p className="sheet-hint">
-              Sumá mesas sólo si el grupo realmente necesita más capacidad o mejor distribución.
+              Sumá mesas sólo si el grupo realmente necesita más capacidad o
+              mejor distribución.
             </p>
           </div>
         )}
@@ -142,7 +161,11 @@ export function SeatSheet({
         )}
 
         <div className="sheet-actions">
-          <button type="button" className="btn btn--ghost btn--lg" onClick={onClose}>
+          <button
+            type="button"
+            className="btn btn--ghost btn--lg"
+            onClick={onClose}
+          >
             Cancelar
           </button>
           <button

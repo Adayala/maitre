@@ -59,8 +59,16 @@
 
 body {
   background:
-    radial-gradient(circle at 12% 8%, rgba(255, 119, 95, 0.2), transparent 28rem),
-    radial-gradient(circle at 92% 36%, rgba(126, 87, 194, 0.3), transparent 32rem),
+    radial-gradient(
+      circle at 12% 8%,
+      rgba(255, 119, 95, 0.2),
+      transparent 28rem
+    ),
+    radial-gradient(
+      circle at 92% 36%,
+      rgba(126, 87, 194, 0.3),
+      transparent 32rem
+    ),
     linear-gradient(145deg, #171225, #0f0c18 70%);
 }
 
@@ -72,7 +80,9 @@ body::before {
   aspect-ratio: 1;
   border: 1px solid rgba(255, 119, 95, 0.18);
   border-radius: 50%;
-  box-shadow: 0 0 0 4rem rgba(255, 119, 95, 0.035), 0 0 0 9rem rgba(255, 119, 95, 0.025);
+  box-shadow:
+    0 0 0 4rem rgba(255, 119, 95, 0.035),
+    0 0 0 9rem rgba(255, 119, 95, 0.025);
   pointer-events: none;
 }
 
@@ -113,7 +123,11 @@ body::before {
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: var(--radius);
   background:
-    radial-gradient(circle at 100% 0, rgba(255, 119, 95, 0.1), transparent 12rem),
+    radial-gradient(
+      circle at 100% 0,
+      rgba(255, 119, 95, 0.1),
+      transparent 12rem
+    ),
     rgba(34, 27, 52, 0.88);
   box-shadow: var(--shadow);
 }
@@ -138,7 +152,9 @@ body::before {
 
 .host-reservation-card {
   border-left: 5px solid var(--primary);
-  transition: transform 220ms ease, box-shadow 220ms ease;
+  transition:
+    transform 220ms ease,
+    box-shadow 220ms ease;
 }
 
 .host-reservation-card:hover,
@@ -181,12 +197,18 @@ body::before {
   .host-reservation-card,
   .host-table-card,
   .cashier-card {
-    animation: arrival-orbit-in 440ms cubic-bezier(.2,.8,.2,1) both;
+    animation: arrival-orbit-in 440ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
   }
 
   @keyframes arrival-orbit-in {
-    from { opacity: 0; transform: translateY(18px) scale(.985); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
+    from {
+      opacity: 0;
+      transform: translateY(18px) scale(0.985);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
   }
 }
 
@@ -250,7 +272,11 @@ body {
 }
 
 .cashier-card--hero {
-  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 24%, var(--surface)), var(--surface));
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--primary) 24%, var(--surface)),
+    var(--surface)
+  );
 }
 
 .cashier-hero-row {
@@ -836,6 +862,82 @@ body {
   border-color: color-mix(in srgb, var(--danger) 45%, transparent);
 }
 
+.host-plaza-board {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1.1rem;
+  border: 1px solid color-mix(in srgb, var(--primary) 28%, var(--border));
+  border-radius: var(--radius);
+  background:
+    radial-gradient(
+      circle at 92% 0%,
+      color-mix(in srgb, var(--primary) 14%, transparent),
+      transparent 38%
+    ),
+    var(--surface);
+  box-shadow: inset 4px 0 0 var(--primary);
+}
+
+.host-plaza-board__heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: end;
+}
+
+.host-plaza-board__heading > div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.host-plaza-board__heading span,
+.host-plaza-card > span {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+}
+
+.host-plaza-board__heading h2,
+.host-plaza-card p,
+.host-plaza-board p {
+  margin: 0;
+}
+
+.host-plaza-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.65rem;
+}
+
+.host-plaza-card {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--surface) 92%, var(--surface-2));
+}
+
+.host-plaza-card strong {
+  font-size: 1rem;
+}
+
+.host-plaza-card small,
+.host-plaza-board__note,
+.host-plaza-board__empty {
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.host-plaza-board__empty {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .host-launchpad {
   display: grid;
   gap: 1rem;
@@ -1168,6 +1270,12 @@ body {
 }
 
 @media (max-width: 640px) {
+  .host-plaza-board__heading,
+  .host-plaza-board__empty {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .host-hero-metrics {
     grid-template-columns: 1fr;
     width: 100%;
@@ -1337,7 +1445,10 @@ p {
   font-weight: 700;
   padding: 0.7rem 1.1rem;
   min-height: 48px;
-  transition: transform 0.05s ease, filter 0.15s ease, background 0.15s ease;
+  transition:
+    transform 0.05s ease,
+    filter 0.15s ease,
+    background 0.15s ease;
 }
 .btn:active {
   transform: translateY(1px) scale(0.99);
@@ -1400,7 +1511,11 @@ p {
   display: grid;
   place-items: center;
   padding: 1.25rem;
-  background: radial-gradient(1000px 500px at 50% -10%, var(--surface-2), var(--bg));
+  background: radial-gradient(
+    1000px 500px at 50% -10%,
+    var(--surface-2),
+    var(--bg)
+  );
 }
 .login-card,
 .setup-card {
