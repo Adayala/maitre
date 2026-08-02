@@ -261,7 +261,7 @@ jobs:
         shell: bash
         run: |
           if ! npm run test:e2e:journey:run; then
-            echo "PRODUCT_FAILURE: MVP-J-001 failed" > "$E2E_EVIDENCE_DIR/classification.txt"
+            echo "PRODUCT_FAILURE: authoritative release journey failed" > "$E2E_EVIDENCE_DIR/classification.txt"
             exit 1
           fi
           mkdir -p "$E2E_EVIDENCE_DIR/initial-process"
@@ -277,7 +277,7 @@ jobs:
           fi
           mkdir -p "$E2E_EVIDENCE_DIR/restarted-process"
           cp -R .artifacts/playwright/results .artifacts/playwright/report "$E2E_EVIDENCE_DIR/restarted-process/"
-          echo "PASS: MVP-J-001 completed and survived an API restart" > "$E2E_EVIDENCE_DIR/classification.txt"
+          echo "PASS: authoritative release journey completed and survived an API restart" > "$E2E_EVIDENCE_DIR/classification.txt"
 
       - name: Destroy ephemeral database and verify cleanup
         if: ${{ always() }}
