@@ -1705,7 +1705,7 @@ h3 {
   letter-spacing: 0.03em;
   padding: 0.2rem 0.55rem;
   border-radius: 999px;
-  background: var(--danger);
+  background: #cc3d3d;
   color: #fff;
 }
 
