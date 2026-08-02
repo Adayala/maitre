@@ -213,7 +213,39 @@ graph TB
 
     ADAPTERS --> AD_PERSIST["persistence/*"]
     ADAPTERS --> AD_AUTH["identity/*"]
+
+    PACKAGES --> ARCA_CLIENT["arca-client"]
+    PACKAGES --> TELEMETRY_PKG["telemetry"]
+    PACKAGES --> BRAND_PKG["brand-presentation"]
 ```
+
+`arca-client` implementa el cliente WSAA/WSFEv1 real usado por el adapter fiscal
+(`packages/modules/fiscal/src/adapters/wsfev1-arca-adapter.ts`), separado del
+adapter simulado (`simulated-arca-adapter.ts`) que sigue disponible para tests y
+demos. `telemetry` (`packages/telemetry`) envuelve OpenTelemetry (trazas y
+métricas) para `apps/api`. Ninguno de los dos tenía representación previa en
+este documento.
+
+## Vista 3 bis — Contrato API y observabilidad
+
+```mermaid
+graph LR
+    ROUTES["apps/api/src/routes/*"] --> SWAGGER["fastify-swagger (app.swagger())"]
+    SWAGGER --> GEN["openapi-generator.ts"]
+    GEN --> SPEC["apps/api/openapi/openapi.json"]
+    SPEC -.contrato consumido por.-> CLIENTS["apps cliente / CI de contratos"]
+
+    ROUTES --> TEL["packages/telemetry"]
+    TEL --> OTEL["OpenTelemetry SDK (traces + metrics)"]
+```
+
+`apps/api/src/openapi-generator.ts` construye el documento OpenAPI a partir de
+la app Fastify en runtime (`app.swagger()`) y le aplica los contratos de payload
+por operación (`openapi-operation-contracts.ts`) antes de escribir
+`apps/api/openapi/openapi.json`. Esto no estaba documentado en foundations
+previamente; es la fuente formal de verdad de rutas HTTP expuestas, más
+autoritativa en el día a día que 16-api-specifications.md para el detalle
+exacto de schemas.
 
 ## Vista 4 — Flujo sincrónico principal
 
@@ -235,6 +267,36 @@ sequenceDiagram
     Module-->>Api: resultado de negocio
     Api-->>App: response DTO / problem details
 ```
+
+## Vista 4 bis — Autenticación y contexto de sesión (las 7 superficies contra `apps/api`)
+
+```mermaid
+sequenceDiagram
+    participant Browser as App (web, customer, waiter, host, kitchen, cashier)
+    participant Supa as Supabase Auth
+    participant Api as apps/api
+    participant Ctx as request-context.ts
+    participant IdM as identity / membership repo
+
+    Browser->>Supa: login (email/password u OAuth)
+    Supa-->>Browser: JWT de sesión
+    Browser->>Api: GET /v1/me/context (Authorization: Bearer JWT)
+    Api->>Ctx: valida JWT, resuelve usuario
+    Ctx->>IdM: busca memberships (tenant, sucursal, rol)
+    IdM-->>Ctx: memberships + entitlements efectivos
+    Ctx-->>Api: contexto de sesión
+    Api-->>Browser: 200 {user, memberships, entitlements} / 401 sin bearer
+    Browser->>Api: siguientes requests a /v1/{dominio}/* con el mismo JWT
+```
+
+Las 6 apps cliente (`web`, `customer`, `waiter`, `host`, `kitchen`, `cashier`)
+comparten el mismo backend único `apps/api`; no existe API por app. Cada una
+resuelve su sesión contra Supabase Auth y luego llama `GET /v1/me/context`
+(`apps/api/src/routes/me.ts`, resuelto vía `apps/api/src/http/request-context.ts`)
+para obtener memberships y entitlements antes de operar contra las rutas de
+dominio (`/v1/organization/*`, `/v1/floor/*`, `/v1/ordering/*`, etc.). Esta
+vista no existía antes en foundations; responde directamente a "cómo interactúa
+el modelo de API con las apps cliente".
 
 ## Vista 5 — Flujo asíncrono y coordinación entre dominios
 

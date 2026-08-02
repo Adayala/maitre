@@ -30,6 +30,17 @@ Dejar explícito qué partes de Maitre ya corren sobre Supabase en el runtime op
 - La razón social usada en desarrollo es temporal y no puede promoverse a producción.
 - El adapter simulado rechaza cualquier comprobante marcado `PRODUCTION`.
 
+## Observabilidad y contrato API
+
+- `packages/telemetry` envuelve el SDK de OpenTelemetry (trazas y métricas) y se
+  usa desde `apps/api`; no hay todavía dashboards ni alertas operativas
+  documentadas, sólo la instrumentación de base.
+- `apps/api/src/openapi-generator.ts` genera `apps/api/openapi/openapi.json`
+  desde la app Fastify en runtime (`app.swagger()` + contratos de payload por
+  operación). Es la fuente autoritativa de rutas HTTP realmente expuestas; no
+  hay todavía un job de CI que falle si el spec commiteado queda desactualizado
+  respecto del código.
+
 ## Qué ya no es un gap
 
 - La existencia de `adapters/persistence/memory` no implica que el runtime principal siga en memoria.
