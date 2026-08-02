@@ -6,6 +6,7 @@ import { test } from "./fixtures.js";
 
 const BRANCH_ID = "00000000-0000-0000-0000-000000000003";
 const DEMO_CATEGORY_ID = "00000000-0000-0000-0000-00000000000a";
+const APP_TIME_ZONE = "America/Argentina/Buenos_Aires";
 
 interface ApiData<T> {
   data: T;
@@ -665,6 +666,20 @@ async function attachEvidence(
 
 function futureDateTimeLocal(minutes: number) {
   const date = new Date(Date.now() + minutes * 60_000);
-  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
-  return local.toISOString().slice(0, 16);
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: APP_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  })
+    .formatToParts(date)
+    .reduce<Record<string, string>>((result, part) => {
+      if (part.type !== "literal") result[part.type] = part.value;
+      return result;
+    }, {});
+
+  return `${parts["year"]}-${parts["month"]}-${parts["day"]}T${parts["hour"]}:${parts["minute"]}`;
 }
