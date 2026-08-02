@@ -1,7 +1,20 @@
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, normalize } from "node:path";
+import { collectFiles } from "../shared/collect-files.mjs";
 
-const files = collectFiles(".", (file) => file.endsWith(".md"));
+const ignoredDirectories = new Set([
+  ".artifacts",
+  ".git",
+  ".secrets",
+  ".superpowers",
+  "dist",
+  "node_modules",
+  "worktrees",
+]);
+const files = collectFiles(".", {
+  ignoredDirectories,
+  select: (file) => file.endsWith(".md"),
+});
 const failures = [];
 const baseline = new Set([
   "docs/sdd/spec-003-entity-fiscal-entity/README.md|../spec-127-entity-fiscal-point/README.md",
@@ -32,16 +45,3 @@ if (failures.length) {
   process.exit(1);
 }
 console.log(`Validated ${files.length} Markdown files.`);
-
-function collectFiles(directory, select) {
-  const ignored = new Set([".git", "node_modules", "dist", "coverage"]);
-  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
-    if (ignored.has(entry.name)) return [];
-    const path = join(directory, entry.name);
-    return entry.isDirectory()
-      ? collectFiles(path, select)
-      : select(path)
-        ? [path]
-        : [];
-  });
-}

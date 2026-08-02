@@ -54,7 +54,7 @@ Los límites iniciales están en `tooling/performance/budgets.json` y se miden s
 
 El coverage nativo de Node bloquea regresiones contra el baseline versionado en
 `tooling/quality/coverage-thresholds.json`: 78 % de líneas, 82 % de branches y 81 % de funciones.
-El reporte completo queda en `coverage/node-test-coverage.txt` y se publica como artifact de CI. Los
+El reporte completo queda en `.artifacts/coverage/node-test-coverage.txt` y se publica como artifact de CI. Los
 umbrales globales son un piso histórico y no reemplazan la exigencia de 100 % sobre código nuevo o
 modificado. Subirlos requiere evidencia; bajarlos está prohibido salvo decisión explícita y
 justificada. Las journeys autenticadas y transversales deben agregarse bajo la aplicación dueña y

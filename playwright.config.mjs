@@ -4,6 +4,8 @@ const host = "127.0.0.1";
 const startupTimeout = Number(
   process.env["E2E_API_STARTUP_TIMEOUT_MS"] ?? 30_000,
 );
+const artifactRoot = process.env["ARTIFACTS_DIR"] ?? ".artifacts";
+const playwrightArtifactRoot = `${artifactRoot}/playwright`;
 const ports = {
   api: 3101,
   dash: 5273,
@@ -50,10 +52,23 @@ export default defineConfig({
   reporter: process.env["CI"]
     ? [
         ["line"],
-        ["junit", { outputFile: "test-results/e2e-junit.xml" }],
-        ["html", { open: "never" }],
+        [
+          "junit",
+          { outputFile: `${playwrightArtifactRoot}/results/e2e-junit.xml` },
+        ],
+        [
+          "html",
+          { open: "never", outputFolder: `${playwrightArtifactRoot}/report` },
+        ],
       ]
-    : [["list"], ["html", { open: "never" }]],
+    : [
+        ["list"],
+        [
+          "html",
+          { open: "never", outputFolder: `${playwrightArtifactRoot}/report` },
+        ],
+      ],
+  outputDir: `${playwrightArtifactRoot}/results`,
   use: {
     trace: "retain-on-failure",
     screenshot: "only-on-failure",

@@ -9,7 +9,9 @@ graph TB
     ROOT --> PACKAGES["packages"]
     ROOT --> ADAPTERS["adapters"]
     ROOT --> DOCS["docs"]
-    ROOT --> SCRIPTS["scripts"]
+    ROOT --> TESTS["tests"]
+    ROOT --> TOOLING["tooling"]
+    ROOT -. generado .-> ARTIFACTS[".artifacts"]
 
     APPS --> API["api"]
     APPS --> ROLE_APPS["apps por rol"]
@@ -43,12 +45,37 @@ maitre/
 │   ├── messaging/              # Eventos, jobs y notificaciones
 │   ├── storage/                # Objetos
 │   └── integrations/           # ARCA y proveedores externos
-├── docs/                       # Foundations y SDD
-├── scripts/                    # Automatización portable
+├── docs/                       # Foundations, SDD, ADRs y operación
+├── tests/                      # Suites transversales y Playwright
+├── tooling/                    # Automatización portable del repositorio
+├── supabase/                   # Migraciones y configuración Supabase
+├── .github/                    # CI/CD y plantillas versionadas
+├── .artifacts/                 # Outputs transitorios ignorados; nunca fuente
 └── package.json                # npm workspaces y comandos raíz
 ```
 
 Los directorios se crean cuando contienen una primera necesidad aprobada. El scaffolding no debe generar paquetes vacíos salvo los mínimos requeridos para demostrar los límites.
+
+### Artefactos generados
+
+Los outputs transitorios del root usan una única raíz ignorada:
+
+```text
+.artifacts/
+├── coverage/                   # reportes de cobertura Node
+├── playwright/report/          # reporte HTML
+├── playwright/results/         # traces, screenshots, JUnit y estado de ejecución
+├── quality/                    # SBOM y evidencia sanitizada de observabilidad
+├── typescript/                 # build info exclusivo del solution tsconfig raíz
+└── archive/                    # snapshots locales no autoritativos
+```
+
+Los builds consumibles de cada workspace permanecen en `<workspace>/dist/` porque `main`, `types`,
+tests compilados y previews dependen de ellos. Se prohíben `coverage/`, `test-results/`,
+`playwright-report/` y `dist/` como outputs directos del root.
+
+Directorios locales de herramientas (`node_modules`, `.secrets`, `.claude/worktrees`,
+`.superpowers`) no forman parte de la arquitectura versionada ni pueden actuar como fuente.
 
 ## Dirección de dependencias
 
@@ -77,15 +104,15 @@ apps -> composición, transporte y presentación
 
 ### Importaciones permitidas
 
-| Origen | Puede importar |
-| --- | --- |
-| `modules/*/domain` | librería estándar y primitives puras aprobadas |
-| `modules/*/application` | domain del mismo módulo y puertos propios |
-| API pública de módulo | domain/application exportados deliberadamente |
-| `contracts` | schemas/tipos sin lógica de infraestructura |
-| `adapters/*` | `application`, `domain`, `contracts` y SDK del proveedor adaptado |
-| `apps/api` | casos de uso, contratos y adaptadores durante composición |
-| `apps/web` | contracts, config/browser, ui, design-tokens y código propio |
+| Origen                  | Puede importar                                                    |
+| ----------------------- | ----------------------------------------------------------------- |
+| `modules/*/domain`      | librería estándar y primitives puras aprobadas                    |
+| `modules/*/application` | domain del mismo módulo y puertos propios                         |
+| API pública de módulo   | domain/application exportados deliberadamente                     |
+| `contracts`             | schemas/tipos sin lógica de infraestructura                       |
+| `adapters/*`            | `application`, `domain`, `contracts` y SDK del proveedor adaptado |
+| `apps/api`              | casos de uso, contratos y adaptadores durante composición         |
+| `apps/web`              | contracts, config/browser, ui, design-tokens y código propio      |
 
 Un módulo no importa internals de otro. La colaboración ocurre mediante una API pública, un port o un evento explícito. No se crean paquetes globales `domain`, `application`, `common` o `shared` que acumulen conceptos no relacionados.
 

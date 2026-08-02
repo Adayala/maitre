@@ -12,7 +12,7 @@ Maitre es una plataforma operativa modular para restaurantes argentinos. Está d
 
 **Maître** se pronuncia aproximadamente "metr" en francés, con una r suave y gutural al final (AFI: `/mɛtʁ/`). En español solemos decir "méitre", pero la pronunciación francesa correcta se acerca mucho más a "metr".
 
-Significa literalmente "maestro", "señor" o "persona experta y con autoridad". En gastronomía, el *maître d'hôtel* —abreviado habitualmente como *maître*— es quien dirige la atención en el salón del restaurante: organiza las mesas, coordina a los mozos, recibe a los clientes y supervisa el servicio.
+Significa literalmente "maestro", "señor" o "persona experta y con autoridad". En gastronomía, el _maître d'hôtel_ —abreviado habitualmente como _maître_— es quien dirige la atención en el salón del restaurante: organiza las mesas, coordina a los mozos, recibe a los clientes y supervisa el servicio.
 
 Para esta plataforma el nombre funciona porque transmite:
 
@@ -46,14 +46,14 @@ La arquitectura mantiene dominio, datos e integraciones desacoplados de Vercel p
 
 ## Apps desplegadas
 
-| App | URL |
-| --- | --- |
+| App      | URL                                                              |
+| -------- | ---------------------------------------------------------------- |
 | Customer | [maitre-customer.vercel.app](https://maitre-customer.vercel.app) |
-| Waiter | [maitre-waiter.vercel.app](https://maitre-waiter.vercel.app) |
-| Host | [maitre-host.vercel.app](https://maitre-host.vercel.app) |
-| Kitchen | [maitre-kitchen.vercel.app](https://maitre-kitchen.vercel.app) |
-| Cashier | [maitre-cashier.vercel.app](https://maitre-cashier.vercel.app) |
-| Dash | [maitre-dash.vercel.app](https://maitre-dash.vercel.app) |
+| Waiter   | [maitre-waiter.vercel.app](https://maitre-waiter.vercel.app)     |
+| Host     | [maitre-host.vercel.app](https://maitre-host.vercel.app)         |
+| Kitchen  | [maitre-kitchen.vercel.app](https://maitre-kitchen.vercel.app)   |
+| Cashier  | [maitre-cashier.vercel.app](https://maitre-cashier.vercel.app)   |
+| Dash     | [maitre-dash.vercel.app](https://maitre-dash.vercel.app)         |
 
 ### Credenciales de demo
 
@@ -159,5 +159,10 @@ los cambios compartidos usan una selección conservadora completa. Consulta
 - El backend remoto de telemetría, dashboards, alertas y SLOs continúa `NOT_OPERATIONAL` para el
   MVP Demo según ADR-005.
 - El rollout fiscal ya quedó aplicado en el proyecto Supabase conectado mediante [supabase/migrations/20260727143000_fiscal_domain.sql](supabase/migrations/20260727143000_fiscal_domain.sql), con schema cache recargado y seed fiscal operativo.
-- El flujo fiscal técnico ya fue validado en vivo el **27 de julio de 2026**: creación, validación, emisión y QR de una `FACTURA_A` sobre Supabase. La autorización ARCA sigue siendo **simulada** (`FISCAL_ARCA_DRIVER=simulated`), por lo que el CAE emitido no es legal/fiscal real.
+- El flujo fiscal técnico fue validado sobre Supabase y el cliente WSAA/WSFEv1 completó login y
+  `FEDummy` en homologación. La emisión productiva continúa bloqueada; el driver simulado sólo es
+  válido para desarrollo/tests y sus CAE no tienen validez fiscal.
 - La app `host` ya quedó re-alineada como superficie de recepción/maître; su shell y documentación ya no presentan el rol como `waiter/mozo`.
+
+Los outputs transitorios del root se concentran en `.artifacts/`; consulta
+[Organización del root y artefactos](docs/foundation/21-repository-root-layout.md).
