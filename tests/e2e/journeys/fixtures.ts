@@ -20,6 +20,7 @@ interface ApplicationPages {
   host: Page;
   kitchen: Page;
   cash: Page;
+  guest: Page;
 }
 
 interface JourneyFixtures {
@@ -50,6 +51,7 @@ export const test = base.extend<JourneyFixtures>({
       applicationPage(browser, "host", manifest, diagnostics),
       applicationPage(browser, "kitchen", manifest, diagnostics),
       applicationPage(browser, "cash", manifest, diagnostics),
+      applicationPage(browser, "guest", manifest, diagnostics),
     ]);
     const apps = {
       dash: resources[0].page,
@@ -57,6 +59,7 @@ export const test = base.extend<JourneyFixtures>({
       host: resources[2].page,
       kitchen: resources[3].page,
       cash: resources[4].page,
+      guest: resources[5].page,
     };
 
     await use(apps);
@@ -122,6 +125,14 @@ async function applicationPage(
           "00000000-0000-0000-0000-00000000000e",
       },
     },
+    guest: {
+      tokenKey: "maitre.customer.fixtureAccessToken",
+      token: tokenForRole("auditor"),
+      localValues: {
+        "maitre.customer.selectedTenantId": TENANT_ID,
+        "maitre.customer.selectedBranchId": BRANCH_ID,
+      },
+    },
   }[application];
 
   const context = await browser.newContext({
@@ -129,9 +140,13 @@ async function applicationPage(
     timezoneId: "America/Argentina/Buenos_Aires",
   });
   await context.addInitScript(({ tokenKey, token, localValues }) => {
-    sessionStorage.setItem(tokenKey, token);
+    if (sessionStorage.getItem(tokenKey) === null) {
+      sessionStorage.setItem(tokenKey, token);
+    }
     for (const [key, value] of Object.entries(localValues)) {
-      localStorage.setItem(key, value);
+      if (localStorage.getItem(key) === null) {
+        localStorage.setItem(key, value);
+      }
     }
   }, configuration);
   const page = await context.newPage();

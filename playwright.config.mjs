@@ -1,6 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const host = "127.0.0.1";
+const startupTimeout = Number(
+  process.env["E2E_API_STARTUP_TIMEOUT_MS"] ?? 30_000,
+);
 const ports = {
   api: 3101,
   dash: 5273,
@@ -94,7 +97,7 @@ function webServersFor(selectedApp) {
   const isJourney =
     selectedApp === "journeys" || selectedApp === "journey-restart";
   const appNames = isJourney
-    ? ["dash", "floor", "host", "kitchen", "cash"]
+    ? ["dash", "floor", "host", "kitchen", "cash", "guest"]
     : selectedApp
       ? [selectedApp]
       : Object.keys(webapps);
@@ -106,7 +109,7 @@ function webServersFor(selectedApp) {
     return {
       name,
       ...server,
-      timeout: 30_000,
+      timeout: startupTimeout,
       reuseExistingServer: false,
     };
   });
@@ -118,7 +121,7 @@ function webServersFor(selectedApp) {
         ? `AUTH_DRIVER=fixture PORT=${ports.api} npm run start --workspace apps/api`
         : `PORT=${ports.api} npm run start --workspace apps/api`,
       url: `http://${host}:${ports.api}/health/ready`,
-      timeout: 30_000,
+      timeout: startupTimeout,
       reuseExistingServer: false,
       stdout: "pipe",
       stderr: "pipe",

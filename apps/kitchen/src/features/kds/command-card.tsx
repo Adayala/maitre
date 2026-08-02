@@ -1,4 +1,3 @@
-import { useState } from "react";
 import type { Command, CommandStatus } from "../../lib/kitchen-types.js";
 import { formatElapsed, urgencyFor, type Urgency } from "./use-now.js";
 import type { CommandAction } from "./use-command-action.js";
@@ -67,8 +66,6 @@ export function CommandCard({
   deniedActions,
   onAction,
 }: CommandCardProps) {
-  const [cancelOpen, setCancelOpen] = useState(false);
-  const [cancelReason, setCancelReason] = useState("");
   const receivedMs = new Date(command.receivedAt).getTime();
   const elapsedMs = now - receivedMs;
   const urgency: Urgency = urgencyFor(elapsedMs);
@@ -100,8 +97,6 @@ export function CommandCard({
     : primaryActionsFor(status).filter(
         (action) => !deniedActions?.[action.action],
       );
-  const canCancel =
-    !lockedByOtherOwner && status !== "READY" && !deniedActions?.cancel; // keep the destructive tap away from the hand-off moment
   const decisionNote = getDecisionNote({
     status,
     lockedByOtherOwner,
@@ -109,14 +104,6 @@ export function CommandCard({
     hasAllergens: payload.allergenFlags.length > 0,
     hasNotes: Boolean(payload.notes),
   });
-
-  function submitCancel() {
-    const reason = cancelReason.trim();
-    if (!reason) return;
-    onAction(command.id, "cancel", reason);
-    setCancelReason("");
-    setCancelOpen(false);
-  }
 
   return (
     <article
@@ -219,61 +206,7 @@ export function CommandCard({
         {decisionNote ? (
           <p className="card-decision-note">{decisionNote}</p>
         ) : null}
-        {cancelOpen && canCancel && (
-          <div
-            className="cancel-box"
-            role="group"
-            aria-label="Motivo de cancelación"
-          >
-            <label
-              className="cancel-box__label"
-              htmlFor={`cancel-reason-${command.id}`}
-            >
-              Motivo obligatorio
-            </label>
-            <textarea
-              id={`cancel-reason-${command.id}`}
-              className="cancel-box__input"
-              value={cancelReason}
-              onChange={(event) => setCancelReason(event.target.value)}
-              placeholder="Ej: faltante de insumo, producto agotado, error de carga…"
-              rows={3}
-              disabled={pending}
-            />
-            <div className="cancel-box__actions">
-              <button
-                type="button"
-                className="btn btn--ghost"
-                onClick={() => {
-                  setCancelOpen(false);
-                  setCancelReason("");
-                }}
-                disabled={pending}
-              >
-                Volver
-              </button>
-              <button
-                type="button"
-                className="btn btn--danger-ghost"
-                onClick={submitCancel}
-                disabled={pending || !cancelReason.trim()}
-              >
-                Confirmar cancelación
-              </button>
-            </div>
-          </div>
-        )}
         <div className="card-actions">
-          {canCancel && !cancelOpen && (
-            <button
-              type="button"
-              className="btn btn--danger-ghost"
-              disabled={pending}
-              onClick={() => setCancelOpen(true)}
-            >
-              Cancelar
-            </button>
-          )}
           {actions.map((a) => (
             <button
               key={a.action}

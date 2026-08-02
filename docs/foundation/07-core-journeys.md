@@ -1,5 +1,9 @@
 # Recorridos principales
 
+La trazabilidad entre estos recorridos, las aplicaciones y la evidencia Playwright vigente se
+mantiene en [20-e2e-flow-coverage.md](20-e2e-flow-coverage.md). Un happy path documentado aquí no se
+considera cubierto hasta que esa matriz identifique un journey real y sus pendientes.
+
 ## 1. Del registro a la primera operación
 
 ```text
@@ -145,3 +149,19 @@ Si el tenant reduce su capacidad de tres a dos sucursales:
 3. Sus datos continúan disponibles según política.
 4. Puede reactivarse posteriormente.
 5. Los documentos fiscales no se eliminan.
+
+## Estado de cobertura transversal
+
+Al 2 de agosto de 2026, el núcleo mesa → pedido → cocina → pago → cierre, la configuración
+operativa compartida y la reserva Guest → Host → Floor tienen evidencia real. Siguen pendientes,
+entre otros, los siguientes recorridos críticos:
+
+- dos rondas completas que incluyan bebida y postre;
+- emisión y entrega de factura/comprobante después del pago;
+- llegada con reserva y conversión en visita;
+- walk-in gestionado por Host/Maître;
+- login y RBAC exhaustivo de cada rol recién configurado;
+- expansión/reducción de sucursales, baja de servicios, feedback y Reputation.
+
+El backlog priorizado y los criterios de aceptación están definidos en
+[Cobertura E2E de flujos entre aplicaciones](20-e2e-flow-coverage.md#backlog-de-cobertura-posterior).

@@ -1,8 +1,13 @@
 import type { FastifyInstance } from "fastify";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
-import { createTenant, transitionTenant, type Tenant } from "@maitre/organization";
+import {
+  createTenant,
+  transitionTenant,
+  type Tenant,
+} from "@maitre/organization";
 import { createMembership } from "@maitre/identity";
+import { createSubscription } from "@maitre/subscription";
 import type { Container } from "../composition/container.js";
 import {
   requireAuthenticatedContext,
@@ -66,6 +71,15 @@ export async function registerTenantRoutes(
           actorId: auth.userId,
         },
       );
+      await createSubscription(
+        {
+          subscriptions: container.subscriptions,
+          subscriptionItems: container.subscriptionItems,
+          entitlements: container.entitlements,
+          catalog: container.catalog,
+        },
+        { tenantId: tenant.id, planCode: "STARTER" },
+      );
 
       reply.code(201);
       return toResponse(tenant);
@@ -93,32 +107,39 @@ export async function registerTenantRoutes(
     }
   });
 
-  app.patch<{ Params: { id: string } }>("/v1/tenants/:id", async (req, reply) => {
-    const correlationId = randomUUID();
-    try {
-      const ctx = await requireTenantContext(container, req);
-      if (ctx.tenantId !== req.params.id) {
-        return sendProblem(reply, correlationId, insufficientScope());
-      }
-      // SPEC-007 §Authorization — PATCH is OWNER only.
-      requirePermission(ctx, "tenant:write");
+  app.patch<{ Params: { id: string } }>(
+    "/v1/tenants/:id",
+    async (req, reply) => {
+      const correlationId = randomUUID();
+      try {
+        const ctx = await requireTenantContext(container, req);
+        if (ctx.tenantId !== req.params.id) {
+          return sendProblem(reply, correlationId, insufficientScope());
+        }
+        // SPEC-007 §Authorization — PATCH is OWNER only.
+        requirePermission(ctx, "tenant:write");
 
-      const tenant = await container.tenants.findById(req.params.id);
-      if (!tenant) return sendProblem(reply, correlationId, notFound("Tenant"));
+        const tenant = await container.tenants.findById(req.params.id);
+        if (!tenant)
+          return sendProblem(reply, correlationId, notFound("Tenant"));
 
-      const body = omitUndefined(patchTenantBodySchema.parse(req.body));
-      let updated: Tenant = { ...tenant, ...body, updatedAt: new Date() };
-      if (body.status && body.status !== tenant.status) {
-        updated = { ...transitionTenant(tenant, body.status, new Date()), ...body };
-      }
+        const body = omitUndefined(patchTenantBodySchema.parse(req.body));
+        let updated: Tenant = { ...tenant, ...body, updatedAt: new Date() };
+        if (body.status && body.status !== tenant.status) {
+          updated = {
+            ...transitionTenant(tenant, body.status, new Date()),
+            ...body,
+          };
+        }
 
-      await container.tenants.save(updated);
-      return toResponse(updated);
-    } catch (err) {
-      if (err instanceof z.ZodError) {
-        return sendProblem(reply, correlationId, badRequest(err.message));
+        await container.tenants.save(updated);
+        return toResponse(updated);
+      } catch (err) {
+        if (err instanceof z.ZodError) {
+          return sendProblem(reply, correlationId, badRequest(err.message));
+        }
+        return sendProblem(reply, correlationId, err);
       }
-      return sendProblem(reply, correlationId, err);
-    }
-  });
+    },
+  );
 }

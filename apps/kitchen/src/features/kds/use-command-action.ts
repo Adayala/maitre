@@ -14,8 +14,7 @@ export type CommandAction =
   | "hold"
   | "resume"
   | "mark-ready"
-  | "complete-handoff"
-  | "cancel";
+  | "complete-handoff";
 
 interface ActionVars {
   commandId: string;

@@ -1153,6 +1153,9 @@ test("POST /v1/tenants provisions a Tenant with an OWNER membership for the call
     ]),
   );
   const tenantId = response.json().data.id;
+  const subscription = await container.subscriptions.findByTenantId(tenantId);
+  assert.equal(subscription?.planCode, "STARTER");
+  assert.equal(subscription?.status, "TRIAL");
 
   const meResponse = await app.inject({
     method: "GET",

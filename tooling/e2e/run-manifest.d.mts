@@ -14,6 +14,7 @@ export interface E2ERunManifest {
     floor: string;
     kitchen: string;
     cash: string;
+    guest: string;
   };
   principals: Record<E2ERole, { tokenEnvironmentVariable: string }>;
 }
