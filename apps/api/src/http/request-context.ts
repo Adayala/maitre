@@ -17,6 +17,7 @@ import {
 
 export interface AuthenticatedContext {
   userId: string;
+  externalIdentityId: string;
   sessionIssuedAt: Date;
   sessionExpiresAt: Date;
 }
@@ -90,6 +91,7 @@ export async function requireAuthenticatedContext(
   authMetric(req, "success");
   return {
     userId: user.id,
+    externalIdentityId: user.externalIdentityId,
     sessionIssuedAt: principal.issuedAt,
     sessionExpiresAt: principal.expiresAt,
   };
@@ -115,17 +117,12 @@ export async function requireTenantContext(
     const tenantId = req.headers["x-tenant-id"] as string | undefined;
     if (!tenantId) throw insufficientScope();
 
-    const tenant = await container.tenants.findById(tenantId);
+    const [tenant, membership] = await Promise.all([
+      container.tenants.findById(tenantId),
+      container.memberships.findActiveByUserAndTenant(auth.userId, tenantId),
+    ]);
     if (!tenant || !isTenantOperable(tenant)) throw insufficientScope();
-
-    const membership = await container.memberships.findActiveByUserAndTenant(
-      auth.userId,
-      tenantId,
-    );
     if (!membership) throw insufficientScope();
-
-    const user = await container.users.findById(auth.userId);
-    if (!user || !isUserEligibleForSession(user)) throw identityNotEnabled();
 
     const context: TenantContext = {
       userId: auth.userId,
@@ -135,7 +132,7 @@ export async function requireTenantContext(
       roleIds: membership.roleIds,
       branchScopeType: membership.branchScopeType,
       branchIds: membership.branchIds,
-      externalIdentityId: user.externalIdentityId,
+      externalIdentityId: auth.externalIdentityId,
     };
     tenantContextByRequest.set(req, context);
     contextSpan?.end("OK");

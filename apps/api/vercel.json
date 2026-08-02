@@ -1,6 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "outputDirectory": "public",
+  "regions": ["pdx1"],
   "functions": {
     "api/serverless.ts": { "maxDuration": 30 }
   },
@@ -10,7 +11,5 @@
       "schedule": "0 3 * * *"
     }
   ],
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/api/serverless" }
-  ]
+  "rewrites": [{ "source": "/(.*)", "destination": "/api/serverless" }]
 }

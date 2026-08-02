@@ -212,11 +212,12 @@ jobs:
           npm ci
           npx playwright install --with-deps chromium
 
-      - name: Build API, Dash, Floor, Kitchen and Cash
+      - name: Build API, Dash, Floor, Host, Kitchen and Cash
         run: |
           npm run build --workspace apps/api
           npm run build --workspace apps/web
           npm run build --workspace apps/waiter
+          npm run build --workspace apps/host
           npm run build --workspace apps/kitchen
           npm run build --workspace apps/cashier
 

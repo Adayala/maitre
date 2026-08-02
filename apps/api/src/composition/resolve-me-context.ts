@@ -1,5 +1,8 @@
 import type { MeContextResponse } from "@maitre/contracts";
-import { isUserEligibleForSession, userAuthenticatedEvent } from "@maitre/identity";
+import {
+  isUserEligibleForSession,
+  userAuthenticatedEvent,
+} from "@maitre/identity";
 import { isTenantOperable } from "@maitre/organization";
 import type { Container } from "./container.js";
 import { resolveDomainUser } from "./resolve-domain-user.js";
@@ -37,32 +40,51 @@ export async function resolveMeContext(
 
   // SPEC-025 — audit fact of a successful authentication, fired from this
   // discovery endpoint since Maitre has no /auth/login of its own (SPEC-023).
-  await container.outbox.append(userAuthenticatedEvent(user, principal, correlationId));
+  const [, activeMemberships] = await Promise.all([
+    container.outbox.append(
+      userAuthenticatedEvent(user, principal, correlationId),
+    ),
+    container.memberships.listActiveByUser(user.id),
+  ]);
 
-  const activeMemberships = await container.memberships.listActiveByUser(user.id);
+  const resolvedTenants = await Promise.all(
+    activeMemberships.map(async (membership) => {
+      const [tenant, allBranches] = await Promise.all([
+        container.tenants.findById(membership.tenantId),
+        container.branches.listByTenant(membership.tenantId),
+      ]);
+      if (!tenant || !isTenantOperable(tenant)) return null;
 
-  const tenants: MeContextResponse["tenants"] = [];
-  for (const membership of activeMemberships) {
-    const tenant = await container.tenants.findById(membership.tenantId);
-    if (!tenant || !isTenantOperable(tenant)) continue;
+      const scopedBranches =
+        membership.branchScopeType === "ALL_BRANCHES"
+          ? allBranches
+          : allBranches.filter((branch) =>
+              membership.branchIds.includes(branch.id),
+            );
 
-    const allBranches = await container.branches.listByTenant(tenant.id);
-    const scopedBranches =
-      membership.branchScopeType === "ALL_BRANCHES"
-        ? allBranches
-        : allBranches.filter((b) => membership.branchIds.includes(b.id));
-
-    tenants.push({
-      id: tenant.id,
-      name: tenant.name,
-      branches: scopedBranches
-        .filter((b) => b.status === "ACTIVE")
-        .map((b) => ({ id: b.id, code: b.code, name: b.name })),
-    });
-  }
+      return {
+        id: tenant.id,
+        name: tenant.name,
+        branches: scopedBranches
+          .filter((branch) => branch.status === "ACTIVE")
+          .map((branch) => ({
+            id: branch.id,
+            code: branch.code,
+            name: branch.name,
+          })),
+      };
+    }),
+  );
+  const tenants = resolvedTenants.filter(
+    (tenant): tenant is MeContextResponse["tenants"][number] => tenant !== null,
+  );
 
   return {
-    user: { id: user.id, displayName: user.displayName, email: user.email ?? null },
+    user: {
+      id: user.id,
+      displayName: user.displayName,
+      email: user.email ?? null,
+    },
     tenants,
   };
 }

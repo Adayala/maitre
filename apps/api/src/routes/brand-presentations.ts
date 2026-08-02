@@ -7,7 +7,9 @@ import type { Container } from "../composition/container.js";
 import { requireTenantContext, requirePermission } from "../http/request-context.js";
 import { badRequest, notFound, sendProblem } from "../http/problem-details.js";
 
-const presentationBodySchema = z.object({ presentation: brandPresentationDocumentSchema });
+const presentationBodySchema = z.object({
+  presentation: brandPresentationDocumentSchema,
+});
 const rollbackBodySchema = z.object({ revision: z.number().int().positive() });
 const assetUploadSchema = z.object({
   kind: z.enum(["LOGO", "LOGO_COMPACT", "LOGO_DARK", "FAVICON", "HERO", "BACKGROUND", "PLACEHOLDER", "FONT"]),
@@ -24,15 +26,14 @@ export async function registerBrandPresentationRoutes(app: FastifyInstance, cont
     try {
       const ctx = await requireTenantContext(container, req);
       requirePermission(ctx, "brand:read");
-      const brand = await container.brands.findById(ctx.tenantId, req.params.brandId);
+      const [brand, history] = await Promise.all([container.brands.findById(ctx.tenantId, req.params.brandId), container.brandPresentations.listByBrand(ctx.tenantId, req.params.brandId)]);
       if (!brand) return sendProblem(reply, correlationId, notFound("Brand"));
-      const [draft, published, history] = await Promise.all([
-        container.brandPresentations.findDraft(ctx.tenantId, brand.id),
-        container.brandPresentations.findPublished(ctx.tenantId, brand.id),
-        container.brandPresentations.listByBrand(ctx.tenantId, brand.id),
-      ]);
+      const draft = history.find((item) => item.status === "DRAFT") ?? null;
+      const published = history.find((item) => item.status === "PUBLISHED") ?? null;
       return { data: { draft, published, history } };
-    } catch (err) { return sendProblem(reply, correlationId, err); }
+    } catch (err) {
+      return sendProblem(reply, correlationId, err);
+    }
   });
 
   app.get<{ Params: { brandId: string } }>("/v1/brands/:brandId/assets", async (req, reply) => {
@@ -40,8 +41,12 @@ export async function registerBrandPresentationRoutes(app: FastifyInstance, cont
     try {
       const ctx = await requireTenantContext(container, req);
       requirePermission(ctx, "brand:read");
-      return { data: await container.brandAssets.listByBrand(ctx.tenantId, req.params.brandId) };
-    } catch (err) { return sendProblem(reply, correlationId, err); }
+      return {
+        data: await container.brandAssets.listByBrand(ctx.tenantId, req.params.brandId),
+      };
+    } catch (err) {
+      return sendProblem(reply, correlationId, err);
+    }
   });
 
   app.post<{ Params: { brandId: string } }>("/v1/brands/:brandId/assets", async (req, reply) => {
@@ -60,13 +65,21 @@ export async function registerBrandPresentationRoutes(app: FastifyInstance, cont
       const path = `tenants/${ctx.tenantId}/brands/${brand.id}/${input.kind.toLowerCase()}/${id}/${input.fileName}`;
       await container.brandAssetStorage.put(path, bytes, input.mimeType);
       const asset = {
-        id, tenantId: ctx.tenantId, brandId: brand.id, kind: input.kind,
-        storageBucket: "brand-assets", storagePath: path,
+        id,
+        tenantId: ctx.tenantId,
+        brandId: brand.id,
+        kind: input.kind,
+        storageBucket: "brand-assets",
+        storagePath: path,
         publicUrl: `/public/tenants/${ctx.tenantId}/brands/${brand.id}/assets/${id}`,
-        mimeType: input.mimeType, sizeBytes: bytes.byteLength,
+        mimeType: input.mimeType,
+        sizeBytes: bytes.byteLength,
         checksum: createHash("sha256").update(bytes).digest("hex"),
-        ...(input.width ? { width: input.width } : {}), ...(input.height ? { height: input.height } : {}),
-        status: "READY" as const, createdAt: new Date(), createdBy: ctx.userId,
+        ...(input.width ? { width: input.width } : {}),
+        ...(input.height ? { height: input.height } : {}),
+        status: "READY" as const,
+        createdAt: new Date(),
+        createdBy: ctx.userId,
       };
       await container.brandAssets.save(asset);
       reply.code(201);
@@ -87,7 +100,9 @@ export async function registerBrandPresentationRoutes(app: FastifyInstance, cont
       await container.brandAssetStorage.remove(asset.storagePath);
       await container.brandAssets.save({ ...asset, status: "ARCHIVED" });
       return reply.code(204).send();
-    } catch (err) { return sendProblem(reply, correlationId, err); }
+    } catch (err) {
+      return sendProblem(reply, correlationId, err);
+    }
   });
 
   app.put<{ Params: { brandId: string } }>("/v1/brands/:brandId/presentation/draft", async (req, reply) => {
@@ -100,10 +115,14 @@ export async function registerBrandPresentationRoutes(app: FastifyInstance, cont
       const body = presentationBodySchema.parse(req.body);
       const existing = await container.brandPresentations.findDraft(ctx.tenantId, brand.id);
       const draft: BrandPresentation = {
-        id: existing?.id ?? randomUUID(), tenantId: ctx.tenantId, brandId: brand.id,
-        revision: existing?.revision ?? await container.brandPresentations.nextRevision(ctx.tenantId, brand.id),
-        status: "DRAFT", document: body.presentation,
-        createdAt: existing?.createdAt ?? new Date(), createdBy: existing?.createdBy ?? ctx.userId,
+        id: existing?.id ?? randomUUID(),
+        tenantId: ctx.tenantId,
+        brandId: brand.id,
+        revision: existing?.revision ?? (await container.brandPresentations.nextRevision(ctx.tenantId, brand.id)),
+        status: "DRAFT",
+        document: body.presentation,
+        createdAt: existing?.createdAt ?? new Date(),
+        createdBy: existing?.createdBy ?? ctx.userId,
       };
       await container.brandPresentations.save(draft);
       return { data: draft };
@@ -119,7 +138,9 @@ export async function registerBrandPresentationRoutes(app: FastifyInstance, cont
       const ctx = await requireTenantContext(container, req);
       requirePermission(ctx, "brand:write");
       const body = presentationBodySchema.parse(req.body);
-      return { data: effectivePayload(ctx.tenantId, req.params.brandId, null, "PREVIEW", body.presentation, 0) };
+      return {
+        data: effectivePayload(ctx.tenantId, req.params.brandId, null, "PREVIEW", body.presentation, 0),
+      };
     } catch (err) {
       if (err instanceof z.ZodError) return sendProblem(reply, correlationId, badRequest(err.message));
       return sendProblem(reply, correlationId, err);
@@ -134,12 +155,23 @@ export async function registerBrandPresentationRoutes(app: FastifyInstance, cont
       const draft = await container.brandPresentations.findDraft(ctx.tenantId, req.params.brandId);
       if (!draft) return sendProblem(reply, correlationId, notFound("Brand presentation draft"));
       const current = await container.brandPresentations.findPublished(ctx.tenantId, req.params.brandId);
-      if (current) await container.brandPresentations.save({ ...current, status: "ARCHIVED" });
+      if (current)
+        await container.brandPresentations.save({
+          ...current,
+          status: "ARCHIVED",
+        });
       const now = new Date();
-      const published = { ...draft, status: "PUBLISHED" as const, publishedAt: now, publishedBy: ctx.userId };
+      const published = {
+        ...draft,
+        status: "PUBLISHED" as const,
+        publishedAt: now,
+        publishedBy: ctx.userId,
+      };
       await container.brandPresentations.save(published);
       return { data: published };
-    } catch (err) { return sendProblem(reply, correlationId, err); }
+    } catch (err) {
+      return sendProblem(reply, correlationId, err);
+    }
   });
 
   app.post<{ Params: { brandId: string } }>("/v1/brands/:brandId/presentation/rollback", async (req, reply) => {
@@ -152,11 +184,21 @@ export async function registerBrandPresentationRoutes(app: FastifyInstance, cont
       const source = history.find((item) => item.revision === body.revision);
       if (!source) return sendProblem(reply, correlationId, notFound("Brand presentation revision"));
       const current = await container.brandPresentations.findPublished(ctx.tenantId, req.params.brandId);
-      if (current) await container.brandPresentations.save({ ...current, status: "ARCHIVED" });
+      if (current)
+        await container.brandPresentations.save({
+          ...current,
+          status: "ARCHIVED",
+        });
       const now = new Date();
       const restored: BrandPresentation = {
-        ...source, id: randomUUID(), revision: await container.brandPresentations.nextRevision(ctx.tenantId, req.params.brandId),
-        status: "PUBLISHED", createdAt: now, createdBy: ctx.userId, publishedAt: now, publishedBy: ctx.userId,
+        ...source,
+        id: randomUUID(),
+        revision: await container.brandPresentations.nextRevision(ctx.tenantId, req.params.brandId),
+        status: "PUBLISHED",
+        createdAt: now,
+        createdBy: ctx.userId,
+        publishedAt: now,
+        publishedBy: ctx.userId,
       };
       await container.brandPresentations.save(restored);
       return { data: restored };
@@ -166,31 +208,41 @@ export async function registerBrandPresentationRoutes(app: FastifyInstance, cont
     }
   });
 
-  app.get<{ Params: { brandId: string }; Querystring: { branchId?: string; surface?: string } }>(
-    "/v1/brands/:brandId/presentation/effective",
-    async (req, reply) => {
-      const correlationId = randomUUID();
-      try {
-        const ctx = await requireTenantContext(container, req);
-        const brand = await container.brands.findById(ctx.tenantId, req.params.brandId);
-        if (!brand) return sendProblem(reply, correlationId, notFound("Brand"));
-      const published = await container.brandPresentations.findPublished(ctx.tenantId, brand.id);
-        const document = absolutizeDocument(published?.document ?? platformFallback(brand.name, brand.logoUrl), `${req.protocol}://${req.hostname}`);
-        return { data: effectivePayload(ctx.tenantId, brand.id, req.query.branchId ?? null, req.query.surface ?? "DASH", document, published?.revision ?? 0) };
-      } catch (err) { return sendProblem(reply, correlationId, err); }
-    },
-  );
-
-  app.get<{ Params: { tenantId: string; brandId: string }; Querystring: { surface?: string } }>(
-    "/public/tenants/:tenantId/brands/:brandId/presentation",
-    async (req, reply) => {
-      const brand = await container.brands.findById(req.params.tenantId, req.params.brandId);
-      if (!brand || brand.status !== "ACTIVE") return reply.code(404).send({ type: "not-found", title: "Presentation not found", status: 404 });
-      const published = await container.brandPresentations.findPublished(req.params.tenantId, brand.id);
+  app.get<{
+    Params: { brandId: string };
+    Querystring: { branchId?: string; surface?: string };
+  }>("/v1/brands/:brandId/presentation/effective", async (req, reply) => {
+    const correlationId = randomUUID();
+    try {
+      const ctx = await requireTenantContext(container, req);
+      const [brand, published] = await Promise.all([container.brands.findById(ctx.tenantId, req.params.brandId), container.brandPresentations.findPublished(ctx.tenantId, req.params.brandId)]);
+      if (!brand) return sendProblem(reply, correlationId, notFound("Brand"));
       const document = absolutizeDocument(published?.document ?? platformFallback(brand.name, brand.logoUrl), `${req.protocol}://${req.hostname}`);
-      return { data: effectivePayload(req.params.tenantId, brand.id, null, req.query.surface ?? "PUBLIC_HOME", document, published?.revision ?? 0) };
-    },
-  );
+      return {
+        data: effectivePayload(ctx.tenantId, brand.id, req.query.branchId ?? null, req.query.surface ?? "DASH", document, published?.revision ?? 0),
+      };
+    } catch (err) {
+      return sendProblem(reply, correlationId, err);
+    }
+  });
+
+  app.get<{
+    Params: { tenantId: string; brandId: string };
+    Querystring: { surface?: string };
+  }>("/public/tenants/:tenantId/brands/:brandId/presentation", async (req, reply) => {
+    const brand = await container.brands.findById(req.params.tenantId, req.params.brandId);
+    if (!brand || brand.status !== "ACTIVE")
+      return reply.code(404).send({
+        type: "not-found",
+        title: "Presentation not found",
+        status: 404,
+      });
+    const published = await container.brandPresentations.findPublished(req.params.tenantId, brand.id);
+    const document = absolutizeDocument(published?.document ?? platformFallback(brand.name, brand.logoUrl), `${req.protocol}://${req.hostname}`);
+    return {
+      data: effectivePayload(req.params.tenantId, brand.id, null, req.query.surface ?? "PUBLIC_HOME", document, published?.revision ?? 0),
+    };
+  });
 
   app.get<{ Params: { file: string } }>("/public/demo-brand/:file", async (req, reply) => {
     const allowed: Record<string, string> = {
@@ -206,28 +258,53 @@ export async function registerBrandPresentationRoutes(app: FastifyInstance, cont
     return reply.header("content-type", contentType).header("cache-control", "public, max-age=31536000, immutable").send(body);
   });
 
-  app.get<{ Params: { tenantId: string; brandId: string; assetId: string } }>(
-    "/public/tenants/:tenantId/brands/:brandId/assets/:assetId",
-    async (req, reply) => {
-      const asset = await container.brandAssets.findById(req.params.tenantId, req.params.brandId, req.params.assetId);
-      if (!asset || asset.status !== "READY") return reply.code(404).send({ type: "not-found", title: "Asset not found", status: 404 });
-      const stored = await container.brandAssetStorage.get(asset.storagePath);
-      if (!stored) return reply.code(404).send({ type: "not-found", title: "Asset not found", status: 404 });
-      return reply.header("content-type", stored.mimeType).header("cache-control", "public, max-age=31536000, immutable").send(Buffer.from(stored.bytes));
-    },
-  );
+  app.get<{ Params: { tenantId: string; brandId: string; assetId: string } }>("/public/tenants/:tenantId/brands/:brandId/assets/:assetId", async (req, reply) => {
+    const asset = await container.brandAssets.findById(req.params.tenantId, req.params.brandId, req.params.assetId);
+    if (!asset || asset.status !== "READY") return reply.code(404).send({ type: "not-found", title: "Asset not found", status: 404 });
+    const stored = await container.brandAssetStorage.get(asset.storagePath);
+    if (!stored) return reply.code(404).send({ type: "not-found", title: "Asset not found", status: 404 });
+    return reply.header("content-type", stored.mimeType).header("cache-control", "public, max-age=31536000, immutable").send(Buffer.from(stored.bytes));
+  });
 }
 
 function effectivePayload(tenantId: string, brandId: string, branchId: string | null, surface: string, document: BrandPresentation["document"], revision: number) {
-  return { tenantId, brandId, branchId, revision, surface, document, cacheKey: `${tenantId}:${brandId}:${branchId ?? "-"}:${revision}:${surface}` };
+  return {
+    tenantId,
+    brandId,
+    branchId,
+    revision,
+    surface,
+    document,
+    cacheKey: `${tenantId}:${brandId}:${branchId ?? "-"}:${revision}:${surface}`,
+  };
 }
 
 function platformFallback(name: string, logoUrl?: string): BrandPresentation["document"] {
   return brandPresentationDocumentSchema.parse({
     identity: { displayName: name },
-    assets: logoUrl ? { logo: { assetId: "00000000-0000-0000-0000-000000000000", kind: "LOGO", url: logoUrl, mimeType: "image/png", checksum: "legacy" } } : {},
-    colors: { primary: "#2B5CAD", canvas: "#FFFFFF", surface: "#FFFFFF", text: "#1A1A1A", mutedText: "#595959", border: "#D0D0D0" },
-    typography: {}, shape: {}, templates: {}, content: { locale: "es-AR" },
+    assets: logoUrl
+      ? {
+          logo: {
+            assetId: "00000000-0000-0000-0000-000000000000",
+            kind: "LOGO",
+            url: logoUrl,
+            mimeType: "image/png",
+            checksum: "legacy",
+          },
+        }
+      : {},
+    colors: {
+      primary: "#2B5CAD",
+      canvas: "#FFFFFF",
+      surface: "#FFFFFF",
+      text: "#1A1A1A",
+      mutedText: "#595959",
+      border: "#D0D0D0",
+    },
+    typography: {},
+    shape: {},
+    templates: {},
+    content: { locale: "es-AR" },
   });
 }
 

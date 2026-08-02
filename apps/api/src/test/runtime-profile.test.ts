@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { resolveRuntimeProfile } from "../composition/container.js";
+import {
+  resolveRuntimeProfile,
+  shouldSeedDemoAtStartup,
+} from "../composition/container.js";
 
 test("runtime profile keeps memory and fixture adapters local by default", () => {
   assert.deepEqual(resolveRuntimeProfile({}), {
@@ -91,4 +94,30 @@ test("unknown drivers fail instead of silently falling back", () => {
       }),
     /Unsupported AUTH_DRIVER/,
   );
+});
+
+test("demo data is initialized only in isolated local and test environments", () => {
+  for (const environment of ["local", "test", "e2e"]) {
+    assert.equal(
+      shouldSeedDemoAtStartup({
+        environment,
+        persistenceDriver: "memory",
+        authenticationDriver: "fixture",
+        durable: false,
+      }),
+      true,
+    );
+  }
+
+  for (const environment of ["preview", "production", "demo"]) {
+    assert.equal(
+      shouldSeedDemoAtStartup({
+        environment,
+        persistenceDriver: "supabase",
+        authenticationDriver: "supabase",
+        durable: true,
+      }),
+      false,
+    );
+  }
 });
