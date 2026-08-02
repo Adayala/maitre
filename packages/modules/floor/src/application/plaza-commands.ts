@@ -50,6 +50,8 @@ export interface SavePlazaInput {
   salonId: string;
   servicePeriodId: string;
   name: string;
+  mode?: Plaza["mode"];
+  sourcePlazaId?: string | null;
   waiterEmploymentId?: string | null;
   tableIds: string[];
   id?: string;
@@ -68,11 +70,15 @@ export async function createPlaza(
     salonId: input.salonId,
     servicePeriodId: input.servicePeriodId,
     name: validated.name,
+    mode: input.mode ?? "VARIABLE",
     tableIds: validated.tableIds,
     createdAt: now,
     updatedAt: now,
     ...(input.waiterEmploymentId !== undefined
       ? { waiterEmploymentId: input.waiterEmploymentId }
+      : {}),
+    ...(input.sourcePlazaId !== undefined
+      ? { sourcePlazaId: input.sourcePlazaId }
       : {}),
   };
   await assertTablesAreAvailable(deps, plaza);
@@ -98,6 +104,7 @@ export async function updatePlaza(
   const updated: Plaza = {
     ...current,
     name: validated.name,
+    mode: input.mode ?? current.mode,
     tableIds: validated.tableIds,
     updatedAt: (deps.now ?? (() => new Date()))(),
     ...(input.waiterEmploymentId !== undefined

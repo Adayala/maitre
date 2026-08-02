@@ -20,6 +20,7 @@ import {
   type OrganizationBranch,
   type OrganizationNode,
   type OrganizationPlaza,
+  plazaModeLabel,
   type OrganizationSalon,
   type OrganizationServicePeriod,
   type OrganizationTable,
@@ -902,6 +903,7 @@ function PlazaDetailPanel({
     branchId,
   ).filter((employment) => employment.status === "ACTIVE");
   const [name, setName] = useState("");
+  const [mode, setMode] = useState<OrganizationPlaza["mode"]>("VARIABLE");
   const [waiterEmploymentId, setWaiterEmploymentId] = useState("");
   const [tableIds, setTableIds] = useState<string[]>([]);
   const [isHydrated, setIsHydrated] = useState(!id);
@@ -914,6 +916,7 @@ function PlazaDetailPanel({
     const plaza = plazaQuery.data?.data;
     if (!plaza) return;
     setName(plaza.name);
+    setMode(plaza.mode ?? "VARIABLE");
     setSelectedSalonId(plaza.salonId);
     setWaiterEmploymentId(plaza.waiterEmploymentId ?? "");
     setTableIds(plaza.tableIds);
@@ -945,6 +948,7 @@ function PlazaDetailPanel({
               servicePeriodId,
             }),
         name,
+        mode,
         waiterEmploymentId: waiterEmploymentId || null,
         tableIds,
       },
@@ -1034,6 +1038,31 @@ function PlazaDetailPanel({
               onChange={(event) => setName(event.target.value)}
             />
           </label>
+          <fieldset
+            className="org-table-picker org-mode-picker"
+            disabled={!isEditablePeriod}
+          >
+            <legend>Composición organizativa</legend>
+            {(["FIXED", "VARIABLE"] as const).map((value) => (
+              <label key={value}>
+                <input
+                  type="radio"
+                  name="plaza-mode"
+                  value={value}
+                  checked={mode === value}
+                  onChange={() => setMode(value)}
+                />
+                <span>
+                  <strong>{plazaModeLabel(value)}</strong>
+                  <small>
+                    {value === "FIXED"
+                      ? "Replica nombre y mesas en la próxima jornada; el mozo se vuelve a asignar."
+                      : "Existe sólo durante esta jornada y se arma según la operación del día."}
+                  </small>
+                </span>
+              </label>
+            ))}
+          </fieldset>
           <label>
             Salón físico
             <select
@@ -1057,8 +1086,8 @@ function PlazaDetailPanel({
                 ))}
             </select>
             <small>
-              La Plaza referencia mesas de un único salón; no cambia su
-              ubicación física.
+              La Plaza referencia mesas de un único salón y organiza el trabajo;
+              no cambia su ubicación física ni limita permisos.
             </small>
           </label>
           <label>
@@ -1082,6 +1111,10 @@ function PlazaDetailPanel({
                 );
               })}
             </select>
+            <small>
+              Un mismo mozo puede ser responsable de varias Plazas en esta
+              jornada.
+            </small>
           </label>
           <fieldset className="org-table-picker" disabled={!isEditablePeriod}>
             <legend>Mesas agrupadas en esta plaza</legend>

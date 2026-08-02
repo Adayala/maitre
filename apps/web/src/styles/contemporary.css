@@ -8,22 +8,33 @@
  */
 
 :root {
+  --app-font-ui: var(
+    --brand-font-body,
+    Inter,
+    "Avenir Next",
+    Avenir,
+    ui-sans-serif,
+    system-ui,
+    sans-serif
+  );
   --app-font-display: var(
     --brand-font-heading,
-    system-ui,
+    Inter,
+    "Avenir Next",
+    Avenir,
+    ui-sans-serif,
     -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI Variable",
-    "Segoe UI",
+    system-ui,
     sans-serif
   );
   --app-font-body: var(
     --brand-font-body,
-    system-ui,
+    Inter,
+    "Avenir Next",
+    Avenir,
+    ui-sans-serif,
     -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI Variable",
-    "Segoe UI",
+    system-ui,
     sans-serif
   );
   --app-radius-sm: max(8px, calc(var(--brand-radius, 16px) * 0.62));
@@ -51,6 +62,7 @@ body {
   color: var(--text);
   font-family: var(--app-font-body);
   font-size: 15px;
+  font-synthesis: none;
   font-optical-sizing: auto;
   line-height: 1.5;
   text-rendering: optimizeLegibility;
@@ -67,11 +79,18 @@ h1,
 h2,
 h3,
 h4,
-.dash-brand,
-.tenant-card > strong,
-.dash-nav .dash-nav__organization-link strong {
+.tenant-card > strong {
   font-family: var(--app-font-display);
   font-optical-sizing: auto;
+}
+
+.dash-header,
+.dash-nav,
+button,
+input,
+select,
+textarea {
+  font-family: var(--app-font-ui);
 }
 
 button {
@@ -95,6 +114,10 @@ button {
   background: transparent;
 }
 
+.dash-shell--nav-collapsed {
+  grid-template-columns: 84px minmax(0, 1fr);
+}
+
 .dash-header {
   position: sticky;
   top: 0;
@@ -115,9 +138,9 @@ button {
   align-items: center;
   flex: 0 0 auto;
   color: var(--text);
-  font-size: 1rem;
-  font-weight: 760;
-  letter-spacing: -0.035em;
+  font-size: 0.98rem;
+  font-weight: 780;
+  letter-spacing: -0.025em;
   text-transform: none;
 }
 
@@ -246,11 +269,41 @@ button {
   background: color-mix(in srgb, var(--surface) 94%, var(--bg));
   box-shadow: none;
   color: var(--text);
+  overscroll-behavior: contain;
+}
+
+.dash-nav__collapse {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  min-height: 44px;
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 680;
+}
+
+.dash-nav__collapse:hover {
+  border-color: var(--border);
+  background: color-mix(in srgb, var(--primary) 5%, var(--surface));
+  color: var(--text);
+}
+
+.dash-nav__collapse > span {
+  font-size: 1.35rem;
+  font-weight: 480;
+  line-height: 1;
 }
 
 .dash-nav .dash-nav__organization-link {
-  display: grid;
-  gap: 4px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
   min-height: 86px;
   padding: 15px 16px;
   border: 1px solid transparent;
@@ -258,6 +311,21 @@ button {
   background: transparent;
   color: var(--text);
   box-shadow: none;
+}
+
+.dash-nav__organization-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.dash-nav__organization-glyph,
+.dash-nav__item-glyph {
+  display: none;
+  color: var(--primary);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
 }
 
 .dash-nav .dash-nav__organization-link span {
@@ -270,9 +338,9 @@ button {
 
 .dash-nav .dash-nav__organization-link strong {
   color: inherit;
-  font-size: 1rem;
-  font-weight: 720;
-  letter-spacing: -0.02em;
+  font-size: 0.96rem;
+  font-weight: 760;
+  letter-spacing: -0.015em;
   line-height: 1.2;
 }
 
@@ -320,10 +388,32 @@ button {
   padding: 8px 10px;
   border-radius: 10px;
   color: var(--muted);
+  cursor: pointer;
   font-family: var(--app-font-body);
   font-size: 0.69rem;
   font-weight: 720;
   letter-spacing: 0.055em;
+  list-style: none;
+}
+
+.dash-nav__group summary::-webkit-details-marker {
+  display: none;
+}
+
+.dash-nav__group summary::after {
+  content: "+";
+}
+
+.dash-nav__group[open] summary::after {
+  content: "−";
+}
+
+.dash-nav__group summary strong {
+  overflow: hidden;
+  font-size: inherit;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .dash-nav__group summary:hover {
@@ -349,6 +439,65 @@ button {
   color: var(--muted);
   font-size: 0.84rem;
   font-weight: 590;
+}
+
+.dash-nav__item-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dash-shell--nav-collapsed .dash-nav {
+  padding-inline: 10px;
+  overflow-x: hidden;
+}
+
+.dash-shell--nav-collapsed .dash-nav__collapse {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+.dash-shell--nav-collapsed .dash-nav__collapse strong,
+.dash-shell--nav-collapsed .dash-nav__organization-copy,
+.dash-shell--nav-collapsed .dash-nav__group summary strong,
+.dash-shell--nav-collapsed .dash-nav__item-label {
+  display: none;
+}
+
+.dash-shell--nav-collapsed .dash-nav__organization-link {
+  justify-content: center;
+  min-height: 52px;
+  padding: 8px;
+}
+
+.dash-shell--nav-collapsed .dash-nav__organization-glyph,
+.dash-shell--nav-collapsed .dash-nav__item-glyph {
+  display: inline;
+}
+
+.dash-shell--nav-collapsed .dash-nav__groups {
+  gap: 4px;
+  padding-top: 10px;
+}
+
+.dash-shell--nav-collapsed .dash-nav__group summary {
+  grid-template-columns: 1fr;
+  place-items: center;
+  padding-inline: 0;
+}
+
+.dash-shell--nav-collapsed .dash-nav__group summary::after {
+  display: none;
+}
+
+.dash-shell--nav-collapsed .dash-nav__group > ul {
+  display: grid;
+  padding: 2px 0 7px;
+}
+
+.dash-shell--nav-collapsed .dash-nav__group a {
+  justify-content: center;
+  padding-inline: 0;
 }
 
 .dash-nav .dash-nav__group a:hover {
@@ -381,10 +530,11 @@ button {
   max-width: none;
   margin: 0;
   color: var(--text);
-  font-size: clamp(2.35rem, 4vw, 3.6rem);
-  font-weight: 720;
-  letter-spacing: -0.052em;
-  line-height: 1.04;
+  font-family: var(--app-font-display);
+  font-size: clamp(2.25rem, 3.45vw, 3.25rem);
+  font-weight: 760;
+  letter-spacing: -0.045em;
+  line-height: 1.02;
 }
 
 .org-kicker,
@@ -735,6 +885,14 @@ button {
   border-radius: 10px;
 }
 
+.org-mode-picker {
+  grid-template-columns: repeat(2, 1fr) !important;
+}
+
+.org-mode-picker span {
+  display: grid;
+}
+
 .org-plaza-summary {
   border: 1px solid color-mix(in srgb, var(--primary) 14%, var(--border));
   border-radius: 12px;
@@ -997,6 +1155,46 @@ button {
     display: block;
   }
 
+  .dash-nav__collapse {
+    display: none;
+  }
+
+  .dash-shell--nav-collapsed .dash-nav__organization-copy,
+  .dash-shell--nav-collapsed .dash-nav__group summary strong,
+  .dash-shell--nav-collapsed .dash-nav__item-label {
+    display: initial;
+  }
+
+  .dash-shell--nav-collapsed .dash-nav__organization-glyph,
+  .dash-shell--nav-collapsed .dash-nav__item-glyph {
+    display: none;
+  }
+
+  .dash-shell--nav-collapsed .dash-nav__organization-link {
+    justify-content: flex-start;
+    min-height: 72px;
+    padding: 15px 16px;
+  }
+
+  .dash-shell--nav-collapsed .dash-nav__group summary {
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    place-items: initial;
+    padding: 8px 10px;
+  }
+
+  .dash-shell--nav-collapsed .dash-nav__group summary::after {
+    display: initial;
+  }
+
+  .dash-shell--nav-collapsed .dash-nav__group > ul {
+    padding: 2px 0 7px 32px;
+  }
+
+  .dash-shell--nav-collapsed .dash-nav__group a {
+    justify-content: flex-start;
+    padding: 9px 12px;
+  }
+
   .dash-header {
     position: sticky;
     align-items: center;
@@ -1050,7 +1248,26 @@ button {
   }
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  .dash-shell {
+    transition: grid-template-columns 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .dash-nav__collapse,
+  .dash-nav__organization-link,
+  .dash-nav__group a {
+    transition:
+      color 160ms ease,
+      background-color 160ms ease,
+      border-color 160ms ease;
+  }
+}
+
 @media (max-width: 600px) {
+  .org-mode-picker {
+    grid-template-columns: 1fr;
+  }
+
   .dash-header {
     gap: 10px;
     padding: 10px 14px;

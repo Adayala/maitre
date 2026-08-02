@@ -24,6 +24,7 @@ const createBodySchema = z.object({
   salonId: z.string().uuid(),
   servicePeriodId: z.string().uuid(),
   name: z.string().min(2).max(80),
+  mode: z.enum(["FIXED", "VARIABLE"]).default("VARIABLE"),
   waiterEmploymentId: z.string().uuid().nullable().optional(),
   tableIds: z.array(z.string().uuid()).min(1),
 });
@@ -31,6 +32,7 @@ const createBodySchema = z.object({
 const patchBodySchema = z
   .object({
     name: z.string().min(2).max(80).optional(),
+    mode: z.enum(["FIXED", "VARIABLE"]).optional(),
     waiterEmploymentId: z.string().uuid().nullable().optional(),
     tableIds: z.array(z.string().uuid()).min(1).optional(),
   })
@@ -77,6 +79,52 @@ export async function registerPlazaRoutes(
       return sendProblem(reply, correlationId, error);
     }
   });
+
+  app.get<{ Params: { branchId: string } }>(
+    "/v1/branches/:branchId/active-plazas",
+    async (req, reply) => {
+      const correlationId = randomUUID();
+      try {
+        const ctx = await requireTenantContext(container, req);
+        requirePermission(ctx, "table-status:read");
+        if (
+          ctx.branchScopeType === "SELECTED_BRANCHES" &&
+          !ctx.branchIds.includes(req.params.branchId)
+        ) {
+          return sendProblem(reply, correlationId, notFound("Branch"));
+        }
+        const period = await container.servicePeriods.findActiveByBranch(
+          ctx.tenantId,
+          req.params.branchId,
+        );
+        if (!period) return { data: { servicePeriod: null, plazas: [] } };
+        const [plazas, employments] = await Promise.all([
+          container.plazas.listByServicePeriod(ctx.tenantId, period.id),
+          container.employments?.listByTenant(ctx.tenantId) ?? [],
+        ]);
+        const employmentById = new Map(
+          employments.map((employment) => [employment.id, employment]),
+        );
+        return {
+          data: {
+            servicePeriod: period,
+            plazas: plazas.map((plaza) => {
+              const waiter = plaza.waiterEmploymentId
+                ? employmentById.get(plaza.waiterEmploymentId)
+                : undefined;
+              return {
+                ...plaza,
+                waiterEmployeeCode: waiter?.employeeCode ?? null,
+                isMine: waiter?.personRef === ctx.externalIdentityId,
+              };
+            }),
+          },
+        };
+      } catch (error) {
+        return sendProblem(reply, correlationId, error);
+      }
+    },
+  );
 
   app.get<{ Params: { id: string } }>("/v1/plazas/:id", async (req, reply) => {
     const correlationId = randomUUID();
@@ -131,6 +179,7 @@ export async function registerPlazaRoutes(
         const body = omitUndefined(patchBodySchema.parse(req.body));
         const plaza = await updatePlaza(deps(), current, {
           name: body.name ?? current.name,
+          mode: body.mode ?? current.mode,
           tableIds: body.tableIds ?? current.tableIds,
           ...(body.waiterEmploymentId !== undefined
             ? { waiterEmploymentId: body.waiterEmploymentId }

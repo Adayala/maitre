@@ -51,6 +51,7 @@ export function createRunManifest(env = process.env) {
     applications: {
       dash: env["E2E_DASH_URL"] ?? "http://127.0.0.1:5273",
       floor: env["E2E_FLOOR_URL"] ?? "http://127.0.0.1:5276",
+      host: env["E2E_HOST_URL"] ?? "http://127.0.0.1:5278",
       kitchen: env["E2E_KITCHEN_URL"] ?? "http://127.0.0.1:5275",
       cash: env["E2E_CASH_URL"] ?? "http://127.0.0.1:5274",
     },

@@ -17,7 +17,10 @@ Los comensales no pertenecen permanentemente a una mesa. Una visita ocupa una o 
 
 ## 4. La plaza es operacional
 
-Una plaza es un grupo de mesas asignado a un mozo o equipo durante una jornada. No es sinónimo de mesa ni una división física permanente.
+Una plaza es un grupo organizativo de mesas durante una jornada. Puede tener una
+composición fija o variable y asignarse a un mozo; un mismo mozo puede recibir
+varias plazas. La asignación orienta el trabajo y no limita por sí sola qué mesas
+puede operar. No es sinónimo de mesa, permiso ni división física permanente.
 
 ## 5. Humanos en control
 

@@ -8,33 +8,26 @@ import { StateView } from "../../components/state-view.js";
 import { ApiError } from "../../lib/api-client.js";
 import type {
   ApiData,
+  ActivePlazasPayload,
   Salon,
   Table,
   TableStatusProjection,
   TableStatusValue,
 } from "../../lib/waiter-types.js";
 import { SeatSheet } from "./seat-sheet.js";
-
-export interface FloorTable {
-  id: string;
-  number: string;
-  name?: string;
-  capacity?: number;
-  salonName?: string;
-  status: TableStatusValue;
-  relatedVisitId?: string;
-}
-
-interface FloorGroup {
-  key: string;
-  salonName: string;
-  tables: FloorTable[];
-}
+import {
+  organizeFloorGroups,
+  type FloorGroup,
+  type FloorTable,
+} from "./floor-organization.js";
 
 interface FloorData {
   groups: FloorGroup[];
   limited: boolean; // true when the full table list is not readable (fell back to statuses)
   counts: Record<string, number>;
+  servicePeriodName?: string;
+  ownPlazaCount: number;
+  organizationUnavailable: boolean;
 }
 
 interface FloorPriority {
@@ -53,7 +46,10 @@ interface FloorFocusCard {
   onClick: () => void;
 }
 
-const STATUS_META: Record<TableStatusValue, { label: string; cls: string; icon: string }> = {
+const STATUS_META: Record<
+  TableStatusValue,
+  { label: string; cls: string; icon: string }
+> = {
   AVAILABLE: { label: "Libre", cls: "s-available", icon: "○" },
   OCCUPIED: { label: "Ocupada", cls: "s-occupied", icon: "●" },
   PAYING: { label: "Pagando", cls: "s-paying", icon: "$" },
@@ -67,7 +63,9 @@ export function FloorPage() {
   const { selectedBranchId, selectedBranch } = useSession();
   const { push } = useNav();
   const [seatTable, setSeatTable] = useState<FloorTable | null>(null);
-  const [statusFilter, setStatusFilter] = useState<TableStatusValue | "ALL">("ALL");
+  const [statusFilter, setStatusFilter] = useState<TableStatusValue | "ALL">(
+    "ALL",
+  );
 
   const query = useQuery({
     queryKey: ["floor", selectedBranchId],
@@ -79,16 +77,34 @@ export function FloorPage() {
       const statusRes = await api<ApiData<TableStatusProjection[]>>(
         `/v1/branches/${branchId}/table-statuses`,
       );
+      let activePlazas: ActivePlazasPayload = {
+        servicePeriod: null,
+        plazas: [],
+      };
+      let organizationUnavailable = false;
+      try {
+        activePlazas = (
+          await api<ApiData<ActivePlazasPayload>>(
+            `/v1/branches/${branchId}/active-plazas`,
+          )
+        ).data;
+      } catch {
+        organizationUnavailable = true;
+      }
       const statusById = new Map<string, TableStatusProjection>();
       for (const s of statusRes.data) statusById.set(s.tableId, s);
 
       // Full table list needs salon:read/table:read (admin/manager). Waiters may
       // not have it — degrade gracefully to the tables referenced by statuses.
       try {
-        const salonRes = await api<{ data: Salon[] }>(`/v1/salons?branchId=${branchId}`);
+        const salonRes = await api<{ data: Salon[] }>(
+          `/v1/salons?branchId=${branchId}`,
+        );
         const groups: FloorGroup[] = [];
         for (const salon of salonRes.data) {
-          const tableRes = await api<{ data: Table[] }>(`/v1/tables?salonId=${salon.id}&limit=200`);
+          const tableRes = await api<{ data: Table[] }>(
+            `/v1/tables?salonId=${salon.id}&limit=200`,
+          );
           const tables: FloorTable[] = tableRes.data
             .map((t) => {
               const st = statusById.get(t.id);
@@ -99,15 +115,34 @@ export function FloorPage() {
                 capacity: t.capacity,
                 salonName: salon.name,
                 status: st?.status ?? "AVAILABLE",
-                ...(st?.relatedVisitId ? { relatedVisitId: st.relatedVisitId } : {}),
+                ...(st?.relatedVisitId
+                  ? { relatedVisitId: st.relatedVisitId }
+                  : {}),
               } satisfies FloorTable;
             })
-            .sort((a, b) => a.number.localeCompare(b.number, "es", { numeric: true }));
-          if (tables.length > 0) groups.push({ key: salon.id, salonName: salon.name, tables });
+            .sort((a, b) =>
+              a.number.localeCompare(b.number, "es", { numeric: true }),
+            );
+          if (tables.length > 0)
+            groups.push({ key: salon.id, salonName: salon.name, tables });
         }
-        return { groups, limited: false, counts: tallyCounts(groups) };
+        const organized = organizeFloorGroups(groups, activePlazas.plazas);
+        return {
+          groups: organized,
+          limited: false,
+          counts: tallyCounts(organized),
+          ...(activePlazas.servicePeriod
+            ? { servicePeriodName: activePlazas.servicePeriod.name }
+            : {}),
+          ownPlazaCount: activePlazas.plazas.filter((plaza) => plaza.isMine)
+            .length,
+          organizationUnavailable,
+        };
       } catch (err) {
-        if (err instanceof ApiError && (err.status === 403 || err.status === 401)) {
+        if (
+          err instanceof ApiError &&
+          (err.status === 403 || err.status === 401)
+        ) {
           const tables: FloorTable[] = statusRes.data.map((s) => ({
             id: s.tableId,
             number: s.tableId.slice(0, 4),
@@ -117,7 +152,18 @@ export function FloorPage() {
           const groups = tables.length
             ? [{ key: "all", salonName: "Mesas activas", tables }]
             : [];
-          return { groups, limited: true, counts: tallyCounts(groups) };
+          const organized = organizeFloorGroups(groups, activePlazas.plazas);
+          return {
+            groups: organized,
+            limited: true,
+            counts: tallyCounts(organized),
+            ...(activePlazas.servicePeriod
+              ? { servicePeriodName: activePlazas.servicePeriod.name }
+              : {}),
+            ownPlazaCount: activePlazas.plazas.filter((plaza) => plaza.isMine)
+              .length,
+            organizationUnavailable,
+          };
         }
         throw err;
       }
@@ -140,7 +186,10 @@ export function FloorPage() {
   }
 
   const availableTables = useMemo(
-    () => (query.data?.groups.flatMap((g) => g.tables) ?? []).filter((t) => t.status === "AVAILABLE"),
+    () =>
+      (query.data?.groups.flatMap((g) => g.tables) ?? []).filter(
+        (t) => t.status === "AVAILABLE",
+      ),
     [query.data],
   );
 
@@ -165,39 +214,57 @@ export function FloorPage() {
   });
   const floorChecklist = [
     { label: "Pagos bajo control", done: payingCount === 0 },
-    { label: "Mesas ocupadas monitoreadas", done: occupiedCount === 0 || statusFilter === "OCCUPIED" },
-    { label: "Reservas anticipadas revisadas", done: reservedCount === 0 || statusFilter === "RESERVED" },
+    {
+      label: "Mesas ocupadas monitoreadas",
+      done: occupiedCount === 0 || statusFilter === "OCCUPIED",
+    },
+    {
+      label: "Reservas anticipadas revisadas",
+      done: reservedCount === 0 || statusFilter === "RESERVED",
+    },
     { label: "Capacidad libre visible", done: availableCount > 0 },
   ];
-  const floorPending = floorChecklist.filter((step) => !step.done).map((step) => step.label);
+  const floorPending = floorChecklist
+    .filter((step) => !step.done)
+    .map((step) => step.label);
   const floorFocusCards: FloorFocusCard[] = [
     {
       label: "Pagando",
       value: payingCount,
       detail: "Cerrar y liberar rotación",
       active: statusFilter === "PAYING",
-      onClick: () => setStatusFilter((current) => (current === "PAYING" ? "ALL" : "PAYING")),
+      onClick: () =>
+        setStatusFilter((current) => (current === "PAYING" ? "ALL" : "PAYING")),
     },
     {
       label: "Ocupadas",
       value: occupiedCount,
       detail: "Seguir servicio en curso",
       active: statusFilter === "OCCUPIED",
-      onClick: () => setStatusFilter((current) => (current === "OCCUPIED" ? "ALL" : "OCCUPIED")),
+      onClick: () =>
+        setStatusFilter((current) =>
+          current === "OCCUPIED" ? "ALL" : "OCCUPIED",
+        ),
     },
     {
       label: "Reservadas",
       value: reservedCount,
       detail: "Preparar próximas llegadas",
       active: statusFilter === "RESERVED",
-      onClick: () => setStatusFilter((current) => (current === "RESERVED" ? "ALL" : "RESERVED")),
+      onClick: () =>
+        setStatusFilter((current) =>
+          current === "RESERVED" ? "ALL" : "RESERVED",
+        ),
     },
     {
       label: "Libres",
       value: availableCount,
       detail: "Capacidad para sentar ya",
       active: statusFilter === "AVAILABLE",
-      onClick: () => setStatusFilter((current) => (current === "AVAILABLE" ? "ALL" : "AVAILABLE")),
+      onClick: () =>
+        setStatusFilter((current) =>
+          current === "AVAILABLE" ? "ALL" : "AVAILABLE",
+        ),
     },
   ];
 
@@ -209,7 +276,9 @@ export function FloorPage() {
         right={
           counts ? (
             <div className="floor-legend" aria-hidden="true">
-              <span className="lg lg--available">{counts["AVAILABLE"] ?? 0}</span>
+              <span className="lg lg--available">
+                {counts["AVAILABLE"] ?? 0}
+              </span>
               <span className="lg lg--occupied">{counts["OCCUPIED"] ?? 0}</span>
               <span className="lg lg--paying">{counts["PAYING"] ?? 0}</span>
             </div>
@@ -229,22 +298,65 @@ export function FloorPage() {
           emptyMessage="Todavía no hay mesas con actividad en esta sucursal."
         >
           {floorPriority ? (
-            <div className={`waiter-banner waiter-banner--${floorPriority.tone}`}>
+            <div
+              className={`waiter-banner waiter-banner--${floorPriority.tone}`}
+            >
               <div className="waiter-banner-copy">
                 <strong>{floorPriority.title}</strong>
                 <span>{floorPriority.message}</span>
               </div>
-              <button type="button" className="btn btn--ghost btn--sm" onClick={floorPriority.onAction}>
+              <button
+                type="button"
+                className="btn btn--ghost btn--sm"
+                onClick={floorPriority.onAction}
+              >
                 {floorPriority.cta}
               </button>
             </div>
           ) : null}
 
-          <section className="waiter-kpi-strip" aria-label="Resumen operativo del salón">
+          <section
+            className="plaza-context"
+            aria-label="Organización de plazas"
+          >
+            <div>
+              <span>Organización de jornada</span>
+              <strong>
+                {query.data?.servicePeriodName ?? "Sin jornada activa"}
+              </strong>
+            </div>
+            <p>
+              {query.data?.organizationUnavailable
+                ? "No pudimos cargar las plazas. El mapa completo sigue disponible."
+                : query.data?.servicePeriodName
+                  ? query.data.ownPlazaCount > 0
+                    ? `${query.data.ownPlazaCount} plaza(s) a tu cargo. También podés operar el resto del salón.`
+                    : "No tenés una plaza asignada. Podés operar el salón normalmente."
+                  : "Cuando abra una jornada vas a ver acá la distribución organizativa."}
+            </p>
+            {query.data?.organizationUnavailable ? (
+              <button
+                type="button"
+                className="btn btn--ghost btn--sm"
+                onClick={() => query.refetch()}
+              >
+                Reintentar
+              </button>
+            ) : null}
+          </section>
+
+          <section
+            className="waiter-kpi-strip"
+            aria-label="Resumen operativo del salón"
+          >
             <button
               type="button"
               className="waiter-kpi-card"
-              onClick={() => setStatusFilter((current) => (current === "PAYING" ? "ALL" : "PAYING"))}
+              onClick={() =>
+                setStatusFilter((current) =>
+                  current === "PAYING" ? "ALL" : "PAYING",
+                )
+              }
             >
               <span>Pagando</span>
               <strong>{payingCount}</strong>
@@ -252,7 +364,11 @@ export function FloorPage() {
             <button
               type="button"
               className="waiter-kpi-card"
-              onClick={() => setStatusFilter((current) => (current === "OCCUPIED" ? "ALL" : "OCCUPIED"))}
+              onClick={() =>
+                setStatusFilter((current) =>
+                  current === "OCCUPIED" ? "ALL" : "OCCUPIED",
+                )
+              }
             >
               <span>Ocupadas</span>
               <strong>{occupiedCount}</strong>
@@ -260,7 +376,11 @@ export function FloorPage() {
             <button
               type="button"
               className="waiter-kpi-card"
-              onClick={() => setStatusFilter((current) => (current === "AVAILABLE" ? "ALL" : "AVAILABLE"))}
+              onClick={() =>
+                setStatusFilter((current) =>
+                  current === "AVAILABLE" ? "ALL" : "AVAILABLE",
+                )
+              }
             >
               <span>Libres</span>
               <strong>{availableCount}</strong>
@@ -268,20 +388,32 @@ export function FloorPage() {
             <button
               type="button"
               className="waiter-kpi-card"
-              onClick={() => setStatusFilter((current) => (current === "RESERVED" ? "ALL" : "RESERVED"))}
+              onClick={() =>
+                setStatusFilter((current) =>
+                  current === "RESERVED" ? "ALL" : "RESERVED",
+                )
+              }
             >
               <span>Reservadas</span>
               <strong>{reservedCount}</strong>
             </button>
           </section>
 
-          <section className="waiter-guidance" aria-label="Guía operativa del salón">
+          <section
+            className="waiter-guidance"
+            aria-label="Guía operativa del salón"
+          >
             <article className="waiter-guidance-card">
-              <span className="waiter-guidance-eyebrow">Chequeo de recorrido</span>
+              <span className="waiter-guidance-eyebrow">
+                Chequeo de recorrido
+              </span>
               <strong>Qué conviene revisar ahora</strong>
               <div className="waiter-checklist">
                 {floorChecklist.map((step) => (
-                  <div key={step.label} className={`waiter-check ${step.done ? "waiter-check--done" : ""}`}>
+                  <div
+                    key={step.label}
+                    className={`waiter-check ${step.done ? "waiter-check--done" : ""}`}
+                  >
                     <strong>{step.done ? "✓" : "•"}</strong>
                     <span>{step.label}</span>
                   </div>
@@ -316,14 +448,16 @@ export function FloorPage() {
 
           {query.data?.limited && (
             <p className="floor-note">
-              Mostrando solo mesas con actividad. Para ver todo el salón se necesita permiso de
-              lectura de mesas.
+              Mostrando solo mesas con actividad. Para ver todo el salón se
+              necesita permiso de lectura de mesas.
             </p>
           )}
 
           <div className="waiter-toolbar">
             <div className="waiter-segmented">
-              {(["ALL", "AVAILABLE", "OCCUPIED", "PAYING", "RESERVED"] as const).map((value) => (
+              {(
+                ["ALL", "AVAILABLE", "OCCUPIED", "PAYING", "RESERVED"] as const
+              ).map((value) => (
                 <button
                   key={value}
                   type="button"
@@ -342,7 +476,8 @@ export function FloorPage() {
               <div className="table-grid">
                 {group.tables.map((t) => {
                   const meta = STATUS_META[t.status];
-                  const actionable = t.status === "AVAILABLE" || Boolean(t.relatedVisitId);
+                  const actionable =
+                    t.status === "AVAILABLE" || Boolean(t.relatedVisitId);
                   return (
                     <button
                       key={t.id}
@@ -392,7 +527,8 @@ export function FloorPage() {
 
 function tallyCounts(groups: FloorGroup[]): Record<string, number> {
   const counts: Record<string, number> = {};
-  for (const g of groups) for (const t of g.tables) counts[t.status] = (counts[t.status] ?? 0) + 1;
+  for (const g of groups)
+    for (const t of g.tables) counts[t.status] = (counts[t.status] ?? 0) + 1;
   return counts;
 }
 
@@ -409,15 +545,19 @@ function getFloorPriority({
   reservedCount: number;
   availableCount: number;
   statusFilter: TableStatusValue | "ALL";
-  setStatusFilter: React.Dispatch<React.SetStateAction<TableStatusValue | "ALL">>;
+  setStatusFilter: React.Dispatch<
+    React.SetStateAction<TableStatusValue | "ALL">
+  >;
 }): FloorPriority | null {
   if (payingCount > 0) {
     return {
       tone: "warning",
       title: `${payingCount} mesa${payingCount === 1 ? "" : "s"} cobrando ahora`,
-      message: "Conviene resolver primero las mesas en pago para liberar rotación y evitar esperas.",
+      message:
+        "Conviene resolver primero las mesas en pago para liberar rotación y evitar esperas.",
       cta: statusFilter === "PAYING" ? "Ver todas" : "Ir a pagando",
-      onAction: () => setStatusFilter((current) => (current === "PAYING" ? "ALL" : "PAYING")),
+      onAction: () =>
+        setStatusFilter((current) => (current === "PAYING" ? "ALL" : "PAYING")),
     };
   }
 
@@ -425,9 +565,13 @@ function getFloorPriority({
     return {
       tone: "info",
       title: `${occupiedCount} mesa${occupiedCount === 1 ? "" : "s"} en servicio`,
-      message: "Revisá rápido las ocupadas para seguir pedidos, entregas o próximos cierres.",
+      message:
+        "Revisá rápido las ocupadas para seguir pedidos, entregas o próximos cierres.",
       cta: statusFilter === "OCCUPIED" ? "Ver todas" : "Ir a ocupadas",
-      onAction: () => setStatusFilter((current) => (current === "OCCUPIED" ? "ALL" : "OCCUPIED")),
+      onAction: () =>
+        setStatusFilter((current) =>
+          current === "OCCUPIED" ? "ALL" : "OCCUPIED",
+        ),
     };
   }
 
@@ -435,9 +579,13 @@ function getFloorPriority({
     return {
       tone: "info",
       title: `${reservedCount} mesa${reservedCount === 1 ? "" : "s"} reservada${reservedCount === 1 ? "" : "s"}`,
-      message: "Chequeá preparación de mesas reservadas para anticiparte a próximas llegadas.",
+      message:
+        "Chequeá preparación de mesas reservadas para anticiparte a próximas llegadas.",
       cta: statusFilter === "RESERVED" ? "Ver todas" : "Ir a reservadas",
-      onAction: () => setStatusFilter((current) => (current === "RESERVED" ? "ALL" : "RESERVED")),
+      onAction: () =>
+        setStatusFilter((current) =>
+          current === "RESERVED" ? "ALL" : "RESERVED",
+        ),
     };
   }
 
@@ -445,9 +593,13 @@ function getFloorPriority({
     return {
       tone: "success",
       title: `${availableCount} mesa${availableCount === 1 ? "" : "s"} libre${availableCount === 1 ? "" : "s"}`,
-      message: "Hay capacidad para sentar una nueva visita enseguida si entra un grupo.",
+      message:
+        "Hay capacidad para sentar una nueva visita enseguida si entra un grupo.",
       cta: statusFilter === "AVAILABLE" ? "Ver todas" : "Ir a libres",
-      onAction: () => setStatusFilter((current) => (current === "AVAILABLE" ? "ALL" : "AVAILABLE")),
+      onAction: () =>
+        setStatusFilter((current) =>
+          current === "AVAILABLE" ? "ALL" : "AVAILABLE",
+        ),
     };
   }
 

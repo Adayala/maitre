@@ -40,6 +40,8 @@ test("@ui-contract muestra estados operativos, filtra mesas y abre una visita", 
     },
   ];
   let submittedVisit: unknown;
+  let plazaReadFails = true;
+  let plazaHasNoActivePeriod = false;
 
   await page.addInitScript(
     ({ tenant, branch }) => {
@@ -103,6 +105,51 @@ test("@ui-contract muestra estados operativos, filtra mesas y abre una visita", 
         },
       });
     }
+    if (path === `/v1/branches/${branchId}/active-plazas`) {
+      if (plazaReadFails) {
+        return route.fulfill({
+          status: 503,
+          json: { title: "Plazas unavailable", status: 503 },
+        });
+      }
+      if (plazaHasNoActivePeriod) {
+        return route.fulfill({
+          json: { data: { servicePeriod: null, plazas: [] } },
+        });
+      }
+      return route.fulfill({
+        json: {
+          data: {
+            servicePeriod: {
+              id: "period-e2e",
+              name: "Cena",
+              businessDate: "2026-08-02",
+              status: "OPEN",
+            },
+            plazas: [
+              {
+                id: "plaza-own",
+                name: "Terraza",
+                mode: "FIXED",
+                salonId,
+                tableIds: [tables[0]!.id],
+                waiterEmployeeCode: "MZ-7",
+                isMine: true,
+              },
+              {
+                id: "plaza-other",
+                name: "Interior",
+                mode: "VARIABLE",
+                salonId,
+                tableIds: [tables[1]!.id],
+                waiterEmployeeCode: "MZ-9",
+                isMine: false,
+              },
+            ],
+          },
+        },
+      });
+    }
     if (path === "/v1/salons") {
       return route.fulfill({
         json: { data: [{ id: salonId, branchId, name: "Salón principal" }] },
@@ -139,8 +186,24 @@ test("@ui-contract muestra estados operativos, filtra mesas y abre una visita", 
   await page.goto("/");
 
   await expect(
-    page.getByRole("heading", { name: "Salón principal" }),
+    page.getByText(
+      "No pudimos cargar las plazas. El mapa completo sigue disponible.",
+    ),
   ).toBeVisible();
+  await expect(page.getByRole("button", { name: /1 Libre/ })).toBeVisible();
+  plazaReadFails = false;
+  await page.getByRole("button", { name: "Reintentar" }).click();
+
+  await expect(
+    page.getByRole("heading", { name: "Mi plaza · Terraza" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Otra plaza · Interior" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Resto del salón" }),
+  ).toBeVisible();
+  await expect(page.getByText("1 plaza(s) a tu cargo")).toBeVisible();
   const availableTable = page.getByRole("button", { name: /1 Libre/ });
   await expect(availableTable).toBeVisible();
   await expect(availableTable).toHaveAttribute("data-table-id", tables[0]!.id);
@@ -172,6 +235,19 @@ test("@ui-contract muestra estados operativos, filtra mesas y abre una visita", 
   await expect(
     page.getByRole("dialog", { name: "Sentar comensales" }),
   ).toBeHidden();
+
+  plazaHasNoActivePeriod = true;
+  await page.reload();
+  await expect(page.getByText("Sin jornada activa")).toBeVisible();
+  await expect(
+    page.getByText(
+      "Cuando abra una jornada vas a ver acá la distribución organizativa.",
+    ),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Salón principal" }),
+  ).toBeVisible();
+  await expectNoSeriousAccessibilityViolations(page);
 });
 
 test("@ui-contract arma un pedido y lo envía a cocina desde una visita", async ({

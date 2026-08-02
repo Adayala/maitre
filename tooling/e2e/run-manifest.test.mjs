@@ -25,6 +25,14 @@ test("run manifest records replay inputs without serializing credentials", () =>
     manifest.principals.cashier.tokenEnvironmentVariable,
     "E2E_CASHIER_TOKEN",
   );
+  assert.equal(manifest.applications.host, "http://127.0.0.1:5278");
+  assert.equal(
+    createRunManifest({
+      ...validEnvironment,
+      E2E_HOST_URL: "https://host.e2e.test",
+    }).applications.host,
+    "https://host.e2e.test",
+  );
   assert.equal(JSON.stringify(manifest).includes("cashier-token"), false);
 });
 

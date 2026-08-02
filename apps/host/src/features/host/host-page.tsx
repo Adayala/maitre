@@ -26,7 +26,14 @@ interface ReservationListItem {
   durationMinutes: number;
   notes?: string | null;
   cancellationPolicyId?: string | null;
-  status: "PENDING" | "CONFIRMED" | "EXPIRED" | "SEATED" | "CANCELLED" | "NO_SHOW" | "COMPLETED";
+  status:
+    | "PENDING"
+    | "CONFIRMED"
+    | "EXPIRED"
+    | "SEATED"
+    | "CANCELLED"
+    | "NO_SHOW"
+    | "COMPLETED";
   tableIds?: string[] | null;
   createdAt: string;
   updatedAt: string;
@@ -60,8 +67,27 @@ interface AvailabilityResponse {
 
 interface TableStatus {
   tableId: string;
-  status: "AVAILABLE" | "OCCUPIED" | "PAYING" | "BLOCKED" | "CLEANING" | "RESERVED";
+  status:
+    "AVAILABLE" | "OCCUPIED" | "PAYING" | "BLOCKED" | "CLEANING" | "RESERVED";
   occupancy: null | { visitId: string };
+}
+
+interface ActivePlaza {
+  id: string;
+  name: string;
+  mode: "FIXED" | "VARIABLE";
+  tableIds: string[];
+  waiterEmployeeCode?: string | null;
+}
+
+interface ActivePlazasPayload {
+  servicePeriod: null | {
+    id: string;
+    name: string;
+    businessDate: string;
+    status: "OPEN" | "CLOSING";
+  };
+  plazas: ActivePlaza[];
 }
 
 interface SalonSummary {
@@ -86,7 +112,12 @@ type HostTab = "reservations" | "waitlist" | "availability";
 type TimePreset = { label: string; value: string };
 type TimePresetConfig =
   | { label: string; hoursOffset: number }
-  | { label: string; dayOffset?: number; fixedHour: number; fixedMinute: number };
+  | {
+      label: string;
+      dayOffset?: number;
+      fixedHour: number;
+      fixedMinute: number;
+    };
 
 const reservationStatuses: Array<ReservationListItem["status"] | "ALL"> = [
   "ALL",
@@ -109,25 +140,38 @@ export function HostPage() {
   const now = useNow();
 
   const [tab, setTab] = useState<HostTab>("reservations");
-  const [reservationStatus, setReservationStatus] = useState<ReservationListItem["status"] | "ALL">("ALL");
+  const [reservationStatus, setReservationStatus] = useState<
+    ReservationListItem["status"] | "ALL"
+  >("ALL");
   const [availabilityPartySize, setAvailabilityPartySize] = useState("2");
-  const [availabilityStartAt, setAvailabilityStartAt] = useState(defaultDateTimeLocal());
-  const [availabilityDurationMinutes, setAvailabilityDurationMinutes] = useState("90");
+  const [availabilityStartAt, setAvailabilityStartAt] = useState(
+    defaultDateTimeLocal(),
+  );
+  const [availabilityDurationMinutes, setAvailabilityDurationMinutes] =
+    useState("90");
   const [newReservationPartySize, setNewReservationPartySize] = useState("2");
-  const [newReservationStartAt, setNewReservationStartAt] = useState(defaultDateTimeLocal());
-  const [newReservationDurationMinutes, setNewReservationDurationMinutes] = useState("90");
+  const [newReservationStartAt, setNewReservationStartAt] = useState(
+    defaultDateTimeLocal(),
+  );
+  const [newReservationDurationMinutes, setNewReservationDurationMinutes] =
+    useState("90");
   const [newReservationGuestName, setNewReservationGuestName] = useState("");
   const [newReservationGuestEmail, setNewReservationGuestEmail] = useState("");
   const [newReservationGuestPhone, setNewReservationGuestPhone] = useState("");
   const [newReservationNotes, setNewReservationNotes] = useState("");
   const [newWaitlistPartySize, setNewWaitlistPartySize] = useState("2");
-  const [newWaitlistQuotedMinutes, setNewWaitlistQuotedMinutes] = useState("20");
+  const [newWaitlistQuotedMinutes, setNewWaitlistQuotedMinutes] =
+    useState("20");
   const [newWaitlistGuestName, setNewWaitlistGuestName] = useState("");
   const [newWaitlistGuestEmail, setNewWaitlistGuestEmail] = useState("");
   const [newWaitlistGuestPhone, setNewWaitlistGuestPhone] = useState("");
   const [newWaitlistNotes, setNewWaitlistNotes] = useState("");
-  const [waitlistSeatSelections, setWaitlistSeatSelections] = useState<Record<string, string[]>>({});
-  const [lastActionMessage, setLastActionMessage] = useState<string | null>(null);
+  const [waitlistSeatSelections, setWaitlistSeatSelections] = useState<
+    Record<string, string[]>
+  >({});
+  const [lastActionMessage, setLastActionMessage] = useState<string | null>(
+    null,
+  );
   const timePresets = useMemo(() => buildTimePresets(), []);
 
   const reservationsQuery = useQuery({
@@ -143,12 +187,21 @@ export function HostPage() {
   const waitlistQuery = useQuery({
     queryKey: ["host-waitlist", selectedBranchId],
     enabled: Boolean(selectedBranchId),
-    queryFn: () => api<ApiData<WaitlistEntry[]>>(`/v1/branches/${selectedBranchId}/waitlist-entries`),
+    queryFn: () =>
+      api<ApiData<WaitlistEntry[]>>(
+        `/v1/branches/${selectedBranchId}/waitlist-entries`,
+      ),
     refetchInterval: 10_000,
   });
 
   const availabilityQuery = useQuery({
-    queryKey: ["host-availability", selectedBranchId, availabilityPartySize, availabilityStartAt, availabilityDurationMinutes],
+    queryKey: [
+      "host-availability",
+      selectedBranchId,
+      availabilityPartySize,
+      availabilityStartAt,
+      availabilityDurationMinutes,
+    ],
     enabled: Boolean(selectedBranchId) && Boolean(availabilityStartAt),
     queryFn: () =>
       api<AvailabilityResponse>(
@@ -162,17 +215,25 @@ export function HostPage() {
   const salonsQuery = useQuery({
     queryKey: ["host-salons", selectedBranchId],
     enabled: Boolean(selectedBranchId),
-    queryFn: () => api<{ data: SalonSummary[] }>(`/v1/salons?branchId=${selectedBranchId}`),
+    queryFn: () =>
+      api<{ data: SalonSummary[] }>(`/v1/salons?branchId=${selectedBranchId}`),
   });
 
   const salonDetailsQuery = useQuery({
-    queryKey: ["host-salon-details", selectedBranchId, salonsQuery.data?.data.map((salon) => salon.id).join(",")],
-    enabled: Boolean(selectedBranchId) && Boolean(salonsQuery.data?.data.length),
+    queryKey: [
+      "host-salon-details",
+      selectedBranchId,
+      salonsQuery.data?.data.map((salon) => salon.id).join(","),
+    ],
+    enabled:
+      Boolean(selectedBranchId) && Boolean(salonsQuery.data?.data.length),
     queryFn: async () => {
       const salons = salonsQuery.data?.data ?? [];
       return Promise.all(
         salons.map(async (salon) => {
-          const detail = await api<ApiData<SalonDetail>>(`/v1/salons/${salon.id}`);
+          const detail = await api<ApiData<SalonDetail>>(
+            `/v1/salons/${salon.id}`,
+          );
           return detail.data;
         }),
       );
@@ -182,21 +243,43 @@ export function HostPage() {
   const tableStatusesQuery = useQuery({
     queryKey: ["host-table-statuses", selectedBranchId],
     enabled: Boolean(selectedBranchId),
-    queryFn: () => api<ApiData<TableStatus[]>>(`/v1/branches/${selectedBranchId}/table-statuses`),
+    queryFn: () =>
+      api<ApiData<TableStatus[]>>(
+        `/v1/branches/${selectedBranchId}/table-statuses`,
+      ),
+    refetchInterval: 10_000,
+  });
+
+  const activePlazasQuery = useQuery({
+    queryKey: ["host-active-plazas", selectedBranchId],
+    enabled: Boolean(selectedBranchId),
+    queryFn: () =>
+      api<ApiData<ActivePlazasPayload>>(
+        `/v1/branches/${selectedBranchId}/active-plazas`,
+      ),
     refetchInterval: 10_000,
   });
 
   const allTables = useMemo(
-    () => (salonDetailsQuery.data ?? []).flatMap((salon) => salon.tables.map((table) => ({ ...table, salonName: salon.name }))),
+    () =>
+      (salonDetailsQuery.data ?? []).flatMap((salon) =>
+        salon.tables.map((table) => ({ ...table, salonName: salon.name })),
+      ),
     [salonDetailsQuery.data],
   );
   const guestIds = useMemo(
     () =>
       Array.from(
         new Set(
-          [...(reservationsQuery.data?.data ?? []), ...(waitlistQuery.data?.data ?? [])]
+          [
+            ...(reservationsQuery.data?.data ?? []),
+            ...(waitlistQuery.data?.data ?? []),
+          ]
             .map((item) => item.guestId)
-            .filter((value): value is string => typeof value === "string" && value.length > 0),
+            .filter(
+              (value): value is string =>
+                typeof value === "string" && value.length > 0,
+            ),
         ),
       ),
     [reservationsQuery.data, waitlistQuery.data],
@@ -208,7 +291,9 @@ export function HostPage() {
       const entries = await Promise.all(
         guestIds.map(async (guestId) => {
           try {
-            const response = await api<ApiData<GuestProfile>>(`/v1/guests/${guestId}`);
+            const response = await api<ApiData<GuestProfile>>(
+              `/v1/guests/${guestId}`,
+            );
             return [guestId, response.data] as const;
           } catch {
             return [guestId, null] as const;
@@ -218,10 +303,19 @@ export function HostPage() {
       return new Map(entries);
     },
   });
-  const guestById = useMemo(() => guestsQuery.data ?? new Map<string, GuestProfile | null>(), [guestsQuery.data]);
+  const guestById = useMemo(
+    () => guestsQuery.data ?? new Map<string, GuestProfile | null>(),
+    [guestsQuery.data],
+  );
 
   const tableStatusById = useMemo(
-    () => new Map((tableStatusesQuery.data?.data ?? []).map((status) => [status.tableId, status])),
+    () =>
+      new Map(
+        (tableStatusesQuery.data?.data ?? []).map((status) => [
+          status.tableId,
+          status,
+        ]),
+      ),
     [tableStatusesQuery.data],
   );
   const tableStatusSummary = useMemo(() => {
@@ -256,11 +350,17 @@ export function HostPage() {
     [reservationsQuery.data],
   );
   const pendingReservations = useMemo(
-    () => sortedReservations.filter((reservation) => reservation.status === "PENDING"),
+    () =>
+      sortedReservations.filter(
+        (reservation) => reservation.status === "PENDING",
+      ),
     [sortedReservations],
   );
   const confirmedReservations = useMemo(
-    () => sortedReservations.filter((reservation) => reservation.status === "CONFIRMED"),
+    () =>
+      sortedReservations.filter(
+        (reservation) => reservation.status === "CONFIRMED",
+      ),
     [sortedReservations],
   );
   const arrivingSoonReservations = useMemo(() => {
@@ -276,7 +376,10 @@ export function HostPage() {
     });
   }, [sortedReservations]);
   const waitingEntries = useMemo(
-    () => (waitlistQuery.data?.data ?? []).filter((entry) => entry.status === "WAITING" || entry.status === "NOTIFIED"),
+    () =>
+      (waitlistQuery.data?.data ?? []).filter(
+        (entry) => entry.status === "WAITING" || entry.status === "NOTIFIED",
+      ),
     [waitlistQuery.data],
   );
   const overdueWaitlistEntries = useMemo(
@@ -284,7 +387,10 @@ export function HostPage() {
       waitingEntries.filter((entry) => {
         const quotedMinutes = entry.quotedMinutes ?? 0;
         if (quotedMinutes <= 0) return false;
-        const waitedMinutes = Math.max(0, Math.round((now - Date.parse(entry.createdAt)) / 60000));
+        const waitedMinutes = Math.max(
+          0,
+          Math.round((now - Date.parse(entry.createdAt)) / 60000),
+        );
         return waitedMinutes > quotedMinutes;
       }),
     [now, waitingEntries],
@@ -293,7 +399,11 @@ export function HostPage() {
     () =>
       (waitlistQuery.data?.data ?? [])
         .slice()
-        .sort((a, b) => waitlistPriority(a.status) - waitlistPriority(b.status) || Date.parse(a.createdAt) - Date.parse(b.createdAt)),
+        .sort(
+          (a, b) =>
+            waitlistPriority(a.status) - waitlistPriority(b.status) ||
+            Date.parse(a.createdAt) - Date.parse(b.createdAt),
+        ),
     [waitlistQuery.data],
   );
   const notifiedEntries = useMemo(
@@ -302,55 +412,77 @@ export function HostPage() {
   );
   const seatableWaitlistCount = useMemo(
     () =>
-      sortedWaitlistEntries.filter((entry) =>
-        (entry.status === "WAITING" || entry.status === "NOTIFIED") &&
-        availableTables.some((table) => table.capacity >= entry.partySize),
+      sortedWaitlistEntries.filter(
+        (entry) =>
+          (entry.status === "WAITING" || entry.status === "NOTIFIED") &&
+          availableTables.some((table) => table.capacity >= entry.partySize),
       ).length,
     [sortedWaitlistEntries, availableTables],
   );
   const confirmedSoonReservations = useMemo(
-    () => arrivingSoonReservations.filter((reservation) => reservation.status === "CONFIRMED"),
+    () =>
+      arrivingSoonReservations.filter(
+        (reservation) => reservation.status === "CONFIRMED",
+      ),
     [arrivingSoonReservations],
   );
   const prioritizedReservations = useMemo(
     () =>
-      (reservationsQuery.data?.data ?? [])
-        .slice()
-        .sort((a, b) => {
-          const score = (reservation: ReservationListItem) => {
-            const minutesUntil = Math.round((Date.parse(reservation.startAt) - now) / 60000);
-            const hasAssignedTable = Boolean(reservation.tableIds?.length);
-            if (reservation.status === "CONFIRMED" && minutesUntil <= 0) return 0;
-            if (reservation.status === "CONFIRMED" && !hasAssignedTable && minutesUntil <= 30) return 1;
-            if (reservation.status === "CONFIRMED" && minutesUntil <= 90) return 2;
-            if (reservation.status === "PENDING" && minutesUntil <= 15) return 3;
-            if (reservation.status === "PENDING" && minutesUntil <= 90) return 4;
-            if (reservation.status === "CONFIRMED") return 5;
-            if (reservation.status === "PENDING") return 6;
-            return 7;
-          };
-          return score(a) - score(b) || Date.parse(a.startAt) - Date.parse(b.startAt);
-        }),
+      (reservationsQuery.data?.data ?? []).slice().sort((a, b) => {
+        const score = (reservation: ReservationListItem) => {
+          const minutesUntil = Math.round(
+            (Date.parse(reservation.startAt) - now) / 60000,
+          );
+          const hasAssignedTable = Boolean(reservation.tableIds?.length);
+          if (reservation.status === "CONFIRMED" && minutesUntil <= 0) return 0;
+          if (
+            reservation.status === "CONFIRMED" &&
+            !hasAssignedTable &&
+            minutesUntil <= 30
+          )
+            return 1;
+          if (reservation.status === "CONFIRMED" && minutesUntil <= 90)
+            return 2;
+          if (reservation.status === "PENDING" && minutesUntil <= 15) return 3;
+          if (reservation.status === "PENDING" && minutesUntil <= 90) return 4;
+          if (reservation.status === "CONFIRMED") return 5;
+          if (reservation.status === "PENDING") return 6;
+          return 7;
+        };
+        return (
+          score(a) - score(b) || Date.parse(a.startAt) - Date.parse(b.startAt)
+        );
+      }),
     [now, reservationsQuery.data],
   );
   const prioritizedWaitlistEntries = useMemo(
     () =>
-      (waitlistQuery.data?.data ?? [])
-        .slice()
-        .sort((a, b) => {
-          const score = (entry: WaitlistEntry) => {
-            const hasTableNow = availableTables.some((table) => table.capacity >= entry.partySize);
-            const waitedMinutes = Math.max(0, Math.round((now - Date.parse(entry.createdAt)) / 60000));
-            const quotedMinutes = entry.quotedMinutes ?? 0;
-            const overdue = quotedMinutes > 0 && waitedMinutes > quotedMinutes;
-            if ((entry.status === "WAITING" || entry.status === "NOTIFIED") && hasTableNow) return 0;
-            if (overdue) return 1;
-            if (entry.status === "NOTIFIED") return 2;
-            if (entry.status === "WAITING") return 3;
-            return 4;
-          };
-          return score(a) - score(b) || Date.parse(a.createdAt) - Date.parse(b.createdAt);
-        }),
+      (waitlistQuery.data?.data ?? []).slice().sort((a, b) => {
+        const score = (entry: WaitlistEntry) => {
+          const hasTableNow = availableTables.some(
+            (table) => table.capacity >= entry.partySize,
+          );
+          const waitedMinutes = Math.max(
+            0,
+            Math.round((now - Date.parse(entry.createdAt)) / 60000),
+          );
+          const quotedMinutes = entry.quotedMinutes ?? 0;
+          const overdue = quotedMinutes > 0 && waitedMinutes > quotedMinutes;
+          if (
+            (entry.status === "WAITING" || entry.status === "NOTIFIED") &&
+            hasTableNow
+          )
+            return 0;
+          if (overdue) return 1;
+          if (entry.status === "NOTIFIED") return 2;
+          if (entry.status === "WAITING") return 3;
+          return 4;
+        };
+        return (
+          score(a) - score(b) ||
+          Date.parse(a.createdAt) - Date.parse(b.createdAt)
+        );
+      }),
     [availableTables, now, waitlistQuery.data],
   );
   const triagePriority =
@@ -358,7 +490,8 @@ export function HostPage() {
       ? {
           tone: "waitlist" as const,
           title: `${seatableWaitlistCount} grupo${seatableWaitlistCount === 1 ? "" : "s"} ya se puede sentar`,
-          message: "Hay capacidad disponible para destrabar waitlist ahora mismo.",
+          message:
+            "Hay capacidad disponible para destrabar waitlist ahora mismo.",
           actionLabel: "Ir a waitlist",
           onAction: () => setTab("waitlist"),
         }
@@ -366,7 +499,8 @@ export function HostPage() {
         ? {
             tone: "arrival" as const,
             title: `${confirmedSoonReservations.length} llegada${confirmedSoonReservations.length === 1 ? "" : "s"} próxima${confirmedSoonReservations.length === 1 ? "" : "s"}`,
-            message: "Conviene preparar seating de reservas confirmadas que llegan pronto.",
+            message:
+              "Conviene preparar seating de reservas confirmadas que llegan pronto.",
             actionLabel: "Ir a confirmadas",
             onAction: () => {
               setTab("reservations");
@@ -377,7 +511,8 @@ export function HostPage() {
           ? {
               tone: "pending" as const,
               title: `${pendingReservations.length} reserva${pendingReservations.length === 1 ? "" : "s"} pendiente${pendingReservations.length === 1 ? "" : "s"} de confirmación`,
-              message: "Todavía quedan reservas por confirmar para estabilizar el servicio.",
+              message:
+                "Todavía quedan reservas por confirmar para estabilizar el servicio.",
               actionLabel: "Ir a pendientes",
               onAction: () => {
                 setTab("reservations");
@@ -387,40 +522,69 @@ export function HostPage() {
           : null;
 
   const reservationDraftChecklist = [
-    { label: "Huésped identificado", done: Boolean(newReservationGuestName.trim()) },
+    {
+      label: "Huésped identificado",
+      done: Boolean(newReservationGuestName.trim()),
+    },
     { label: "Cantidad definida", done: Number(newReservationPartySize) > 0 },
     { label: "Horario definido", done: Boolean(newReservationStartAt) },
-    { label: "Duración definida", done: Number(newReservationDurationMinutes) > 0 },
+    {
+      label: "Duración definida",
+      done: Number(newReservationDurationMinutes) > 0,
+    },
   ];
-  const reservationDraftReady = reservationDraftChecklist.every((step) => step.done);
-  const reservationDraftMissing = reservationDraftChecklist.filter((step) => !step.done).map((step) => step.label);
+  const reservationDraftReady = reservationDraftChecklist.every(
+    (step) => step.done,
+  );
+  const reservationDraftMissing = reservationDraftChecklist
+    .filter((step) => !step.done)
+    .map((step) => step.label);
   const waitlistDraftChecklist = [
-    { label: "Huésped identificado", done: Boolean(newWaitlistGuestName.trim()) },
+    {
+      label: "Huésped identificado",
+      done: Boolean(newWaitlistGuestName.trim()),
+    },
     { label: "Cantidad definida", done: Number(newWaitlistPartySize) > 0 },
     { label: "Promesa informada", done: Number(newWaitlistQuotedMinutes) >= 0 },
   ];
   const waitlistDraftReady = waitlistDraftChecklist.every((step) => step.done);
-  const waitlistDraftMissing = waitlistDraftChecklist.filter((step) => !step.done).map((step) => step.label);
+  const waitlistDraftMissing = waitlistDraftChecklist
+    .filter((step) => !step.done)
+    .map((step) => step.label);
   const availabilityActionPlan = [
     { label: "Cantidad cargada", done: Number(availabilityPartySize) > 0 },
     { label: "Horario cargado", done: Boolean(availabilityStartAt) },
-    { label: "Duración cargada", done: Number(availabilityDurationMinutes) > 0 },
-    { label: "Mesas sugeridas", done: (availabilityQuery.data?.data.freeTableIds.length ?? 0) > 0 },
+    {
+      label: "Duración cargada",
+      done: Number(availabilityDurationMinutes) > 0,
+    },
+    {
+      label: "Mesas sugeridas",
+      done: (availabilityQuery.data?.data.freeTableIds.length ?? 0) > 0,
+    },
   ];
   const reservationFocusPlan =
     pendingReservations.length > 0
       ? {
           title: "Primero conviene limpiar pendientes",
-          message: "Todavía hay reservas sin confirmar; eso impacta directo sobre llegadas, seating y expectativa del cliente.",
+          message:
+            "Todavía hay reservas sin confirmar; eso impacta directo sobre llegadas, seating y expectativa del cliente.",
           primaryLabel: "Ver pendientes",
           onPrimary: () => setReservationStatus("PENDING"),
-          secondaryLabel: confirmedSoonReservations.length > 0 ? "Ver confirmadas próximas" : null,
-          onSecondary: confirmedSoonReservations.length > 0 ? () => setReservationStatus("CONFIRMED") : null,
+          secondaryLabel:
+            confirmedSoonReservations.length > 0
+              ? "Ver confirmadas próximas"
+              : null,
+          onSecondary:
+            confirmedSoonReservations.length > 0
+              ? () => setReservationStatus("CONFIRMED")
+              : null,
         }
       : confirmedSoonReservations.length > 0
         ? {
             title: "El foco ya pasó a preparar seating",
-            message: "Las próximas reservas confirmadas necesitan mesa o seguimiento de arribo.",
+            message:
+              "Las próximas reservas confirmadas necesitan mesa o seguimiento de arribo.",
             primaryLabel: "Ver confirmadas",
             onPrimary: () => setReservationStatus("CONFIRMED"),
             secondaryLabel: null,
@@ -428,7 +592,8 @@ export function HostPage() {
           }
         : {
             title: "La cola de reservas está estable",
-            message: "Podés usar este bloque para cargar una nueva reserva o revisar casos puntuales del día.",
+            message:
+              "Podés usar este bloque para cargar una nueva reserva o revisar casos puntuales del día.",
             primaryLabel: "Ver todas",
             onPrimary: () => setReservationStatus("ALL"),
             secondaryLabel: null,
@@ -438,35 +603,42 @@ export function HostPage() {
     seatableWaitlistCount > 0
       ? {
           title: "Hay grupos que ya se pueden sentar",
-          message: "Conviene asignar mesa ahora para bajar fricción en puerta y liberar presión sobre recepción.",
+          message:
+            "Conviene asignar mesa ahora para bajar fricción en puerta y liberar presión sobre recepción.",
         }
       : overdueWaitlistEntries.length > 0
         ? {
             title: "Hay demoras vencidas para resolver",
-            message: "Si no hay mesa todavía, la prioridad pasa a reestimar o notificar para sostener expectativa.",
+            message:
+              "Si no hay mesa todavía, la prioridad pasa a reestimar o notificar para sostener expectativa.",
           }
         : notifiedEntries.length > 0
           ? {
               title: "Hay grupos notificados esperando arribo",
-              message: "Mantené visible esta cola para sentar rápido apenas lleguen o liberar la mesa si no se presentan.",
+              message:
+                "Mantené visible esta cola para sentar rápido apenas lleguen o liberar la mesa si no se presentan.",
             }
           : {
               title: "La waitlist está bajo control",
-              message: "Podés usar este bloque para registrar walk-ins y mantener una promesa clara.",
+              message:
+                "Podés usar este bloque para registrar walk-ins y mantener una promesa clara.",
             };
   const availabilityFocusPlan = availabilityQuery.data
     ? availabilityQuery.data.data.available
       ? {
           title: "Hay lugar para prometer ese horario",
-          message: "Si el huésped ya decidió, el siguiente paso natural es copiar el chequeo y crear la reserva.",
+          message:
+            "Si el huésped ya decidió, el siguiente paso natural es copiar el chequeo y crear la reserva.",
         }
       : {
           title: "Ese horario hoy no cierra",
-          message: "Conviene ajustar hora, duración o cantidad antes de prometer algo en recepción.",
+          message:
+            "Conviene ajustar hora, duración o cantidad antes de prometer algo en recepción.",
         }
     : {
         title: "Cargá un escenario para consultar",
-        message: "Completá cantidad, hora y duración para validar si la operación realmente soporta la promesa.",
+        message:
+          "Completá cantidad, hora y duración para validar si la operación realmente soporta la promesa.",
       };
 
   const refreshAll = async () => {
@@ -475,24 +647,32 @@ export function HostPage() {
       queryClient.invalidateQueries({ queryKey: ["host-waitlist"] }),
       queryClient.invalidateQueries({ queryKey: ["host-availability"] }),
       queryClient.invalidateQueries({ queryKey: ["host-table-statuses"] }),
+      queryClient.invalidateQueries({ queryKey: ["host-active-plazas"] }),
       queryClient.invalidateQueries({ queryKey: ["host-guests"] }),
     ]);
   };
 
-  async function ensureGuest(input: { displayName: string; email?: string; phone?: string }) {
+  async function ensureGuest(input: {
+    displayName: string;
+    email?: string;
+    phone?: string;
+  }) {
     const displayName = input.displayName.trim();
     const email = input.email?.trim() || undefined;
     const phone = input.phone?.trim() || undefined;
     if (!displayName) return null;
 
     if (email || phone) {
-      const lookup = await api<ApiData<GuestProfile | null>>("/v1/guests/lookup", {
-        method: "POST",
-        body: {
-          ...(email ? { email } : {}),
-          ...(phone ? { phone } : {}),
+      const lookup = await api<ApiData<GuestProfile | null>>(
+        "/v1/guests/lookup",
+        {
+          method: "POST",
+          body: {
+            ...(email ? { email } : {}),
+            ...(phone ? { phone } : {}),
+          },
         },
-      });
+      );
       if (lookup.data) return lookup.data;
     }
 
@@ -515,17 +695,22 @@ export function HostPage() {
         email: newReservationGuestEmail,
         phone: newReservationGuestPhone,
       });
-      return api<ApiData<ReservationListItem>>(`/v1/branches/${selectedBranchId}/reservations`, {
-        method: "POST",
-        body: {
-          partySize: Number(newReservationPartySize),
-          startAt: new Date(newReservationStartAt).toISOString(),
-          durationMinutes: Number(newReservationDurationMinutes),
-          source: "HOST_APP",
-          ...(guest ? { guestId: guest.id } : {}),
-          ...(newReservationNotes.trim() ? { notes: newReservationNotes.trim() } : {}),
+      return api<ApiData<ReservationListItem>>(
+        `/v1/branches/${selectedBranchId}/reservations`,
+        {
+          method: "POST",
+          body: {
+            partySize: Number(newReservationPartySize),
+            startAt: new Date(newReservationStartAt).toISOString(),
+            durationMinutes: Number(newReservationDurationMinutes),
+            source: "HOST_APP",
+            ...(guest ? { guestId: guest.id } : {}),
+            ...(newReservationNotes.trim()
+              ? { notes: newReservationNotes.trim() }
+              : {}),
+          },
         },
-      });
+      );
     },
     onSuccess: async () => {
       setNewReservationGuestName("");
@@ -544,15 +729,20 @@ export function HostPage() {
         email: newWaitlistGuestEmail,
         phone: newWaitlistGuestPhone,
       });
-      return api<ApiData<WaitlistEntry>>(`/v1/branches/${selectedBranchId}/waitlist-entries`, {
-        method: "POST",
-        body: {
-          partySize: Number(newWaitlistPartySize),
-          quotedMinutes: Number(newWaitlistQuotedMinutes),
-          ...(guest ? { guestId: guest.id } : {}),
-          ...(newWaitlistNotes.trim() ? { notes: newWaitlistNotes.trim() } : {}),
+      return api<ApiData<WaitlistEntry>>(
+        `/v1/branches/${selectedBranchId}/waitlist-entries`,
+        {
+          method: "POST",
+          body: {
+            partySize: Number(newWaitlistPartySize),
+            quotedMinutes: Number(newWaitlistQuotedMinutes),
+            ...(guest ? { guestId: guest.id } : {}),
+            ...(newWaitlistNotes.trim()
+              ? { notes: newWaitlistNotes.trim() }
+              : {}),
+          },
         },
-      });
+      );
     },
     onSuccess: async () => {
       setNewWaitlistGuestName("");
@@ -578,16 +768,26 @@ export function HostPage() {
     setNewReservationStartAt(availabilityStartAt);
     setNewReservationDurationMinutes(availabilityDurationMinutes);
     setTab("reservations");
-    setLastActionMessage("Chequeo de disponibilidad copiado al alta de reserva.");
+    setLastActionMessage(
+      "Chequeo de disponibilidad copiado al alta de reserva.",
+    );
   }
 
   return (
     <main className="host-app">
       <AppHeader
         title="Host / Maître"
-        subtitle={selectedBranch ? `${selectedBranch.name} · reservas y lista de espera` : "Operación de salón"}
+        subtitle={
+          selectedBranch
+            ? `${selectedBranch.name} · reservas y lista de espera`
+            : "Operación de salón"
+        }
         right={
-          <button type="button" className="btn btn--ghost" onClick={() => void refreshAll()}>
+          <button
+            type="button"
+            className="btn btn--ghost"
+            onClick={() => void refreshAll()}
+          >
             Actualizar
           </button>
         }
@@ -598,8 +798,13 @@ export function HostPage() {
           <div className="cashier-hero-row">
             <div>
               <div className="cashier-eyebrow">Frente de salón</div>
-              <h2 className="host-hero-title">{selectedBranch?.name ?? "Sucursal"}</h2>
-              <p className="host-hero-copy">Gestioná confirmaciones, lista de espera, disponibilidad y seating.</p>
+              <h2 className="host-hero-title">
+                {selectedBranch?.name ?? "Sucursal"}
+              </h2>
+              <p className="host-hero-copy">
+                Gestioná confirmaciones, lista de espera, disponibilidad y
+                seating.
+              </p>
             </div>
             <div className="host-hero-metrics">
               <div className="cashier-balance-block">
@@ -618,14 +823,84 @@ export function HostPage() {
           </div>
         </section>
 
+        <section
+          className="host-plaza-board"
+          aria-label="Organización de plazas"
+        >
+          <div className="host-plaza-board__heading">
+            <div>
+              <span>Organización de jornada</span>
+              <h2>
+                {activePlazasQuery.data?.data.servicePeriod?.name ??
+                  "Sin jornada activa"}
+              </h2>
+            </div>
+            {activePlazasQuery.data?.data.servicePeriod ? (
+              <small>
+                {activePlazasQuery.data.data.servicePeriod.businessDate} ·{" "}
+                {activePlazasQuery.data.data.servicePeriod.status === "OPEN"
+                  ? "Abierta"
+                  : "En cierre"}
+              </small>
+            ) : null}
+          </div>
+          {activePlazasQuery.isLoading ? (
+            <p role="status">Cargando distribución de plazas…</p>
+          ) : activePlazasQuery.error ? (
+            <div className="host-plaza-board__empty" role="alert">
+              <p>
+                No pudimos cargar la organización. El seating sigue disponible.
+              </p>
+              <button
+                type="button"
+                className="btn btn--ghost btn--sm"
+                onClick={() => activePlazasQuery.refetch()}
+              >
+                Reintentar
+              </button>
+            </div>
+          ) : (activePlazasQuery.data?.data.plazas.length ?? 0) > 0 ? (
+            <div className="host-plaza-grid">
+              {activePlazasQuery.data?.data.plazas.map((plaza) => (
+                <article key={plaza.id} className="host-plaza-card">
+                  <span>{plaza.mode === "FIXED" ? "Fija" : "Variable"}</span>
+                  <strong>{plaza.name}</strong>
+                  <p>{plaza.tableIds.length} mesa(s)</p>
+                  <small>
+                    {plaza.waiterEmployeeCode
+                      ? `Responsable ${plaza.waiterEmployeeCode}`
+                      : "Sin responsable"}
+                  </small>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="host-plaza-board__empty">
+              La jornada todavía no tiene plazas. Podés seguir organizando el
+              salón por mesas.
+            </p>
+          )}
+          <p className="host-plaza-board__note">
+            Las plazas distribuyen responsabilidad; no bloquean seating ni
+            colaboración entre equipos.
+          </p>
+        </section>
+
         {triagePriority ? (
-          <section className={`host-priority-banner host-priority-banner--${triagePriority.tone}`} aria-label="Prioridad actual de recepción">
+          <section
+            className={`host-priority-banner host-priority-banner--${triagePriority.tone}`}
+            aria-label="Prioridad actual de recepción"
+          >
             <div className="host-priority-copy">
               <span className="host-priority-eyebrow">Prioridad actual</span>
               <strong>{triagePriority.title}</strong>
               <p>{triagePriority.message}</p>
             </div>
-            <button type="button" className="btn btn--ghost" onClick={triagePriority.onAction}>
+            <button
+              type="button"
+              className="btn btn--ghost"
+              onClick={triagePriority.onAction}
+            >
               {triagePriority.actionLabel}
             </button>
           </section>
@@ -654,7 +929,9 @@ export function HostPage() {
           </article>
           <article className="cashier-kpi-card">
             <span>Disponibilidad</span>
-            <strong>{availabilityQuery.data?.data.available ? "Sí" : "No"}</strong>
+            <strong>
+              {availabilityQuery.data?.data.available ? "Sí" : "No"}
+            </strong>
           </article>
         </section>
 
@@ -663,14 +940,20 @@ export function HostPage() {
             <div className="cashier-card-head">
               <div>
                 <h2 className="host-card-title">Próximas llegadas</h2>
-                <p className="host-card-copy">Lo que llega dentro de los próximos 90 minutos.</p>
+                <p className="host-card-copy">
+                  Lo que llega dentro de los próximos 90 minutos.
+                </p>
               </div>
-              <span className="host-count-pill">{arrivingSoonReservations.length}</span>
+              <span className="host-count-pill">
+                {arrivingSoonReservations.length}
+              </span>
             </div>
             {arrivingSoonReservations.length > 0 ? (
               <div className="host-arrivals-list">
                 {arrivingSoonReservations.slice(0, 4).map((reservation) => {
-                  const minutesUntil = Math.round((Date.parse(reservation.startAt) - now) / 60000);
+                  const minutesUntil = Math.round(
+                    (Date.parse(reservation.startAt) - now) / 60000,
+                  );
                   const arrivalTone =
                     reservation.status === "PENDING"
                       ? "pending"
@@ -680,41 +963,75 @@ export function HostPage() {
                           ? "soon"
                           : "scheduled";
                   return (
-                  <article key={reservation.id} className={`host-arrival-card host-arrival-card--${arrivalTone}`}>
-                    <div className="host-arrival-main">
-                      <strong>{formatReservationHeading(reservation, guestById.get(reservation.guestId ?? "") ?? null)}</strong>
-                      <p>{formatDateTime(reservation.startAt)} · {formatArrivalTiming(minutesUntil)}</p>
-                      <p>{reservation.partySize} pax · {reservation.durationMinutes} min</p>
-                      <p>{reservation.tableIds?.length ? `Mesas: ${reservation.tableIds.join(", ")}` : "Sin mesa asignada"}</p>
-                    </div>
-                    <div className="host-arrival-actions">
-                      <span className={`host-status host-status--${reservation.status.toLowerCase()}`}>{reservationStatusLabel(reservation.status)}</span>
-                      {reservation.status === "PENDING" ? (
-                        <button
-                          type="button"
-                          className="btn btn--ghost btn--sm"
-                          onClick={() => void hostCommand.mutateAsync({ path: `/v1/reservations/${reservation.id}/confirm` })}
+                    <article
+                      key={reservation.id}
+                      className={`host-arrival-card host-arrival-card--${arrivalTone}`}
+                    >
+                      <div className="host-arrival-main">
+                        <strong>
+                          {formatReservationHeading(
+                            reservation,
+                            guestById.get(reservation.guestId ?? "") ?? null,
+                          )}
+                        </strong>
+                        <p>
+                          {formatDateTime(reservation.startAt)} ·{" "}
+                          {formatArrivalTiming(minutesUntil)}
+                        </p>
+                        <p>
+                          {reservation.partySize} pax ·{" "}
+                          {reservation.durationMinutes} min
+                        </p>
+                        <p>
+                          {reservation.tableIds?.length
+                            ? `Mesas: ${reservation.tableIds.join(", ")}`
+                            : "Sin mesa asignada"}
+                        </p>
+                      </div>
+                      <div className="host-arrival-actions">
+                        <span
+                          className={`host-status host-status--${reservation.status.toLowerCase()}`}
                         >
-                          Confirmar
-                        </button>
-                      ) : null}
-                      {reservation.status === "CONFIRMED" ? (
-                        <button
-                          type="button"
-                          className="btn btn--primary btn--sm"
-                          onClick={() => void hostCommand.mutateAsync({ path: `/v1/reservations/${reservation.id}/seat` })}
-                        >
-                          Sentar
-                        </button>
-                      ) : null}
-                    </div>
-                  </article>
-                )})}
+                          {reservationStatusLabel(reservation.status)}
+                        </span>
+                        {reservation.status === "PENDING" ? (
+                          <button
+                            type="button"
+                            className="btn btn--ghost btn--sm"
+                            onClick={() =>
+                              void hostCommand.mutateAsync({
+                                path: `/v1/reservations/${reservation.id}/confirm`,
+                              })
+                            }
+                          >
+                            Confirmar
+                          </button>
+                        ) : null}
+                        {reservation.status === "CONFIRMED" ? (
+                          <button
+                            type="button"
+                            className="btn btn--primary btn--sm"
+                            onClick={() =>
+                              void hostCommand.mutateAsync({
+                                path: `/v1/reservations/${reservation.id}/seat`,
+                              })
+                            }
+                          >
+                            Sentar
+                          </button>
+                        ) : null}
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
             ) : (
               <div className="host-empty-note">
                 <strong>Sin llegadas inmediatas.</strong>
-                <span>No hay reservas pendientes o confirmadas en la próxima hora y media.</span>
+                <span>
+                  No hay reservas pendientes o confirmadas en la próxima hora y
+                  media.
+                </span>
               </div>
             )}
           </article>
@@ -723,7 +1040,9 @@ export function HostPage() {
             <div className="cashier-card-head">
               <div>
                 <h2 className="host-card-title">Acciones rápidas</h2>
-                <p className="host-card-copy">Atajos para entrar directo a la cola que importa ahora.</p>
+                <p className="host-card-copy">
+                  Atajos para entrar directo a la cola que importa ahora.
+                </p>
               </div>
             </div>
             <div className="host-quick-grid">
@@ -757,8 +1076,16 @@ export function HostPage() {
                 onClick={() => setTab("waitlist")}
               >
                 <span>Waitlist</span>
-                <strong>{seatableWaitlistCount > 0 ? seatableWaitlistCount : waitingEntries.length}</strong>
-                <p>{seatableWaitlistCount > 0 ? "Ya se pueden sentar" : "Grupos esperando o notificados"}</p>
+                <strong>
+                  {seatableWaitlistCount > 0
+                    ? seatableWaitlistCount
+                    : waitingEntries.length}
+                </strong>
+                <p>
+                  {seatableWaitlistCount > 0
+                    ? "Ya se pueden sentar"
+                    : "Grupos esperando o notificados"}
+                </p>
               </button>
               <button
                 type="button"
@@ -776,7 +1103,11 @@ export function HostPage() {
         {lastActionMessage ? (
           <div className="cashier-banner cashier-banner--success">
             <span>{lastActionMessage}</span>
-            <button type="button" className="btn btn--ghost" onClick={() => setLastActionMessage(null)}>
+            <button
+              type="button"
+              className="btn btn--ghost"
+              onClick={() => setLastActionMessage(null)}
+            >
               Ocultar
             </button>
           </div>
@@ -786,12 +1117,20 @@ export function HostPage() {
           <div className="cashier-card-head">
             <div>
               <h2 className="host-card-title">Snapshot de mesas</h2>
-              <p className="host-card-copy">Estado live del salón para decidir seating rápido.</p>
+              <p className="host-card-copy">
+                Estado live del salón para decidir seating rápido.
+              </p>
             </div>
           </div>
           <StateView
-            isLoading={salonDetailsQuery.isLoading || tableStatusesQuery.isLoading}
-            error={(salonDetailsQuery.error as Error) ?? (tableStatusesQuery.error as Error) ?? null}
+            isLoading={
+              salonDetailsQuery.isLoading || tableStatusesQuery.isLoading
+            }
+            error={
+              (salonDetailsQuery.error as Error) ??
+              (tableStatusesQuery.error as Error) ??
+              null
+            }
             isEmpty={allTables.length === 0}
             emptyIcon="🪑"
             emptyTitle="Sin mesas visibles"
@@ -801,7 +1140,10 @@ export function HostPage() {
               void tableStatusesQuery.refetch();
             }}
           >
-            <section className="host-table-summary" aria-label="Resumen de estados de mesa">
+            <section
+              className="host-table-summary"
+              aria-label="Resumen de estados de mesa"
+            >
               <article className="host-table-kpi host-table-kpi--available">
                 <span>Libres</span>
                 <strong>{tableStatusSummary.AVAILABLE}</strong>
@@ -812,19 +1154,29 @@ export function HostPage() {
               </article>
               <article className="host-table-kpi host-table-kpi--reserved">
                 <span>Reservadas / pagando</span>
-                <strong>{tableStatusSummary.RESERVED + tableStatusSummary.PAYING}</strong>
+                <strong>
+                  {tableStatusSummary.RESERVED + tableStatusSummary.PAYING}
+                </strong>
               </article>
               <article className="host-table-kpi host-table-kpi--blocked">
                 <span>Bloqueadas / cleaning</span>
-                <strong>{tableStatusSummary.BLOCKED + tableStatusSummary.CLEANING}</strong>
+                <strong>
+                  {tableStatusSummary.BLOCKED + tableStatusSummary.CLEANING}
+                </strong>
               </article>
             </section>
             <div className="host-table-grid">
               {allTables.map((table) => {
-                const liveStatus = tableStatusById.get(table.id)?.status ?? "AVAILABLE";
+                const liveStatus =
+                  tableStatusById.get(table.id)?.status ?? "AVAILABLE";
                 return (
-                  <article key={table.id} className={`host-table-card host-table-card--${liveStatus.toLowerCase()}`}>
-                    <strong>{table.name?.trim() || `Mesa ${table.number}`}</strong>
+                  <article
+                    key={table.id}
+                    className={`host-table-card host-table-card--${liveStatus.toLowerCase()}`}
+                  >
+                    <strong>
+                      {table.name?.trim() || `Mesa ${table.number}`}
+                    </strong>
                     <span>{table.salonName}</span>
                     <span>{table.capacity} pax</span>
                     <em>{liveStatus}</em>
@@ -837,13 +1189,25 @@ export function HostPage() {
 
         <div className="cashier-toolbar">
           <div className="cashier-segmented">
-            <button type="button" className={`seg-btn ${tab === "reservations" ? "seg-btn--active" : ""}`} onClick={() => setTab("reservations")}>
+            <button
+              type="button"
+              className={`seg-btn ${tab === "reservations" ? "seg-btn--active" : ""}`}
+              onClick={() => setTab("reservations")}
+            >
               Reservas
             </button>
-            <button type="button" className={`seg-btn ${tab === "waitlist" ? "seg-btn--active" : ""}`} onClick={() => setTab("waitlist")}>
+            <button
+              type="button"
+              className={`seg-btn ${tab === "waitlist" ? "seg-btn--active" : ""}`}
+              onClick={() => setTab("waitlist")}
+            >
               Waitlist
             </button>
-            <button type="button" className={`seg-btn ${tab === "availability" ? "seg-btn--active" : ""}`} onClick={() => setTab("availability")}>
+            <button
+              type="button"
+              className={`seg-btn ${tab === "availability" ? "seg-btn--active" : ""}`}
+              onClick={() => setTab("availability")}
+            >
               Disponibilidad
             </button>
           </div>
@@ -862,11 +1226,20 @@ export function HostPage() {
                 <strong>{reservationFocusPlan.title}</strong>
                 <p className="host-card-copy">{reservationFocusPlan.message}</p>
                 <div className="cashier-quick-actions">
-                  <button type="button" className="btn btn--ghost" onClick={reservationFocusPlan.onPrimary}>
+                  <button
+                    type="button"
+                    className="btn btn--ghost"
+                    onClick={reservationFocusPlan.onPrimary}
+                  >
                     {reservationFocusPlan.primaryLabel}
                   </button>
-                  {reservationFocusPlan.secondaryLabel && reservationFocusPlan.onSecondary ? (
-                    <button type="button" className="btn btn--ghost" onClick={reservationFocusPlan.onSecondary}>
+                  {reservationFocusPlan.secondaryLabel &&
+                  reservationFocusPlan.onSecondary ? (
+                    <button
+                      type="button"
+                      className="btn btn--ghost"
+                      onClick={reservationFocusPlan.onSecondary}
+                    >
                       {reservationFocusPlan.secondaryLabel}
                     </button>
                   ) : null}
@@ -876,13 +1249,18 @@ export function HostPage() {
                 <strong>Checklist de alta</strong>
                 <div className="host-checklist">
                   {reservationDraftChecklist.map((step) => (
-                    <div key={step.label} className={`host-check ${step.done ? "host-check--done" : ""}`}>
+                    <div
+                      key={step.label}
+                      className={`host-check ${step.done ? "host-check--done" : ""}`}
+                    >
                       <strong>{step.done ? "✓" : "•"}</strong>
                       <span>{step.label}</span>
                     </div>
                   ))}
                 </div>
-                <div className={`cashier-banner ${reservationDraftReady ? "cashier-banner--success" : "cashier-banner--info"}`}>
+                <div
+                  className={`cashier-banner ${reservationDraftReady ? "cashier-banner--success" : "cashier-banner--info"}`}
+                >
                   <span>
                     {reservationDraftReady
                       ? "La reserva ya tiene los datos mínimos para cargarse."
@@ -899,22 +1277,46 @@ export function HostPage() {
               >
                 <label>
                   Nombre del huésped
-                  <input value={newReservationGuestName} onChange={(e) => setNewReservationGuestName(e.target.value)} placeholder="Nombre y apellido" />
+                  <input
+                    value={newReservationGuestName}
+                    onChange={(e) => setNewReservationGuestName(e.target.value)}
+                    placeholder="Nombre y apellido"
+                  />
                 </label>
                 <label>
                   Email
-                  <input value={newReservationGuestEmail} onChange={(e) => setNewReservationGuestEmail(e.target.value)} inputMode="email" placeholder="opcional" />
+                  <input
+                    value={newReservationGuestEmail}
+                    onChange={(e) =>
+                      setNewReservationGuestEmail(e.target.value)
+                    }
+                    inputMode="email"
+                    placeholder="opcional"
+                  />
                 </label>
                 <label>
                   Teléfono
-                  <input value={newReservationGuestPhone} onChange={(e) => setNewReservationGuestPhone(e.target.value)} inputMode="tel" placeholder="opcional" />
+                  <input
+                    value={newReservationGuestPhone}
+                    onChange={(e) =>
+                      setNewReservationGuestPhone(e.target.value)
+                    }
+                    inputMode="tel"
+                    placeholder="opcional"
+                  />
                 </label>
                 <label>
                   Comensales
-                  <input value={newReservationPartySize} onChange={(e) => setNewReservationPartySize(e.target.value)} inputMode="numeric" />
+                  <input
+                    value={newReservationPartySize}
+                    onChange={(e) => setNewReservationPartySize(e.target.value)}
+                    inputMode="numeric"
+                  />
                 </label>
                 <div className="host-preset-group">
-                  <span className="host-preset-label">Atajos de comensales</span>
+                  <span className="host-preset-label">
+                    Atajos de comensales
+                  </span>
                   <div className="host-preset-row">
                     {PARTY_SIZE_PRESETS.map((preset: string) => (
                       <button
@@ -929,11 +1331,18 @@ export function HostPage() {
                   </div>
                 </div>
                 <div className="cashier-banner cashier-banner--info">
-                  <span>Recepción guarda el huésped para poder reencontrarlo luego en reservas y waitlist.</span>
+                  <span>
+                    Recepción guarda el huésped para poder reencontrarlo luego
+                    en reservas y waitlist.
+                  </span>
                 </div>
                 <label>
                   Inicio
-                  <input type="datetime-local" value={newReservationStartAt} onChange={(e) => setNewReservationStartAt(e.target.value)} />
+                  <input
+                    type="datetime-local"
+                    value={newReservationStartAt}
+                    onChange={(e) => setNewReservationStartAt(e.target.value)}
+                  />
                 </label>
                 <div className="host-preset-group">
                   <span className="host-preset-label">Horarios frecuentes</span>
@@ -952,7 +1361,13 @@ export function HostPage() {
                 </div>
                 <label>
                   Duración (min)
-                  <input value={newReservationDurationMinutes} onChange={(e) => setNewReservationDurationMinutes(e.target.value)} inputMode="numeric" />
+                  <input
+                    value={newReservationDurationMinutes}
+                    onChange={(e) =>
+                      setNewReservationDurationMinutes(e.target.value)
+                    }
+                    inputMode="numeric"
+                  />
                 </label>
                 <div className="host-preset-group">
                   <span className="host-preset-label">Duración sugerida</span>
@@ -971,14 +1386,29 @@ export function HostPage() {
                 </div>
                 <label>
                   Notas
-                  <input value={newReservationNotes} onChange={(e) => setNewReservationNotes(e.target.value)} placeholder="Cumpleaños, silla alta, etc." />
+                  <input
+                    value={newReservationNotes}
+                    onChange={(e) => setNewReservationNotes(e.target.value)}
+                    placeholder="Cumpleaños, silla alta, etc."
+                  />
                 </label>
-                <button type="submit" className="btn btn--primary btn--xl" disabled={createReservationMutation.isPending || !newReservationGuestName.trim()}>
-                  {createReservationMutation.isPending ? "Creando…" : "Crear reserva"}
+                <button
+                  type="submit"
+                  className="btn btn--primary btn--xl"
+                  disabled={
+                    createReservationMutation.isPending ||
+                    !newReservationGuestName.trim()
+                  }
+                >
+                  {createReservationMutation.isPending
+                    ? "Creando…"
+                    : "Crear reserva"}
                 </button>
                 {createReservationMutation.error ? (
                   <div className="cashier-banner cashier-banner--warning">
-                    <span>{toErrorMessage(createReservationMutation.error)}</span>
+                    <span>
+                      {toErrorMessage(createReservationMutation.error)}
+                    </span>
                   </div>
                 ) : null}
               </form>
@@ -988,7 +1418,9 @@ export function HostPage() {
               <div className="cashier-card-head">
                 <div>
                   <h2 className="host-card-title">Reservas activas</h2>
-                  <p className="host-card-copy">Confirmá, marcá no-show o sentá la mesa.</p>
+                  <p className="host-card-copy">
+                    Confirmá, marcá no-show o sentá la mesa.
+                  </p>
                 </div>
               </div>
               <div className="cashier-segmented">
@@ -1012,125 +1444,181 @@ export function HostPage() {
                 emptyMessage="No hay reservas para este filtro."
                 onRetry={() => void reservationsQuery.refetch()}
               >
-                <p className="host-list-hint">Ordenado por prioridad operativa y horario de llegada.</p>
+                <p className="host-list-hint">
+                  Ordenado por prioridad operativa y horario de llegada.
+                </p>
                 <div className="host-reservation-list">
                   {prioritizedReservations.map((reservation) => {
-                      const startAtMs = Date.parse(reservation.startAt);
-                      const minutesUntil = Math.round((startAtMs - Date.now()) / 60000);
-                      const isSoon =
-                        minutesUntil >= 0 &&
-                        minutesUntil <= 90 &&
-                        (reservation.status === "PENDING" || reservation.status === "CONFIRMED");
-                      const candidateTables = availableTables
-                        .filter((table) => table.capacity >= reservation.partySize)
-                        .slice()
-                        .sort((a, b) => {
-                          const overfillA = a.capacity - reservation.partySize;
-                          const overfillB = b.capacity - reservation.partySize;
-                          if (overfillA !== overfillB) return overfillA - overfillB;
-                          return a.salonName.localeCompare(b.salonName) || a.number.localeCompare(b.number);
-                        });
-                      const bestFitTable = candidateTables[0] ?? null;
-                      const reservationFlowHint =
-                        reservation.status === "PENDING" && isSoon
-                          ? { label: minutesUntil <= 15 ? "Confirmar ya" : "Confirmar hoy", tone: "pending" as const }
-                          : reservation.status === "CONFIRMED" && minutesUntil <= 0
-                            ? { label: "Sentar ahora", tone: "ready" as const }
-                            : reservation.status === "CONFIRMED" && isSoon
-                              ? { label: reservation.tableIds?.length ? "Preparar seating" : "Asignar mesa", tone: "confirmed" as const }
-                              : reservation.status === "PENDING"
-                                ? { label: "Pendiente", tone: "pending" as const }
-                                : null;
-                      return (
-                        <article
-                          key={reservation.id}
-                          className={`host-reservation-card ${isSoon ? "host-reservation-card--soon" : ""} ${reservationFlowHint?.tone === "ready" || reservationFlowHint?.label === "Asignar mesa" ? "host-reservation-card--actionable" : ""}`}
-                        >
-                          <div className="host-reservation-main">
-                            <div className="host-reservation-head">
-                              <div className="host-reservation-title">
-                                <strong>{formatReservationHeading(reservation, guestById.get(reservation.guestId ?? "") ?? null)}</strong>
-                                <span>{formatDateTime(reservation.startAt)} · {reservation.durationMinutes} min</span>
-                              </div>
-                              <div className="host-reservation-flags">
-                                <span className={`host-status host-status--${reservation.status.toLowerCase()}`}>{reservation.status}</span>
-                                {isSoon ? (
-                                  <span className="host-status host-status--soon">
-                                    {minutesUntil <= 0 ? "Ahora" : `${minutesUntil} min`}
-                                  </span>
-                                ) : null}
-                                {reservationFlowHint ? (
-                                  <span className={`host-flow-hint host-flow-hint--${reservationFlowHint.tone}`}>{reservationFlowHint.label}</span>
-                                ) : null}
-                              </div>
+                    const startAtMs = Date.parse(reservation.startAt);
+                    const minutesUntil = Math.round(
+                      (startAtMs - Date.now()) / 60000,
+                    );
+                    const isSoon =
+                      minutesUntil >= 0 &&
+                      minutesUntil <= 90 &&
+                      (reservation.status === "PENDING" ||
+                        reservation.status === "CONFIRMED");
+                    const candidateTables = availableTables
+                      .filter(
+                        (table) => table.capacity >= reservation.partySize,
+                      )
+                      .slice()
+                      .sort((a, b) => {
+                        const overfillA = a.capacity - reservation.partySize;
+                        const overfillB = b.capacity - reservation.partySize;
+                        if (overfillA !== overfillB)
+                          return overfillA - overfillB;
+                        return (
+                          a.salonName.localeCompare(b.salonName) ||
+                          a.number.localeCompare(b.number)
+                        );
+                      });
+                    const bestFitTable = candidateTables[0] ?? null;
+                    const reservationFlowHint =
+                      reservation.status === "PENDING" && isSoon
+                        ? {
+                            label:
+                              minutesUntil <= 15
+                                ? "Confirmar ya"
+                                : "Confirmar hoy",
+                            tone: "pending" as const,
+                          }
+                        : reservation.status === "CONFIRMED" &&
+                            minutesUntil <= 0
+                          ? { label: "Sentar ahora", tone: "ready" as const }
+                          : reservation.status === "CONFIRMED" && isSoon
+                            ? {
+                                label: reservation.tableIds?.length
+                                  ? "Preparar seating"
+                                  : "Asignar mesa",
+                                tone: "confirmed" as const,
+                              }
+                            : reservation.status === "PENDING"
+                              ? { label: "Pendiente", tone: "pending" as const }
+                              : null;
+                    return (
+                      <article
+                        key={reservation.id}
+                        className={`host-reservation-card ${isSoon ? "host-reservation-card--soon" : ""} ${reservationFlowHint?.tone === "ready" || reservationFlowHint?.label === "Asignar mesa" ? "host-reservation-card--actionable" : ""}`}
+                      >
+                        <div className="host-reservation-main">
+                          <div className="host-reservation-head">
+                            <div className="host-reservation-title">
+                              <strong>
+                                {formatReservationHeading(
+                                  reservation,
+                                  guestById.get(reservation.guestId ?? "") ??
+                                    null,
+                                )}
+                              </strong>
+                              <span>
+                                {formatDateTime(reservation.startAt)} ·{" "}
+                                {reservation.durationMinutes} min
+                              </span>
                             </div>
-                            <div className="host-reservation-meta">
-                              <span>Mesas: {reservation.tableIds?.length ? reservation.tableIds.join(", ") : "sin asignar"}</span>
-                              {reservation.status === "CONFIRMED" && !reservation.tableIds?.length ? (
-                                <span>
-                                  {bestFitTable
-                                    ? `Mejor mesa libre: ${bestFitTable.name?.trim() || `Mesa ${bestFitTable.number}`} · ${bestFitTable.salonName} · ${bestFitTable.capacity} pax`
-                                    : "Sin mesa libre sugerida ahora mismo"}
+                            <div className="host-reservation-flags">
+                              <span
+                                className={`host-status host-status--${reservation.status.toLowerCase()}`}
+                              >
+                                {reservation.status}
+                              </span>
+                              {isSoon ? (
+                                <span className="host-status host-status--soon">
+                                  {minutesUntil <= 0
+                                    ? "Ahora"
+                                    : `${minutesUntil} min`}
                                 </span>
                               ) : null}
-                              <span>{reservation.notes?.trim() || "Sin notas operativas"}</span>
+                              {reservationFlowHint ? (
+                                <span
+                                  className={`host-flow-hint host-flow-hint--${reservationFlowHint.tone}`}
+                                >
+                                  {reservationFlowHint.label}
+                                </span>
+                              ) : null}
                             </div>
                           </div>
-                          <div className="host-reservation-actions">
-                            {reservation.status === "PENDING" ? (
+                          <div className="host-reservation-meta">
+                            <span>
+                              Mesas:{" "}
+                              {reservation.tableIds?.length
+                                ? reservation.tableIds.join(", ")
+                                : "sin asignar"}
+                            </span>
+                            {reservation.status === "CONFIRMED" &&
+                            !reservation.tableIds?.length ? (
+                              <span>
+                                {bestFitTable
+                                  ? `Mejor mesa libre: ${bestFitTable.name?.trim() || `Mesa ${bestFitTable.number}`} · ${bestFitTable.salonName} · ${bestFitTable.capacity} pax`
+                                  : "Sin mesa libre sugerida ahora mismo"}
+                              </span>
+                            ) : null}
+                            <span>
+                              {reservation.notes?.trim() ||
+                                "Sin notas operativas"}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="host-reservation-actions">
+                          {reservation.status === "PENDING" ? (
+                            <button
+                              type="button"
+                              className="btn btn--ghost"
+                              onClick={() =>
+                                void hostCommand.mutateAsync({
+                                  path: `/v1/reservations/${reservation.id}/confirm`,
+                                })
+                              }
+                            >
+                              Confirmar
+                            </button>
+                          ) : null}
+                          {reservation.status === "CONFIRMED" ? (
+                            <button
+                              type="button"
+                              className="btn btn--primary"
+                              onClick={() =>
+                                void hostCommand.mutateAsync({
+                                  path: `/v1/reservations/${reservation.id}/seat`,
+                                })
+                              }
+                            >
+                              Sentar
+                            </button>
+                          ) : null}
+                          {reservation.status === "PENDING" ||
+                          reservation.status === "CONFIRMED" ? (
+                            <>
                               <button
                                 type="button"
                                 className="btn btn--ghost"
                                 onClick={() =>
-                                  void hostCommand.mutateAsync({ path: `/v1/reservations/${reservation.id}/confirm` })
+                                  void hostCommand.mutateAsync({
+                                    path: `/v1/reservations/${reservation.id}/cancel`,
+                                    body: { reasonCode: "HOST_CANCELLED" },
+                                  })
                                 }
                               >
-                                Confirmar
+                                Cancelar
                               </button>
-                            ) : null}
-                            {reservation.status === "CONFIRMED" ? (
                               <button
                                 type="button"
-                                className="btn btn--primary"
+                                className="btn btn--ghost"
                                 onClick={() =>
-                                  void hostCommand.mutateAsync({ path: `/v1/reservations/${reservation.id}/seat` })
+                                  void hostCommand.mutateAsync({
+                                    path: `/v1/reservations/${reservation.id}/no-show`,
+                                    body: { reason: "Guest no-show" },
+                                  })
                                 }
                               >
-                                Sentar
+                                No-show
                               </button>
-                            ) : null}
-                            {(reservation.status === "PENDING" || reservation.status === "CONFIRMED") ? (
-                              <>
-                                <button
-                                  type="button"
-                                  className="btn btn--ghost"
-                                  onClick={() =>
-                                    void hostCommand.mutateAsync({
-                                      path: `/v1/reservations/${reservation.id}/cancel`,
-                                      body: { reasonCode: "HOST_CANCELLED" },
-                                    })
-                                  }
-                                >
-                                  Cancelar
-                                </button>
-                                <button
-                                  type="button"
-                                  className="btn btn--ghost"
-                                  onClick={() =>
-                                    void hostCommand.mutateAsync({
-                                      path: `/v1/reservations/${reservation.id}/no-show`,
-                                      body: { reason: "Guest no-show" },
-                                    })
-                                  }
-                                >
-                                  No-show
-                                </button>
-                              </>
-                            ) : null}
-                          </div>
-                        </article>
-                      );
-                    })}
+                            </>
+                          ) : null}
+                        </div>
+                      </article>
+                    );
+                  })}
                 </div>
               </StateView>
             </section>
@@ -1143,7 +1631,9 @@ export function HostPage() {
               <div className="cashier-card-head">
                 <div>
                   <h2 className="host-card-title">Nueva espera</h2>
-                  <p className="host-card-copy">Alta rápida para recepción walk-in.</p>
+                  <p className="host-card-copy">
+                    Alta rápida para recepción walk-in.
+                  </p>
                 </div>
               </div>
               <div className="host-form-panel">
@@ -1151,13 +1641,18 @@ export function HostPage() {
                 <p className="host-card-copy">{waitlistFocusPlan.message}</p>
                 <div className="host-checklist">
                   {waitlistDraftChecklist.map((step) => (
-                    <div key={step.label} className={`host-check ${step.done ? "host-check--done" : ""}`}>
+                    <div
+                      key={step.label}
+                      className={`host-check ${step.done ? "host-check--done" : ""}`}
+                    >
                       <strong>{step.done ? "✓" : "•"}</strong>
                       <span>{step.label}</span>
                     </div>
                   ))}
                 </div>
-                <div className={`cashier-banner ${waitlistDraftReady ? "cashier-banner--success" : "cashier-banner--info"}`}>
+                <div
+                  className={`cashier-banner ${waitlistDraftReady ? "cashier-banner--success" : "cashier-banner--info"}`}
+                >
                   <span>
                     {waitlistDraftReady
                       ? "La espera ya tiene los datos mínimos para cargarse."
@@ -1174,30 +1669,67 @@ export function HostPage() {
               >
                 <label>
                   Nombre del huésped
-                  <input value={newWaitlistGuestName} onChange={(e) => setNewWaitlistGuestName(e.target.value)} placeholder="Walk-in / apellido" />
+                  <input
+                    value={newWaitlistGuestName}
+                    onChange={(e) => setNewWaitlistGuestName(e.target.value)}
+                    placeholder="Walk-in / apellido"
+                  />
                 </label>
                 <label>
                   Email
-                  <input value={newWaitlistGuestEmail} onChange={(e) => setNewWaitlistGuestEmail(e.target.value)} inputMode="email" placeholder="opcional" />
+                  <input
+                    value={newWaitlistGuestEmail}
+                    onChange={(e) => setNewWaitlistGuestEmail(e.target.value)}
+                    inputMode="email"
+                    placeholder="opcional"
+                  />
                 </label>
                 <label>
                   Teléfono
-                  <input value={newWaitlistGuestPhone} onChange={(e) => setNewWaitlistGuestPhone(e.target.value)} inputMode="tel" placeholder="opcional" />
+                  <input
+                    value={newWaitlistGuestPhone}
+                    onChange={(e) => setNewWaitlistGuestPhone(e.target.value)}
+                    inputMode="tel"
+                    placeholder="opcional"
+                  />
                 </label>
                 <label>
                   Comensales
-                  <input value={newWaitlistPartySize} onChange={(e) => setNewWaitlistPartySize(e.target.value)} inputMode="numeric" />
+                  <input
+                    value={newWaitlistPartySize}
+                    onChange={(e) => setNewWaitlistPartySize(e.target.value)}
+                    inputMode="numeric"
+                  />
                 </label>
                 <label>
                   Minutos prometidos
-                  <input value={newWaitlistQuotedMinutes} onChange={(e) => setNewWaitlistQuotedMinutes(e.target.value)} inputMode="numeric" />
+                  <input
+                    value={newWaitlistQuotedMinutes}
+                    onChange={(e) =>
+                      setNewWaitlistQuotedMinutes(e.target.value)
+                    }
+                    inputMode="numeric"
+                  />
                 </label>
                 <label>
                   Notas
-                  <input value={newWaitlistNotes} onChange={(e) => setNewWaitlistNotes(e.target.value)} placeholder="Preferencia, cochecito, etc." />
+                  <input
+                    value={newWaitlistNotes}
+                    onChange={(e) => setNewWaitlistNotes(e.target.value)}
+                    placeholder="Preferencia, cochecito, etc."
+                  />
                 </label>
-                <button type="submit" className="btn btn--primary btn--xl" disabled={createWaitlistMutation.isPending || !newWaitlistGuestName.trim()}>
-                  {createWaitlistMutation.isPending ? "Agregando…" : "Agregar a espera"}
+                <button
+                  type="submit"
+                  className="btn btn--primary btn--xl"
+                  disabled={
+                    createWaitlistMutation.isPending ||
+                    !newWaitlistGuestName.trim()
+                  }
+                >
+                  {createWaitlistMutation.isPending
+                    ? "Agregando…"
+                    : "Agregar a espera"}
                 </button>
                 {createWaitlistMutation.error ? (
                   <div className="cashier-banner cashier-banner--warning">
@@ -1211,13 +1743,24 @@ export function HostPage() {
               <div className="cashier-card-head">
                 <div>
                   <h2 className="host-card-title">Lista de espera</h2>
-                  <p className="host-card-copy">Notificá, priorizá o sentá con una mesa libre.</p>
+                  <p className="host-card-copy">
+                    Notificá, priorizá o sentá con una mesa libre.
+                  </p>
                 </div>
               </div>
-              <section className="host-waitlist-summary" aria-label="Resumen de waitlist">
+              <section
+                className="host-waitlist-summary"
+                aria-label="Resumen de waitlist"
+              >
                 <article className="host-waitlist-kpi">
                   <span>Esperando</span>
-                  <strong>{waitingEntries.filter((entry) => entry.status === "WAITING").length}</strong>
+                  <strong>
+                    {
+                      waitingEntries.filter(
+                        (entry) => entry.status === "WAITING",
+                      ).length
+                    }
+                  </strong>
                 </article>
                 <article className="host-waitlist-kpi">
                   <span>Notificados</span>
@@ -1229,8 +1772,17 @@ export function HostPage() {
                 </article>
               </section>
               <StateView
-                isLoading={waitlistQuery.isLoading || salonDetailsQuery.isLoading || tableStatusesQuery.isLoading}
-                error={(waitlistQuery.error as Error) ?? (salonDetailsQuery.error as Error) ?? (tableStatusesQuery.error as Error) ?? null}
+                isLoading={
+                  waitlistQuery.isLoading ||
+                  salonDetailsQuery.isLoading ||
+                  tableStatusesQuery.isLoading
+                }
+                error={
+                  (waitlistQuery.error as Error) ??
+                  (salonDetailsQuery.error as Error) ??
+                  (tableStatusesQuery.error as Error) ??
+                  null
+                }
                 isEmpty={(waitlistQuery.data?.data.length ?? 0) === 0}
                 emptyIcon="⏳"
                 emptyTitle="Sin espera"
@@ -1241,7 +1793,10 @@ export function HostPage() {
                   void tableStatusesQuery.refetch();
                 }}
               >
-                <p className="host-list-hint">Primero se muestran grupos sentables ahora o con demora vencida.</p>
+                <p className="host-list-hint">
+                  Primero se muestran grupos sentables ahora o con demora
+                  vencida.
+                </p>
                 <div className="host-waitlist-list">
                   {prioritizedWaitlistEntries.map((entry) => {
                     const selected = waitlistSeatSelections[entry.id] ?? [];
@@ -1251,21 +1806,39 @@ export function HostPage() {
                       .sort((a, b) => {
                         const overfillA = a.capacity - entry.partySize;
                         const overfillB = b.capacity - entry.partySize;
-                        if (overfillA !== overfillB) return overfillA - overfillB;
-                        return a.salonName.localeCompare(b.salonName) || a.number.localeCompare(b.number);
+                        if (overfillA !== overfillB)
+                          return overfillA - overfillB;
+                        return (
+                          a.salonName.localeCompare(b.salonName) ||
+                          a.number.localeCompare(b.number)
+                        );
                       });
-                    const waitedMinutes = Math.max(0, Math.round((Date.now() - Date.parse(entry.createdAt)) / 60000));
+                    const waitedMinutes = Math.max(
+                      0,
+                      Math.round(
+                        (Date.now() - Date.parse(entry.createdAt)) / 60000,
+                      ),
+                    );
                     const quotedMinutes = entry.quotedMinutes ?? 0;
-                    const overdue = quotedMinutes > 0 && waitedMinutes > quotedMinutes;
+                    const overdue =
+                      quotedMinutes > 0 && waitedMinutes > quotedMinutes;
                     const waitlistFlowHint =
-                      (entry.status === "WAITING" || entry.status === "NOTIFIED") && entryTables.length > 0
+                      (entry.status === "WAITING" ||
+                        entry.status === "NOTIFIED") &&
+                      entryTables.length > 0
                         ? { label: "Sentable ahora", tone: "ready" as const }
                         : overdue
-                          ? { label: "Resolver demora", tone: "overdue" as const }
+                          ? {
+                              label: "Resolver demora",
+                              tone: "overdue" as const,
+                            }
                           : entry.status === "WAITING"
                             ? { label: "Notificar", tone: "waiting" as const }
                             : entry.status === "NOTIFIED"
-                              ? { label: "Esperando llegada", tone: "notified" as const }
+                              ? {
+                                  label: "Esperando llegada",
+                                  tone: "notified" as const,
+                                }
                               : null;
                     return (
                       <article
@@ -1275,23 +1848,50 @@ export function HostPage() {
                         <div className="host-waitlist-main">
                           <div className="host-waitlist-head">
                             <div className="host-waitlist-title">
-                              <strong>{formatWaitlistHeading(entry, guestById.get(entry.guestId ?? "") ?? null)}</strong>
-                              <span>{formatWaitlistTiming(waitedMinutes, quotedMinutes)}</span>
+                              <strong>
+                                {formatWaitlistHeading(
+                                  entry,
+                                  guestById.get(entry.guestId ?? "") ?? null,
+                                )}
+                              </strong>
+                              <span>
+                                {formatWaitlistTiming(
+                                  waitedMinutes,
+                                  quotedMinutes,
+                                )}
+                              </span>
                             </div>
                             <div className="host-waitlist-flags">
-                              <span className={`host-status host-status--${entry.status.toLowerCase()}`}>{entry.status}</span>
-                              {overdue ? <span className="host-status host-status--soon">Demorado</span> : null}
+                              <span
+                                className={`host-status host-status--${entry.status.toLowerCase()}`}
+                              >
+                                {entry.status}
+                              </span>
+                              {overdue ? (
+                                <span className="host-status host-status--soon">
+                                  Demorado
+                                </span>
+                              ) : null}
                               {waitlistFlowHint ? (
-                                <span className={`host-flow-hint host-flow-hint--${waitlistFlowHint.tone}`}>{waitlistFlowHint.label}</span>
+                                <span
+                                  className={`host-flow-hint host-flow-hint--${waitlistFlowHint.tone}`}
+                                >
+                                  {waitlistFlowHint.label}
+                                </span>
                               ) : null}
                             </div>
                           </div>
                           <div className="host-waitlist-meta">
                             <span>Promesa: {quotedMinutes} min</span>
-                            <span>{entryTables.length > 0 ? `${entryTables.length} mesas candidatas` : "Sin mesa disponible ahora"}</span>
+                            <span>
+                              {entryTables.length > 0
+                                ? `${entryTables.length} mesas candidatas`
+                                : "Sin mesa disponible ahora"}
+                            </span>
                             <span>{entry.notes?.trim() || "Sin notas"}</span>
                           </div>
-                          {(entry.status === "WAITING" || entry.status === "NOTIFIED") ? (
+                          {entry.status === "WAITING" ||
+                          entry.status === "NOTIFIED" ? (
                             <div className="host-table-picker">
                               {entryTables.map((table, index) => (
                                 <label
@@ -1304,13 +1904,23 @@ export function HostPage() {
                                     onChange={() =>
                                       setWaitlistSeatSelections((current) => ({
                                         ...current,
-                                        [entry.id]: current[entry.id]?.includes(table.id)
-                                          ? current[entry.id]!.filter((id) => id !== table.id)
-                                          : [...(current[entry.id] ?? []), table.id],
+                                        [entry.id]: current[entry.id]?.includes(
+                                          table.id,
+                                        )
+                                          ? current[entry.id]!.filter(
+                                              (id) => id !== table.id,
+                                            )
+                                          : [
+                                              ...(current[entry.id] ?? []),
+                                              table.id,
+                                            ],
                                       }))
                                     }
                                   />
-                                  <span className="host-table-chip__name">{table.name?.trim() || `Mesa ${table.number}`}</span>
+                                  <span className="host-table-chip__name">
+                                    {table.name?.trim() ||
+                                      `Mesa ${table.number}`}
+                                  </span>
                                   <span className="host-table-chip__meta">
                                     {table.salonName} · {table.capacity} pax
                                     {index === 0 ? " · mejor fit" : ""}
@@ -1319,7 +1929,10 @@ export function HostPage() {
                               ))}
                               {entryTables.length === 0 ? (
                                 <div className="cashier-banner cashier-banner--warning">
-                                  <span>No hay mesas libres con capacidad suficiente para este grupo.</span>
+                                  <span>
+                                    No hay mesas libres con capacidad suficiente
+                                    para este grupo.
+                                  </span>
                                 </div>
                               ) : null}
                             </div>
@@ -1329,7 +1942,15 @@ export function HostPage() {
                           <div className="cashier-quick-actions">
                             {entry.status === "WAITING" ? (
                               <>
-                                <button type="button" className="btn btn--ghost" onClick={() => void hostCommand.mutateAsync({ path: `/v1/waitlist-entries/${entry.id}/notify` })}>
+                                <button
+                                  type="button"
+                                  className="btn btn--ghost"
+                                  onClick={() =>
+                                    void hostCommand.mutateAsync({
+                                      path: `/v1/waitlist-entries/${entry.id}/notify`,
+                                    })
+                                  }
+                                >
                                   Notificar
                                 </button>
                                 <button
@@ -1338,7 +1959,10 @@ export function HostPage() {
                                   onClick={() =>
                                     void hostCommand.mutateAsync({
                                       path: `/v1/waitlist-entries/${entry.id}/priority-overrides`,
-                                      body: { priorityOverride: -10, reason: "Host bump" },
+                                      body: {
+                                        priorityOverride: -10,
+                                        reason: "Host bump",
+                                      },
                                     })
                                   }
                                 >
@@ -1346,7 +1970,8 @@ export function HostPage() {
                                 </button>
                               </>
                             ) : null}
-                            {(entry.status === "WAITING" || entry.status === "NOTIFIED") ? (
+                            {entry.status === "WAITING" ||
+                            entry.status === "NOTIFIED" ? (
                               <button
                                 type="button"
                                 className="btn btn--primary"
@@ -1361,7 +1986,8 @@ export function HostPage() {
                                 Sentar
                               </button>
                             ) : null}
-                            {(entry.status === "WAITING" || entry.status === "NOTIFIED") ? (
+                            {entry.status === "WAITING" ||
+                            entry.status === "NOTIFIED" ? (
                               <>
                                 <button
                                   type="button"
@@ -1375,7 +2001,15 @@ export function HostPage() {
                                 >
                                   Cancelar
                                 </button>
-                                <button type="button" className="btn btn--ghost" onClick={() => void hostCommand.mutateAsync({ path: `/v1/waitlist-entries/${entry.id}/expire` })}>
+                                <button
+                                  type="button"
+                                  className="btn btn--ghost"
+                                  onClick={() =>
+                                    void hostCommand.mutateAsync({
+                                      path: `/v1/waitlist-entries/${entry.id}/expire`,
+                                    })
+                                  }
+                                >
                                   Expirar
                                 </button>
                               </>
@@ -1397,17 +2031,31 @@ export function HostPage() {
               <div className="cashier-card-head">
                 <div>
                   <h2 className="host-card-title">Chequeo de disponibilidad</h2>
-                  <p className="host-card-copy">Consulta live para una fecha y cantidad de cubiertos.</p>
+                  <p className="host-card-copy">
+                    Consulta live para una fecha y cantidad de cubiertos.
+                  </p>
                 </div>
               </div>
               <div className="host-form-panel">
                 <strong>{availabilityFocusPlan.title}</strong>
-                <p className="host-card-copy">{availabilityFocusPlan.message}</p>
+                <p className="host-card-copy">
+                  {availabilityFocusPlan.message}
+                </p>
                 <div className="cashier-quick-actions">
-                  <button type="button" className="btn btn--ghost" onClick={() => setAvailabilityStartAt(defaultDateTimeLocal())}>
+                  <button
+                    type="button"
+                    className="btn btn--ghost"
+                    onClick={() =>
+                      setAvailabilityStartAt(defaultDateTimeLocal())
+                    }
+                  >
                     Resetear horario
                   </button>
-                  <button type="button" className="btn btn--ghost" onClick={() => setAvailabilityPartySize("2")}>
+                  <button
+                    type="button"
+                    className="btn btn--ghost"
+                    onClick={() => setAvailabilityPartySize("2")}
+                  >
                     Volver a 2 pax
                   </button>
                 </div>
@@ -1416,7 +2064,10 @@ export function HostPage() {
                 <strong>Qué revisar antes de prometer un horario</strong>
                 <div className="host-checklist">
                   {availabilityActionPlan.map((step) => (
-                    <div key={step.label} className={`host-check ${step.done ? "host-check--done" : ""}`}>
+                    <div
+                      key={step.label}
+                      className={`host-check ${step.done ? "host-check--done" : ""}`}
+                    >
                       <strong>{step.done ? "✓" : "•"}</strong>
                       <span>{step.label}</span>
                     </div>
@@ -1426,10 +2077,16 @@ export function HostPage() {
               <div className="cashier-form">
                 <label>
                   Comensales
-                  <input value={availabilityPartySize} onChange={(e) => setAvailabilityPartySize(e.target.value)} inputMode="numeric" />
+                  <input
+                    value={availabilityPartySize}
+                    onChange={(e) => setAvailabilityPartySize(e.target.value)}
+                    inputMode="numeric"
+                  />
                 </label>
                 <div className="host-preset-group">
-                  <span className="host-preset-label">Atajos de comensales</span>
+                  <span className="host-preset-label">
+                    Atajos de comensales
+                  </span>
                   <div className="host-preset-row">
                     {PARTY_SIZE_PRESETS.map((preset: string) => (
                       <button
@@ -1445,7 +2102,11 @@ export function HostPage() {
                 </div>
                 <label>
                   Inicio
-                  <input type="datetime-local" value={availabilityStartAt} onChange={(e) => setAvailabilityStartAt(e.target.value)} />
+                  <input
+                    type="datetime-local"
+                    value={availabilityStartAt}
+                    onChange={(e) => setAvailabilityStartAt(e.target.value)}
+                  />
                 </label>
                 <div className="host-preset-group">
                   <span className="host-preset-label">Horarios frecuentes</span>
@@ -1464,7 +2125,13 @@ export function HostPage() {
                 </div>
                 <label>
                   Duración (min)
-                  <input value={availabilityDurationMinutes} onChange={(e) => setAvailabilityDurationMinutes(e.target.value)} inputMode="numeric" />
+                  <input
+                    value={availabilityDurationMinutes}
+                    onChange={(e) =>
+                      setAvailabilityDurationMinutes(e.target.value)
+                    }
+                    inputMode="numeric"
+                  />
                 </label>
                 <div className="host-preset-group">
                   <span className="host-preset-label">Duración sugerida</span>
@@ -1488,7 +2155,9 @@ export function HostPage() {
               <div className="cashier-card-head">
                 <div>
                   <h2 className="host-card-title">Resultado</h2>
-                  <p className="host-card-copy">Mesas libres según reservas y ocupación actual.</p>
+                  <p className="host-card-copy">
+                    Mesas libres según reservas y ocupación actual.
+                  </p>
                 </div>
               </div>
               <StateView
@@ -1498,7 +2167,9 @@ export function HostPage() {
               >
                 {availabilityQuery.data ? (
                   <>
-                    <div className={`cashier-banner ${availabilityQuery.data.data.available ? "cashier-banner--success" : "cashier-banner--warning"}`}>
+                    <div
+                      className={`cashier-banner ${availabilityQuery.data.data.available ? "cashier-banner--success" : "cashier-banner--warning"}`}
+                    >
                       <span>
                         {availabilityQuery.data.data.available
                           ? "Hay disponibilidad para ese horario."
@@ -1506,24 +2177,41 @@ export function HostPage() {
                       </span>
                     </div>
                     <div className="cashier-quick-actions">
-                      <button type="button" className="btn btn--primary" onClick={copyAvailabilityIntoReservation}>
+                      <button
+                        type="button"
+                        className="btn btn--primary"
+                        onClick={copyAvailabilityIntoReservation}
+                      >
                         Pasar a nueva reserva
                       </button>
-                      <button type="button" className="btn btn--ghost" onClick={() => setTab("reservations")}>
+                      <button
+                        type="button"
+                        className="btn btn--ghost"
+                        onClick={() => setTab("reservations")}
+                      >
                         Ir a reservas
                       </button>
                     </div>
                     <div className="owner-links">
                       {availabilityQuery.data.data.freeTableIds.length > 0 ? (
-                        availabilityQuery.data.data.freeTableIds.map((tableId) => {
-                          const table = allTables.find((item) => item.id === tableId);
-                          return (
-                            <div key={tableId} className="owner-link-card">
-                              <strong>{table?.name?.trim() || `Mesa ${table?.number ?? tableId.slice(0, 8)}`}</strong>
-                              <span>{table?.salonName ?? "Mesa disponible"}</span>
-                            </div>
-                          );
-                        })
+                        availabilityQuery.data.data.freeTableIds.map(
+                          (tableId) => {
+                            const table = allTables.find(
+                              (item) => item.id === tableId,
+                            );
+                            return (
+                              <div key={tableId} className="owner-link-card">
+                                <strong>
+                                  {table?.name?.trim() ||
+                                    `Mesa ${table?.number ?? tableId.slice(0, 8)}`}
+                                </strong>
+                                <span>
+                                  {table?.salonName ?? "Mesa disponible"}
+                                </span>
+                              </div>
+                            );
+                          },
+                        )
                       ) : (
                         <div className="owner-link-card">
                           <strong>Sin mesas sugeridas</strong>
@@ -1585,13 +2273,20 @@ function formatDateTime(value: string) {
   });
 }
 
-function formatReservationHeading(reservation: ReservationListItem, guest: GuestProfile | null) {
-  const guestLabel = guest?.displayName?.trim() || reservation.guestId?.slice(0, 8) || "Sin huésped";
+function formatReservationHeading(
+  reservation: ReservationListItem,
+  guest: GuestProfile | null,
+) {
+  const guestLabel =
+    guest?.displayName?.trim() ||
+    reservation.guestId?.slice(0, 8) ||
+    "Sin huésped";
   return `${guestLabel} · ${reservation.partySize} pax`;
 }
 
 function formatArrivalTiming(minutesUntil: number) {
-  if (minutesUntil <= 0) return `llegando ahora · ${Math.abs(minutesUntil)} min ${minutesUntil === 0 ? "de horario" : "tarde"}`;
+  if (minutesUntil <= 0)
+    return `llegando ahora · ${Math.abs(minutesUntil)} min ${minutesUntil === 0 ? "de horario" : "tarde"}`;
   if (minutesUntil <= 20) return `llega en ${minutesUntil} min`;
   return `llega en ${minutesUntil} min`;
 }
@@ -1617,8 +2312,12 @@ function reservationStatusLabel(status: ReservationListItem["status"]) {
   }
 }
 
-function formatWaitlistHeading(entry: WaitlistEntry, guest: GuestProfile | null) {
-  const guestLabel = guest?.displayName?.trim() || entry.guestId?.slice(0, 8) || "Walk-in";
+function formatWaitlistHeading(
+  entry: WaitlistEntry,
+  guest: GuestProfile | null,
+) {
+  const guestLabel =
+    guest?.displayName?.trim() || entry.guestId?.slice(0, 8) || "Walk-in";
   return `${guestLabel} · ${entry.partySize} pax`;
 }
 

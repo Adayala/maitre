@@ -17,10 +17,11 @@ Dos pasos explícitos:
 2. **Operación dentro del tenant activo** — árbol jerárquico `Marca → Sucursal →
 (Salones → Plazas → Mesas, Empleados)` con panel de detalle a la derecha.
 
-Una Plaza no es una mesa ni una medida de capacidad. Es una agrupación operativa
-de mesas de un mismo salón para una jornada de servicio, normalmente asignada a
-un mozo. Los cubiertos son la capacidad de cada mesa y se muestran como métrica,
-no como entidades CRUD individuales.
+Una Plaza no es una mesa, una medida de capacidad ni un permiso. Es una
+agrupación organizativa fija o variable de mesas de un mismo salón para una
+jornada de servicio, normalmente asignada a un mozo. Un mozo puede recibir
+varias Plazas y conserva acceso operativo al resto del salón. Los cubiertos son
+la capacidad de cada mesa y se muestran como métrica, no como entidades CRUD.
 
 ## Estado actual reusable
 
@@ -60,8 +61,8 @@ que la jerarquía no quede comprimida dentro del rail global:
   - Hijos visibles de cada Sucursal: grupos "Salones" (`/v1/salons?branchId=`) y
     "Equipo / mozos". Los registros se cargan lazy al expandir cada grupo y cada
     salón o relación laboral aparece como nodo individual editable.
-  - Cada salón puede expandir sus plazas. Cada plaza declara jornada, mesas y mozo
-    asignado; sus mesas muestran capacidad en cubiertos. Una misma mesa no puede
+  - Cada salón puede expandir sus plazas. Cada plaza declara jornada, modo fijo o
+    variable, mesas y mozo asignado; sus mesas muestran capacidad en cubiertos. Una misma mesa no puede
     pertenecer a dos plazas de la misma jornada.
   - Cada nodo clickeable setea `selectedNode` (tipo + id) en estado local del
     `OrgExplorer` (no en `tenant-context` — es navegación de UI, no contexto de
@@ -82,8 +83,9 @@ que la jerarquía no quede comprimida dentro del rail global:
       (parte de sucursal).
     - `SalonDetailPanel` ← lógica de salones, hoy embebida en
       `branches-page.tsx`.
-    - `PlazaDetailPanel` crea/edita una plaza por jornada, limita las mesas al
-      salón padre y permite elegir un empleo/mozo elegible para la sucursal. Si
+    - `PlazaDetailPanel` crea/edita una plaza por jornada, define modo fijo o
+      variable, limita las mesas al salón padre y permite elegir un empleo/mozo
+      elegible para la sucursal. Si
       todavía no existe una jornada editable, permite crear la primera dentro
       del mismo flujo.
     - `TableDetailPanel` crea/edita número, nombre y capacidad en cubiertos usando
@@ -123,6 +125,15 @@ que la jerarquía no quede comprimida dentro del rail global:
   fugas visuales ni de datos entre tenants.
 - El header identifica si la apariencia activa es la base Maitre o una marca y,
   cuando hay una marca elegida, permite restaurar explícitamente el tema base.
+- El rail global puede contraerse a una barra compacta de 84 px. En ese estado
+  conserva todos los destinos mediante siglas accesibles, muestra tooltips,
+  expone un control con `aria-expanded` y persiste la preferencia en el browser.
+  En mobile prevalece la navegación completa para no convertir los destinos en
+  controles crípticos.
+- La jerarquía tipográfica separa tres funciones: la fuente heading de la marca
+  se reserva para títulos de contenido; navegación, header, botones y metadata
+  usan la fuente body/UI; texto extenso usa body con una escala mínima legible.
+  Sin marca, la pila moderna prioriza Inter/Avenir y fallbacks sans del sistema.
 
 ## Fuera de alcance (esta iteración)
 
@@ -152,6 +163,10 @@ que la jerarquía no quede comprimida dentro del rail global:
   concreta y se gestiona su ciclo `PLANNED → OPEN → CLOSING → CLOSED` o su
   cancelación. El alta de Plaza nace dentro de una Jornada editable y luego exige
   elegir Salón, al menos una Mesa y opcionalmente un mozo/responsable.
+- Una Plaza fija replica nombre, salón y mesas como snapshot al crear la Jornada
+  siguiente de la sucursal; no replica responsable. Una Plaza variable no se
+  propaga. La asignación es organizativa y un mozo puede aparecer en varias
+  Plazas de la Jornada.
 - Los tres grupos de una Sucursal son visibles aun cerrados: “Estructura física”,
   “Operación de servicio” y “Equipo”. Al expandir Operación se muestran a la vez
   cada Jornada y su grupo “Plazas”, incluido el estado vacío accionable; Plaza no
@@ -222,3 +237,11 @@ que la jerarquía no quede comprimida dentro del rail global:
     los tokens sin conservar valores de la marca anterior.
 12. El usuario ve en el header qué apariencia está activa y puede volver al tema
     base; el Dash base no usa serif ni títulos editoriales sobredimensionados.
+13. El editor distingue Plaza fija y variable; una nueva Jornada replica sólo
+    las composiciones fijas y permite asignar varias al mismo mozo sin convertir
+    esa relación en un alcance de autorización.
+14. El usuario puede contraer y expandir el panel vertical, navegar a todos sus
+    destinos en ambos estados y conservar la preferencia después de recargar.
+15. Títulos, navegación y cuerpo mantienen una escala descendente verificable;
+    seleccionar una marca reemplaza heading y body sin reintroducir serif ni
+    desordenar tamaños o pesos.
