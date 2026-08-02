@@ -49,7 +49,7 @@
 
 ## Harness E2E reproducible
 
-La aceptación detallada del harness se verifica mediante `E2E-H-01` a `E2E-H-07` definidos en
-[e2e-harness.md](e2e-harness.md). Ningún perfil release se considera operativo hasta demostrar
-equivalencia local/CI, aislamiento Tenant A/B, cleanup, bloqueo pre-deploy e identidad entre el
-artefacto probado y el desplegado.
+La aceptación detallada, la topología y los criterios del harness se mantienen en
+[Cobertura E2E de flujos entre aplicaciones](../../foundation/20-e2e-flow-coverage.md). Ningún
+perfil release se considera operativo hasta demostrar equivalencia local/CI, aislamiento Tenant
+A/B, cleanup, bloqueo pre-deploy e identidad entre el artefacto probado y el desplegado.
