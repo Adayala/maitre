@@ -140,7 +140,10 @@ test("@release-journey MVP-J-001 completes table to close through the real produ
     expect(brandResponse.status()).toBe(201);
     await expect(apps.dash.getByLabel("Nombre").first()).toHaveValue(brandName);
 
-    await apps.dash.getByRole("button", { name: /Equipo \/ mozos/ }).click();
+    await apps.dash
+      .locator(".org-tree__group-button")
+      .filter({ hasText: "Equipo" })
+      .click();
     await expect(
       apps.dash.getByRole("heading", {
         name: "Empleados de la sucursal",

@@ -622,13 +622,6 @@ button {
   border-left-color: color-mix(in srgb, var(--primary) 18%, var(--border));
 }
 
-.org-tree__subgroup > div {
-  color: var(--muted);
-  font-size: 0.67rem;
-  font-weight: 720;
-  letter-spacing: 0.055em;
-}
-
 .org-detail {
   background: var(--surface);
 }
@@ -1122,18 +1115,9 @@ button {
     padding: 10px;
   }
 
-  .org-tree__plazas {
-    margin-left: 10px !important;
-    padding-left: 5px !important;
-  }
-
   .org-detail__header,
   .org-detail__body {
     padding: 22px 18px;
-  }
-
-  .org-inline-period {
-    grid-template-columns: 1fr !important;
   }
 
   .org-operation-context {
