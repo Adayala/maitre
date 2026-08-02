@@ -8,6 +8,19 @@ Maitre es una plataforma operativa modular para restaurantes argentinos. Está d
 
 > Los sistemas tradicionales administran mesas, pedidos y cajas. Maitre administra el servicio.
 
+## Por qué "Maître"
+
+**Maître** se pronuncia aproximadamente "metr" en francés, con una r suave y gutural al final (AFI: `/mɛtʁ/`). En español solemos decir "méitre", pero la pronunciación francesa correcta se acerca mucho más a "metr".
+
+Significa literalmente "maestro", "señor" o "persona experta y con autoridad". En gastronomía, el *maître d'hôtel* —abreviado habitualmente como *maître*— es quien dirige la atención en el salón del restaurante: organiza las mesas, coordina a los mozos, recibe a los clientes y supervisa el servicio.
+
+Para esta plataforma el nombre funciona porque transmite:
+
+- coordinación y control de la operación del restaurante;
+- hospitalidad y atención personalizada;
+- experiencia, elegancia y autoridad;
+- la idea de un "director inteligente" de toda la operación.
+
 ## Visión
 
 Maitre propone un modelo gastronómico que representa la operación real del restaurante y permite activar capacidades por tenant o sucursal. La plataforma combina atención humana y experiencias digitales —como menú, pedidos y solicitud de cuenta mediante QR— sin imponer un modelo de autoservicio.
@@ -62,10 +75,15 @@ La arquitectura mantiene dominio, datos e integraciones desacoplados de Vercel p
 - [Glosario del dominio](docs/foundation/05-domain-glossary.md)
 - [Modelo de dominio](docs/foundation/06-domain-model.md)
 - [Recorridos principales](docs/foundation/07-core-journeys.md)
+- [Feedback y reputación](docs/foundation/08-feedback-reputation.md)
+- [Maître digital / gemelo con IA](docs/foundation/09-ai-digital-twin.md)
 - [Principios de arquitectura](docs/foundation/10-architecture-principles.md)
-- [Mapa visual de arquitectura, componentes y diseño](docs/foundation/18-architecture-components-design-views.md)
 - [Roadmap del MVP](docs/foundation/11-mvp-roadmap.md)
+- [Mensajería del sitio](docs/foundation/12-site-messaging.md)
 - [Decisiones y preguntas abiertas](docs/foundation/13-decisions-and-open-questions.md)
+- [Referencias](docs/foundation/14-references.md)
+- [Mapa visual de arquitectura, componentes y diseño](docs/foundation/18-architecture-components-design-views.md)
+- [Inventario de runtime y persistencia](docs/foundation/19-runtime-persistence-inventory.md)
 
 ### Especificaciones SDD
 
