@@ -12,144 +12,6 @@ Mantener una fuente única y verificable que responda cuatro preguntas:
 Este documento complementa [los recorridos principales](07-core-journeys.md). No reemplaza las
 especificaciones de dominio, API, eventos ni la cobertura granular exigida a cada aplicación.
 
-## Autoridad y organización
-
-Esta es la **única documentación operativa vigente** del harness y de la cobertura E2E. La
-separación de responsabilidades es:
-
-| Ubicación                                                                 | Responsabilidad                                                       |
-| ------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| `docs/foundation/20-e2e-flow-coverage.md`                                 | topología, comandos, perfiles, evidencia, cobertura y backlog         |
-| `tests/e2e/apps/<app>/`                                                   | specs Playwright propias de cada aplicación                           |
-| `tests/e2e/journeys/`                                                     | recorridos reales entre aplicaciones y prueba de durabilidad          |
-| `tests/e2e/support/`                                                      | utilidades compartidas de assertions y accesibilidad                  |
-| `tooling/e2e/`                                                            | política fail-closed y manifiesto reproducible del run                |
-| `playwright.config.mjs`                                                   | proyectos, dispositivos, servidores, puertos y reportes ejecutables   |
-| `.github/workflows/e2e.yml`                                               | gate CI, infraestructura release y publicación de evidencia           |
-| `docs/sdd/spec-224-transversal-testing-test-data/`                        | contrato normativo general de testing y datos, sin duplicar esta guía |
-| `docs/sdd/spec-224-transversal-testing-test-data/implementation-history/` | registro histórico de la decisión que originó MVP-J-001               |
-
-Por lo tanto, `tests/e2e/` **no está obsoleto**: es el directorio activo de tests. Se retiraron su
-README duplicado y el antiguo diseño de harness de SPEC-224 porque mezclaban planes históricos,
-estado implementado y una política de datos distinta de la evidencia real más reciente.
-
-## Topología ejecutable actual
-
-```text
-playwright.config.mjs
-tests/e2e/
-├── apps/{dash,host,floor,kitchen,cash,guest}/
-├── journeys/
-│   ├── api-client.ts
-│   ├── fixtures.ts
-│   ├── mvp-j-001.spec.ts
-│   ├── mvp-j-003.spec.ts
-│   ├── mvp-j-004.spec.ts
-│   └── restart-durability.spec.ts
-└── support/accessibility.ts
-
-tooling/e2e/
-├── check-authoritative-policy.mjs
-└── run-manifest.mjs
-```
-
-Playwright levanta la API real y los builds de las aplicaciones seleccionadas. En `journeys`
-inicia las seis aplicaciones para permitir que un único estado atraviese Dash, Host, Floor,
-Kitchen, Cash y Guest.
-
-| Proyecto E2E | Workspace       | Responsabilidad                                          |
-| ------------ | --------------- | -------------------------------------------------------- |
-| Dash         | `apps/web`      | administración, configuración, suscripciones y auditoría |
-| Host         | `apps/host`     | reservas, recepción, espera y asignación                 |
-| Floor        | `apps/waiter`   | visitas, mesas, pedidos y entrega                        |
-| Kitchen      | `apps/kitchen`  | recepción, preparación y despacho                        |
-| Cash         | `apps/cashier`  | caja, cuenta, pagos y cierre                             |
-| Guest        | `apps/customer` | reserva pública, menú QR y cuenta digital                |
-| API          | `apps/api`      | auth, contratos y estado black-box no visible por UI     |
-| Journeys     | varias          | consistencia del mismo estado a través de aplicaciones   |
-
-| Servicio | Puerto | Dispositivo Playwright principal |
-| -------- | -----: | -------------------------------- |
-| API      |   3101 | n/a                              |
-| Dash     |   5273 | Desktop Chrome                   |
-| Cash     |   5274 | iPad 7                           |
-| Kitchen  |   5275 | iPad 7                           |
-| Floor    |   5276 | iPad 7                           |
-| Host     |   5278 | iPad 7                           |
-| Guest    |   5279 | Pixel 7                          |
-
-Los puertos son estrictos y `reuseExistingServer` está deshabilitado: una colisión debe fallar en
-vez de hacer que el test use accidentalmente un proceso ajeno. El timeout de arranque se controla
-con `E2E_API_STARTUP_TIMEOUT_MS`.
-
-## Comandos canónicos
-
-| Objetivo                                       | Comando                                                 |
-| ---------------------------------------------- | ------------------------------------------------------- |
-| Construir y ejecutar todos los proyectos       | `npm run test:e2e`                                      |
-| Ejecutar sólo casos `@smoke` después del build | `npm run test:e2e:smoke`                                |
-| Ejecutar un proyecto con builds existentes     | `npm run test:e2e:run -- --project=<app>`               |
-| Levantar sólo API y una aplicación             | `E2E_APP=<app> npm run test:e2e:run -- --project=<app>` |
-| Construir y ejecutar los journeys reales       | `npm run test:e2e:journey`                              |
-| Ejecutar journeys con builds existentes        | `npm run test:e2e:journey:run`                          |
-| Reiniciar API y releer el checkpoint durable   | `npm run test:e2e:journey:restart`                      |
-| Validar la política de journeys                | `npm run e2e:journey:policy`                            |
-| Probar el tooling de política/manifiesto       | `npm run e2e:journey:policy:test`                       |
-
-Para ejecutar sólo una aplicación, `E2E_APP` y `--project` deben identificar el mismo proyecto. El
-perfil `journeys` requiere `APP_ENV=e2e`, fixture auth habilitada, identidades por rol y variables
-de persistencia explícitas. Ninguna credencial productiva debe usarse en estos comandos.
-
-## Perfiles de datos y valor probatorio
-
-Existen dos perfiles reales complementarios y uno exclusivamente local:
-
-| Perfil                         | Persistencia                  | Ciclo de datos                                                              | Uso                                                             |
-| ------------------------------ | ----------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| Release CI                     | Supabase local efímero        | migraciones desde cero, namespace por run, restart y destrucción sin backup | gate reproducible y fail-closed                                 |
-| Dataset persistente de pruebas | Supabase de pruebas existente | agrega datos únicos; no reset, no cleanup y los registros permanecen        | validación de comportamiento real y degradación por acumulación |
-| Desarrollo local               | memoria o fixture controlada  | proceso local descartable                                                   | feedback rápido; nunca evidencia release                        |
-
-El perfil efímero de CI verifica reproducibilidad, migraciones y cleanup. El dataset persistente
-verifica coexistencia con estado histórico y es el perfil usado para MVP-J-003, MVP-J-004 y
-MVP-J-005 el 2 de agosto de 2026. Ninguno autoriza conectarse a producción. No deben confundirse:
-son evidencias distintas y ambas deben conservar su clasificación.
-
-MVP-J-001 captura las métricas de Dash antes de operar y exige volver al mismo baseline después
-del cierre. Esto permite convivir con datos demo intencionales sin confundirlos con residuos del
-journey. En el dataset persistente no se espera volver al baseline: se conservan deliberadamente
-las nuevas entidades y sus estados intermedios/finales.
-
-## Política y gate de release
-
-Los journeys reales:
-
-- no pueden usar `route.fulfill`, `route.abort` ni reescribir respuestas de la API de Maitre;
-- no pueden contener `skip`, `fixme`, `only`, retries aprobatorios ni sleeps fijos;
-- esperan respuestas, UI observable o estado persistido con polling acotado;
-- usan importes en unidades menores y comprueban invariantes de cuenta/pago;
-- verifican acciones positivas y al menos límites representativos de rol y tenant;
-- producen trace y screenshot ante fallo, sin video por defecto;
-- usan locale `es-AR` y timezone `America/Argentina/Buenos_Aires`.
-
-En GitHub Actions cada app afectada corre en un job independiente. El release journey es
-obligatorio aun cuando el detector no seleccione una app: levanta Supabase local, aplica todas las
-migraciones, ejecuta el journey, reinicia la API, relee el checkpoint, verifica cleanup y publica
-evidencia sanitizada. `FAILED`, `INFRA_ERROR`, cleanup incompleto o evidencia ausente bloquean
-`E2E gate` y el deploy.
-
-## Criterios del harness
-
-Además de los criterios de cobertura del final de este documento, el harness debe conservar:
-
-1. equivalencia de comandos, builds y topología entre local y CI para el perfil release;
-2. run ID, seed, clock, SHA, migration head y configuración no sensible suficientes para replay;
-3. proyectos independientes por app y journeys explícitos para propagación cross-app;
-4. fallo cerrado ante producto, infraestructura, políticas prohibidas o cleanup incompleto;
-5. trazabilidad del SHA probado respecto del artefacto promovido, todavía parcial si hay rebuild;
-6. datos sintéticos/no productivos y aislamiento Tenant A/Tenant B;
-7. diagnóstico atribuible por aplicación y journey mediante JUnit, HTML, traces y logs sanitizados.
-
 ## Regla para interpretar la evidencia
 
 No todos los tests Playwright demuestran lo mismo.
@@ -182,7 +44,7 @@ Estado relevado el **2 de agosto de 2026**:
 | Durabilidad        |      1 | relectura del checkpoint de MVP-J-001 después de reiniciar API   |
 | **Total**          | **32** | 27 casos por app y 5 casos transversales/durabilidad             |
 
-Specs autoritativas:
+Archivos autoritativos:
 
 - `tests/e2e/apps/<app>/`: smoke y cobertura propia de cada aplicación;
 - `tests/e2e/journeys/mvp-j-001.spec.ts`: operación base de mesa a cierre;
@@ -435,10 +297,6 @@ caché, eventos ni resultados anteriores.
 - accesibilidad Axe en loading, empty, validation, error y success de cada app;
 - performance con volumen histórico, muchas mesas, reservas, órdenes y pagos;
 - retención, exportación y consulta read-only de históricos.
-- ownership formal de cada proyecto y del harness transversal;
-- presupuesto CI/SLO de duración basado en ejecuciones históricas;
-- política aprobada de retención de traces, logs y artifacts;
-- promoción staged del artefacto probado sin rebuild mutable.
 
 ## Cuándo podremos afirmar “todos los flujos están cubiertos”
 
