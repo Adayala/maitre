@@ -35,8 +35,8 @@
     "@maitre/subscription": "*",
     "@maitre/telemetry": "*",
     "@maitre/workforce": "*",
-    "@supabase/supabase-js": "2.100.0",
-    "fastify": "5.10.0",
+    "@supabase/supabase-js": "2.111.0",
+    "fastify": "5.11.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
