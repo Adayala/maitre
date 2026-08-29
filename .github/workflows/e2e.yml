@@ -356,6 +356,7 @@ jobs:
           node-version: 20.19.0
       - name: Deploy after all required checks
         run: |
+          DEPLOYED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           npx --yes vercel@57 pull --yes --environment=production --token="$VERCEL_TOKEN"
           if [[ "${{ matrix.name }}" == "api" ]]; then
             node tooling/deployment/check-runtime-profile.mjs \
@@ -363,9 +364,9 @@ jobs:
               --expect demo
           fi
           if [[ "${{ matrix.name }}" == "web" ]]; then
-            deployment_url="$(npx --yes vercel@57 deploy --prod --yes --token="$VERCEL_TOKEN" --local-config vercel.spa.json)"
+            deployment_url="$(npx --yes vercel@57 deploy --prod --yes --token="$VERCEL_TOKEN" --local-config vercel.spa.json --env MAITRE_GIT_COMMIT_SHA="$GITHUB_SHA" --env MAITRE_DEPLOYED_AT="$DEPLOYED_AT")"
           else
-            deployment_url="$(npx --yes vercel@57 deploy --prod --yes --token="$VERCEL_TOKEN")"
+            deployment_url="$(npx --yes vercel@57 deploy --prod --yes --token="$VERCEL_TOKEN" --env MAITRE_GIT_COMMIT_SHA="$GITHUB_SHA" --env MAITRE_DEPLOYED_AT="$DEPLOYED_AT")"
           fi
           echo "Deployment ready at $deployment_url"
           if [[ "${{ matrix.name }}" == "api" ]]; then

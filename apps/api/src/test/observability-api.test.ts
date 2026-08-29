@@ -120,6 +120,62 @@ test("invalid external context is replaced and readiness emits dependency state"
     ),
     true,
   );
+  assert.deepEqual(
+    new Set(Object.keys(response.json().build as Record<string, unknown>)),
+    new Set(["commitSha", "deployedAt", "environment"]),
+  );
+  await app.close();
+});
+
+test("readiness includes build metadata when a dependency is unavailable", async () => {
+  const telemetry = new InMemoryTelemetry();
+  const container = await buildContainer();
+  container.tenants.findById = async () => {
+    throw new Error("database unavailable");
+  };
+  const app = await buildApp(container, telemetry);
+  const response = await app.inject({ method: "GET", url: "/health/ready" });
+
+  assert.equal(response.statusCode, 503);
+  assert.equal(response.json().status, "not_ready");
+  assert.deepEqual(
+    new Set(Object.keys(response.json().build as Record<string, unknown>)),
+    new Set(["commitSha", "deployedAt", "environment"]),
+  );
+  assert.equal(
+    telemetry.metrics.find(
+      ({ signal }) => signal === TELEMETRY_SIGNALS.readiness,
+    )?.attributes.outcome,
+    "not_ready",
+  );
+  await app.close();
+});
+
+test("readiness remains available when optional outbox metrics fail", async () => {
+  const telemetry = new InMemoryTelemetry();
+  const container = await buildContainer();
+  let attempts = 0;
+  container.outbox.getOperationalSnapshot = async () => {
+    attempts += 1;
+    if (attempts === 1) throw new Error("outbox metrics unavailable");
+    const unavailable: unknown = "outbox metrics unavailable";
+    throw unavailable;
+  };
+  const app = await buildApp(container, telemetry);
+  const responses = await Promise.all([
+    app.inject({ method: "GET", url: "/health/ready" }),
+    app.inject({ method: "GET", url: "/health/ready" }),
+  ]);
+
+  assert.deepEqual(
+    responses.map(({ statusCode }) => statusCode),
+    [200, 200],
+  );
+  assert.equal(responses[0]?.json().status, "ready");
+  assert.deepEqual(
+    new Set(Object.keys(responses[0]?.json().build as Record<string, unknown>)),
+    new Set(["commitSha", "deployedAt", "environment"]),
+  );
   await app.close();
 });
 

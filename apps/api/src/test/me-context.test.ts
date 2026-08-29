@@ -27,9 +27,13 @@ test("GET /health/live returns ok without touching dependencies", async () => {
   assert.equal(response.statusCode, 200);
   assert.deepEqual(
     new Set(Object.keys(response.json() as Record<string, unknown>)),
-    new Set(["status"]),
+    new Set(["status", "build"]),
   );
-  assert.deepEqual(response.json(), { status: "ok" });
+  assert.equal(response.json().status, "ok");
+  assert.deepEqual(
+    new Set(Object.keys(response.json().build as Record<string, unknown>)),
+    new Set(["commitSha", "deployedAt", "environment"]),
+  );
   await app.close();
 });
 
