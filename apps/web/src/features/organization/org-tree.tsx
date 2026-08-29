@@ -6,6 +6,7 @@ import {
   isOrganizationNodeSelected,
   plazasForServicePeriod,
   plazaModeLabel,
+  salonCountLabel,
   servicePeriodStatusLabel,
   servicePeriodTypeLabel,
   userForEmployment,
@@ -140,7 +141,6 @@ function BranchTreeNode({
   const salonsQuery = useTenantQuery<{ data: OrganizationSalon[] }>(
     `salons-${branch.id}`,
     `/v1/salons?branchId=${encodeURIComponent(branch.id)}`,
-    { enabled: structureExpanded || operationsExpanded },
   );
   const periodsQuery = useTenantQuery<{ data: OrganizationServicePeriod[] }>(
     `organization-periods-${branch.id}`,
@@ -229,7 +229,7 @@ function BranchTreeNode({
               <small>
                 {salonsQuery.isLoading
                   ? "Cargando…"
-                  : `${salons.length} salones`}
+                  : salonCountLabel(salons.length)}
               </small>
             </button>
             <button

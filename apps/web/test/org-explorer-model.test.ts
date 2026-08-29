@@ -10,8 +10,10 @@ import {
   organizationNodeFromSearch,
   organizationNodeHref,
   organizationNodeKey,
+  organizationPathLabel,
   organizationPanelTitle,
   plazaModeLabel,
+  salonCountLabel,
   plazasForServicePeriod,
   servicePeriodStatusLabel,
   servicePeriodTypeLabel,
@@ -34,6 +36,26 @@ test("branch group expansion selects its tenant-scoped branch only while expandi
     parentId: "brand-b",
   });
   assert.equal(branchNodeForGroupExpansion(branches[0]!, false), null);
+});
+
+test("salonCountLabel pluralizes zero, one and multiple salons", () => {
+  assert.equal(salonCountLabel(0), "0 salones");
+  assert.equal(salonCountLabel(1), "1 salón");
+  assert.equal(salonCountLabel(2), "2 salones");
+});
+
+test("organizationPathLabel disambiguates branches with configurable labels", () => {
+  assert.equal(
+    organizationPathLabel({ brand: "Casa Norte", branch: "Centro" }),
+    "Marca: Casa Norte · Sucursal: Centro",
+  );
+  assert.equal(
+    organizationPathLabel(
+      { brand: "White Label", branch: "Palermo" },
+      { brand: "Concepto", branch: "Local" },
+    ),
+    "Concepto: White Label · Local: Palermo",
+  );
 });
 
 const branches: OrganizationBranch[] = [

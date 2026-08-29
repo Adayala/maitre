@@ -11,6 +11,7 @@ import {
   editableMembershipStatus,
   employmentsForBranch,
   organizationPanelTitle,
+  organizationPathLabel,
   servicePeriodStatusLabel,
   servicePeriodTypeLabel,
   userForEmployment,
@@ -83,6 +84,7 @@ export function OrgDetailPanel({
           key={node.id ?? `new-${node.parentId}`}
           id={node.id}
           branchId={node.parentId}
+          brands={brands}
           onSelect={onSelect}
           onNotify={onNotify}
         />
@@ -386,11 +388,13 @@ function BranchDetailPanel({
 function SalonDetailPanel({
   id,
   branchId,
+  brands,
   onSelect,
   onNotify,
 }: {
   id: string | null;
   branchId: string;
+  brands: OrganizationBrand[];
   onSelect: (node: OrganizationNode) => void;
   onNotify: (message: string) => void;
 }) {
@@ -409,6 +413,12 @@ function SalonDetailPanel({
   const [status, setStatus] = useState<"ACTIVE" | "INACTIVE">("ACTIVE");
   const [isHydrated, setIsHydrated] = useState(!id);
   const mutation = usePanelMutation();
+  const branch = branchQuery.data?.data;
+  const brand = brands.find((candidate) => candidate.id === branch?.brandId);
+  const subtitle =
+    branch && brand
+      ? organizationPathLabel({ brand: brand.name, branch: branch.name })
+      : "Ruta de organización: cargando…";
 
   useEffect(() => {
     if (!salonQuery.data?.data) return;
@@ -444,7 +454,7 @@ function SalonDetailPanel({
     <PanelFrame
       kicker="Nivel 03 / Salón"
       title={id ? "Detalle de salón" : "Nuevo salón"}
-      subtitle={`Sucursal: ${branchQuery.data?.data.name ?? "cargando…"}`}
+      subtitle={subtitle}
     >
       <StateView
         isLoading={

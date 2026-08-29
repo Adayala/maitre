@@ -277,8 +277,13 @@ test("recorre estructura física, operación y equipo con carga lazy y paneles d
   await expect(
     page.getByRole("heading", { name: "Elegí un nodo del árbol" }),
   ).toBeVisible();
-  await expect.poll(() => calls.salons).toBe(0);
+  await expect.poll(() => calls.salons).toBeGreaterThan(0);
   await expect.poll(() => calls.employments).toBe(0);
+  await expect(
+    page
+      .locator(".org-tree__group-button")
+      .filter({ hasText: "Estructura física" }),
+  ).toContainText("1 salón");
 
   await page
     .getByRole("button", { name: "Centro", exact: false })
@@ -300,7 +305,7 @@ test("recorre estructura física, operación y equipo con carga lazy y paneles d
   await page
     .getByRole("button", { name: "Expandir estructura física de Centro" })
     .click();
-  await expect.poll(() => calls.salons).toBe(1);
+  await expect.poll(() => calls.salons).toBeGreaterThan(0);
   await expect.poll(() => calls.employments).toBe(0);
   await page.getByRole("button", { name: "Expandir equipo de Centro" }).click();
   await expect.poll(() => calls.employments).toBe(1);
@@ -366,6 +371,9 @@ test("recorre estructura física, operación y equipo con carga lazy y paneles d
   ).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Detalle de salón" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Marca: Casa Norte · Sucursal: Centro"),
   ).toBeVisible();
   await expect.poll(() => calls.createdSalons).toBe(1);
 });

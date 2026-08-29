@@ -1,3 +1,41 @@
 # Work events
 
 - 2026-08-29T13:32:30.684134Z | work.created | state=drafting actor=user:owner
+- 2026-08-29T13:49:59.292564Z | artifact.added | kind=spec uri=.agora/swarms/001-fixes/work/gh-106/spec.md actor=user:owner
+- 2026-08-29T13:49:59.585669Z | work.criterion-stage-marked | criterion=availability actor=user:owner stage=specified
+- 2026-08-29T13:49:59.881692Z | work.criterion-stage-marked | criterion=confirmation actor=user:owner stage=specified
+- 2026-08-29T13:50:00.165255Z | work.criterion-stage-marked | criterion=seating actor=user:owner stage=specified
+- 2026-08-29T13:50:00.441607Z | work.criterion-stage-marked | criterion=tenant-config actor=user:owner stage=specified
+- 2026-08-29T13:50:00.727531Z | work.criterion-stage-marked | criterion=tests actor=user:owner stage=specified
+- 2026-08-29T13:50:01.019355Z | work.transitioned | from=drafting to=clarified actor=user:owner
+- 2026-08-29T13:50:01.301618Z | work.transitioned | from=clarified to=planned actor=project:fixes-agent
+- 2026-08-29T13:50:01.590552Z | artifact.added | kind=implementation-plan uri=.agora/swarms/001-fixes/work/gh-106/implementation-plan.md actor=project:fixes-agent
+- 2026-08-29T13:50:01.888777Z | work.criterion-stage-marked | criterion=availability actor=user:owner stage=planned
+- 2026-08-29T13:50:02.179889Z | work.criterion-stage-marked | criterion=confirmation actor=user:owner stage=planned
+- 2026-08-29T13:50:02.495181Z | work.criterion-stage-marked | criterion=seating actor=user:owner stage=planned
+- 2026-08-29T13:50:02.812300Z | work.criterion-stage-marked | criterion=tenant-config actor=user:owner stage=planned
+- 2026-08-29T13:50:03.136488Z | work.criterion-stage-marked | criterion=tests actor=user:owner stage=planned
+- 2026-08-29T13:50:03.451795Z | work.transitioned | from=planned to=implementing actor=project:fixes-agent
+- 2026-08-29T13:53:50.411838Z | artifact.added | kind=verification-report uri=.agora/swarms/001-fixes/work/gh-106/verification.md actor=project:fixes-agent
+- 2026-08-29T13:53:50.708506Z | evidence.added | type=api-tests result=success actor=project:fixes-agent
+- 2026-08-29T13:53:50.992824Z | evidence.added | type=coverage result=success actor=project:fixes-agent
+- 2026-08-29T13:53:51.291679Z | evidence.added | type=documentation result=success actor=project:fixes-agent
+- 2026-08-29T13:53:51.570837Z | evidence.added | type=quality-gates result=success actor=project:fixes-agent
+- 2026-08-29T13:53:51.853276Z | work.transitioned | from=implementing to=verifying actor=project:fixes-agent
+- 2026-08-29T13:53:52.145140Z | work.criterion-stage-marked | criterion=availability actor=user:owner stage=implemented
+- 2026-08-29T13:53:52.431116Z | work.criterion-stage-marked | criterion=confirmation actor=user:owner stage=implemented
+- 2026-08-29T13:53:52.711496Z | work.criterion-stage-marked | criterion=seating actor=user:owner stage=implemented
+- 2026-08-29T13:53:53.000878Z | work.criterion-stage-marked | criterion=tenant-config actor=user:owner stage=implemented
+- 2026-08-29T13:53:53.291385Z | work.criterion-stage-marked | criterion=tests actor=user:owner stage=implemented
+- 2026-08-29T13:53:53.569625Z | work.criterion-stage-marked | criterion=availability actor=user:owner stage=verified
+- 2026-08-29T13:53:53.860357Z | work.criterion-stage-marked | criterion=confirmation actor=user:owner stage=verified
+- 2026-08-29T13:53:54.145011Z | work.criterion-stage-marked | criterion=seating actor=user:owner stage=verified
+- 2026-08-29T13:53:54.426017Z | work.criterion-stage-marked | criterion=tenant-config actor=user:owner stage=verified
+- 2026-08-29T13:53:54.713348Z | work.criterion-stage-marked | criterion=tests actor=user:owner stage=verified
+- 2026-08-29T13:53:55.001754Z | work.criterion-stage-marked | criterion=availability actor=user:owner stage=accepted
+- 2026-08-29T13:53:55.278302Z | work.criterion-stage-marked | criterion=confirmation actor=user:owner stage=accepted
+- 2026-08-29T13:53:55.564957Z | work.criterion-stage-marked | criterion=seating actor=user:owner stage=accepted
+- 2026-08-29T13:53:55.861354Z | work.criterion-stage-marked | criterion=tenant-config actor=user:owner stage=accepted
+- 2026-08-29T13:53:56.151354Z | work.criterion-stage-marked | criterion=tests actor=user:owner stage=accepted
+- 2026-08-29T13:53:56.446221Z | approval.added | role=spec-owner actor=user:owner delegation=none
+- 2026-08-29T13:53:56.759887Z | work.transitioned | from=verifying to=completed actor=user:owner

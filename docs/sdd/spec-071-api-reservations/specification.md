@@ -29,6 +29,10 @@ Confirm revalida capacidad contra otras reservations `CONFIRMED`/`SEATED` del mi
 devuelve `409` cuando no encuentra mesa compatible. Cancel, confirm y create escriben outbox;
 seat/no-show hoy sólo actualizan estado.
 
+Un salón activo sin mesas no impide crear una reserva `PENDING`, pero sí impide confirmarla:
+`confirm` devuelve `409` y, al no existir una reserva `CONFIRMED`, `seat` también devuelve `409`
+sin crear una Visit. La capacidad declarada del salón no reemplaza una asignación de mesa.
+
 Tenant y actor derivan de autenticación interna. El horario se modela con `startAt` y
 `durationMinutes`; no hay todavía tratamiento explícito de `timezone` IANA/DST. El modelo
 acepta `guestId`, `source`, `cancellationPolicyId` y `notes`, pero el route I0 sólo exige

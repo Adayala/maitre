@@ -1,3 +1,46 @@
 # Work events
 
 - 2026-08-29T13:32:30.087070Z | work.created | state=drafting actor=user:owner
+- 2026-08-29T13:46:59.115518Z | artifact.added | kind=spec uri=.agora/swarms/001-fixes/work/gh-104/spec.md actor=user:owner
+- 2026-08-29T13:46:59.394580Z | work.criterion-stage-marked | criterion=collapsed-count actor=user:owner stage=specified
+- 2026-08-29T13:46:59.674717Z | work.criterion-stage-marked | criterion=expanded-count actor=user:owner stage=specified
+- 2026-08-29T13:46:59.952152Z | work.criterion-stage-marked | criterion=pluralization actor=user:owner stage=specified
+- 2026-08-29T13:47:00.241885Z | work.criterion-stage-marked | criterion=tenant-safety actor=user:owner stage=specified
+- 2026-08-29T13:47:00.534155Z | work.criterion-stage-marked | criterion=tests actor=user:owner stage=specified
+- 2026-08-29T13:47:00.834565Z | work.criterion-stage-marked | criterion=e2e actor=user:owner stage=specified
+- 2026-08-29T13:47:01.134425Z | work.transitioned | from=drafting to=clarified actor=user:owner
+- 2026-08-29T13:47:01.463740Z | work.transitioned | from=clarified to=planned actor=project:fixes-agent
+- 2026-08-29T13:47:01.758356Z | artifact.added | kind=implementation-plan uri=.agora/swarms/001-fixes/work/gh-104/implementation-plan.md actor=project:fixes-agent
+- 2026-08-29T13:47:02.053989Z | work.criterion-stage-marked | criterion=collapsed-count actor=user:owner stage=planned
+- 2026-08-29T13:47:02.328317Z | work.criterion-stage-marked | criterion=expanded-count actor=user:owner stage=planned
+- 2026-08-29T13:47:02.629991Z | work.criterion-stage-marked | criterion=pluralization actor=user:owner stage=planned
+- 2026-08-29T13:47:02.915223Z | work.criterion-stage-marked | criterion=tenant-safety actor=user:owner stage=planned
+- 2026-08-29T13:47:03.195374Z | work.criterion-stage-marked | criterion=tests actor=user:owner stage=planned
+- 2026-08-29T13:47:03.490936Z | work.criterion-stage-marked | criterion=e2e actor=user:owner stage=planned
+- 2026-08-29T13:47:03.773085Z | work.transitioned | from=planned to=implementing actor=project:fixes-agent
+- 2026-08-29T13:53:36.102123Z | artifact.added | kind=verification-report uri=.agora/swarms/001-fixes/work/gh-104/verification.md actor=project:fixes-agent
+- 2026-08-29T13:53:36.388327Z | evidence.added | type=unit-tests result=success actor=project:fixes-agent
+- 2026-08-29T13:53:36.664365Z | evidence.added | type=coverage result=success actor=project:fixes-agent
+- 2026-08-29T13:53:36.946766Z | evidence.added | type=playwright result=success actor=project:fixes-agent
+- 2026-08-29T13:53:37.237565Z | evidence.added | type=quality-gates result=success actor=project:fixes-agent
+- 2026-08-29T13:53:37.535889Z | work.transitioned | from=implementing to=verifying actor=project:fixes-agent
+- 2026-08-29T13:53:37.832524Z | work.criterion-stage-marked | criterion=collapsed-count actor=user:owner stage=implemented
+- 2026-08-29T13:53:38.135451Z | work.criterion-stage-marked | criterion=expanded-count actor=user:owner stage=implemented
+- 2026-08-29T13:53:38.422796Z | work.criterion-stage-marked | criterion=pluralization actor=user:owner stage=implemented
+- 2026-08-29T13:53:38.710017Z | work.criterion-stage-marked | criterion=tenant-safety actor=user:owner stage=implemented
+- 2026-08-29T13:53:38.995892Z | work.criterion-stage-marked | criterion=tests actor=user:owner stage=implemented
+- 2026-08-29T13:53:39.281289Z | work.criterion-stage-marked | criterion=e2e actor=user:owner stage=implemented
+- 2026-08-29T13:53:39.562482Z | work.criterion-stage-marked | criterion=collapsed-count actor=user:owner stage=verified
+- 2026-08-29T13:53:39.854612Z | work.criterion-stage-marked | criterion=expanded-count actor=user:owner stage=verified
+- 2026-08-29T13:53:40.139020Z | work.criterion-stage-marked | criterion=pluralization actor=user:owner stage=verified
+- 2026-08-29T13:53:40.435303Z | work.criterion-stage-marked | criterion=tenant-safety actor=user:owner stage=verified
+- 2026-08-29T13:53:40.725384Z | work.criterion-stage-marked | criterion=tests actor=user:owner stage=verified
+- 2026-08-29T13:53:41.014325Z | work.criterion-stage-marked | criterion=e2e actor=user:owner stage=verified
+- 2026-08-29T13:53:41.306548Z | work.criterion-stage-marked | criterion=collapsed-count actor=user:owner stage=accepted
+- 2026-08-29T13:53:41.591565Z | work.criterion-stage-marked | criterion=expanded-count actor=user:owner stage=accepted
+- 2026-08-29T13:53:41.888625Z | work.criterion-stage-marked | criterion=pluralization actor=user:owner stage=accepted
+- 2026-08-29T13:53:42.185621Z | work.criterion-stage-marked | criterion=tenant-safety actor=user:owner stage=accepted
+- 2026-08-29T13:53:42.488631Z | work.criterion-stage-marked | criterion=tests actor=user:owner stage=accepted
+- 2026-08-29T13:53:42.796988Z | work.criterion-stage-marked | criterion=e2e actor=user:owner stage=accepted
+- 2026-08-29T13:53:43.097772Z | approval.added | role=spec-owner actor=user:owner delegation=none
+- 2026-08-29T13:53:43.378544Z | work.transitioned | from=verifying to=completed actor=user:owner
