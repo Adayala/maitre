@@ -153,6 +153,29 @@ export function branchesForBrand(
   return branches.filter((branch) => branch.brandId === brandId);
 }
 
+export function branchNodeForGroupExpansion(
+  branch: OrganizationBranch,
+  willExpand: boolean,
+): OrganizationNode | null {
+  return willExpand
+    ? { type: "branch", id: branch.id, parentId: branch.brandId }
+    : null;
+}
+
+export function salonCountLabel(count: number) {
+  return count === 1 ? "1 salón" : `${count} salones`;
+}
+
+export function organizationPathLabel(
+  names: { brand: string; branch: string },
+  labels: { brand: string; branch: string } = {
+    brand: "Marca",
+    branch: "Sucursal",
+  },
+) {
+  return `${labels.brand}: ${names.brand} · ${labels.branch}: ${names.branch}`;
+}
+
 export function employmentsForBranch(
   employments: BranchEmployment[],
   branchId: string,

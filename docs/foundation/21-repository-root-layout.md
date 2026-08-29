@@ -73,3 +73,5 @@ el antiguo `dist/` del root, que contenía exclusivamente el build info de TypeS
    sólo por estética del root.
 6. Los validadores recorren fuente versionable y omiten `.artifacts/`, `.secrets/`, worktrees y
    tooling personal local; el scanner de secretos sigue inspeccionando `.claude/settings.json`.
+7. `npm run repository:files:test` rechaza outputs históricos en el root, reglas de ignore faltantes
+   y paths locales o sensibles versionados por error.

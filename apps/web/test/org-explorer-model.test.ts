@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  branchNodeForGroupExpansion,
   buildBranchEmploymentPayload,
   branchesForBrand,
   editableMembershipStatus,
@@ -9,8 +10,10 @@ import {
   organizationNodeFromSearch,
   organizationNodeHref,
   organizationNodeKey,
+  organizationPathLabel,
   organizationPanelTitle,
   plazaModeLabel,
+  salonCountLabel,
   plazasForServicePeriod,
   servicePeriodStatusLabel,
   servicePeriodTypeLabel,
@@ -20,6 +23,40 @@ import {
   type OrganizationNode,
   type OrganizationPlaza,
 } from "../src/features/organization/org-explorer-model.js";
+
+test("branch group expansion selects its tenant-scoped branch only while expanding", () => {
+  assert.deepEqual(branchNodeForGroupExpansion(branches[0]!, true), {
+    type: "branch",
+    id: "branch-a",
+    parentId: "brand-a",
+  });
+  assert.deepEqual(branchNodeForGroupExpansion(branches[1]!, true), {
+    type: "branch",
+    id: "branch-b",
+    parentId: "brand-b",
+  });
+  assert.equal(branchNodeForGroupExpansion(branches[0]!, false), null);
+});
+
+test("salonCountLabel pluralizes zero, one and multiple salons", () => {
+  assert.equal(salonCountLabel(0), "0 salones");
+  assert.equal(salonCountLabel(1), "1 salón");
+  assert.equal(salonCountLabel(2), "2 salones");
+});
+
+test("organizationPathLabel disambiguates branches with configurable labels", () => {
+  assert.equal(
+    organizationPathLabel({ brand: "Casa Norte", branch: "Centro" }),
+    "Marca: Casa Norte · Sucursal: Centro",
+  );
+  assert.equal(
+    organizationPathLabel(
+      { brand: "White Label", branch: "Palermo" },
+      { brand: "Concepto", branch: "Local" },
+    ),
+    "Concepto: White Label · Local: Palermo",
+  );
+});
 
 const branches: OrganizationBranch[] = [
   {

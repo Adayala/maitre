@@ -28,6 +28,14 @@ const branch = {
   status: "ACTIVE",
   timezone: "America/Argentina/Buenos_Aires",
 };
+const secondBranch = {
+  id: "30000000-0000-0000-0000-000000000002",
+  brandId: brand.id,
+  name: "Palermo",
+  code: "PAL",
+  status: "ACTIVE",
+  timezone: "America/Argentina/Buenos_Aires",
+};
 const salon = {
   id: "40000000-0000-0000-0000-000000000001",
   branchId: branch.id,
@@ -269,8 +277,13 @@ test("recorre estructura física, operación y equipo con carga lazy y paneles d
   await expect(
     page.getByRole("heading", { name: "Elegí un nodo del árbol" }),
   ).toBeVisible();
-  await expect.poll(() => calls.salons).toBe(0);
+  await expect.poll(() => calls.salons).toBeGreaterThan(0);
   await expect.poll(() => calls.employments).toBe(0);
+  await expect(
+    page
+      .locator(".org-tree__group-button")
+      .filter({ hasText: "Estructura física" }),
+  ).toContainText("1 salón");
 
   await page
     .getByRole("button", { name: "Centro", exact: false })
@@ -292,7 +305,7 @@ test("recorre estructura física, operación y equipo con carga lazy y paneles d
   await page
     .getByRole("button", { name: "Expandir estructura física de Centro" })
     .click();
-  await expect.poll(() => calls.salons).toBe(1);
+  await expect.poll(() => calls.salons).toBeGreaterThan(0);
   await expect.poll(() => calls.employments).toBe(0);
   await page.getByRole("button", { name: "Expandir equipo de Centro" }).click();
   await expect.poll(() => calls.employments).toBe(1);
@@ -359,7 +372,47 @@ test("recorre estructura física, operación y equipo con carga lazy y paneles d
   await expect(
     page.getByRole("heading", { name: "Detalle de salón" }),
   ).toBeVisible();
+  await expect(
+    page.getByText("Marca: Casa Norte · Sucursal: Centro"),
+  ).toBeVisible();
   await expect.poll(() => calls.createdSalons).toBe(1);
+});
+
+test("actualiza el panel al expandir otra sucursal y elimina acciones del salón anterior", async ({
+  page,
+}) => {
+  await installSession(page, tenantA.id);
+  await mockOrganizationApi(page, {
+    tenants: [tenantA],
+    branches: [branch, secondBranch],
+  });
+
+  await page.goto(
+    `/organizacion?node=salon&id=${salon.id}&parentId=${branch.id}`,
+  );
+  await expect(
+    page.getByRole("heading", { name: "Detalle de salón" }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Desactivar" })).toBeVisible();
+
+  await page
+    .getByRole("button", { name: "Expandir estructura física de Palermo" })
+    .click();
+
+  await expect(page).toHaveURL(
+    new RegExp(
+      `/organizacion\\?node=branch&id=${secondBranch.id}&parentId=${brand.id}$`,
+    ),
+  );
+  await expect(
+    page.getByRole("heading", { name: "Detalle de sucursal" }),
+  ).toBeVisible();
+  await expect(page.getByLabel("Código")).toHaveValue("PAL");
+  await expect(page.getByRole("button", { name: "Desactivar" })).toHaveCount(0);
+
+  await page.reload();
+  await expect(page.getByLabel("Código")).toHaveValue("PAL");
+  await expectNoSeriousAccessibilityViolations(page);
 });
 
 test("edita marca, sucursal, salón y mozo desde el mismo árbol", async ({
@@ -827,6 +880,7 @@ async function mockOrganizationApi(
   options: {
     tenants: (typeof tenantA)[];
     brands?: (typeof brand)[];
+    branches?: (typeof branch)[];
     delayBrands?: boolean;
     shouldFailBrands?: () => boolean;
     failFirstEmployment?: boolean;
@@ -860,7 +914,10 @@ async function mockOrganizationApi(
     periodTransitions: 0,
   };
   const brandRecords = (options.brands ?? [brand]).map((item) => ({ ...item }));
-  const branchRecord = { ...branch };
+  const branchRecords = (options.branches ?? [branch]).map((item) => ({
+    ...item,
+  }));
+  const branchRecord = branchRecords[0]!;
   const salons = [{ ...salon }];
   const employmentRecords = [{ ...employment }];
   const tableRecords = [{ ...table }];
@@ -927,7 +984,7 @@ async function mockOrganizationApi(
     }
     if (path === "/v1/branches" && method === "GET")
       return json(route, {
-        data: brandRecords.length === 0 ? [] : [branchRecord],
+        data: brandRecords.length === 0 ? [] : branchRecords,
       });
     if (path === `/v1/brands/${brand.id}` && method === "GET") {
       calls.brandDetails += 1;
@@ -978,8 +1035,12 @@ async function mockOrganizationApi(
       Object.assign(brandRecords[0]!, request.postDataJSON());
       return json(route, { data: brandRecords[0] });
     }
-    if (path === `/v1/branches/${branch.id}` && method === "GET")
-      return json(route, { data: branchRecord });
+    if (path.startsWith("/v1/branches/") && method === "GET") {
+      const requestedBranch = branchRecords.find(
+        (item) => path === `/v1/branches/${item.id}`,
+      );
+      if (requestedBranch) return json(route, { data: requestedBranch });
+    }
     if (path === `/v1/branches/${branch.id}` && method === "PATCH") {
       calls.updatedBranches += 1;
       Object.assign(branchRecord, request.postDataJSON());
