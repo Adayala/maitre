@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTenantQuery } from "../../lib/use-tenant-query.js";
 import {
+  branchNodeForGroupExpansion,
   branchesForBrand,
   isOrganizationNodeSelected,
   plazasForServicePeriod,
@@ -170,6 +171,22 @@ function BranchTreeNode({
     id: branch.id,
   } as const;
 
+  function toggleBranchGroup(
+    expanded: boolean,
+    setExpanded: (value: boolean) => void,
+  ) {
+    const nextExpanded = !expanded;
+    const branchNode = branchNodeForGroupExpansion(branch, nextExpanded);
+    if (branchNode) onSelect(branchNode, brandId);
+    setExpanded(nextExpanded);
+  }
+
+  function expandBranchGroup(setExpanded: (value: boolean) => void) {
+    const branchNode = branchNodeForGroupExpansion(branch, true);
+    if (branchNode) onSelect(branchNode, brandId);
+    setExpanded(true);
+  }
+
   return (
     <li className="org-tree__branch">
       <div className="org-tree__row org-tree__row--branch">
@@ -197,14 +214,16 @@ function BranchTreeNode({
               className="org-tree__toggle"
               aria-expanded={structureExpanded}
               aria-label={`${structureExpanded ? "Contraer" : "Expandir"} estructura física de ${branch.name}`}
-              onClick={() => setStructureExpanded((value) => !value)}
+              onClick={() =>
+                toggleBranchGroup(structureExpanded, setStructureExpanded)
+              }
             >
               {structureExpanded ? "−" : "+"}
             </button>
             <button
               type="button"
               className="org-tree__group-button org-tree__group-button--domain"
-              onClick={() => setStructureExpanded(true)}
+              onClick={() => expandBranchGroup(setStructureExpanded)}
             >
               <span>Estructura física</span>
               <small>
@@ -265,14 +284,16 @@ function BranchTreeNode({
               className="org-tree__toggle"
               aria-expanded={operationsExpanded}
               aria-label={`${operationsExpanded ? "Contraer" : "Expandir"} operación de servicio de ${branch.name}`}
-              onClick={() => setOperationsExpanded((value) => !value)}
+              onClick={() =>
+                toggleBranchGroup(operationsExpanded, setOperationsExpanded)
+              }
             >
               {operationsExpanded ? "−" : "+"}
             </button>
             <button
               type="button"
               className="org-tree__group-button org-tree__group-button--domain"
-              onClick={() => setOperationsExpanded(true)}
+              onClick={() => expandBranchGroup(setOperationsExpanded)}
             >
               <span>Operación de servicio</span>
               <small>
@@ -344,7 +365,9 @@ function BranchTreeNode({
               className="org-tree__toggle"
               aria-expanded={employeesExpanded}
               aria-label={`${employeesExpanded ? "Contraer" : "Expandir"} equipo de ${branch.name}`}
-              onClick={() => setEmployeesExpanded((value) => !value)}
+              onClick={() =>
+                toggleBranchGroup(employeesExpanded, setEmployeesExpanded)
+              }
             >
               {employeesExpanded ? "−" : "+"}
             </button>

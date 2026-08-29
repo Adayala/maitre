@@ -153,6 +153,15 @@ export function branchesForBrand(
   return branches.filter((branch) => branch.brandId === brandId);
 }
 
+export function branchNodeForGroupExpansion(
+  branch: OrganizationBranch,
+  willExpand: boolean,
+): OrganizationNode | null {
+  return willExpand
+    ? { type: "branch", id: branch.id, parentId: branch.brandId }
+    : null;
+}
+
 export function employmentsForBranch(
   employments: BranchEmployment[],
   branchId: string,

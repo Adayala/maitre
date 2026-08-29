@@ -606,7 +606,7 @@ serialTest(
       500,
     );
 
-    const now = new Date("2026-08-05T12:00:00Z");
+    const now = new Date();
     const scopedUser = {
       id: randomUUID(),
       identityProvider: "fixture",

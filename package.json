@@ -22,7 +22,7 @@
     "openapi:tools:test": "node --test tooling/openapi/openapi-tools.test.mjs",
     "observability:evidence": "npm run build --workspace packages/telemetry && node tooling/observability/measure-overhead.mjs",
     "performance:budget": "node tooling/performance/check-bundles.mjs",
-    "repository:files:test": "node --experimental-test-coverage --test tooling/shared/collect-files.test.mjs",
+    "repository:files:test": "node --experimental-test-coverage --test tooling/shared/*.test.mjs",
     "runtime:profile:test": "node --test tooling/deployment/runtime-profile.test.mjs",
     "runtime:grants:test": "node --test tooling/deployment/service-role-grants.test.mjs",
     "sdd:validate": "node tooling/quality/validate-docs.mjs",

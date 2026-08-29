@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  branchNodeForGroupExpansion,
   buildBranchEmploymentPayload,
   branchesForBrand,
   editableMembershipStatus,
@@ -20,6 +21,20 @@ import {
   type OrganizationNode,
   type OrganizationPlaza,
 } from "../src/features/organization/org-explorer-model.js";
+
+test("branch group expansion selects its tenant-scoped branch only while expanding", () => {
+  assert.deepEqual(branchNodeForGroupExpansion(branches[0]!, true), {
+    type: "branch",
+    id: "branch-a",
+    parentId: "brand-a",
+  });
+  assert.deepEqual(branchNodeForGroupExpansion(branches[1]!, true), {
+    type: "branch",
+    id: "branch-b",
+    parentId: "brand-b",
+  });
+  assert.equal(branchNodeForGroupExpansion(branches[0]!, false), null);
+});
 
 const branches: OrganizationBranch[] = [
   {
