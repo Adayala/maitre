@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { TELEMETRY_SIGNALS, type TelemetryPort } from "@maitre/telemetry";
 import type { Container } from "../composition/container.js";
 import { startRequestTelemetrySpan } from "../http/observability.js";
+import { runtimeBuildInfo } from "../runtime/build-info.js";
 
 const READINESS_PROBE_TENANT_ID = "00000000-0000-0000-0000-000000000000";
 
@@ -11,7 +12,10 @@ export async function registerHealthRoutes(
   container: Container,
   telemetry: TelemetryPort,
 ): Promise<void> {
-  app.get("/health/live", async () => ({ status: "ok" }));
+  app.get("/health/live", async () => ({
+    status: "ok",
+    build: runtimeBuildInfo(),
+  }));
 
   app.get("/health/ready", async (request, reply) => {
     const start = Date.now();
@@ -75,7 +79,11 @@ export async function registerHealthRoutes(
           "outbox operational snapshot failed",
         );
       }
-      return { status: "ready", checkedInMs: Date.now() - start };
+      return {
+        status: "ready",
+        checkedInMs: Date.now() - start,
+        build: runtimeBuildInfo(),
+      };
     } catch {
       dependencySpan?.end("ERROR");
       telemetry.gauge(TELEMETRY_SIGNALS.readiness, 0, {
@@ -83,7 +91,11 @@ export async function registerHealthRoutes(
         outcome: "not_ready",
       });
       reply.code(503);
-      return { status: "not_ready", checkedInMs: Date.now() - start };
+      return {
+        status: "not_ready",
+        checkedInMs: Date.now() - start,
+        build: runtimeBuildInfo(),
+      };
     }
   });
 }

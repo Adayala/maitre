@@ -48,10 +48,14 @@ jobs:
           if [[ "${{ matrix.name }}" == "web" ]]; then
             deployment_url="$(npx --yes vercel@57 deploy --prod --yes --token="$VERCEL_TOKEN" \
               --local-config vercel.spa.json \
+              --env MAITRE_GIT_COMMIT_SHA="$GITHUB_SHA" \
+              --env MAITRE_DEPLOYED_AT="$DEPLOYED_AT" \
               --build-env VITE_GIT_COMMIT_SHA="$GITHUB_SHA" \
               --build-env VITE_DEPLOYED_AT="$DEPLOYED_AT")"
           else
             deployment_url="$(npx --yes vercel@57 deploy --prod --yes --token="$VERCEL_TOKEN" \
+              --env MAITRE_GIT_COMMIT_SHA="$GITHUB_SHA" \
+              --env MAITRE_DEPLOYED_AT="$DEPLOYED_AT" \
               --build-env VITE_GIT_COMMIT_SHA="$GITHUB_SHA" \
               --build-env VITE_DEPLOYED_AT="$DEPLOYED_AT")"
           fi
