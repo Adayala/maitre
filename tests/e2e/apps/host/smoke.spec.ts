@@ -19,6 +19,7 @@ test("@ui-contract crea una reserva desde recepción y la incorpora a la agenda"
   const reservationId = "00000000-0000-0000-0000-000000000201";
   const guestId = "00000000-0000-0000-0000-000000000301";
   let createdReservation: Record<string, unknown> | null = null;
+  let createdGuest: Record<string, unknown> | null = null;
   let plazaReadFails = false;
   let plazaHasNoActivePeriod = false;
 
@@ -104,9 +105,10 @@ test("@ui-contract crea una reserva desde recepción y la incorpora a la agenda"
     if (path === "/v1/guests/lookup")
       return route.fulfill({ json: { data: null } });
     if (path === "/v1/guests" && request.method() === "POST") {
+      createdGuest = request.postDataJSON() as Record<string, unknown>;
       return route.fulfill({
         status: 201,
-        json: { data: { id: guestId, ...request.postDataJSON() } },
+        json: { data: { id: guestId, ...createdGuest } },
       });
     }
     if (path === `/v1/guests/${guestId}`) {
@@ -238,6 +240,10 @@ test("@ui-contract crea una reserva desde recepción y la incorpora a la agenda"
   ).toBeVisible();
   await page.getByPlaceholder("Nombre y apellido").fill("Ada Lovelace");
   await page.getByPlaceholder("opcional").first().fill("ada@example.com");
+  await page.getByPlaceholder("opcional").nth(1).fill("1123245566");
+  await expect(
+    page.getByText("Huésped identificado").locator(".."),
+  ).toHaveClass(/host-check--done/);
   await page
     .getByPlaceholder("Cumpleaños, silla alta, etc.")
     .fill("Mesa tranquila");
@@ -253,6 +259,14 @@ test("@ui-contract crea una reserva desde recepción y la incorpora a la agenda"
       guestId,
       notes: "Mesa tranquila",
     });
+  await expect
+    .poll(() => createdGuest)
+    .toMatchObject({
+      displayName: "Ada Lovelace",
+      email: "ada@example.com",
+      phone: "1123245566",
+    });
   await expect(page.getByText("Ada Lovelace").first()).toBeVisible();
+  await expect(page.getByText("Host E2E")).toHaveCount(0);
   await expectNoSeriousAccessibilityViolations(page);
 });

@@ -38,6 +38,25 @@ function ownerHeaders(container: Container, tenantId: string) {
   };
 }
 
+async function saveGuest(
+  container: Container,
+  tenantId: string,
+  id: string,
+  displayName = "Reservation Guest",
+) {
+  const now = new Date("2026-08-30T00:00:00Z");
+  await container.guests.save({
+    id,
+    tenantId,
+    displayName,
+    consentGiven: false,
+    status: "ACTIVE",
+    revision: 1,
+    createdAt: now,
+    updatedAt: now,
+  });
+}
+
 function serialTest(name: string, fn: () => Promise<void> | void) {
   return test(name, { concurrency: false }, fn);
 }
@@ -90,6 +109,64 @@ serialTest("Reservation lifecycle: create, confirm, seat", async () => {
   assert.deepEqual(visit!.tableIds, confirm.json().data.tableIds);
   await app.close();
 });
+
+serialTest(
+  "Staff reservation creation preserves a tenant-scoped guest and hides invalid references",
+  async () => {
+    const container = await buildContainer();
+    const { tenantId, branchId } = await getContext(container);
+    const app = await buildApp(container);
+    const headers = ownerHeaders(container, tenantId);
+    const guestId = randomUUID();
+    const crossTenantGuestId = randomUUID();
+    await saveGuest(container, tenantId, guestId, "Adrian Ayala");
+    await saveGuest(
+      container,
+      randomUUID(),
+      crossTenantGuestId,
+      "Other Tenant Guest",
+    );
+    const reservationPayload = {
+      partySize: 4,
+      startAt: "2026-08-30T20:00:00Z",
+      durationMinutes: 90,
+      source: "HOST_APP",
+      notes: "aniversario",
+    };
+
+    const create = await app.inject({
+      method: "POST",
+      url: `/v1/branches/${branchId}/reservations`,
+      headers,
+      payload: { ...reservationPayload, guestId },
+    });
+    assert.equal(create.statusCode, 201);
+    assert.equal(create.json().data.guestId, guestId);
+    assert.equal(create.json().data.notes, "aniversario");
+
+    const withoutGuest = await app.inject({
+      method: "POST",
+      url: `/v1/branches/${branchId}/reservations`,
+      headers,
+      payload: reservationPayload,
+    });
+    assert.equal(withoutGuest.statusCode, 201);
+    assert.equal("guestId" in withoutGuest.json().data, false);
+
+    for (const invalidGuestId of [randomUUID(), crossTenantGuestId]) {
+      const invalid = await app.inject({
+        method: "POST",
+        url: `/v1/branches/${branchId}/reservations`,
+        headers,
+        payload: { ...reservationPayload, guestId: invalidGuestId },
+      });
+      assert.equal(invalid.statusCode, 404);
+      assert.equal(invalid.json().detail, "Guest not found");
+    }
+
+    await app.close();
+  },
+);
 
 serialTest(
   "Reservation list filters by status and no-show transitions a confirmed reservation",
@@ -171,6 +248,7 @@ serialTest(
     const { tenantId, branchId } = await getContext(container);
     const app = await buildApp(container);
     const headers = ownerHeaders(container, tenantId);
+    await saveGuest(container, tenantId, "guest-list-redaction");
 
     const create = await app.inject({
       method: "POST",
@@ -1374,6 +1452,7 @@ serialTest(
     const { tenantId, branchId } = await getContext(container);
     const app = await buildApp(container);
     const now = new Date();
+    await saveGuest(container, tenantId, "guest-waiter-read");
 
     const create = await app.inject({
       method: "POST",
