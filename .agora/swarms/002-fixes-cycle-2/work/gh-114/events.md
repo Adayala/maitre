@@ -21,3 +21,8 @@
 - 2026-08-30T11:45:45.484640Z | work.criterion-stage-marked | criterion=ux actor=project:fixes-agent stage=verified
 - 2026-08-30T11:45:45.710698Z | work.criterion-stage-marked | criterion=accessibility actor=project:fixes-agent stage=verified
 - 2026-08-30T11:45:45.932011Z | work.criterion-stage-marked | criterion=tests actor=project:fixes-agent stage=verified
+- 2026-08-30T11:46:12.163804Z | work.criterion-stage-marked | criterion=ux actor=user:owner stage=accepted
+- 2026-08-30T11:46:12.402059Z | work.criterion-stage-marked | criterion=accessibility actor=user:owner stage=accepted
+- 2026-08-30T11:46:12.618724Z | work.criterion-stage-marked | criterion=tests actor=user:owner stage=accepted
+- 2026-08-30T11:46:12.832035Z | approval.added | role=spec-owner actor=user:owner delegation=none
+- 2026-08-30T11:46:13.039979Z | work.transitioned | from=verifying to=completed actor=user:owner

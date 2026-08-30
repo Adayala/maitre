@@ -2,7 +2,7 @@
 schema: "agora/swarm/v1"
 id: "fixes-cycle-2"
 method: "spec-driven"
-status: "running"
+status: "completed"
 branch: "fixes/agora-cycle-2"
 required-roles: ["spec-owner","developer"]
 assignments: {"spec-owner":"user:owner","developer":"project:fixes-agent"}
