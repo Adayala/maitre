@@ -1,3 +1,23 @@
 # Work events
 
 - 2026-08-30T11:13:01.007993Z | work.created | state=drafting actor=user:owner
+- 2026-08-30T11:44:33.039665Z | artifact.added | kind=spec uri=.agora/swarms/002-fixes-cycle-2/work/gh-110/spec.md actor=user:owner
+- 2026-08-30T11:44:33.258167Z | artifact.added | kind=implementation-plan uri=.agora/swarms/002-fixes-cycle-2/work/gh-110/implementation-plan.md actor=project:fixes-agent
+- 2026-08-30T11:44:33.474068Z | artifact.added | kind=verification uri=.agora/swarms/002-fixes-cycle-2/work/gh-110/verification.md actor=project:fixes-agent
+- 2026-08-30T11:44:43.407119Z | work.criterion-stage-marked | criterion=affordance actor=user:owner stage=specified
+- 2026-08-30T11:44:43.654540Z | work.criterion-stage-marked | criterion=white-label actor=user:owner stage=specified
+- 2026-08-30T11:44:43.894375Z | work.criterion-stage-marked | criterion=tests actor=user:owner stage=specified
+- 2026-08-30T11:44:44.133321Z | work.transitioned | from=drafting to=clarified actor=user:owner
+- 2026-08-30T11:44:55.315032Z | work.transitioned | from=clarified to=planned actor=project:fixes-agent
+- 2026-08-30T11:45:22.493998Z | work.criterion-stage-marked | criterion=affordance actor=user:owner stage=planned
+- 2026-08-30T11:45:22.729662Z | work.criterion-stage-marked | criterion=white-label actor=user:owner stage=planned
+- 2026-08-30T11:45:22.955723Z | work.criterion-stage-marked | criterion=tests actor=user:owner stage=planned
+- 2026-08-30T11:45:23.177613Z | work.transitioned | from=planned to=implementing actor=project:fixes-agent
+- 2026-08-30T11:45:23.405315Z | work.criterion-stage-marked | criterion=affordance actor=project:fixes-agent stage=implemented
+- 2026-08-30T11:45:23.626676Z | work.criterion-stage-marked | criterion=white-label actor=project:fixes-agent stage=implemented
+- 2026-08-30T11:45:23.842370Z | work.criterion-stage-marked | criterion=tests actor=project:fixes-agent stage=implemented
+- 2026-08-30T11:45:40.544794Z | work.transitioned | from=implementing to=verifying actor=project:fixes-agent
+- 2026-08-30T11:45:40.766581Z | evidence.added | type=test result=success actor=project:fixes-agent
+- 2026-08-30T11:45:40.989145Z | work.criterion-stage-marked | criterion=affordance actor=project:fixes-agent stage=verified
+- 2026-08-30T11:45:41.201628Z | work.criterion-stage-marked | criterion=white-label actor=project:fixes-agent stage=verified
+- 2026-08-30T11:45:41.424747Z | work.criterion-stage-marked | criterion=tests actor=project:fixes-agent stage=verified

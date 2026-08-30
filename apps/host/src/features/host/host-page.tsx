@@ -2227,8 +2227,20 @@ export function HostPage() {
         ) : null}
 
         {hostCommand.error ? (
-          <div className="cashier-banner cashier-banner--warning">
-            <span>{toErrorMessage(hostCommand.error)}</span>
+          <div className="cashier-banner cashier-banner--warning" role="alert">
+            <span aria-hidden="true">⚠️</span>
+            <div>
+              <strong>No pudimos completar la acción</strong>
+              <p>{toErrorMessage(hostCommand.error)}</p>
+            </div>
+            <button
+              type="button"
+              className="btn btn--ghost"
+              onClick={() => hostCommand.reset()}
+              aria-label="Cerrar mensaje de error"
+            >
+              Cerrar
+            </button>
           </div>
         ) : null}
       </section>

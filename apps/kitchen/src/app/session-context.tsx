@@ -75,7 +75,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       setSelectedBranchId(branchId);
     } else {
       localStorage.removeItem(BRANCH_KEY);
-      setSelectedBranchId(null);
+      setSelectedBranchId("");
     }
   }
 
@@ -110,7 +110,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       setSelectedBranchId(null);
       return;
     }
-    if (!selectedBranchId && branches.length === 1) {
+    if (selectedBranchId === null && branches.length === 1) {
       localStorage.setItem(BRANCH_KEY, branches[0]!.id);
       setSelectedBranchId(branches[0]!.id);
     }

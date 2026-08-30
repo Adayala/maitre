@@ -1,3 +1,23 @@
 # Work events
 
 - 2026-08-30T11:13:00.684198Z | work.created | state=drafting actor=user:owner
+- 2026-08-30T11:44:33.695125Z | artifact.added | kind=spec uri=.agora/swarms/002-fixes-cycle-2/work/gh-111/spec.md actor=user:owner
+- 2026-08-30T11:44:33.911025Z | artifact.added | kind=implementation-plan uri=.agora/swarms/002-fixes-cycle-2/work/gh-111/implementation-plan.md actor=project:fixes-agent
+- 2026-08-30T11:44:34.132164Z | artifact.added | kind=verification uri=.agora/swarms/002-fixes-cycle-2/work/gh-111/verification.md actor=project:fixes-agent
+- 2026-08-30T11:44:44.391987Z | work.criterion-stage-marked | criterion=escape actor=user:owner stage=specified
+- 2026-08-30T11:44:44.635249Z | work.criterion-stage-marked | criterion=transversal actor=user:owner stage=specified
+- 2026-08-30T11:44:44.872976Z | work.criterion-stage-marked | criterion=tests actor=user:owner stage=specified
+- 2026-08-30T11:44:45.088280Z | work.transitioned | from=drafting to=clarified actor=user:owner
+- 2026-08-30T11:45:01.857654Z | work.transitioned | from=clarified to=planned actor=project:fixes-agent
+- 2026-08-30T11:45:24.066993Z | work.criterion-stage-marked | criterion=escape actor=user:owner stage=planned
+- 2026-08-30T11:45:24.284210Z | work.criterion-stage-marked | criterion=transversal actor=user:owner stage=planned
+- 2026-08-30T11:45:24.499014Z | work.criterion-stage-marked | criterion=tests actor=user:owner stage=planned
+- 2026-08-30T11:45:24.721126Z | work.transitioned | from=planned to=implementing actor=project:fixes-agent
+- 2026-08-30T11:45:24.942798Z | work.criterion-stage-marked | criterion=escape actor=project:fixes-agent stage=implemented
+- 2026-08-30T11:45:25.169440Z | work.criterion-stage-marked | criterion=transversal actor=project:fixes-agent stage=implemented
+- 2026-08-30T11:45:25.386175Z | work.criterion-stage-marked | criterion=tests actor=project:fixes-agent stage=implemented
+- 2026-08-30T11:45:41.647571Z | work.transitioned | from=implementing to=verifying actor=project:fixes-agent
+- 2026-08-30T11:45:41.877777Z | evidence.added | type=test result=success actor=project:fixes-agent
+- 2026-08-30T11:45:42.104578Z | work.criterion-stage-marked | criterion=escape actor=project:fixes-agent stage=verified
+- 2026-08-30T11:45:42.333860Z | work.criterion-stage-marked | criterion=transversal actor=project:fixes-agent stage=verified
+- 2026-08-30T11:45:42.577791Z | work.criterion-stage-marked | criterion=tests actor=project:fixes-agent stage=verified

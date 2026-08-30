@@ -10,6 +10,80 @@ test("@smoke muestra el acceso de Host", async ({ page }) => {
   await expectNoSeriousAccessibilityViolations(page);
 });
 
+test("permite salir del bloqueo cuando Reservations no está contratado", async ({
+  page,
+}) => {
+  const tenantId = "00000000-0000-0000-0000-000000000001";
+  const branchId = "00000000-0000-0000-0000-000000000003";
+  await page.addInitScript(
+    ({ tenant, branch }) => {
+      sessionStorage.setItem("maitre.host.fixtureAccessToken", "e2e-token");
+      localStorage.setItem("maitre.host.selectedTenantId", tenant);
+      localStorage.setItem("maitre.host.selectedBranchId", branch);
+    },
+    { tenant: tenantId, branch: branchId },
+  );
+  await page.route("http://127.0.0.1:3101/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    if (path === "/v1/me/context") {
+      return route.fulfill({
+        json: {
+          user: { id: "user-e2e", displayName: "Host E2E", email: null },
+          tenants: [
+            {
+              id: tenantId,
+              name: "Maitre",
+              branches: [
+                { id: branchId, code: "PAL", name: "Palermo" },
+                {
+                  id: "00000000-0000-0000-0000-000000000004",
+                  code: "CTR",
+                  name: "Centro",
+                },
+              ],
+            },
+          ],
+        },
+      });
+    }
+    if (path === `/v1/subscriptions/${tenantId}/access`) {
+      return route.fulfill({ json: { data: { services: [] } } });
+    }
+    return route.fulfill({ status: 404, json: {} });
+  });
+
+  await page.goto("/");
+  await expect(
+    page.getByRole("heading", { name: /no está contratado/ }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Cambiar sucursal" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Cerrar sesión" }),
+  ).toBeVisible();
+  await expectNoSeriousAccessibilityViolations(page);
+
+  await page.getByRole("button", { name: "Cambiar sucursal" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Elegí la sucursal de trabajo" }),
+  ).toBeVisible();
+
+  await page.evaluate(
+    ({ tenant, branch }) => {
+      sessionStorage.setItem("maitre.host.fixtureAccessToken", "e2e-token");
+      localStorage.setItem("maitre.host.selectedTenantId", tenant);
+      localStorage.setItem("maitre.host.selectedBranchId", branch);
+    },
+    { tenant: tenantId, branch: branchId },
+  );
+  await page.reload();
+  await page.getByRole("button", { name: "Cerrar sesión" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Maitre Host" }),
+  ).toBeVisible();
+});
+
 test("@ui-contract crea una reserva desde recepción y la incorpora a la agenda", async ({
   page,
 }) => {
@@ -119,6 +193,20 @@ test("@ui-contract crea una reserva desde recepción y la incorpora a la agenda"
             displayName: "Ada Lovelace",
             email: "ada@example.com",
           },
+        },
+      });
+    }
+    if (path === `/v1/reservations/${reservationId}/confirm`) {
+      return route.fulfill({
+        status: 409,
+        contentType: "application/problem+json",
+        json: {
+          type: "https://docs.maitre.app/problems/reservation-capacity-unavailable",
+          title: "No se puede completar la reserva",
+          detail:
+            "No hay mesas configuradas o disponibles en esta sucursal para el horario solicitado.",
+          status: 409,
+          code: "RESERVATION_CAPACITY_UNAVAILABLE",
         },
       });
     }
@@ -268,5 +356,20 @@ test("@ui-contract crea una reserva desde recepción y la incorpora a la agenda"
     });
   await expect(page.getByText("Ada Lovelace").first()).toBeVisible();
   await expect(page.getByText("Host E2E")).toHaveCount(0);
+  await page
+    .locator(".host-reservation-card")
+    .filter({ hasText: "Ada Lovelace" })
+    .getByRole("button", { name: "Confirmar" })
+    .click();
+  await expect(
+    page.getByRole("alert").getByText("No pudimos completar la acción"),
+  ).toBeVisible();
+  await expect(
+    page
+      .getByRole("alert")
+      .getByText(/No hay mesas configuradas o disponibles/),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Cerrar mensaje de error" }).click();
+  await expect(page.getByText("No pudimos completar la acción")).toHaveCount(0);
   await expectNoSeriousAccessibilityViolations(page);
 });

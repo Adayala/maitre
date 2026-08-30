@@ -78,7 +78,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       setSelectedBranchId(branchId);
     } else {
       localStorage.removeItem(BRANCH_KEY);
-      setSelectedBranchId(null);
+      setSelectedBranchId("");
     }
   }
 

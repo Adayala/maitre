@@ -1,3 +1,23 @@
 # Work events
 
 - 2026-08-30T11:13:00.019222Z | work.created | state=drafting actor=user:owner
+- 2026-08-30T11:44:34.998575Z | artifact.added | kind=spec uri=.agora/swarms/002-fixes-cycle-2/work/gh-113/spec.md actor=user:owner
+- 2026-08-30T11:44:35.226213Z | artifact.added | kind=implementation-plan uri=.agora/swarms/002-fixes-cycle-2/work/gh-113/implementation-plan.md actor=project:fixes-agent
+- 2026-08-30T11:44:35.440292Z | artifact.added | kind=verification uri=.agora/swarms/002-fixes-cycle-2/work/gh-113/verification.md actor=project:fixes-agent
+- 2026-08-30T11:44:46.164862Z | work.criterion-stage-marked | criterion=message actor=user:owner stage=specified
+- 2026-08-30T11:44:46.387288Z | work.criterion-stage-marked | criterion=mapping actor=user:owner stage=specified
+- 2026-08-30T11:44:46.614977Z | work.criterion-stage-marked | criterion=tests actor=user:owner stage=specified
+- 2026-08-30T11:44:46.842400Z | work.transitioned | from=drafting to=clarified actor=user:owner
+- 2026-08-30T11:45:02.299660Z | work.transitioned | from=clarified to=planned actor=project:fixes-agent
+- 2026-08-30T11:45:27.163431Z | work.criterion-stage-marked | criterion=message actor=user:owner stage=planned
+- 2026-08-30T11:45:27.405199Z | work.criterion-stage-marked | criterion=mapping actor=user:owner stage=planned
+- 2026-08-30T11:45:27.641854Z | work.criterion-stage-marked | criterion=tests actor=user:owner stage=planned
+- 2026-08-30T11:45:27.888104Z | work.transitioned | from=planned to=implementing actor=project:fixes-agent
+- 2026-08-30T11:45:28.130171Z | work.criterion-stage-marked | criterion=message actor=project:fixes-agent stage=implemented
+- 2026-08-30T11:45:28.374780Z | work.criterion-stage-marked | criterion=mapping actor=project:fixes-agent stage=implemented
+- 2026-08-30T11:45:28.610132Z | work.criterion-stage-marked | criterion=tests actor=project:fixes-agent stage=implemented
+- 2026-08-30T11:45:43.949355Z | work.transitioned | from=implementing to=verifying actor=project:fixes-agent
+- 2026-08-30T11:45:44.165886Z | evidence.added | type=test result=success actor=project:fixes-agent
+- 2026-08-30T11:45:44.392680Z | work.criterion-stage-marked | criterion=message actor=project:fixes-agent stage=verified
+- 2026-08-30T11:45:44.608923Z | work.criterion-stage-marked | criterion=mapping actor=project:fixes-agent stage=verified
+- 2026-08-30T11:45:44.824528Z | work.criterion-stage-marked | criterion=tests actor=project:fixes-agent stage=verified

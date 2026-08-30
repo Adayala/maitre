@@ -850,6 +850,21 @@ button {
   outline: 0;
 }
 
+.org-form__readonly-value {
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--bg) 72%, var(--surface));
+  color: var(--muted);
+  font-family: var(--app-font-body);
+  font-size: 1rem;
+  font-weight: 500;
+  user-select: text;
+}
+
 .org-form fieldset,
 .org-employee-onboarding,
 .org-employee-card,
