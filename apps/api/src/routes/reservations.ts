@@ -10,7 +10,6 @@ import {
   createReservationPreference,
   upsertCancellationPolicy,
   evaluateCancellation,
-  createGuest,
   InvalidReservationTransitionError,
   CapacityUnavailableError,
 } from "@maitre/reservations";
@@ -88,29 +87,6 @@ async function branchTables(container: Container, tenantId: string, branchId: st
   return tables.map((t) => ({ id: t.id, capacity: t.capacity }));
 }
 
-async function resolveCustomerGuestId(
-  container: Container,
-  ctx: Awaited<ReturnType<typeof requireTenantContext>>,
-) {
-  const user = await container.users.findById(ctx.userId);
-  if (!user?.email) return null;
-
-  const existing = await container.guests.lookupByContact(ctx.tenantId, user.email, undefined);
-  if (existing) return existing.id;
-
-  const guest = await createGuest(
-    { guests: container.guests },
-    {
-      tenantId: ctx.tenantId,
-      displayName: user.displayName,
-      email: user.email,
-      consentGiven: false,
-      notes: `Auto-linked from customer identity ${ctx.externalIdentityId}`,
-    },
-  );
-  return guest.id;
-}
-
 export async function registerReservationRoutes(app: FastifyInstance, container: Container): Promise<void> {
   const deps = () => ({ reservations: container.reservations, outbox: container.outbox });
 
@@ -124,16 +100,16 @@ export async function registerReservationRoutes(app: FastifyInstance, container:
         const body = createReservationBodySchema.parse(req.body);
         const branch = await container.branches.findById(ctx.tenantId, req.params.branchId);
         if (!branch) return sendProblem(reply, correlationId, notFound("Branch"));
-        const customerGuestId = await resolveCustomerGuestId(container, ctx);
+        if (body.guestId) {
+          const guest = await container.guests.findById(ctx.tenantId, body.guestId);
+          if (!guest) return sendProblem(reply, correlationId, notFound("Guest"));
+        }
 
         const reservation = await createReservation(deps(), {
           tenantId: ctx.tenantId,
           branchId: req.params.branchId,
           correlationId,
-          ...omitUndefined({
-            ...body,
-            guestId: customerGuestId ?? body.guestId,
-          }),
+          ...omitUndefined(body),
         });
         reply.code(201);
         return { data: reservation };

@@ -1,0 +1,25 @@
+# Work events
+
+- 2026-08-30T11:12:59.381716Z | work.created | state=drafting actor=user:owner
+- 2026-08-30T11:15:08.042382Z | artifact.added | kind=spec uri=.agora/swarms/002-fixes-cycle-2/work/gh-115/spec.md actor=user:owner
+- 2026-08-30T11:15:08.340566Z | artifact.added | kind=implementation-plan uri=.agora/swarms/002-fixes-cycle-2/work/gh-115/implementation-plan.md actor=project:fixes-agent
+- 2026-08-30T11:15:08.641527Z | work.criterion-stage-marked | criterion=guest-data actor=user:owner stage=specified
+- 2026-08-30T11:15:08.940547Z | work.criterion-stage-marked | criterion=checklist actor=user:owner stage=specified
+- 2026-08-30T11:15:09.231646Z | work.criterion-stage-marked | criterion=tenant-safety actor=user:owner stage=specified
+- 2026-08-30T11:15:09.531145Z | work.criterion-stage-marked | criterion=tests actor=user:owner stage=specified
+- 2026-08-30T11:15:09.829790Z | work.transitioned | from=drafting to=clarified actor=user:owner
+- 2026-08-30T11:15:13.547646Z | work.transitioned | from=clarified to=planned actor=project:fixes-agent
+- 2026-08-30T11:15:27.430345Z | work.criterion-stage-marked | criterion=guest-data actor=user:owner stage=planned
+- 2026-08-30T11:15:27.734542Z | work.criterion-stage-marked | criterion=checklist actor=user:owner stage=planned
+- 2026-08-30T11:15:28.028161Z | work.criterion-stage-marked | criterion=tenant-safety actor=user:owner stage=planned
+- 2026-08-30T11:15:28.321194Z | work.criterion-stage-marked | criterion=tests actor=user:owner stage=planned
+- 2026-08-30T11:15:28.618622Z | work.transitioned | from=planned to=implementing actor=project:fixes-agent
+- 2026-08-30T11:22:12.202641Z | artifact.added | kind=verification-report uri=.agora/swarms/002-fixes-cycle-2/work/gh-115/verification.md actor=project:fixes-agent
+- 2026-08-30T11:22:12.509306Z | evidence.added | type=unit-tests result=success actor=project:fixes-agent
+- 2026-08-30T11:22:12.801818Z | evidence.added | type=playwright-host result=success actor=project:fixes-agent
+- 2026-08-30T11:22:13.093108Z | evidence.added | type=quality-gates result=success actor=project:fixes-agent
+- 2026-08-30T11:22:13.393224Z | work.criterion-stage-marked | criterion=guest-data actor=project:fixes-agent stage=implemented
+- 2026-08-30T11:22:13.686738Z | work.criterion-stage-marked | criterion=checklist actor=project:fixes-agent stage=implemented
+- 2026-08-30T11:22:13.990316Z | work.criterion-stage-marked | criterion=tenant-safety actor=project:fixes-agent stage=implemented
+- 2026-08-30T11:22:14.288367Z | work.criterion-stage-marked | criterion=tests actor=project:fixes-agent stage=implemented
+- 2026-08-30T11:22:14.588375Z | work.transitioned | from=implementing to=verifying actor=project:fixes-agent
