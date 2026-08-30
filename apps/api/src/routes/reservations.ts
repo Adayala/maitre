@@ -96,7 +96,6 @@ function reservationCapacityUnavailable() {
     "RESERVATION_CAPACITY_UNAVAILABLE",
   );
 }
-
 export async function registerReservationRoutes(app: FastifyInstance, container: Container): Promise<void> {
   const deps = () => ({ reservations: container.reservations, outbox: container.outbox });
 
