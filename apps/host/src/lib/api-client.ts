@@ -6,9 +6,15 @@ const API_URL = (import.meta.env["VITE_API_URL"] as string | undefined) ?? "http
 export class ApiError extends Error {
   constructor(
     public readonly status: number,
-    public readonly problem: { type: string; title: string; correlationId?: string },
+    public readonly problem: {
+      type: string;
+      title: string;
+      detail?: string;
+      code?: string;
+      correlationId?: string;
+    },
   ) {
-    super(problem?.title ?? `HTTP ${status}`);
+    super(problem?.detail ?? problem?.title ?? `HTTP ${status}`);
     this.name = "ApiError";
   }
 }

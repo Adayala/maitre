@@ -16,7 +16,7 @@ import {
 import { openVisit } from "@maitre/floor";
 import type { Container } from "../composition/container.js";
 import { requireTenantContext, requirePermission } from "../http/request-context.js";
-import { sendProblem, notFound, conflict, badRequest } from "../http/problem-details.js";
+import { sendProblem, notFound, conflict, badRequest, HttpProblemError } from "../http/problem-details.js";
 import { omitUndefined } from "../http/omit-undefined.js";
 
 // SPEC-071 — Reservations API. No PATCH: each transition is a command
@@ -87,6 +87,15 @@ async function branchTables(container: Container, tenantId: string, branchId: st
   return tables.map((t) => ({ id: t.id, capacity: t.capacity }));
 }
 
+function reservationCapacityUnavailable() {
+  return new HttpProblemError(
+    409,
+    "reservation-capacity-unavailable",
+    "No se puede completar la reserva",
+    "No hay mesas configuradas o disponibles en esta sucursal para el horario solicitado.",
+    "RESERVATION_CAPACITY_UNAVAILABLE",
+  );
+}
 export async function registerReservationRoutes(app: FastifyInstance, container: Container): Promise<void> {
   const deps = () => ({ reservations: container.reservations, outbox: container.outbox });
 
@@ -103,6 +112,10 @@ export async function registerReservationRoutes(app: FastifyInstance, container:
         if (body.guestId) {
           const guest = await container.guests.findById(ctx.tenantId, body.guestId);
           if (!guest) return sendProblem(reply, correlationId, notFound("Guest"));
+        }
+        const tables = await branchTables(container, ctx.tenantId, req.params.branchId);
+        if (tables.length === 0) {
+          return sendProblem(reply, correlationId, reservationCapacityUnavailable());
         }
 
         const reservation = await createReservation(deps(), {
@@ -171,7 +184,7 @@ export async function registerReservationRoutes(app: FastifyInstance, container:
       return { data: reservation };
     } catch (err) {
       if (err instanceof CapacityUnavailableError) {
-        return sendProblem(reply, correlationId, conflict(err.message));
+        return sendProblem(reply, correlationId, reservationCapacityUnavailable());
       }
       if (err instanceof InvalidReservationTransitionError) {
         return sendProblem(reply, correlationId, conflict(err.message));

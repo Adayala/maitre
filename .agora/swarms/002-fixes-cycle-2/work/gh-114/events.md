@@ -1,3 +1,28 @@
 # Work events
 
 - 2026-08-30T11:12:59.702549Z | work.created | state=drafting actor=user:owner
+- 2026-08-30T11:44:35.667139Z | artifact.added | kind=spec uri=.agora/swarms/002-fixes-cycle-2/work/gh-114/spec.md actor=user:owner
+- 2026-08-30T11:44:35.889605Z | artifact.added | kind=implementation-plan uri=.agora/swarms/002-fixes-cycle-2/work/gh-114/implementation-plan.md actor=project:fixes-agent
+- 2026-08-30T11:44:36.118584Z | artifact.added | kind=verification uri=.agora/swarms/002-fixes-cycle-2/work/gh-114/verification.md actor=project:fixes-agent
+- 2026-08-30T11:44:47.065040Z | work.criterion-stage-marked | criterion=ux actor=user:owner stage=specified
+- 2026-08-30T11:44:47.288659Z | work.criterion-stage-marked | criterion=accessibility actor=user:owner stage=specified
+- 2026-08-30T11:44:47.520716Z | work.criterion-stage-marked | criterion=tests actor=user:owner stage=specified
+- 2026-08-30T11:44:47.748751Z | work.transitioned | from=drafting to=clarified actor=user:owner
+- 2026-08-30T11:45:02.531540Z | work.transitioned | from=clarified to=planned actor=project:fixes-agent
+- 2026-08-30T11:45:28.851003Z | work.criterion-stage-marked | criterion=ux actor=user:owner stage=planned
+- 2026-08-30T11:45:29.067907Z | work.criterion-stage-marked | criterion=accessibility actor=user:owner stage=planned
+- 2026-08-30T11:45:29.300822Z | work.criterion-stage-marked | criterion=tests actor=user:owner stage=planned
+- 2026-08-30T11:45:29.520111Z | work.transitioned | from=planned to=implementing actor=project:fixes-agent
+- 2026-08-30T11:45:29.734705Z | work.criterion-stage-marked | criterion=ux actor=project:fixes-agent stage=implemented
+- 2026-08-30T11:45:29.950808Z | work.criterion-stage-marked | criterion=accessibility actor=project:fixes-agent stage=implemented
+- 2026-08-30T11:45:30.178441Z | work.criterion-stage-marked | criterion=tests actor=project:fixes-agent stage=implemented
+- 2026-08-30T11:45:45.042937Z | work.transitioned | from=implementing to=verifying actor=project:fixes-agent
+- 2026-08-30T11:45:45.265007Z | evidence.added | type=test result=success actor=project:fixes-agent
+- 2026-08-30T11:45:45.484640Z | work.criterion-stage-marked | criterion=ux actor=project:fixes-agent stage=verified
+- 2026-08-30T11:45:45.710698Z | work.criterion-stage-marked | criterion=accessibility actor=project:fixes-agent stage=verified
+- 2026-08-30T11:45:45.932011Z | work.criterion-stage-marked | criterion=tests actor=project:fixes-agent stage=verified
+- 2026-08-30T11:46:12.163804Z | work.criterion-stage-marked | criterion=ux actor=user:owner stage=accepted
+- 2026-08-30T11:46:12.402059Z | work.criterion-stage-marked | criterion=accessibility actor=user:owner stage=accepted
+- 2026-08-30T11:46:12.618724Z | work.criterion-stage-marked | criterion=tests actor=user:owner stage=accepted
+- 2026-08-30T11:46:12.832035Z | approval.added | role=spec-owner actor=user:owner delegation=none
+- 2026-08-30T11:46:13.039979Z | work.transitioned | from=verifying to=completed actor=user:owner

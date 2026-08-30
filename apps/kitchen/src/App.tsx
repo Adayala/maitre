@@ -57,7 +57,9 @@ interface SubscriptionAccess {
   data: { services: Array<{ code: string; quantity: number; scopeRefId: string | null }> };
 }
 function SubscriptionState({ title }: { title: string }) {
-  return <main className="state state--empty"><h1>{title}</h1><p>Consultá al administrador del tenant.</p></main>;
+  const { signOut } = useAuth();
+  const { selectBranch } = useSession();
+  return <main className="state state--empty"><h1>{title}</h1><p>Consultá al administrador del tenant.</p><div className="state__actions"><button type="button" className="btn btn--primary" onClick={() => selectBranch("")}>Cambiar sucursal</button><button type="button" className="btn btn--ghost" onClick={() => void signOut()}>Cerrar sesión</button></div></main>;
 }
 function SubscriptionCapacity({ services, codes }: { services: SubscriptionAccess["data"]["services"]; codes: string[] }) {
   const visible = services.filter((service) => codes.includes(service.code));

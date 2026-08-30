@@ -1188,9 +1188,25 @@ serialTest(
         durationMinutes: 60,
       },
     });
-    assert.equal(create.statusCode, 201);
-    assert.equal(create.json().data.status, "PENDING");
-    const reservationId = create.json().data.id as string;
+    assert.equal(create.statusCode, 409);
+    assert.equal(create.json().code, "RESERVATION_CAPACITY_UNAVAILABLE");
+    assert.equal(create.json().title, "No se puede completar la reserva");
+
+    const now = new Date("2026-08-29T19:00:00Z");
+    const reservationId = randomUUID();
+    await container.reservations.save({
+      id: reservationId,
+      tenantId,
+      branchId,
+      partySize: 2,
+      startAt: new Date("2026-08-29T20:00:00Z"),
+      durationMinutes: 60,
+      source: "HOST_APP",
+      status: "PENDING",
+      revision: 1,
+      createdAt: now,
+      updatedAt: now,
+    });
 
     const confirm = await app.inject({
       method: "POST",
@@ -1198,6 +1214,8 @@ serialTest(
       headers,
     });
     assert.equal(confirm.statusCode, 409);
+    assert.equal(confirm.json().code, "RESERVATION_CAPACITY_UNAVAILABLE");
+    assert.equal(confirm.json().title, "No se puede completar la reserva");
 
     const seat = await app.inject({
       method: "POST",

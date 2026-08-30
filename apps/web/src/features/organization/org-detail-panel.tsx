@@ -350,12 +350,18 @@ function BranchDetailPanel({
           </label>
           <label>
             Zona horaria
-            <input
-              required
-              disabled={Boolean(id)}
-              value={timezone}
-              onChange={(event) => setTimezone(event.target.value)}
-            />
+            {id ? (
+              <>
+                <span className="org-form__readonly-value">{timezone}</span>
+                <small>La zona horaria se define al crear la sucursal.</small>
+              </>
+            ) : (
+              <input
+                required
+                value={timezone}
+                onChange={(event) => setTimezone(event.target.value)}
+              />
+            )}
           </label>
           {id ? (
             <label>

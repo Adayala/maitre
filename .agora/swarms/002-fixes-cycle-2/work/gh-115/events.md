@@ -26,3 +26,13 @@
 - 2026-08-30T11:22:29.333053Z | tool.prepared | run=commit-gh-115 tool=repository operation=commit actor=project:fixes-agent
 - 2026-08-30T11:22:29.334824Z | tool.running | run=commit-gh-115 actor=project:fixes-agent
 - 2026-08-30T11:22:29.357701Z | tool.completed | run=commit-gh-115 exit-code=0
+- 2026-08-30T11:28:14.308333Z | work.criterion-stage-marked | criterion=guest-data actor=project:fixes-agent stage=verified
+- 2026-08-30T11:28:14.599602Z | work.criterion-stage-marked | criterion=checklist actor=project:fixes-agent stage=verified
+- 2026-08-30T11:28:14.900447Z | work.criterion-stage-marked | criterion=tenant-safety actor=project:fixes-agent stage=verified
+- 2026-08-30T11:28:15.197658Z | work.criterion-stage-marked | criterion=tests actor=project:fixes-agent stage=verified
+- 2026-08-30T11:28:15.494804Z | work.criterion-stage-marked | criterion=guest-data actor=user:owner stage=accepted
+- 2026-08-30T11:28:15.795199Z | work.criterion-stage-marked | criterion=checklist actor=user:owner stage=accepted
+- 2026-08-30T11:28:16.093661Z | work.criterion-stage-marked | criterion=tenant-safety actor=user:owner stage=accepted
+- 2026-08-30T11:28:16.391251Z | work.criterion-stage-marked | criterion=tests actor=user:owner stage=accepted
+- 2026-08-30T11:28:24.259878Z | approval.added | role=spec-owner actor=user:owner delegation=none
+- 2026-08-30T11:28:24.560393Z | work.transitioned | from=verifying to=completed actor=user:owner

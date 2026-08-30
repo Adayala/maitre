@@ -296,6 +296,16 @@ test("recorre estructura física, operación y equipo con carga lazy y paneles d
     page.getByRole("heading", { name: "Detalle de sucursal" }),
   ).toBeVisible();
   await expect(page.getByLabel("Código")).toHaveValue("CTR");
+  const timezoneField = page
+    .locator("label")
+    .filter({ hasText: "Zona horaria" });
+  await expect(timezoneField.locator("span")).toHaveText(
+    "America/Argentina/Buenos_Aires",
+  );
+  await expect(
+    page.getByText("La zona horaria se define al crear la sucursal."),
+  ).toBeVisible();
+  await expect(timezoneField.locator("input")).toHaveCount(0);
 
   await page.reload();
   await expect(
