@@ -12,11 +12,11 @@
     "test": "node --test dist/test/"
   },
   "dependencies": {
-    "@fastify/cors": "11.3.0",
-    "@fastify/helmet": "13.1.0",
+    "@fastify/cors": "11.3.1",
+    "@fastify/helmet": "13.1.2",
     "@fastify/rate-limit": "10.3.0",
-    "@fastify/swagger": "9.8.1",
-    "@fastify/swagger-ui": "6.1.1",
+    "@fastify/swagger": "9.9.2",
+    "@fastify/swagger-ui": "6.1.2",
     "@maitre/adapter-identity-supabase-auth": "*",
     "@maitre/adapter-persistence-memory": "*",
     "@maitre/adapter-persistence-supabase": "*",
@@ -35,8 +35,8 @@
     "@maitre/subscription": "*",
     "@maitre/telemetry": "*",
     "@maitre/workforce": "*",
-    "@supabase/supabase-js": "2.100.0",
-    "fastify": "5.10.0",
+    "@supabase/supabase-js": "2.117.3",
+    "fastify": "5.12.5",
     "zod": "^3.23.8"
   },
   "devDependencies": {
